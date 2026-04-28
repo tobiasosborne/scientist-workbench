@@ -3,6 +3,8 @@ export {
   type InvariantEntry,
   type ToolDefinition,
   runTool,
+  defineTool,
+  decodeSchema,
 } from "./runner.js";
 export {
   type ProvenanceRecord,

@@ -1,41 +1,53 @@
-// cas-verify — decide A = B as elements of Q(x_1,...,x_n).
-// Input:  record { lhs: Value, rhs: Value }
-// Output: record { equal: boolean, reason?: string, witness?: Value, side?: string, detail?: string }
+// =============================================================================
+// cas-verify — decide A = B as elements of Q(x_1, ..., x_n)
+// =============================================================================
 //
-// Equality is decided by cross-multiplication: a/b = c/d  iff  a*d - c*b = 0
-// in Q[x_1,...,x_n]. Sound and complete because Q[x_1,...,x_n] is an integral
-// domain (PRD §9.3); no polynomial GCD needed.
+// Equality is decided by cross-multiplication: a/b = c/d iff
+// a·d − c·b = 0 in Q[x_1, ..., x_n]. Sound and complete because
+// Q[x_1, ..., x_n] is an integral domain (PRD §9.3); no polynomial
+// GCD needed.
+//
+// Schema (ADR-0004)
+// -----------------
+// Input: record { lhs: any, rhs: any }. Both fields are intentionally
+// `S.any()` — the in-scope set is "anything cas-core's expression
+// bridge can interpret as a Q(x)-element," and the out-of-scope path
+// is part of the contract (record-with-flag, ADR-0003). Tightening
+// the schema to "expression" would lose the leaf cases (a single
+// integer, a bare symbol).
+//
+// Output: record-with-flag (ADR-0003). `equal` is always present.
+// `reason`, `witness`, `side`, `detail` are conditional and modelled
+// as schema-level optionals.
 
-import {
-  bool,
-  expr,
-  int,
-  rat as protocolRat,
-  record,
-  str,
-  sym,
-  ToolError,
-  type Value,
-} from "@workbench/protocol";
-import { runTool } from "@workbench/contract";
+import { bool, expr, int, rat as protocolRat, record, S, str, sym } from "@workbench/protocol";
+import { defineTool, runTool } from "@workbench/contract";
 import { casVerify } from "@workbench/cas-core";
 
 const NAME = "cas-verify";
-const VERSION = "0.2.0";
+const VERSION = "0.3.0";
 
-void runTool({
+const inputSchema = S.record({ lhs: S.any(), rhs: S.any() });
+
+// `equal` always present; the others are conditional on the equality
+// outcome and the scope. The runner enforces "no extra fields" and
+// "all required fields present" so every output of fn must hit this
+// shape exactly — a tool that forgot to emit `equal` would fail loud.
+const outputSchema = S.record(
+  {
+    equal: S.kind("boolean"),
+    reason: S.union([S.literal(str("not-equal")), S.literal(str("out-of-scope"))]),
+    witness: S.any(),
+    side: S.union([S.literal(str("lhs")), S.literal(str("rhs"))]),
+    detail: S.kind("string"),
+  },
+  { optional: ["reason", "witness", "side", "detail"] }
+);
+
+export const def = defineTool({
   name: NAME,
   version: VERSION,
-  schema: {
-    input: record({ lhs: expr("<lhs>", []), rhs: expr("<rhs>", []) }),
-    output: record({
-      equal: bool(true),
-      reason: str("optional: not-equal | out-of-scope"),
-      witness: expr("<lhs - rhs canonical form, present iff equal=false and reason=not-equal>", []),
-      side: str("optional: lhs | rhs (present iff reason=out-of-scope)"),
-      detail: str("optional: explanation for out-of-scope"),
-    }),
-  },
+  schema: { input: inputSchema, output: outputSchema },
   examples: [
     {
       description: "trivial identity",
@@ -99,16 +111,11 @@ void runTool({
     { name: "deterministic", statement: "same input → same output bytes", machine_checkable: true },
     { name: "honest-scope", statement: "out-of-scope inputs return equal=false with reason='out-of-scope', not a wrong answer", machine_checkable: false },
   ],
-  fn: (input: Value, _flags: Record<string, string>): Value => {
-    if (input.kind !== "record") {
-      throw new ToolError(`cas-verify: input must be a record {lhs, rhs} (got kind ${input.kind})`, {
-        suggestion: "wrap as {\"kind\":\"record\",\"fields\":{\"lhs\":<expr>,\"rhs\":<expr>}}",
-      });
-    }
-    const lhs = input.fields["lhs"];
-    const rhs = input.fields["rhs"];
-    if (!lhs) throw new ToolError("cas-verify: missing field 'lhs'", {});
-    if (!rhs) throw new ToolError("cas-verify: missing field 'rhs'", {});
-    return casVerify({ lhs, rhs });
+  fn: (input, _flags) => {
+    // Schema runner has already validated `input` is a record
+    // {lhs, rhs}. The fields are typed `Value`, no further unwrapping.
+    return casVerify({ lhs: input.fields.lhs, rhs: input.fields.rhs });
   },
 });
+
+void runTool(def);

@@ -1,17 +1,40 @@
-// Registry discovery: scan tools/ for tool entry points (tools/<name>/tool.ts).
-// `query` calls each tool with --schema/--examples/--invariants/--version and
-// caches the result. Used by tools/registry-list and tools/registry-search.
+// =============================================================================
+// Registry — discover installed tools and read their declared metadata
+// =============================================================================
+//
+// The registry exists for one user: an agent (or a human acting agent-
+// shaped) that wants to plan a composition without first running every
+// candidate tool. `findToolsRoot` locates the tools/ directory; for each
+// directory containing a `tool.ts`, `describeTool` invokes the tool's
+// standard metadata flags (`--version`, `--schema`, `--examples`,
+// `--invariants`) and assembles a `ToolMetadata` record.
+//
+// Schema-aware reads
+// ------------------
+// As of ADR-0004 a tool's `--schema` output is the encoded form of a
+// real `Schema` (not a sample value). `describeTool` decodes that wire
+// form here, so callers (registry-list, registry-search) work with
+// `Schema` objects directly. Filtering by kind, by expression head, or
+// by deep-mention is then a clean call into the schema helpers
+// (`schemaTopKind`, `schemaMentionsKind`, `schemaExpressionHead`).
+//
+// Latency note
+// ------------
+// `describeTool` shells out four times per tool. With many tools that
+// becomes the registry's dominant cost (see beads issue
+// scientist-workbench-tyq for the planned cache, which depends on the
+// `defineTool` / `runTool` split tracked by scientist-workbench-yth).
 
 import { readdir, stat } from "node:fs/promises";
 import { join } from "node:path";
-import { parse, type Value } from "@workbench/protocol";
+import { decodeSchema, parse, type Schema, type Value } from "@workbench/protocol";
 import { spawnBun } from "./spawn.js";
 
 export interface ToolMetadata {
   name: string;
   version: string;
   path: string;
-  schema: { input: Value; output: Value };
+  schema: { input: Schema; output: Schema };
   examples: Value[];
   invariants: Value[];
 }
@@ -66,12 +89,25 @@ export async function describeTool(toolPath: string, name: string): Promise<Tool
 
   if (versionVal.kind !== "record") throw new Error(`${name}: --version not a record`);
   const versionStr = versionVal.fields["version"];
-  if (!versionStr || versionStr.kind !== "string") throw new Error(`${name}: --version.version not a string`);
+  if (!versionStr || versionStr.kind !== "string") {
+    throw new Error(`${name}: --version.version not a string`);
+  }
 
   if (schemaVal.kind !== "record") throw new Error(`${name}: --schema not a record`);
-  const schemaInput = schemaVal.fields["input"];
-  const schemaOutput = schemaVal.fields["output"];
-  if (!schemaInput || !schemaOutput) throw new Error(`${name}: --schema missing input/output`);
+  const schemaInputV = schemaVal.fields["input"];
+  const schemaOutputV = schemaVal.fields["output"];
+  if (!schemaInputV || !schemaOutputV) throw new Error(`${name}: --schema missing input/output`);
+
+  // ADR-0004: --schema output is encoded `Schema`. Decode here so callers
+  // get a real Schema object, not a wire-form Value.
+  let inputSchema: Schema;
+  let outputSchema: Schema;
+  try {
+    inputSchema = decodeSchema(schemaInputV);
+    outputSchema = decodeSchema(schemaOutputV);
+  } catch (e) {
+    throw new Error(`${name}: --schema decode failed: ${(e as Error).message}`);
+  }
 
   const examples: Value[] = examplesVal.kind === "list" ? [...examplesVal.items] : [];
   const invariants: Value[] = invariantsVal.kind === "list" ? [...invariantsVal.items] : [];
@@ -80,7 +116,7 @@ export async function describeTool(toolPath: string, name: string): Promise<Tool
     name,
     version: versionStr.value,
     path: toolPath,
-    schema: { input: schemaInput, output: schemaOutput },
+    schema: { input: inputSchema, output: outputSchema },
     examples,
     invariants,
   };

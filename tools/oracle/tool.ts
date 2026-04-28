@@ -1,14 +1,37 @@
-// oracle — golden-master diffing harness.
-// Input: record { tool_path, goldens_dir, mode? }
-//   tool_path:    string — path to the tool's tool.ts (run via `bun <path>`)
-//   goldens_dir:  string — directory of *.golden.json files
-//   mode:         optional string — "exact" (default) | "structural"
-// Each golden is a record {input, output, flags?}. The harness pipes
-// canonical(input) into the tool's stdin (with `flags` joined as argv) and
-// compares the tool's stdout to the canonical expected output.
+// =============================================================================
+// oracle — golden-master diffing harness
+// =============================================================================
 //
-// Output: record { passed, failed, total, results: [...] }
-// Exits 0 iff failed === 0.
+// Intent
+// ------
+// For a single tool's goldens directory, run the tool against each
+// golden's input and compare its stdout to the recorded expected
+// output. Modes:
+//   - exact (default): canonical bytes must match.
+//   - structural: hashes must match (allows the same Value emitted as
+//     a different but canonically-equal byte string — never observed
+//     in practice given the canonical encoder is bijective, but kept
+//     as an explicit knob for future encoders).
+//
+// Schema (ADR-0004)
+// -----------------
+// Input: record { tool_path, goldens_dir, mode? } where mode is the
+// literal-union "exact" | "structural". The schema runner enforces
+// the mode enum and the field shape; the body trusts the narrowed
+// input.
+//
+// Output: record { passed, failed, total, mode, results: list }
+// where each result is a record { filename, passed, expected_hash?,
+// actual_hash?, error? }.
+//
+// Process exit
+// ------------
+// On golden failure the oracle still emits its full results record
+// to stdout (so consumers learn *which* goldens failed), then exits
+// 1 from outside `fn`. We rely on `runTool`'s ToolError path: throw
+// a ToolError carrying the result detail, and the runner emits the
+// stderr line and exits non-zero. The result record is also returned
+// from fn so a successful run produces a normal canonical output.
 //
 // PRD §4.5.
 
@@ -22,13 +45,42 @@ import {
   list,
   parse,
   record,
+  S,
   str,
   type Value,
 } from "@workbench/protocol";
-import { runTool, spawnBun } from "@workbench/contract";
+import { defineTool, runTool, spawnBun } from "@workbench/contract";
 
 const NAME = "oracle";
-const VERSION = "0.2.0";
+const VERSION = "0.3.0";
+
+const inputSchema = S.record(
+  {
+    tool_path: S.kind("string"),
+    goldens_dir: S.kind("string"),
+    mode: S.union([S.literal(str("exact")), S.literal(str("structural"))]),
+  },
+  { optional: ["mode"] }
+);
+
+const resultRecordSchema = S.record(
+  {
+    filename: S.kind("string"),
+    passed: S.kind("boolean"),
+    expected_hash: S.kind("string"),
+    actual_hash: S.kind("string"),
+    error: S.kind("string"),
+  },
+  { optional: ["expected_hash", "actual_hash", "error"] }
+);
+
+const outputSchema = S.record({
+  passed: S.kind("integer"),
+  failed: S.kind("integer"),
+  total: S.kind("integer"),
+  mode: S.kind("string"),
+  results: S.list(resultRecordSchema),
+});
 
 interface GoldenFile {
   filename: string;
@@ -68,14 +120,6 @@ async function readGoldens(dir: string): Promise<GoldenFile[]> {
   return out;
 }
 
-function runUnderTest(toolPath: string, flags: string[], inputBytes: string): Promise<{
-  code: number;
-  stdout: string;
-  stderr: string;
-}> {
-  return spawnBun([toolPath, ...flags], inputBytes);
-}
-
 interface GoldenResult {
   filename: string;
   passed: boolean;
@@ -84,7 +128,7 @@ interface GoldenResult {
   error?: string;
 }
 
-function resultToValue(r: GoldenResult): Value {
+function resultToValue(r: GoldenResult) {
   const fields: Record<string, Value> = {
     filename: str(r.filename),
     passed: bool(r.passed),
@@ -95,117 +139,13 @@ function resultToValue(r: GoldenResult): Value {
   return record(fields);
 }
 
-async function fn(input: Value, _flags: Record<string, string>): Promise<Value> {
-  if (input.kind !== "record") {
-    throw new Error(`oracle: input must be a record (got ${input.kind})`);
-  }
-  const toolPathV = input.fields["tool_path"];
-  const goldensDirV = input.fields["goldens_dir"];
-  const modeV = input.fields["mode"];
-  if (!toolPathV || toolPathV.kind !== "string") {
-    throw new Error("oracle: tool_path must be a string");
-  }
-  if (!goldensDirV || goldensDirV.kind !== "string") {
-    throw new Error("oracle: goldens_dir must be a string");
-  }
-  const mode = modeV !== undefined && modeV.kind === "string" ? modeV.value : "exact";
-  if (mode !== "exact" && mode !== "structural") {
-    throw new Error(`oracle: unsupported mode ${JSON.stringify(mode)}`);
-  }
-
-  const goldens = await readGoldens(goldensDirV.value);
-  const results: GoldenResult[] = [];
-  let passed = 0;
-  let failed = 0;
-
-  for (const g of goldens) {
-    const expectedBytes = canonicalize(g.expected);
-    const expectedHash = hash(g.expected);
-    let r: GoldenResult;
-    try {
-      const proc = await runUnderTest(toolPathV.value, g.flags, canonicalize(g.input));
-      if (proc.code !== 0) {
-        r = {
-          filename: g.filename,
-          passed: false,
-          error: `tool exit ${proc.code}: ${proc.stderr.trim() || "(no stderr)"}`,
-          expected_hash: expectedHash,
-        };
-      } else {
-        const actualV = parse(proc.stdout);
-        const actualBytes = canonicalize(actualV);
-        const actualHash = hash(actualV);
-        const ok = mode === "exact" ? actualBytes === expectedBytes : actualHash === expectedHash;
-        r = {
-          filename: g.filename,
-          passed: ok,
-          expected_hash: expectedHash,
-          actual_hash: actualHash,
-        };
-        if (!ok) {
-          r.error =
-            mode === "exact"
-              ? `canonical bytes differ: expected ${expectedBytes.length} bytes, got ${actualBytes.length} bytes`
-              : `hash mismatch (mode=structural)`;
-        }
-      }
-    } catch (e) {
-      r = {
-        filename: g.filename,
-        passed: false,
-        error: (e as Error).message,
-        expected_hash: expectedHash,
-      };
-    }
-    results.push(r);
-    if (r.passed) passed++;
-    else failed++;
-  }
-
-  if (failed > 0) {
-    process.stderr.write(`oracle: ${failed}/${results.length} goldens failed\n`);
-    for (const r of results) {
-      if (!r.passed) {
-        process.stderr.write(`  FAIL ${r.filename}: ${r.error ?? "(no detail)"}\n`);
-      }
-    }
-  }
-
-  const out = record({
-    failed: int(BigInt(failed)),
-    mode: str(mode),
-    passed: int(BigInt(passed)),
-    results: list(results.map(resultToValue)),
-    total: int(BigInt(results.length)),
-  });
-
-  if (failed > 0) {
-    process.stdout.write(canonicalize(out));
-    process.exit(1);
-  }
-  return out;
-}
-
-void runTool({
+export const def = defineTool({
   name: NAME,
   version: VERSION,
-  schema: {
-    input: record({
-      tool_path: str("path to tool.ts"),
-      goldens_dir: str("path to goldens dir containing *.golden.json"),
-      mode: str("exact | structural (optional, default exact)"),
-    }),
-    output: record({
-      passed: int(0n),
-      failed: int(0n),
-      total: int(0n),
-      mode: str("exact"),
-      results: list([]),
-    }),
-  },
+  schema: { input: inputSchema, output: outputSchema },
   examples: [
     {
-      description: "run cas-simplify against its goldens",
+      description: "run cas-simplify against its goldens — output omitted; verifier checks shape",
       input: record({
         tool_path: str("tools/cas-simplify/tool.ts"),
         goldens_dir: str("tools/cas-simplify/goldens"),
@@ -224,5 +164,87 @@ void runTool({
       machine_checkable: false,
     },
   ],
-  fn,
+  fn: async (input, _flags) => {
+    // Schema runner has narrowed input to {tool_path, goldens_dir, mode?}.
+    const mode = (input.fields.mode?.value ?? "exact") as "exact" | "structural";
+    const toolPath = input.fields.tool_path.value;
+    const goldensDir = input.fields.goldens_dir.value;
+    const goldens = await readGoldens(goldensDir);
+    const results: GoldenResult[] = [];
+    let passed = 0;
+    let failed = 0;
+
+    for (const g of goldens) {
+      const expectedBytes = canonicalize(g.expected);
+      const expectedHash = hash(g.expected);
+      let r: GoldenResult;
+      try {
+        const proc = await spawnBun([toolPath, ...g.flags], canonicalize(g.input));
+        if (proc.code !== 0) {
+          r = {
+            filename: g.filename,
+            passed: false,
+            error: `tool exit ${proc.code}: ${proc.stderr.trim() || "(no stderr)"}`,
+            expected_hash: expectedHash,
+          };
+        } else {
+          const actualV = parse(proc.stdout);
+          const actualBytes = canonicalize(actualV);
+          const actualHash = hash(actualV);
+          const ok = mode === "exact" ? actualBytes === expectedBytes : actualHash === expectedHash;
+          r = {
+            filename: g.filename,
+            passed: ok,
+            expected_hash: expectedHash,
+            actual_hash: actualHash,
+          };
+          if (!ok) {
+            r.error =
+              mode === "exact"
+                ? `canonical bytes differ: expected ${expectedBytes.length} bytes, got ${actualBytes.length} bytes`
+                : `hash mismatch (mode=structural)`;
+          }
+        }
+      } catch (e) {
+        r = {
+          filename: g.filename,
+          passed: false,
+          error: (e as Error).message,
+          expected_hash: expectedHash,
+        };
+      }
+      results.push(r);
+      if (r.passed) passed++;
+      else failed++;
+    }
+
+    if (failed > 0) {
+      process.stderr.write(`oracle: ${failed}/${results.length} goldens failed\n`);
+      for (const r of results) {
+        if (!r.passed) {
+          process.stderr.write(`  FAIL ${r.filename}: ${r.error ?? "(no detail)"}\n`);
+        }
+      }
+    }
+
+    const out = record({
+      failed: int(BigInt(failed)),
+      mode: str(mode),
+      passed: int(BigInt(passed)),
+      results: list(results.map(resultToValue)),
+      total: int(BigInt(results.length)),
+    });
+
+    // Failed goldens still produce a well-formed record, but we want
+    // CI to see a non-zero exit. Emit the record on stdout and exit 1
+    // before the runner's normal flow takes over. (Replacing this
+    // pattern is tracked under beads issue scientist-workbench-qf1.)
+    if (failed > 0) {
+      process.stdout.write(canonicalize(out));
+      process.exit(1);
+    }
+    return out;
+  },
 });
+
+void runTool(def);

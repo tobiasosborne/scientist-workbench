@@ -63,10 +63,15 @@ criteria) before starting the implementation.
   (record-with-flag). `cas-simplify` is the canonical example of boundary
   failure (tagged out-of-scope). `ToolError` (exit 1) is reserved for
   malformed inputs, not legitimate-but-unsupported ones.
-- **Schema annotations** (ADR-0002): prefer `kindOf("integer")` over
-  `int(0n)` in tool schemas when the *kind* is the load-bearing fact.
-  Keep sample-values when the *specific shape* is load-bearing (heads,
-  field names).
+- **Schemas** (ADR-0004): tools declare input/output via the `Schema`
+  type from `@workbench/protocol`, built with the `S.*` constructors
+  (`S.kind`, `S.record`, `S.list`, `S.tuple`, `S.union`, `S.literal`,
+  `S.expression`, `S.tagged`, `S.any`). Use `defineTool({...})` so TS
+  infers `I`/`O` from the schema and threads them into `fn`'s
+  signature — input is narrowed by the runner before `fn` runs, so do
+  not re-validate inside the body. `kindOf("...")` is the wire form
+  for `S.kind`; ADR-0002 is preserved for transport but the in-process
+  vocabulary is `Schema`.
 - **Subprocess plumbing** (ADR-0001): use `spawnBun` from
   `@workbench/contract`, not `node:child_process`.
 

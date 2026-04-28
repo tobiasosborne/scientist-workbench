@@ -16,19 +16,34 @@
 // LaTeX is out of scope for v1 — that's a sister tool (PRD §9.2).
 
 import {
+  canonicalize,
   expr,
   int,
-  parse as parseValue,
   rat,
+  S,
   str,
   sym,
   ToolError,
   type Value,
 } from "@workbench/protocol";
-import { runTool } from "@workbench/contract";
+import { defineTool, runTool } from "@workbench/contract";
 
 const NAME = "expr-parse";
-const VERSION = "0.2.0";
+const VERSION = "0.3.0";
+
+// Output is "an expression of head + - * / ^, or a leaf integer /
+// rational / symbol." That's a literal-driven union — exactly the
+// shape ADR-0004's schema language was designed for.
+const outputSchema = S.union([
+  S.expression("+"),
+  S.expression("-"),
+  S.expression("*"),
+  S.expression("/"),
+  S.expression("^"),
+  S.kind("integer"),
+  S.kind("rational"),
+  S.kind("symbol"),
+]);
 
 class Parser {
   src: string;
@@ -210,22 +225,12 @@ class Parser {
   }
 }
 
-function fn(input: Value, _flags: Record<string, string>): Value {
-  if (input.kind !== "string") {
-    throw new ToolError(`expr-parse: expected a string value, got kind ${input.kind}`, {
-      suggestion: "wrap your text as {\"kind\":\"string\",\"value\":\"<text>\"}",
-    });
-  }
-  const p = new Parser(input.value);
-  return p.parseTopLevel();
-}
-
-void runTool({
+export const def = defineTool({
   name: NAME,
   version: VERSION,
   schema: {
-    input: str("source text of an arithmetic expression"),
-    output: expr("<one of + - * / ^ or a leaf integer/rational/symbol>", []),
+    input: S.kind("string"),
+    output: outputSchema,
   },
   examples: [
     { description: "single integer literal", input: str("42"), output: int(42n) },
@@ -292,8 +297,15 @@ void runTool({
       machine_checkable: true,
     },
   ],
-  fn,
+  fn: (input, _flags) => {
+    // Input is already-validated as kind="string"; the runner narrowed
+    // it before this call. We can read .value directly.
+    const p = new Parser(input.value);
+    return p.parseTopLevel();
+  },
   test: () => {
+    // Compare via canonical bytes (the protocol's structural equality)
+    // rather than JSON.stringify, which would be sensitive to key order.
     const cases: { in: string; out: Value }[] = [
       { in: "42", out: int(42n) },
       { in: "  -1 ", out: expr("-", [int(1n)]) },
@@ -307,9 +319,11 @@ void runTool({
     ];
     for (const c of cases) {
       const got = new Parser(c.in).parseTopLevel();
-      const a = JSON.stringify(parseValue(JSON.stringify(got)));
-      const b = JSON.stringify(parseValue(JSON.stringify(c.out)));
+      const a = canonicalize(got);
+      const b = canonicalize(c.out);
       if (a !== b) throw new Error(`expr-parse self-test: input ${JSON.stringify(c.in)} got ${a}, expected ${b}`);
     }
   },
 });
+
+void runTool(def);

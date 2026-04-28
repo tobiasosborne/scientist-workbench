@@ -18,15 +18,14 @@ The reading order is non-negotiable: §2 (Value Protocol) is the design centrepi
 
 What v0.1 marked OPEN that v0.2 marks SETTLED or BUILT, and what the implementation chose:
 
-- **§2.2 primitive set.** v0.1 listed 12 candidates and asked which were primitives. v0.2 ships nine in the MVP (`symbol`, `integer`, `rational`, `float64`, `boolean`, `list`, `record`, `expression`, `tagged`). The four deferred (`algebraic`, `indexed`, `operator-string`, `polynomial`) are accretive: they can be added without breaking deployed tools because of the foreign-pass-through invariant (§2.3).
+- **§2.2 primitive set.** v0.1 listed 12 candidates and asked which were primitives. v0.2 ships **ten** in the MVP (`symbol`, `string`, `integer`, `rational`, `float64`, `boolean`, `list`, `record`, `expression`, `tagged`). `string` joined the primitive set when `expr-parse` outgrew its initial `{kind:"symbol", namespace:"source"}` shim. The four deferred (`algebraic`, `indexed`, `operator-string`, `polynomial`) are accretive: they can be added without breaking deployed tools because of the foreign-pass-through invariant (§2.3).
 - **§2.2 `expression` shape.** Chosen as a primitive, but with the Lean-style discipline: small fixed shape `{head: string, args: Value[]}`, not the Mathematica universal head. The Mathematica answer is rejected.
 - **§2.4 canonical serialisation.** Pinned: strict JSON subset, sorted keys, no whitespace, no raw JSON numbers (all numerics live inside tagged kinds whose fields are strings). Specified in `packages/protocol/src/canonical.ts`.
 - **§3.2 provenance shape.** Pinned: record carrying `{tool: {name, version}, inputs: [{name, hash}], flags: record-of-symbols, output_hash: hash}`. No timestamps. Indexed on disk by output hash, under `$CAS_STORE/provenance/<hh>/<hash>.json`.
-- **§4 tool contract.** Implemented as `runTool(definition)` in `packages/contract/src/runner.ts`. Standard flags `--schema --examples --invariants --version --provenance-of --help` are all wired.
+- **§4 tool contract.** Implemented as `runTool(definition)` in `packages/contract/src/runner.ts`. Standard flags `--schema --examples --invariants --version --provenance-of --help` are all wired. As of ADR-0004, `schema` is a real `Schema` (not a sample value): the runner validates input and output against it, examples must conform, and `--schema` emits canonical bytes a registry consumer decodes via `decodeSchema`.
 
 What v0.1 did not anticipate:
 
-- **`string` is not a primitive in the MVP.** Source text for `expr-parse` rides on `{kind:"symbol", namespace:"source", name:"<text>"}`. This is a smell and should be replaced by adding `string` as primitive #10 in the next protocol revision (see §2.2).
 - **No polynomial GCD in v1.** `cas-simplify` does not reduce `(x²−1)/(x−1)` to `x+1`. `cas-verify` does decide `(x²−1)/(x−1) = x+1` correctly, because it uses cross-multiplication, which is sound and complete over Q(x₁,…,xₙ) without needing GCD. Per §1.4 a separate `cas-reduce` tool covers reduction; deferred.
 - **Provenance has read but no write.** `--provenance-of` reads the store; no tool currently writes to it. Phase 0 hole, see §10.
 
@@ -104,11 +103,12 @@ The value protocol is the typed value language in which all tools communicate. I
 
 ### 2.2 Primitive node kinds [BUILT, with named extensions deferred]
 
-The MVP ships nine kinds. They are exhaustive over the discriminator; a tool that pattern-matches `value.kind` covers all cases.
+The MVP ships ten kinds. They are exhaustive over the discriminator; a tool that pattern-matches `value.kind` covers all cases.
 
 | Kind | MVP shape | Status |
 |---|---|---|
 | `symbol` | `{kind, name: string, namespace?: string}` | BUILT |
+| `string` | `{kind, value: string}` | BUILT |
 | `integer` | `{kind, value: string}` (canonical decimal, big) | BUILT |
 | `rational` | `{kind, num, den}` (lowest terms, den > 0) | BUILT |
 | `float64` | `{kind, bits: string}` (16 hex chars, big-endian IEEE 754) | BUILT |
@@ -127,7 +127,7 @@ Deferred (will be added accretively, no breaking change because of §2.3):
 
 **Resolved from v0.1:** `expression` is a primitive. Its shape is small and fixed (`head` + `args`); the Lean discipline (small inductive type) is right; the Mathematica universal head is wrong.
 
-**Open question (carried forward):** `string` is not currently a primitive. The MVP rides source text on `{kind:"symbol", namespace:"source", name:"<text>"}`, which is a smell. **Recommendation:** add `string` as primitive #10 in the next protocol revision. Doing so is non-breaking under the foreign-pass-through invariant.
+**Resolved from v0.1:** `string` is a primitive (#10). The MVP no longer rides source text on `{kind:"symbol", namespace:"source"}`; `expr-parse` consumes a `string` value directly. The change was non-breaking under the foreign-pass-through invariant.
 
 **Open question (carried forward):** Binders (∀, ∃, λ, ∫, ∑) representation. De Bruijn, locally-nameless, named with explicit α-equivalence? Recommendation unchanged: locally-nameless, since it's the standard in modern proof assistants and handles capture-avoidance cleanly. Decide before any tool that handles binders is written.
 
@@ -220,31 +220,33 @@ Every tool in the ecosystem satisfies the following contract. No exceptions; too
 
 ### 4.1 Interface [BUILT]
 
-Implementation: `packages/contract/src/runner.ts`. A tool author calls `runTool(definition)`; the runner dispatches based on `argv`.
+Implementation: `packages/contract/src/runner.ts`. A tool author calls `defineTool({...})` (a typed identity that lets TS infer the input/output value types from the schema) and dispatches via `runTool(def)` against `argv`.
 
 - Single executable. Reads JSON from stdin, writes canonical JSON to stdout. Errors to stderr, non-zero exit code on failure.
 - Standard flags:
-  - `--schema` — emits a record `{input, output}` of value-protocol values describing input/output shapes.
-  - `--examples` — emits a list of `{description, input, output | error, flags?}` records.
+  - `--schema` — emits a record `{input, output}` of *encoded `Schema`* values (ADR-0004). Decode via `decodeSchema` to obtain a real `Schema` for filtering / planning.
+  - `--examples` — emits a list of `{description, input, output | error, flags?}` records. Every example's `input` and `output` is required to conform to the tool's declared schema; the runner enforces this at load time.
   - `--invariants` — emits a list of `{name, statement, machine_checkable?}` records.
   - `--version` — emits `{name, version}`.
   - `--provenance-of <hash>` — given a value hash, emits the derivation tree if known, else a tagged null.
+  - `--test` — runs the tool's optional in-process property tests; exits 0 on pass, 1 on fail, 2 if no hook is registered.
   - `--help` / `-h` — emits human-readable usage.
 - Tool-specific flags follow `--key value` form and are passed verbatim into the tool's `fn(input, flags)`.
+- The runner validates input against `schema.input` *before* `fn` runs, narrowing the parsed Value to the declared TS type. It validates output against `schema.output` after `fn` returns; non-conformance is an internal contract violation and fails loudly. Tool authors no longer hand-roll input parsers (ADR-0004).
 
 ### 4.2 Required artefacts [SETTLED, partially BUILT]
 
 A tool ships with:
 
 1. The compiled binary, content-addressed. *MVP: source + Bun runtime; `bun build --compile` step deferred.*
-2. A schema declaration. *BUILT: required field of `ToolDefinition`.*
-3. A set of examples. *BUILT: required field. Currently sparse (5–10 per tool); should grow toward 30+ as agents exercise them.*
+2. A schema declaration as a `Schema` (ADR-0004). *BUILT: required field of `ToolDefinition<I, O>`, which infers `I`/`O` from the schema for use in `fn`.*
+3. A set of examples. *BUILT: required field. Each example's input and output is checked to conform to the schema at tool-load time. The current floor is "every code-path branch + edge cases"; ≥30 to call a tool v1-complete.*
 4. A set of invariants. *BUILT: required field.*
-5. A property-based test suite. *Partially built: workspace-level property tests in `packages/cas-core/test/`. Per-tool `--test` flag deferred (§4.3).*
-6. A golden-master test set, content-addressed. *Partial: `expr-parse` has 3, `cas-simplify` and `cas-verify` have 0. Phase-1-blocking.*
-7. A README. *Not yet built. Phase-1-blocking.*
+5. A property-based test suite, OR a `--test` hook (§4.3). *BUILT: workspace-level property tests in `packages/*/test/`; per-tool `--test` hooks for the tools whose properties are best checked in-process.*
+6. A golden-master test set, content-addressed. *BUILT: every tool with non-trivial behaviour has 30+ goldens.*
+7. A README. *BUILT.*
 
-A tool without all seven is not a tool; it is a prototype. The MVP has four prototypes by this definition. Closing the gap is Phase 1's exit criterion.
+A tool without all seven is not a tool; it is a prototype.
 
 ### 4.3 Property-based testing [SETTLED, partially BUILT]
 
@@ -470,9 +472,9 @@ Phases are priority-ordered, not date-ordered. Phase 1 should not start until Ph
 
 ### 10.1 Concrete next-action list
 
-1. Add `string` as primitive #10 (§2.2). Rewrite `expr-parse` input shape; remove the `namespace='source'` smell.
+1. ~~Add `string` as primitive #10 (§2.2). Rewrite `expr-parse` input shape; remove the `namespace='source'` smell.~~ **Done.**
 2. Wire provenance writes into `runTool` (§3.5).
-3. Build `registry-list` and `registry-search` (§6.2).
+3. ~~Build `registry-list` and `registry-search` (§6.2).~~ **Done; both are schema-aware as of ADR-0004.**
 4. Fill goldens directories for `cas-simplify` and `cas-verify`. Aim for 30+ each.
 5. Write READMEs for the four MVP tools.
 6. Add `--test` flag to the runner; wire each tool's property suite under it (§4.3).

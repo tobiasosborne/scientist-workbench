@@ -7,31 +7,36 @@
 // (which uses cross-multiplication) to decide that equality, or wait for cas-reduce.
 
 import {
-  bool,
   canonicalize,
   expr,
   hash,
   int,
-  list,
   rat as protocolRat,
-  record,
-  str,
+  S,
   sym,
   tagged,
   type Value,
 } from "@workbench/protocol";
-import { runTool } from "@workbench/contract";
+import { defineTool, runTool } from "@workbench/contract";
 import { casSimplify, SIMPLIFY_TAG } from "@workbench/cas-core";
 
 const NAME = "cas-simplify";
-const VERSION = "0.2.0";
+const VERSION = "0.3.0";
 
-void runTool({
+// cas-simplify is honest about its breadth: it accepts any Value (it
+// will recursively simplify arithmetic subterms wherever they appear,
+// wrapping non-arithmetic subterms in `tagged "cas-simplify/out-of-
+// scope"`). The output is also any Value — sometimes a literal, often
+// an expression, occasionally a tagged-out-of-scope wrap. Tightening
+// either side via the schema would lie about what the tool does.
+const passThroughSchema = S.any();
+
+export const def = defineTool({
   name: NAME,
   version: VERSION,
   schema: {
-    input: expr("<arithmetic expression over Q with symbol indeterminates>", []),
-    output: expr("<canonical sum-of-monomials, or num/den ratfn, or tagged out-of-scope>", []),
+    input: passThroughSchema,
+    output: passThroughSchema,
   },
   examples: [
     {
@@ -95,7 +100,7 @@ void runTool({
       machine_checkable: false,
     },
   ],
-  fn: (input: Value, _flags: Record<string, string>): Value => casSimplify(input),
+  fn: (input, _flags) => casSimplify(input),
   test: () => {
     const probes: Value[] = [
       int(0n),
@@ -108,15 +113,13 @@ void runTool({
       const a = canonicalize(casSimplify(v));
       const b = canonicalize(casSimplify(casSimplify(v)));
       if (a !== b) {
-        throw new Error(`cas-simplify not idempotent on ${JSON.stringify(v)}`);
+        throw new Error(`cas-simplify not idempotent on ${canonicalize(v)}`);
       }
       const ha = hash(casSimplify(v));
       const hb = hash(casSimplify(v));
       if (ha !== hb) throw new Error(`cas-simplify not deterministic`);
     }
-    void list;
-    void record;
-    void bool;
-    void str;
   },
 });
+
+void runTool(def);

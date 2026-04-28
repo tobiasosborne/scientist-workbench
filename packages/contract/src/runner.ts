@@ -1,28 +1,77 @@
-// runTool — the standard contract dispatcher.
-// Reads JSON from stdin (in the work case), writes canonical JSON to stdout.
-// Standard flags: --schema --examples --invariants --version --help/-h
-//                 --provenance-of <hash> --test
-// Tool-specific flags follow `--key value` form and are passed to fn(input, flags).
-// On success, writes a ProvenanceRecord indexed by output hash. See PRD §3.5, §4.1.
+// =============================================================================
+// runTool — the standard contract dispatcher
+// =============================================================================
+//
+// Every tool in the workbench has the same shape: read a JSON value from
+// stdin, write a JSON value to stdout, and accept a fixed set of standard
+// flags (--schema, --examples, --invariants, --version, --help/-h,
+// --provenance-of, --test). This module owns that shape.
+//
+// What this module does
+// ---------------------
+// 1. Parses argv into switches + named flags (no positional args except the
+//    optional value for --provenance-of).
+// 2. Dispatches the standard flags. --schema, --examples, --invariants,
+//    --version emit canonical JSON metadata. --provenance-of looks up a
+//    derivation by output hash. --test runs the tool's optional in-process
+//    property tests.
+// 3. In the work case: parses stdin, *validates* the parsed Value against
+//    `def.schema.input`, runs `def.fn`, validates the output against
+//    `def.schema.output`, writes canonical bytes to stdout, and writes a
+//    provenance record.
+//
+// The schema validation hooks (added in ADR-0004) replace the hand-rolled
+// `expectIntegerField` / `parseFooInput` shims that every tool used to
+// carry. Tool authors now declare a `Schema<I>` and the runner narrows
+// the parsed Value to `I` before calling `fn`. The `fn` body sees an
+// already-typed input.
+//
+// Output validation is not optional. A tool that returns a Value not
+// conforming to its declared output schema is, by ADR-0004's rules,
+// lying — and the project's "honest scope" discipline (PRD §6.1) is
+// about declining work, not misreporting it. We surface the violation
+// loudly as a ToolError.
 
 import {
+  bool,
   canonicalize,
+  decodeSchema,
+  encodeSchema,
   hash,
+  hashCanonicalBytes,
   list,
   parse,
   record,
   str,
   tagged,
   ToolError,
+  validate,
+  type Schema,
   type Value,
 } from "@workbench/protocol";
-import { readProvenance, writeProvenance } from "./provenance.js";
+import { provenanceToValue, readProvenance, writeProvenance } from "./provenance.js";
 import { defaultStore } from "./store.js";
 
-export interface ExampleEntry {
+// -----------------------------------------------------------------------------
+// Public types
+// -----------------------------------------------------------------------------
+//
+// `ToolDefinition<I, O>` is generic in the input and output Value types
+// inferred from the schema. Tools that import `defineTool` and pass an
+// inline schema get tight `fn` typing for free; the cost is invisible at
+// the call site.
+
+// `NoInfer<I>` makes the example's `input` checked against `I` without
+// contributing to its inference. Otherwise TS picks `I` from the
+// narrower of (schema-implied type) and (example-input type), and an
+// example that omits an optional field would silently widen the
+// inferred I to "record without that field" — which then breaks
+// `fn`'s access to it. Schema is the source of truth; examples
+// conform to it, not the other way around.
+export interface ExampleEntry<I extends Value = Value, O extends Value = Value> {
   description: string;
-  input: Value;
-  output?: Value;
+  input: NoInfer<I>;
+  output?: NoInfer<O>;
   error?: string;
   flags?: Record<string, string>;
 }
@@ -33,15 +82,49 @@ export interface InvariantEntry {
   machine_checkable?: boolean;
 }
 
-export interface ToolDefinition {
+export interface ToolDefinition<I extends Value = Value, O extends Value = Value> {
   name: string;
   version: string;
-  schema: { input: Value; output: Value };
-  examples: ExampleEntry[];
+  schema: { input: Schema<I>; output: Schema<O> };
+  examples: ExampleEntry<I, O>[];
   invariants: InvariantEntry[];
-  fn: (input: Value, flags: Record<string, string>) => Value | Promise<Value>;
+  fn: (input: I, flags: Record<string, string>) => O | Promise<O>;
   test?: () => void | Promise<void>;
 }
+
+/**
+ * Identity wrapper around a `ToolDefinition` that exists purely so that
+ * TypeScript can infer the `I` and `O` type parameters from the inline
+ * `schema` argument at the call site. Authors write
+ *
+ *     export const def = defineTool({
+ *       name: "mod-pow", version: "0.1.0",
+ *       schema: { input: S.record({...}), output: S.kind("integer") },
+ *       fn: (input, flags) => ...    // input is typed as the record, output as IntegerValue
+ *     });
+ *
+ * Without `defineTool`, `runTool({...})` swallows the inference and `fn`'s
+ * `input` parameter widens back to `Value`.
+ */
+export function defineTool<I extends Value, O extends Value>(
+  def: ToolDefinition<I, O>
+): ToolDefinition<I, O> {
+  return def;
+}
+
+// -----------------------------------------------------------------------------
+// Argv parsing
+// -----------------------------------------------------------------------------
+//
+// Three forms are recognised:
+//   --flag           switch (flag in `switches`)
+//   --flag=value     named (named[flag] = value)
+//   --flag value     named, when the flag is in STD_TAKES_VALUE or the
+//                    next arg does not start with `-`. This last
+//                    heuristic is the historical footgun (see beads
+//                    issue scientist-workbench-rej for the planned
+//                    typed-flag overhaul); for now keep behaviour
+//                    compatible with v0.2 callers.
 
 interface ParsedArgv {
   switches: Set<string>;
@@ -85,6 +168,10 @@ function parseArgv(argv: string[]): ParsedArgv {
   return { switches, named, positional };
 }
 
+// -----------------------------------------------------------------------------
+// Metadata emission
+// -----------------------------------------------------------------------------
+
 function exampleToValue(e: ExampleEntry): Value {
   const fields: Record<string, Value> = {
     description: str(e.description),
@@ -106,15 +193,20 @@ function invariantToValue(inv: InvariantEntry): Value {
     statement: str(inv.statement),
   };
   if (inv.machine_checkable !== undefined) {
-    fields["machine_checkable"] = { kind: "boolean", value: inv.machine_checkable };
+    fields["machine_checkable"] = bool(inv.machine_checkable);
   }
   return record(fields);
 }
 
+// -----------------------------------------------------------------------------
+// Stdin / stdout
+// -----------------------------------------------------------------------------
+
 async function readStdin(): Promise<string> {
-  if (typeof (globalThis as unknown as { Bun?: { stdin: { text(): Promise<string> } } }).Bun !== "undefined") {
-    return await (globalThis as unknown as { Bun: { stdin: { text(): Promise<string> } } }).Bun.stdin.text();
-  }
+  // Bun exposes `Bun.stdin.text()` which is faster than the iterator path.
+  // Fall back to the Node iterator under plain `node`.
+  const g = globalThis as unknown as { Bun?: { stdin: { text(): Promise<string> } } };
+  if (typeof g.Bun !== "undefined") return g.Bun.stdin.text();
   let s = "";
   for await (const chunk of process.stdin) s += chunk;
   return s;
@@ -124,14 +216,18 @@ function writeOut(v: Value): void {
   process.stdout.write(canonicalize(v));
 }
 
-function helpText(def: ToolDefinition): string {
+// -----------------------------------------------------------------------------
+// Help text
+// -----------------------------------------------------------------------------
+
+function helpText<I extends Value, O extends Value>(def: ToolDefinition<I, O>): string {
   const lines: string[] = [];
   lines.push(`${def.name} ${def.version}`);
   lines.push("");
   lines.push("Reads a JSON value from stdin and writes a JSON value to stdout.");
   lines.push("");
   lines.push("Standard flags:");
-  lines.push("  --schema           emit input/output schema");
+  lines.push("  --schema           emit input/output schema (encodeSchema'd Values)");
   lines.push("  --examples         emit list of examples");
   lines.push("  --invariants       emit list of invariants");
   lines.push("  --version          emit {name, version}");
@@ -150,11 +246,60 @@ function ensureExtractFlags(named: Record<string, string>): Record<string, strin
   return out;
 }
 
-export async function runTool(def: ToolDefinition): Promise<void> {
+// -----------------------------------------------------------------------------
+// Examples-conform-to-schema check (load-time)
+// -----------------------------------------------------------------------------
+//
+// ADR-0004: `examples[i].input` and `examples[i].output` must conform to
+// the declared schema. Catching this at tool-load time turns drift into
+// an immediate, named failure rather than a goldens-mismatch hours
+// later.
+//
+// Cost: linear in the example payload, capped by the example count
+// (typically 10–30). Well under the 100ms cold-start budget.
+
+function checkExamplesAgainstSchema<I extends Value, O extends Value>(def: ToolDefinition<I, O>): void {
+  for (let i = 0; i < def.examples.length; i++) {
+    const e = def.examples[i]!;
+    const inputCheck = validate(e.input, def.schema.input);
+    if (!inputCheck.ok) {
+      throw new Error(
+        `${def.name}: example #${i + 1} ('${e.description}') input does not conform to schema.input ` +
+        `(at $.${inputCheck.failure.path.join(".") || "<root>"}): ${inputCheck.failure.message}`
+      );
+    }
+    if (e.output !== undefined) {
+      const outputCheck = validate(e.output, def.schema.output);
+      if (!outputCheck.ok) {
+        throw new Error(
+          `${def.name}: example #${i + 1} ('${e.description}') output does not conform to schema.output ` +
+          `(at $.${outputCheck.failure.path.join(".") || "<root>"}): ${outputCheck.failure.message}`
+        );
+      }
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Public API: runTool
+// -----------------------------------------------------------------------------
+
+export async function runTool<I extends Value, O extends Value>(
+  def: ToolDefinition<I, O>
+): Promise<void> {
   const argv = process.argv.slice(2);
   const parsed = parseArgv(argv);
 
   try {
+    // Examples-conform-to-schema is a load-time invariant. Run it once on
+    // every entry into runTool — most invocations are cheap (validation
+    // on small examples), and we want the failure surfaced early on the
+    // metadata paths too (--examples, --schema), not just in the work
+    // case. Skipping is opt-in for genuinely-pathological surfaces.
+    if (process.env["WB_SKIP_SCHEMA_CHECK"] !== "1") {
+      checkExamplesAgainstSchema(def);
+    }
+
     if (parsed.switches.has("help")) {
       process.stdout.write(helpText(def));
       process.stdout.write("\n");
@@ -165,7 +310,12 @@ export async function runTool(def: ToolDefinition): Promise<void> {
       return;
     }
     if (parsed.switches.has("schema")) {
-      writeOut(record({ input: def.schema.input, output: def.schema.output }));
+      writeOut(
+        record({
+          input: encodeSchema(def.schema.input),
+          output: encodeSchema(def.schema.output),
+        })
+      );
       return;
     }
     if (parsed.switches.has("examples")) {
@@ -184,16 +334,7 @@ export async function runTool(def: ToolDefinition): Promise<void> {
         writeOut(tagged("provenance/not-found", str(h)));
         return;
       }
-      const flagFields: Record<string, Value> = {};
-      for (const [k, v] of Object.entries(rec.flags)) flagFields[k] = str(v);
-      writeOut(
-        record({
-          flags: record(flagFields),
-          inputs: list(rec.inputs.map((i) => record({ hash: str(i.hash), name: str(i.name) }))),
-          output_hash: str(rec.output_hash),
-          tool: record({ name: str(rec.tool.name), version: str(rec.tool.version) }),
-        })
-      );
+      writeOut(provenanceToValue(rec));
       return;
     }
     if (parsed.switches.has("test")) {
@@ -206,7 +347,21 @@ export async function runTool(def: ToolDefinition): Promise<void> {
       return;
     }
 
-    // Work case: read stdin, parse, validate, run fn, emit canonical output, write provenance.
+    // ── Work case ────────────────────────────────────────────────────────
+    //
+    // 1. Read stdin. Refuse on empty input — a tool shouldn't silently do
+    //    something on no input.
+    // 2. Parse to a Value (rejects raw numbers, unknown kinds).
+    // 3. Validate input against schema.input. Failure here is user-facing:
+    //    the agent gave a wrong-shaped value.
+    // 4. Call fn with the narrowed input.
+    // 5. Validate output against schema.output. Failure here is internal:
+    //    the tool produced a value that doesn't match its own contract.
+    // 6. Canonicalise output bytes (one-shot — used both for stdout and
+    //    for the provenance hash; see beads issue scientist-workbench-wmh).
+    // 7. Write to stdout. Write provenance (best-effort; failures here
+    //    must not destroy the user's output).
+
     const stdinText = await readStdin();
     if (stdinText.trim().length === 0) {
       throw new ToolError(`${def.name}: no input on stdin`, {
@@ -214,15 +369,43 @@ export async function runTool(def: ToolDefinition): Promise<void> {
       });
     }
     const input = parse(stdinText);
+    const inputCheck = validate(input, def.schema.input);
+    if (!inputCheck.ok) {
+      throw new ToolError(
+        `${def.name}: input does not conform to schema (at $.${
+          inputCheck.failure.path.join(".") || "<root>"
+        }): ${inputCheck.failure.message}`,
+        {
+          suggestion: "run `--schema` to see the declared shape; check field names, kinds, and required fields",
+          detail: { path: inputCheck.failure.path },
+        }
+      );
+    }
     const flags = ensureExtractFlags(parsed.named);
-    const output = await def.fn(input, flags);
+    const output = await def.fn(input as I, flags);
+
+    const outputCheck = validate(output, def.schema.output);
+    if (!outputCheck.ok) {
+      // Internal contract violation. Loud failure — see ADR-0004.
+      throw new ToolError(
+        `${def.name}: tool output violates declared schema (internal bug, at $.${
+          outputCheck.failure.path.join(".") || "<root>"
+        }): ${outputCheck.failure.message}`,
+        {
+          suggestion: "the tool's `fn` returned a Value that does not conform to schema.output; this is a bug in the tool, not the input",
+          detail: { path: outputCheck.failure.path },
+        }
+      );
+    }
+
     const outBytes = canonicalize(output);
     process.stdout.write(outBytes);
 
-    // Provenance write — append-only, content-addressed, no-op on hash collision.
+    // Provenance: append-only, content-addressed. Hash from the canonical
+    // bytes we already have rather than re-canonicalising via hash().
     try {
       const inputHash = hash(input);
-      const outputHash = hash(output);
+      const outputHash = hashCanonicalBytes(outBytes);
       const store = process.env["CAS_STORE"] ?? defaultStore();
       await writeProvenance(store, {
         tool: { name: def.name, version: def.version },
@@ -240,3 +423,13 @@ export async function runTool(def: ToolDefinition): Promise<void> {
     process.exit(1);
   }
 }
+
+// -----------------------------------------------------------------------------
+// Helper for callers that want to decode a `--schema` result
+// -----------------------------------------------------------------------------
+//
+// Re-exported here for ergonomic discovery: tools that read another
+// tool's schema (registry-list, registry-search) want `decodeSchema`
+// in scope without reaching into the protocol package directly.
+
+export { decodeSchema };

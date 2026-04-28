@@ -34,3 +34,32 @@ export { canonicalize, encodeString } from "./canonical.js";
 export { parse } from "./parse.js";
 export { validateValue } from "./validate.js";
 export { hash, hashCanonicalBytes } from "./hash.js";
+export {
+  type Schema,
+  type SchemaNode,
+  type ValueOf,
+  type ValueOfKind,
+  type ListValueOf,
+  type TupleValueOf,
+  type RecordValueOf,
+  type RecordSchemaOptions,
+  type ConformanceFailure,
+  type ConformanceResult,
+  S,
+  anySchema,
+  kindSchema,
+  literalSchema,
+  listSchema,
+  tupleSchema,
+  recordSchema,
+  expressionSchema,
+  taggedSchema,
+  unionSchema,
+  validate,
+  conforms,
+  encodeSchema,
+  decodeSchema,
+  schemaTopKind,
+  schemaMentionsKind,
+  schemaExpressionHead,
+} from "./schema.js";

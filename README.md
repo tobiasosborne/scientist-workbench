@@ -102,12 +102,15 @@ Tool-specific flags follow `--key=value` or `--key value`. See each tool's `--ex
 
 | tool | input | output | summary |
 |---|---|---|---|
-| `expr-parse` | `string` | `expression` (or leaf) | text → AST. Operators `+ − * / ^`, identifiers, integer / rational / decimal literals. LaTeX is out of scope (sister tool). |
+| `expr-parse` | `string` | `expression` (or leaf integer / rational / symbol) | text → AST. Operators `+ − * / ^`, identifiers, integer / rational / decimal literals. LaTeX is out of scope (sister tool). |
 | `cas-simplify` | any `Value` | canonical `Value` | canonicalise over `Q[x_1,…,x_n]` / `Q(x_1,…,x_n)`. Foreign subtrees wrapped in `tagged "cas-simplify/out-of-scope"`. **No polynomial GCD reduction in v1.** Idempotent. |
 | `cas-verify` | `record{lhs, rhs}` | `record{equal, reason?, witness?, side?, detail?}` | decide A = B over `Q(x)` by cross-multiplication (sound and complete; no GCD needed). On inequality: emits `lhs - rhs` as a witness. |
-| `oracle` | `record{tool_path, goldens_dir, mode?}` | `record{passed, failed, total, results}` | golden-master harness. Modes: `exact` (default), `structural`. Exits 1 if any golden fails. |
-| `registry-list` | `record{tools_root?}` | `list` of metadata records | discover installed tools. |
-| `registry-search` | `record{tools_root?, input_kind?, output_kind?, head?, name_substring?}` | `list` of metadata records | filter the registry. All filters AND-conjoined. |
+| `mod-pow` | `record{base, exponent, modulus}` | `integer` | modular exponentiation over `Z/mZ`. Square-and-multiply; canonical-residue output in `[0, m)`. |
+| `mod-inv` | `record{value, modulus}` | `record{invertible, inverse?, gcd}` | modular inverse via extended Euclid. Record-with-flag (ADR-0003): `inverse` present iff invertible; `gcd` always present. |
+| `ntt` | `record{n, modulus, primitive_root, direction, x}` | `list<integer>` | Number-Theoretic Transform over `F_p` for `p = 998244353, g = 3`. Power-of-two via Cooley-Tukey on Montgomery REDC; arbitrary `n \| p−1` via Bluestein chirp-z. |
+| `oracle` | `record{tool_path, goldens_dir, mode?}` | `record{passed, failed, total, mode, results}` | golden-master harness. Modes: `exact` (default), `structural`. Exits 1 if any golden fails. |
+| `registry-list` | `record{tools_root?}` | `list` of metadata records | discover installed tools. Schemas in the output are wire-encoded (decode via `decodeSchema`). |
+| `registry-search` | `record{tools_root?, input_kind?, output_kind?, head?, name_substring?}` | `list` of metadata records | filter the registry by schema-derived predicates. All filters AND-conjoined. |
 
 Per-tool detail in `tools/<name>/README.md`.
 
@@ -162,19 +165,46 @@ Filters: `input_kind`, `output_kind`, `head` (matches the top-level head of `sch
 
 ---
 
+## The schema language
+
+Tools declare their input/output **shapes**, not example values. The schema language (ADR-0004) is structural recursion over a small set of constructors:
+
+```ts
+import { S } from "@workbench/protocol";
+
+const inputSchema = S.record({
+  base: S.kind("integer"),
+  exponent: S.kind("integer"),
+  modulus: S.kind("integer"),
+});
+
+const outputSchema = S.kind("integer");
+```
+
+Available constructors: `S.any()`, `S.kind(k)`, `S.literal(v)`, `S.list(e)`, `S.tuple([...])`, `S.record({...}, {optional?})`, `S.expression(head?, args?)`, `S.tagged(tag?, payload)`, `S.union([...])`. Records are closed by default — extras throw. Optional fields are declared in the second argument.
+
+Two consequences any tool author should expect:
+
+- The runner validates input against `schema.input` *before* `fn` runs, and output against `schema.output` after. A tool author no longer hand-rolls `expectIntegerField` or `parseFooInput` shims; the runner narrows the input to the schema's TypeScript type and the body trusts it. Output non-conformance is an internal contract violation and fails loudly.
+- Examples must conform to the declared schema. The runner checks this at tool-load time, so drift between the schema and the canonical examples surfaces immediately.
+
+Schemas are pure data and round-trip through the value protocol: `--schema` emits canonical bytes a registry consumer can decode (`decodeSchema`) without spawning the tool. Top-level kind queries, deep-mention queries, and expression-head queries are first-class via `schemaTopKind`, `schemaMentionsKind`, and `schemaExpressionHead`.
+
+Three deliberate omissions: no recursive schemas, no predicate refinements, no open records. ADR-0004 is the canonical reference for the design and the rationale.
+
 ## The contract
 
 A tool is admitted to the registry iff it ships **all seven** artefacts (PRD §4.2):
 
 1. The compiled tool. *MVP runs source via `bun tools/<name>/tool.ts`; `bun build --compile` deferred.*
-2. `schema` declaration. Use `kindOf("...")` for kind-only annotations and sample-values where a specific shape is load-bearing (ADR-0002).
-3. `examples` — soft floor: **one example per code-path branch + edge cases**, ≥10 once the tool is "done." The literal count is a target, not a quota; if the tool's natural example surface is small, structure-driven coverage wins. ≥30 to call a tool "v1-complete."
+2. `schema` declaration — a `Schema` describing input and output (ADR-0004). The legacy `kindOf("...")` annotation (ADR-0002) is the wire form for `S.kind`, preserved for transport.
+3. `examples` — soft floor: **one example per code-path branch + edge cases**, ≥10 once the tool is "done." The literal count is a target, not a quota; if the tool's natural example surface is small, structure-driven coverage wins. ≥30 to call a tool "v1-complete." Every example's `input` and `output` must conform to the declared schema; the runner checks this at load time.
 4. `invariants`.
 5. Property tests in workspace `bun test`, OR a `--test` hook (PRD §4.3).
 6. `goldens/` directory of `*.golden.json` files.
 7. `README.md`.
 
-Required fields of `ToolDefinition` (artefacts 2–4) are checked at the type level. Artefacts 5–7 are checked by `bun run check`. A tool missing any of these is a prototype, not a tool.
+Required fields of `ToolDefinition` (artefacts 2–4) are checked at the type level — `defineTool({...})` infers `I` and `O` from the schema and threads them into `fn`'s signature. Artefacts 5–7 are checked by `bun run check`. A tool missing any of these is a prototype, not a tool.
 
 ---
 
@@ -198,7 +228,7 @@ bun run new-tool ntt         --uses mod-core
 bun run new-tool geom-orient --uses geom-predicates,float-utils   # multiple substrate packages
 ```
 
-The `tool.ts` skeleton calls `runTool({...})` from `@workbench/contract`. The runner handles every standard flag, parses stdin, validates against the protocol, runs your `fn`, emits canonical output, and writes provenance. Treat the file as **literate** (per `CLAUDE.md`): the comments at the top are a chapter introducing the tool's intent, with prose explaining the algorithm, references, invariants, and out-of-scope decisions. The implementation file *is* its own primary documentation.
+The `tool.ts` skeleton calls `defineTool({...})` from `@workbench/contract` and then runs it via `runTool(def)`. The runner handles every standard flag, parses stdin, validates against the schema, runs your `fn`, validates the output, emits canonical bytes, and writes provenance. Treat the file as **literate** (per `CLAUDE.md`): the comments at the top are a chapter introducing the tool's intent, with prose explaining the algorithm, references, invariants, and out-of-scope decisions. The implementation file *is* its own primary documentation.
 
 ---
 
@@ -237,9 +267,11 @@ README.md                this file — operational reference for agents
 LICENSE                  AGPL-3.0-or-later
 
 packages/
-  protocol/              value protocol; canonical encoder, parser, hash, validator
+  protocol/              value protocol; canonical encoder, parser, hash, validator, Schema
   contract/              runTool dispatcher, provenance store, registry helpers, GoldenSpec
   cas-core/              multivariate Q[x_1,…,x_n] / Q(x_1,…,x_n) arithmetic
+  mod-core/              modular arithmetic (modPow, modInv) and Number-Theoretic Transform
+  json-bridge/           translate between raw JSON and canonical Value, schema-hint-driven
 
 tools/
   <name>/

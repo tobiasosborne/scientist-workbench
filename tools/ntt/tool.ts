@@ -1,27 +1,30 @@
-// ntt — Number-Theoretic Transform over F_p (p = 998244353, g = 3),
-// arbitrary length n with n | (p − 1) = 2^23 · 7 · 17.
-// Input:  record { n: integer, modulus: integer, primitive_root: integer,
-//                  direction: string ("forward" | "inverse"),
-//                  x: list<integer> }
-// Output: list<integer>  — length n, each in [0, p).
+// =============================================================================
+// ntt — Number-Theoretic Transform over F_p (p = 998244353, g = 3)
+// =============================================================================
 //
-// Power-of-two n: iterative Cooley-Tukey, Montgomery REDC inner loop.
-// Other n: Bluestein chirp-z reducing to a length-(next pow2 ≥ 2n−1)
-//          circular convolution evaluated by the same power-of-two NTT.
+// Length-n transform with n | (p − 1) = 2^23 · 7 · 17. Power-of-two n
+// uses iterative Cooley-Tukey on Uint32Array with a Montgomery REDC
+// inner loop; non-power-of-two n uses Bluestein chirp-z reducing to a
+// length-(next pow2 ≥ 2n − 1) circular convolution evaluated by the
+// same power-of-two NTT.
 //
 // v0.1 supports modulus = 998244353 only (Montgomery constants are
 // frozen for this prime). Other moduli are rejected — honest scope.
+//
+// Schema (ADR-0004)
+// -----------------
+// Input is a record of four integers and a `direction` literal-union.
+// The schema runner validates field names, kinds, and the
+// "forward"|"inverse" enum before `fn` runs. The body still has to
+// check value-domain invariants the schema can't express:
+//   - modulus and primitive_root must equal the supported constants;
+//   - n must agree with |x|;
+//   - every x[i] must be a canonical residue in [0, p).
+// Those are the kind of refinement constraints ADR-0004 deliberately
+// keeps out of the schema language for now (the predicate omission).
 
-import {
-  int,
-  kindOf,
-  list,
-  record,
-  str,
-  ToolError,
-  type Value,
-} from "@workbench/protocol";
-import { runTool } from "@workbench/contract";
+import { int, list, record, str, S, ToolError } from "@workbench/protocol";
+import { defineTool, runTool } from "@workbench/contract";
 import {
   ntt as nttCore,
   NTT_SUPPORTED_MODULUS,
@@ -29,150 +32,95 @@ import {
 } from "@workbench/mod-core";
 
 const NAME = "ntt";
-const VERSION = "0.1.0";
+const VERSION = "0.2.0";
 
 const P = NTT_SUPPORTED_MODULUS;
 
-interface ParsedInput {
-  n: number;
-  direction: "forward" | "inverse";
-  x: bigint[];
-}
+// Direction is a discriminated string literal — exactly the union-of-
+// literals shape the schema language was designed for.
+const directionSchema = S.union([S.literal(str("forward")), S.literal(str("inverse"))]);
 
-function parseNttInput(input: Value): ParsedInput {
-  if (input.kind !== "record") {
-    throw new ToolError(`${NAME}: input must be a record (got kind ${input.kind})`, {
-      suggestion: "shape: {n: integer, modulus: integer, primitive_root: integer, direction: \"forward\"|\"inverse\", x: list<integer>}",
-    });
-  }
-  const fields = input.fields;
-  const nV = fields["n"];
-  const modV = fields["modulus"];
-  const grV = fields["primitive_root"];
-  const dirV = fields["direction"];
-  const xV = fields["x"];
+const inputSchema = S.record({
+  direction: directionSchema,
+  modulus: S.kind("integer"),
+  n: S.kind("integer"),
+  primitive_root: S.kind("integer"),
+  x: S.list(S.kind("integer")),
+});
 
-  if (!nV || nV.kind !== "integer") throw new ToolError(`${NAME}: field 'n' must be an integer`, {});
-  if (!modV || modV.kind !== "integer") throw new ToolError(`${NAME}: field 'modulus' must be an integer`, {});
-  if (!grV || grV.kind !== "integer") throw new ToolError(`${NAME}: field 'primitive_root' must be an integer`, {});
-  if (!dirV || dirV.kind !== "string") throw new ToolError(`${NAME}: field 'direction' must be a string`, {});
-  if (!xV || xV.kind !== "list") throw new ToolError(`${NAME}: field 'x' must be a list`, {});
+const outputSchema = S.list(S.kind("integer"));
 
-  const modulus = BigInt(modV.value);
-  const primitiveRoot = BigInt(grV.value);
-  if (modulus !== P) {
-    throw new ToolError(`${NAME}: v0.1 supports modulus = ${P} only (got ${modulus})`, {
-      suggestion: "for other NTT-friendly primes, build a generalising tool that computes Montgomery constants per modulus",
-    });
-  }
-  if (primitiveRoot !== NTT_SUPPORTED_PRIMITIVE_ROOT) {
-    throw new ToolError(`${NAME}: v0.1 supports primitive_root = ${NTT_SUPPORTED_PRIMITIVE_ROOT} only (got ${primitiveRoot})`, {});
-  }
-  const direction = dirV.value;
-  if (direction !== "forward" && direction !== "inverse") {
-    throw new ToolError(`${NAME}: direction must be "forward" or "inverse" (got ${JSON.stringify(direction)})`, {});
-  }
-  const n = Number(BigInt(nV.value));
-  if (!Number.isInteger(n) || n < 0) {
-    throw new ToolError(`${NAME}: n must be ≥ 0 (got ${nV.value})`, {});
-  }
-  if (n !== xV.items.length) {
-    throw new ToolError(`${NAME}: declared n=${n} disagrees with |x|=${xV.items.length}`, {});
-  }
-  const x: bigint[] = new Array(n);
-  for (let i = 0; i < n; i++) {
-    const item = xV.items[i]!;
-    if (item.kind !== "integer") {
-      throw new ToolError(`${NAME}: x[${i}] must be an integer (got kind ${item.kind})`, {});
-    }
-    const v = BigInt(item.value);
-    if (v < 0n || v >= P) {
-      throw new ToolError(`${NAME}: x[${i}] = ${v} is not a canonical residue in [0, ${P})`, {});
-    }
-    x[i] = v;
-  }
-  return { n, direction, x };
-}
+// Compact constructor for example inputs. Keeps the readable layout
+// while still preserving the narrow inferred type the schema requires.
+const inp = (direction: "forward" | "inverse", n: bigint, x: readonly bigint[]) =>
+  record({
+    direction: str(direction),
+    modulus: int(P),
+    n: int(n),
+    primitive_root: int(NTT_SUPPORTED_PRIMITIVE_ROOT),
+    x: list(x.map(int)),
+  });
 
-void runTool({
+const out = (xs: readonly bigint[]) => list(xs.map(int));
+
+export const def = defineTool({
   name: NAME,
   version: VERSION,
-  schema: {
-    // Each numeric field is annotated with kindOf("integer") rather than a
-    // sample value — `n: int(0n)` would suggest the schema cares about the
-    // specific `0`, which it does not. The `x` field is a list of integers,
-    // not an opaque list-of-anything; kindOf("integer") inside list([...])
-    // makes that visible to registry-search and downstream schema
-    // consumers. See ADR-0002.
-    input: record({
-      direction: kindOf("string"),
-      modulus: kindOf("integer"),
-      n: kindOf("integer"),
-      primitive_root: kindOf("integer"),
-      x: list([kindOf("integer")]),
-    }),
-    output: list([kindOf("integer")]),
-  },
+  schema: { input: inputSchema, output: outputSchema },
   examples: [
     {
       description: "n = 0 returns []",
-      input: record({ direction: str("forward"), modulus: int(P), n: int(0n), primitive_root: int(3n), x: list([]) }),
-      output: list([]),
+      input: inp("forward", 0n, []),
+      output: out([]),
     },
     {
       description: "n = 1 forward identity",
-      input: record({ direction: str("forward"), modulus: int(P), n: int(1n), primitive_root: int(3n), x: list([int(3n)]) }),
-      output: list([int(3n)]),
+      input: inp("forward", 1n, [3n]),
+      output: out([3n]),
     },
     {
       description: "n = 1 inverse identity",
-      input: record({ direction: str("inverse"), modulus: int(P), n: int(1n), primitive_root: int(3n), x: list([int(3n)]) }),
-      output: list([int(3n)]),
+      input: inp("inverse", 1n, [3n]),
+      output: out([3n]),
     },
     {
       description: "n = 2 forward [1,1] = [2,0]",
-      input: record({ direction: str("forward"), modulus: int(P), n: int(2n), primitive_root: int(3n), x: list([int(1n), int(1n)]) }),
-      output: list([int(2n), int(0n)]),
+      input: inp("forward", 2n, [1n, 1n]),
+      output: out([2n, 0n]),
     },
     {
       description: "n = 2 forward [1, p-1] = [0, 2]",
-      input: record({ direction: str("forward"), modulus: int(P), n: int(2n), primitive_root: int(3n), x: list([int(1n), int(P - 1n)]) }),
-      output: list([int(0n), int(2n)]),
+      input: inp("forward", 2n, [1n, P - 1n]),
+      output: out([0n, 2n]),
     },
     {
       description: "n = 4 forward delta [1,0,0,0] = [1,1,1,1]",
-      input: record({ direction: str("forward"), modulus: int(P), n: int(4n), primitive_root: int(3n), x: list([int(1n), int(0n), int(0n), int(0n)]) }),
-      output: list([int(1n), int(1n), int(1n), int(1n)]),
+      input: inp("forward", 4n, [1n, 0n, 0n, 0n]),
+      output: out([1n, 1n, 1n, 1n]),
     },
     {
       description: "n = 4 inverse [1,1,1,1] = [1,0,0,0]",
-      input: record({ direction: str("inverse"), modulus: int(P), n: int(4n), primitive_root: int(3n), x: list([int(1n), int(1n), int(1n), int(1n)]) }),
-      output: list([int(1n), int(0n), int(0n), int(0n)]),
+      input: inp("inverse", 4n, [1n, 1n, 1n, 1n]),
+      output: out([1n, 0n, 0n, 0n]),
     },
     {
       description: "n = 8 constant input [5,5,5,5,5,5,5,5] forward = [40, 0,…]",
-      input: record({ direction: str("forward"), modulus: int(P), n: int(8n), primitive_root: int(3n), x: list([int(5n), int(5n), int(5n), int(5n), int(5n), int(5n), int(5n), int(5n)]) }),
-      output: list([int(40n), int(0n), int(0n), int(0n), int(0n), int(0n), int(0n), int(0n)]),
+      input: inp("forward", 8n, [5n, 5n, 5n, 5n, 5n, 5n, 5n, 5n]),
+      output: out([40n, 0n, 0n, 0n, 0n, 0n, 0n, 0n]),
     },
     {
       description: "Bluestein path: n = 7 forward [1,1,1,1,1,1,1] = [7, 0,…]",
-      input: record({ direction: str("forward"), modulus: int(P), n: int(7n), primitive_root: int(3n), x: list([int(1n), int(1n), int(1n), int(1n), int(1n), int(1n), int(1n)]) }),
-      output: list([int(7n), int(0n), int(0n), int(0n), int(0n), int(0n), int(0n)]),
+      input: inp("forward", 7n, [1n, 1n, 1n, 1n, 1n, 1n, 1n]),
+      output: out([7n, 0n, 0n, 0n, 0n, 0n, 0n]),
     },
     {
       description: "Bluestein path: n = 17 delta forward [1,0,…] = [1,1,1,…]",
-      input: record({ direction: str("forward"), modulus: int(P), n: int(17n), primitive_root: int(3n), x: list(Array.from({ length: 17 }, (_, i) => int(i === 0 ? 1n : 0n))) }),
-      output: list(Array.from({ length: 17 }, () => int(1n))),
+      input: inp("forward", 17n, Array.from({ length: 17 }, (_, i) => (i === 0 ? 1n : 0n))),
+      output: out(Array.from({ length: 17 }, () => 1n)),
     },
     {
-      description: "round-trip on n = 8 random input",
-      input: record({
-        direction: str("forward"),
-        modulus: int(P),
-        n: int(8n),
-        primitive_root: int(3n),
-        x: list([int(7n), int(11n), int(13n), int(17n), int(19n), int(23n), int(29n), int(31n)]),
-      }),
+      description: "round-trip on n = 8 random input — output omitted; verifier checks shape",
+      input: inp("forward", 8n, [7n, 11n, 13n, 17n, 19n, 23n, 29n, 31n]),
     },
   ],
   invariants: [
@@ -183,14 +131,52 @@ void runTool({
     { name: "linearity", statement: "ntt(α·x + β·y) ≡ α·ntt(x) + β·ntt(y) (mod p)", machine_checkable: true },
     { name: "honest-scope", statement: "modulus ≠ 998244353 or primitive_root ≠ 3 raises ToolError, never produces a wrong residue", machine_checkable: true },
   ],
-  fn: (input: Value, _flags: Record<string, string>): Value => {
-    const { direction, x } = parseNttInput(input);
-    const out = nttCore(x, { direction });
-    return list(out.map((r) => int(r)));
+  fn: (input, _flags) => {
+    const modulus = BigInt(input.fields.modulus.value);
+    const primitiveRoot = BigInt(input.fields.primitive_root.value);
+    if (modulus !== P) {
+      throw new ToolError(`${NAME}: v0.1 supports modulus = ${P} only (got ${modulus})`, {
+        suggestion: "for other NTT-friendly primes, build a generalising tool that computes Montgomery constants per modulus",
+      });
+    }
+    if (primitiveRoot !== NTT_SUPPORTED_PRIMITIVE_ROOT) {
+      throw new ToolError(`${NAME}: v0.1 supports primitive_root = ${NTT_SUPPORTED_PRIMITIVE_ROOT} only (got ${primitiveRoot})`, {});
+    }
+    const direction = input.fields.direction.value as "forward" | "inverse";
+    const declaredN = Number(BigInt(input.fields.n.value));
+    if (!Number.isInteger(declaredN) || declaredN < 0) {
+      throw new ToolError(`${NAME}: n must be ≥ 0 (got ${input.fields.n.value})`, {});
+    }
+    const xItems = input.fields.x.items;
+    if (declaredN !== xItems.length) {
+      throw new ToolError(`${NAME}: declared n=${declaredN} disagrees with |x|=${xItems.length}`, {});
+    }
+    const x: bigint[] = new Array(declaredN);
+    for (let i = 0; i < declaredN; i++) {
+      const v = BigInt(xItems[i]!.value);
+      if (v < 0n || v >= P) {
+        throw new ToolError(`${NAME}: x[${i}] = ${v} is not a canonical residue in [0, ${P})`, {});
+      }
+      x[i] = v;
+    }
+    const result = nttCore(x, { direction });
+    return list(result.map((r) => int(r)));
   },
   test: () => {
-    // Independent oracle: O(n²) schoolbook DFT, used as a checked baseline.
+    // Independent oracle: O(n²) schoolbook DFT, written inline rather
+    // than imported from @workbench/mod-core so the test does not
+    // accidentally test mod-core agreeing with itself. (See beads
+    // issue scientist-workbench-hgc for the formal note.)
     const G = NTT_SUPPORTED_PRIMITIVE_ROOT;
+    function pow(b: bigint, e: bigint, m: bigint): bigint {
+      let r = 1n; let bb = b % m; let ee = e;
+      while (ee > 0n) { if ((ee & 1n) === 1n) r = (r * bb) % m; bb = (bb * bb) % m; ee >>= 1n; }
+      return r;
+    }
+    function modInvSimple(a: bigint): bigint {
+      // Fermat's: works because P is prime.
+      return pow(a, P - 2n, P);
+    }
     function schoolbook(x: readonly bigint[], invert: boolean): bigint[] {
       const n = x.length;
       if (n === 0) return [];
@@ -213,17 +199,8 @@ void runTool({
       }
       return out;
     }
-    function pow(b: bigint, e: bigint, m: bigint): bigint {
-      let r = 1n; let bb = b % m; let ee = e;
-      while (ee > 0n) { if ((ee & 1n) === 1n) r = (r * bb) % m; bb = (bb * bb) % m; ee >>= 1n; }
-      return r;
-    }
-    function modInvSimple(a: bigint): bigint {
-      // Fermat's: works for prime modulus P.
-      return pow(a, P - 2n, P);
-    }
     function rngBigint(seed: { v: number }, max: bigint): bigint {
-      seed.v = Math.imul(seed.v, 0x6d2b79f5) + 1 | 0;
+      seed.v = (Math.imul(seed.v, 0x6d2b79f5) + 1) | 0;
       const u = (seed.v >>> 0) / 4294967296;
       return BigInt(Math.floor(u * Number(max)));
     }
@@ -244,3 +221,5 @@ void runTool({
     }
   },
 });
+
+void runTool(def);

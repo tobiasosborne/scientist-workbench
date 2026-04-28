@@ -127,12 +127,22 @@ export const str = (value: string): StringValue => ({ kind: "string", value });
 
 export const bool = (value: boolean): BooleanValue => ({ kind: "boolean", value });
 
-export const list = (items: readonly Value[]): ListValue => ({ kind: "list", items });
+// `list` and `record` preserve the structural type of their argument
+// (rather than widening to `ListValue` / `RecordValue`) so that
+// schema-typed contexts retain the narrow element / field types they
+// inferred. A `list([int(0n), int(1n)])` is *assignable to* `ListValue`
+// (covariant subtype) but TS keeps the more specific
+// `{kind:"list"; items: readonly IntegerValue[]}` so it composes with
+// `Schema<ListValueOf<IntegerValue>>` slots — see ADR-0004.
+export const list = <E extends Value>(items: readonly E[]): {
+  readonly kind: "list";
+  readonly items: readonly E[];
+} => ({ kind: "list", items });
 
-export const record = (fields: { readonly [k: string]: Value }): RecordValue => ({
-  kind: "record",
-  fields,
-});
+export const record = <F extends { readonly [k: string]: Value }>(fields: F): {
+  readonly kind: "record";
+  readonly fields: F;
+} => ({ kind: "record", fields });
 
 export const expr = (head: string, args: readonly Value[]): ExpressionValue => ({
   kind: "expression",
