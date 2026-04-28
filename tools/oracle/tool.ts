@@ -12,7 +12,6 @@
 //
 // PRD §4.5.
 
-import { spawn } from "node:child_process";
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import {
@@ -26,11 +25,10 @@ import {
   str,
   type Value,
 } from "@workbench/protocol";
-import { runTool } from "@workbench/contract";
+import { runTool, spawnBun } from "@workbench/contract";
 
 const NAME = "oracle";
 const VERSION = "0.2.0";
-const BUN = process.env["BUN_BIN"] ?? "bun";
 
 interface GoldenFile {
   filename: string;
@@ -75,17 +73,7 @@ function runUnderTest(toolPath: string, flags: string[], inputBytes: string): Pr
   stdout: string;
   stderr: string;
 }> {
-  return new Promise((resolve, reject) => {
-    const p = spawn(BUN, [toolPath, ...flags], { stdio: ["pipe", "pipe", "pipe"] });
-    let stdout = "";
-    let stderr = "";
-    p.stdout.on("data", (b) => (stdout += b.toString("utf8")));
-    p.stderr.on("data", (b) => (stderr += b.toString("utf8")));
-    p.on("error", reject);
-    p.on("close", (code) => resolve({ code: code ?? 0, stdout, stderr }));
-    p.stdin.write(inputBytes, "utf8");
-    p.stdin.end();
-  });
+  return spawnBun([toolPath, ...flags], inputBytes);
 }
 
 interface GoldenResult {

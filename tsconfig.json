@@ -21,7 +21,9 @@
     "paths": {
       "@workbench/protocol": ["packages/protocol/src/index.ts"],
       "@workbench/contract": ["packages/contract/src/index.ts"],
-      "@workbench/cas-core": ["packages/cas-core/src/index.ts"]
+      "@workbench/cas-core": ["packages/cas-core/src/index.ts"],
+      "@workbench/mod-core": ["packages/mod-core/src/index.ts"],
+      "@workbench/json-bridge": ["packages/json-bridge/src/index.ts"]
     }
   },
   "include": [

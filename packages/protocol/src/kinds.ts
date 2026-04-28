@@ -1,6 +1,22 @@
 // The value protocol — ten primitive kinds, exhaustive over `kind`.
 // New domains add tagged variants over these primitives, never new primitives.
 // See PRD §2.
+//
+// Schema-kind annotations
+// -----------------------
+// `kindOf("integer")`, `kindOf("string")`, etc. produce a tagged value
+// `tagged "schema/kind" <symbol>` that means "any value of this kind." It's
+// used in tool schemas where a sample Value would be either misleading
+// (an empty list loses its element kind) or arbitrary (the specific
+// integer 0 in `int(0n)` says nothing about the schema). Composes
+// naturally:
+//
+//     list([kindOf("integer")])             // list of integers, any contents
+//     record({ x: kindOf("integer"),
+//              name: kindOf("string") })   // record with x:int, name:string
+//
+// See `docs/adr/0002-schema-kind-annotations.md`. Consumers (notably
+// registry-search) recognise the tag and unwrap to the named kind.
 
 import { ProtocolError } from "./errors.js";
 
@@ -129,6 +145,31 @@ export const tagged = (tag: string, payload: Value): TaggedValue => ({
   tag,
   payload,
 });
+
+/** The schema-kind annotation tag. See ADR-0002. */
+export const SCHEMA_KIND_TAG = "schema/kind";
+
+/**
+ * Produce a schema-kind annotation: a tagged value declaring "any value of
+ * the given kind." Use in tool schemas where a sample Value would lose
+ * structural information (e.g. an empty `list([])` does not advertise its
+ * element kind) or be arbitrary (e.g. `int(0n)` for an output declaration).
+ */
+export function kindOf(k: Kind): TaggedValue {
+  return tagged(SCHEMA_KIND_TAG, sym(k));
+}
+
+/**
+ * If `v` is a schema-kind annotation, return the named kind. Otherwise
+ * return `null`. Used by registry consumers to unwrap schemas before
+ * filtering.
+ */
+export function asSchemaKind(v: Value): Kind | null {
+  if (v.kind !== "tagged") return null;
+  if (v.tag !== SCHEMA_KIND_TAG) return null;
+  if (v.payload.kind !== "symbol") return null;
+  return isKind(v.payload.name) ? v.payload.name : null;
+}
 
 export function int(value: bigint | number | string): IntegerValue {
   let s: string;

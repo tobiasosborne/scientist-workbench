@@ -6,7 +6,6 @@
 //   --check        fails if any existing golden's expected output differs from current
 //   --tool <name>  restrict to one tool
 
-import { spawn } from "node:child_process";
 import { mkdir, readFile, readdir, writeFile, rm, stat } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -17,12 +16,11 @@ import {
   str,
   type Value,
 } from "@workbench/protocol";
-import type { GoldenSpec } from "@workbench/contract";
+import { spawnBun, type GoldenSpec } from "@workbench/contract";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = dirname(HERE);
 const TOOLS = join(ROOT, "tools");
-const BUN = process.env["BUN_BIN"] ?? "bun";
 
 const argv = process.argv.slice(2);
 const CHECK = argv.includes("--check");
@@ -66,19 +64,6 @@ async function discoverBatches(): Promise<ToolBatch[]> {
   return out;
 }
 
-function runProcess(cmd: string, args: string[], stdin: string): Promise<{ code: number; stdout: string; stderr: string }> {
-  return new Promise((resolve, reject) => {
-    const p = spawn(cmd, args, { stdio: ["pipe", "pipe", "pipe"] });
-    let stdout = "";
-    let stderr = "";
-    p.stdout.on("data", (b) => (stdout += b.toString("utf8")));
-    p.stderr.on("data", (b) => (stderr += b.toString("utf8")));
-    p.on("error", reject);
-    p.on("close", (code) => resolve({ code: code ?? 0, stdout, stderr }));
-    p.stdin.write(stdin, "utf8");
-    p.stdin.end();
-  });
-}
 
 function slug(desc: string, n: number): string {
   const s = desc
@@ -110,7 +95,7 @@ async function generate(batch: ToolBatch): Promise<{ written: number; failures: 
     const flagsArgs: string[] = [];
     if (g.flags) for (const [k, v] of Object.entries(g.flags)) flagsArgs.push(`--${k}=${v}`);
     const inputBytes = canonicalize(g.input);
-    const r = await runProcess(BUN, [batch.toolPath, ...flagsArgs], inputBytes);
+    const r = await spawnBun([batch.toolPath, ...flagsArgs], inputBytes);
     if (r.code !== 0) {
       console.error(`  ✗ ${g.description}: tool exit ${r.code}: ${r.stderr.trim()}`);
       failures++;

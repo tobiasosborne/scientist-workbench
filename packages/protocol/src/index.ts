@@ -26,6 +26,9 @@ export {
   tagged,
   float64FromNumber,
   float64ToNumber,
+  SCHEMA_KIND_TAG,
+  kindOf,
+  asSchemaKind,
 } from "./kinds.js";
 export { canonicalize, encodeString } from "./canonical.js";
 export { parse } from "./parse.js";

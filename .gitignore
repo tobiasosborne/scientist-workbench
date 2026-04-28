@@ -7,3 +7,8 @@ dist/
 
 # bun.lock (text format) IS committed — keeps installs reproducible.
 
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key

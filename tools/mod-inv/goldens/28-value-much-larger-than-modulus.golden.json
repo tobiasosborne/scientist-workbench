@@ -1,0 +1,1 @@
+{"fields":{"input":{"fields":{"modulus":{"kind":"integer","value":"13"},"value":{"kind":"integer","value":"123456789"}},"kind":"record"},"output":{"fields":{"gcd":{"kind":"integer","value":"1"},"inverse":{"kind":"integer","value":"1"},"invertible":{"kind":"boolean","value":true}},"kind":"record"}},"kind":"record"}

@@ -15,10 +15,16 @@ TypeScript on Bun. No build step — every tool runs as `bun tools/<name>/tool.t
 ```sh
 bun --version       # 1.3+
 bun install         # one-time, resolves workspace deps
-bun run check       # full health check, ~12s
+bun run check       # full health check, ~25s
 ```
 
-If `bun` isn't on PATH, locate it once: `command -v bun` or check `~/.bun/bin/bun`.
+Install corner: on **snap-Bun** installs the wrapper at `/snap/bin/bun` is
+not directly spawnable from inside another snap-confined Bun process. The
+workbench's subprocess machinery handles this transparently via
+`process.execPath` and `realpathSync`, so no `BUN_BIN` export is required.
+If you ever see `resolveBunBinary: …` errors, set `BUN_BIN` to the
+underlying binary (typically `/snap/bun-js/current/_bun/bin/bun`). See
+`docs/adr/0001-subprocess-plumbing.md`.
 
 ---
 
@@ -161,8 +167,8 @@ Filters: `input_kind`, `output_kind`, `head` (matches the top-level head of `sch
 A tool is admitted to the registry iff it ships **all seven** artefacts (PRD §4.2):
 
 1. The compiled tool. *MVP runs source via `bun tools/<name>/tool.ts`; `bun build --compile` deferred.*
-2. `schema` declaration.
-3. `examples` (≥10 for real tools; ≥30 once "done").
+2. `schema` declaration. Use `kindOf("...")` for kind-only annotations and sample-values where a specific shape is load-bearing (ADR-0002).
+3. `examples` — soft floor: **one example per code-path branch + edge cases**, ≥10 once the tool is "done." The literal count is a target, not a quota; if the tool's natural example surface is small, structure-driven coverage wins. ≥30 to call a tool "v1-complete."
 4. `invariants`.
 5. Property tests in workspace `bun test`, OR a `--test` hook (PRD §4.3).
 6. `goldens/` directory of `*.golden.json` files.
@@ -175,15 +181,24 @@ Required fields of `ToolDefinition` (artefacts 2–4) are checked at the type le
 ## Writing a new tool
 
 ```sh
-bun run new-tool <name>           # scaffolds tools/<name>/{package.json,tool.ts,README.md,goldens.spec.ts,goldens/}
-# edit tool.ts          (fill schema, examples, invariants, fn, optional test)
-# edit goldens.spec.ts  (add GoldenSpec entries — target ≥30)
-bun install                        # workspaces resolve
+bun run new-tool <name> [--uses pkg1,pkg2,...]
+                                  # scaffolds tools/<name>/ and runs `bun install`.
+                                  # --uses adds workspace packages (under packages/<pkg>) as deps.
+# edit tool.ts          (literate template — expand the prose, fill schema/fn/examples/invariants)
+# edit goldens.spec.ts  (add GoldenSpec entries — target ≥30, soft floor 'every code-path branch')
 bun run goldens                    # generate canonical *.golden.json files
 bun run check                      # typecheck + workspace tests + per-tool --test + oracle on goldens
 ```
 
-The `tool.ts` skeleton calls `runTool({...})` from `@workbench/contract`. The runner handles every standard flag, parses stdin, validates against the protocol, runs your `fn`, emits canonical output, and writes provenance.
+Examples:
+
+```sh
+bun run new-tool cas-reduce  --uses cas-core
+bun run new-tool ntt         --uses mod-core
+bun run new-tool geom-orient --uses geom-predicates,float-utils   # multiple substrate packages
+```
+
+The `tool.ts` skeleton calls `runTool({...})` from `@workbench/contract`. The runner handles every standard flag, parses stdin, validates against the protocol, runs your `fn`, emits canonical output, and writes provenance. Treat the file as **literate** (per `CLAUDE.md`): the comments at the top are a chapter introducing the tool's intent, with prose explaining the algorithm, references, invariants, and out-of-scope decisions. The implementation file *is* its own primary documentation.
 
 ---
 

@@ -9,8 +9,10 @@
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  asSchemaKind,
   expr,
   int,
+  kindOf,
   list,
   record,
   str,
@@ -19,17 +21,30 @@ import {
 import { describeTool, findToolsRoot, listToolEntries, runTool } from "@workbench/contract";
 
 const NAME = "registry-search";
-const VERSION = "0.2.0";
+const VERSION = "0.3.0";
 
+// Top-level kind, with the schema-kind annotation unwrapped: a schema slot
+// declared `kindOf("integer")` is *for matching purposes* an integer.
 function topKind(v: Value): string {
-  return v.kind;
+  const sk = asSchemaKind(v);
+  return sk ?? v.kind;
 }
 
 function expressionHead(v: Value): string | null {
   return v.kind === "expression" ? v.head : null;
 }
 
+// Sub-tree search. Schema-kind annotations count as a member of the kind
+// they name; we still walk into their (symbol) payload as well, so a
+// schema that wraps a deeper structure is searchable.
 function recurseHasKind(v: Value, kind: string): boolean {
+  const sk = asSchemaKind(v);
+  if (sk !== null) {
+    if (sk === kind) return true;
+    // schema-kind markers are leaves for our purposes — don't recurse into
+    // their (symbol) payload.
+    return false;
+  }
   if (v.kind === kind) return true;
   switch (v.kind) {
     case "list":
@@ -76,6 +91,14 @@ void runTool({
       input: record({ output_kind: str("record") }),
     },
     {
+      description: "find tools that produce an integer (e.g. modular arithmetic)",
+      input: record({ output_kind: str("integer") }),
+    },
+    {
+      description: "find tools that consume an integer-bearing record",
+      input: record({ input_kind: str("integer") }),
+    },
+    {
       description: "find tools by name",
       input: record({ name_substring: str("cas") }),
     },
@@ -107,12 +130,19 @@ void runTool({
     }
     const entries = await listToolEntries(toolsRoot);
     const out: Value[] = [];
+    let queried = 0;
+    let described = 0;
+    let describeErrors = 0;
     for (const e of entries) {
       if (filterNameSub && !e.name.toLowerCase().includes(filterNameSub)) continue;
+      queried++;
       let meta;
       try {
         meta = await describeTool(e.path, e.name);
-      } catch {
+        described++;
+      } catch (err) {
+        describeErrors++;
+        process.stderr.write(`registry-search: describe ${e.name} failed: ${(err as Error).message}\n`);
         continue;
       }
       if (filterInputKind && topKind(meta.schema.input) !== filterInputKind && !recurseHasKind(meta.schema.input, filterInputKind)) continue;
@@ -128,7 +158,15 @@ void runTool({
         })
       );
     }
+    if (describeErrors > 0) {
+      process.stderr.write(
+        `registry-search: ${describeErrors}/${queried} tools failed --schema/--version/--examples/--invariants probe; ` +
+        `result list is incomplete. Set BUN_BIN or fix the failing tools.\n`
+      );
+    }
     void int;
+    void described;
+    void kindOf;
     return list(out);
   },
 });

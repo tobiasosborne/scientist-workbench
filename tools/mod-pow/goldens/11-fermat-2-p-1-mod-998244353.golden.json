@@ -1,0 +1,1 @@
+{"fields":{"input":{"fields":{"base":{"kind":"integer","value":"2"},"exponent":{"kind":"integer","value":"998244352"},"modulus":{"kind":"integer","value":"998244353"}},"kind":"record"},"output":{"kind":"integer","value":"1"}},"kind":"record"}

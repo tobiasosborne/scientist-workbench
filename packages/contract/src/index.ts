@@ -27,3 +27,4 @@ export {
   describeTool,
 } from "./registry.js";
 export { type GoldenSpec } from "./goldens.js";
+export { resolveBunBinary, spawnBun, _resetBunBinaryCache, type SpawnResult } from "./spawn.js";

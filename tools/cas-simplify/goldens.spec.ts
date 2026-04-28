@@ -37,9 +37,9 @@ export const goldens: GoldenSpec[] = [
   { description: "unknown head with simplifiable arg", input: expr("sin", [expr("+", [sym("x"), sym("x")])]) },
   { description: "unknown head with deeper structure", input: expr("matmul", [sym("A"), expr("+", [sym("B"), sym("B")])]) },
   { description: "tagged passes through inside out-of-scope", input: expr("foo", [tagged("foreign", int(7n))]) },
-  { description: "string leaf is out of scope (cas does not interpret strings)", input: { kind: "string", value: "hello" } },
+  { description: "string leaf is out of scope (cas does not interpret strings)", input: str("hello") },
   { description: "boolean leaf is out of scope", input: bool(true) },
-  { description: "list leaf wraps as out-of-scope", input: { kind: "list", items: [int(1n), int(2n)] } },
+  { description: "list leaf wraps as out-of-scope", input: list([int(1n), int(2n)]) },
   { description: "x^2 - 2*x + 1 stays as a sum of monomials", input: expr("+", [expr("^", [sym("x"), int(2n)]), expr("-", [int(0n), expr("*", [int(2n), sym("x")])]), int(1n)]) },
   { description: "(a+b)^2 = a^2 + 2ab + b^2", input: expr("^", [expr("+", [sym("a"), sym("b")]), int(2n)]) },
 ];

@@ -4,8 +4,8 @@
 
 import { readdir, stat } from "node:fs/promises";
 import { join } from "node:path";
-import { spawn } from "node:child_process";
 import { parse, type Value } from "@workbench/protocol";
+import { spawnBun } from "./spawn.js";
 
 export interface ToolMetadata {
   name: string;
@@ -50,22 +50,8 @@ export async function listToolEntries(toolsRoot: string): Promise<{ name: string
   return out;
 }
 
-function spawnText(cmd: string, args: string[]): Promise<{ code: number; stdout: string; stderr: string }> {
-  return new Promise((resolve, reject) => {
-    const p = spawn(cmd, args, { stdio: ["ignore", "pipe", "pipe"] });
-    let stdout = "";
-    let stderr = "";
-    p.stdout.on("data", (b) => (stdout += b.toString("utf8")));
-    p.stderr.on("data", (b) => (stderr += b.toString("utf8")));
-    p.on("error", reject);
-    p.on("close", (code) => resolve({ code: code ?? 0, stdout, stderr }));
-  });
-}
-
-const BUN_CMD = process.env["BUN_BIN"] ?? "bun";
-
 async function queryFlag(toolPath: string, flag: string): Promise<Value> {
-  const r = await spawnText(BUN_CMD, [toolPath, `--${flag}`]);
+  const r = await spawnBun([toolPath, `--${flag}`]);
   if (r.code !== 0) {
     throw new Error(`tool ${toolPath} failed --${flag}: ${r.stderr.trim()}`);
   }
