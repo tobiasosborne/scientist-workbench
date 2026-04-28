@@ -1,0 +1,1 @@
+{"fields":{"input":{"args":[{"den":"4","kind":"rational","num":"3"},{"kind":"symbol","name":"x"}],"head":"*","kind":"expression"},"output":{"args":[{"den":"4","kind":"rational","num":"3"},{"kind":"symbol","name":"x"}],"head":"*","kind":"expression"}},"kind":"record"}

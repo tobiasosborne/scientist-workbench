@@ -1,0 +1,1 @@
+{"fields":{"input":{"kind":"string","value":"hello"},"output":{"kind":"tagged","payload":{"kind":"string","value":"hello"},"tag":"cas-simplify/out-of-scope"}},"kind":"record"}

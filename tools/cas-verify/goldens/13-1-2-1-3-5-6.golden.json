@@ -1,0 +1,1 @@
+{"fields":{"input":{"fields":{"lhs":{"args":[{"den":"2","kind":"rational","num":"1"},{"den":"3","kind":"rational","num":"1"}],"head":"+","kind":"expression"},"rhs":{"den":"6","kind":"rational","num":"5"}},"kind":"record"},"output":{"fields":{"equal":{"kind":"boolean","value":true}},"kind":"record"}},"kind":"record"}

@@ -1,0 +1,262 @@
+# scientist-workbench
+
+Agent-first ecosystem of small, contract-conforming tools for exact symbolic computation. Every tool consumes a JSON value on stdin, writes a JSON value on stdout, runs in milliseconds, and is independently versioned.
+
+> **If you are an agent landing in this repo for the first time:** read this file top to bottom *before* invoking a tool. The contract assumes you already know §"The value protocol", §"Standard flags", and §"Hard requirements". The design rationale lives in `PRD-v0.2.md`; this README is operational, the PRD is canonical for design questions.
+
+License: **AGPL-3.0-or-later**. See `LICENSE`.
+
+---
+
+## Substrate
+
+TypeScript on Bun. No build step — every tool runs as `bun tools/<name>/tool.ts`.
+
+```sh
+bun --version       # 1.3+
+bun install         # one-time, resolves workspace deps
+bun run check       # full health check, ~12s
+```
+
+If `bun` isn't on PATH, locate it once: `command -v bun` or check `~/.bun/bin/bun`.
+
+---
+
+## The value protocol
+
+Ten primitive kinds, exhaustive over the `kind` discriminator. A tool that pattern-matches `value.kind` covers every case.
+
+| kind | shape |
+|---|---|
+| `symbol` | `{kind, name, namespace?}` |
+| `string` | `{kind, value}` |
+| `integer` | `{kind, value: <decimal-string>}` |
+| `rational` | `{kind, num: <decimal-string>, den: <decimal-string>}` (lowest terms, den > 0) |
+| `float64` | `{kind, bits: <16 lowercase hex chars, big-endian IEEE-754>}` |
+| `boolean` | `{kind, value: bool}` |
+| `list` | `{kind, items: Value[]}` |
+| `record` | `{kind, fields: {string → Value}}` |
+| `expression` | `{kind, head, args: Value[]}` |
+| `tagged` | `{kind, tag, payload: Value}` |
+
+**Canonical encoding.** Strict JSON subset:
+
+- Object keys sorted by UTF-16 code units.
+- No whitespace anywhere.
+- **No raw JSON numbers.** All numerics live inside `integer` / `rational` / `float64` whose number-bearing fields are *strings*. `{"value":1}` is invalid; write `{"value":"1"}`.
+- Forward slash is never escaped (`/`, never `\/`).
+- `null` is reserved and unused.
+
+Spec & implementation: `packages/protocol/src/canonical.ts`. Round-trip property tested over 1000 random values.
+
+**Content addressing.** `hash(value) = sha256(canonicalize(value))`, hex-encoded (64 chars). Equal canonical bytes ⟹ equal hash ⟹ equal value (modulo collision).
+
+**Foreign-pass-through invariant.** Tools touch only the kinds they declare. Subterms outside a tool's scope must round-trip verbatim, either passed through or wrapped in a `tagged` value with the tool's name in the tag (e.g. `tagged "cas-simplify/out-of-scope"`). PRD §2.3.
+
+---
+
+## Tool invocation
+
+Every tool follows the same shape:
+
+```sh
+echo '<canonical-json-input>' | bun tools/<name>/tool.ts [--flag=value ...]
+```
+
+Pipe linearly to compose:
+
+```sh
+echo '{"kind":"string","value":"(x+1)*(x-1)"}' \
+  | bun tools/expr-parse/tool.ts \
+  | bun tools/cas-simplify/tool.ts
+# → x^2 + (-1)
+```
+
+Errors go to stderr with non-zero exit. The `ToolError` shape carries a `suggestion` line where applicable.
+
+---
+
+## Standard flags (every tool)
+
+| flag | emits |
+|---|---|
+| `--schema` | `{input, output}` representative shapes |
+| `--examples` | list of `{description, input, output? \| error?, flags?}` records |
+| `--invariants` | list of `{name, statement, machine_checkable?}` records |
+| `--version` | `{name, version}` record |
+| `--provenance-of <hash>` | derivation tree for that output hash, or `tagged "provenance/not-found"` |
+| `--test` | run in-process property tests; exits 0 pass, 1 fail, 2 no hook |
+| `--help`, `-h` | human-readable usage |
+
+Tool-specific flags follow `--key=value` or `--key value`. See each tool's `--examples`.
+
+---
+
+## Tool catalog
+
+| tool | input | output | summary |
+|---|---|---|---|
+| `expr-parse` | `string` | `expression` (or leaf) | text → AST. Operators `+ − * / ^`, identifiers, integer / rational / decimal literals. LaTeX is out of scope (sister tool). |
+| `cas-simplify` | any `Value` | canonical `Value` | canonicalise over `Q[x_1,…,x_n]` / `Q(x_1,…,x_n)`. Foreign subtrees wrapped in `tagged "cas-simplify/out-of-scope"`. **No polynomial GCD reduction in v1.** Idempotent. |
+| `cas-verify` | `record{lhs, rhs}` | `record{equal, reason?, witness?, side?, detail?}` | decide A = B over `Q(x)` by cross-multiplication (sound and complete; no GCD needed). On inequality: emits `lhs - rhs` as a witness. |
+| `oracle` | `record{tool_path, goldens_dir, mode?}` | `record{passed, failed, total, results}` | golden-master harness. Modes: `exact` (default), `structural`. Exits 1 if any golden fails. |
+| `registry-list` | `record{tools_root?}` | `list` of metadata records | discover installed tools. |
+| `registry-search` | `record{tools_root?, input_kind?, output_kind?, head?, name_substring?}` | `list` of metadata records | filter the registry. All filters AND-conjoined. |
+
+Per-tool detail in `tools/<name>/README.md`.
+
+---
+
+## Provenance
+
+Every successful tool run writes a record indexed by output hash:
+
+```
+$CAS_STORE/provenance/<hh>/<output_hash>.json
+```
+
+where `<hh>` = first two hex chars of the output hash. Default store: `$HOME/.scientist-workbench/cas-store`. Override with `CAS_STORE=<path>`.
+
+The record shape (PRD §3.2):
+
+```json
+{
+  "tool":        {"name": "...", "version": "..."},
+  "inputs":      [{"name": "stdin", "hash": "..."}],
+  "flags":       {"key": "value", ...},
+  "output_hash": "..."
+}
+```
+
+Look up a derivation through any tool's `--provenance-of`:
+
+```sh
+bun tools/cas-verify/tool.ts --provenance-of <output-hash>
+```
+
+Re-execute by piping the same input bytes back through the same tool version. Determinism is contractually required ⟹ same output bytes ⟹ same output hash ⟹ same provenance record.
+
+---
+
+## Discoverability
+
+Plan a composition by *type*, not by name (PRD §6.3):
+
+```sh
+# what consumes a string?
+echo '{"kind":"record","fields":{"input_kind":{"kind":"string","value":"string"}}}' \
+  | bun tools/registry-search/tool.ts
+
+# what produces a record?
+echo '{"kind":"record","fields":{"output_kind":{"kind":"string","value":"record"}}}' \
+  | bun tools/registry-search/tool.ts
+```
+
+Filters: `input_kind`, `output_kind`, `head` (matches the top-level head of `schema.output`), `name_substring`. All AND-conjoined. The current schema is a representative example value, so kind-filtering matches both the top level and any sub-value of the schema.
+
+---
+
+## The contract
+
+A tool is admitted to the registry iff it ships **all seven** artefacts (PRD §4.2):
+
+1. The compiled tool. *MVP runs source via `bun tools/<name>/tool.ts`; `bun build --compile` deferred.*
+2. `schema` declaration.
+3. `examples` (≥10 for real tools; ≥30 once "done").
+4. `invariants`.
+5. Property tests in workspace `bun test`, OR a `--test` hook (PRD §4.3).
+6. `goldens/` directory of `*.golden.json` files.
+7. `README.md`.
+
+Required fields of `ToolDefinition` (artefacts 2–4) are checked at the type level. Artefacts 5–7 are checked by `bun run check`. A tool missing any of these is a prototype, not a tool.
+
+---
+
+## Writing a new tool
+
+```sh
+bun run new-tool <name>           # scaffolds tools/<name>/{package.json,tool.ts,README.md,goldens.spec.ts,goldens/}
+# edit tool.ts          (fill schema, examples, invariants, fn, optional test)
+# edit goldens.spec.ts  (add GoldenSpec entries — target ≥30)
+bun install                        # workspaces resolve
+bun run goldens                    # generate canonical *.golden.json files
+bun run check                      # typecheck + workspace tests + per-tool --test + oracle on goldens
+```
+
+The `tool.ts` skeleton calls `runTool({...})` from `@workbench/contract`. The runner handles every standard flag, parses stdin, validates against the protocol, runs your `fn`, emits canonical output, and writes provenance.
+
+---
+
+## Hard requirements for any new tool
+
+- **Determinism.** Same input bytes + same tool version ⟹ bit-identical output bytes. No `Date.now`, no `Math.random` without seed input, no iteration over unsorted hash sets, no locale or environment dependence. Property tested in workspace tests.
+- **Idempotence (where the operation allows).** `f(f(v)) = f(v)`. Tested per tool.
+- **Foreign-pass-through.** Subtrees outside your declared scope must round-trip verbatim (or be wrapped in a `tagged` value with your tool's name in the tag). Property tested.
+- **Honest scope.** A tool that fails on inputs outside its declared scope is correct. A tool that lies (silently produces a wrong-shaped or wrong-valued answer) is not — and is inadmissible.
+- **Errors that teach.** Use `ToolError` from `@workbench/protocol` with `suggestion` and `detail` fields. Errors carry a path through the value tree where possible.
+- **Cold start < 100 ms.** The MVP measures ~50 ms on Bun including stdin and canonicalisation. If your tool is slower, justify why.
+- **Few flags, all orthogonal.** One to five flags. Flags that change the *type* of the output should be different tools.
+
+PRD §6.1 ("Properties of a tool an agent will reach for") is not a soft preferences list — it is a hard requirement list. A tool that fails any of these is broken even if it computes the right answer.
+
+---
+
+## Verification
+
+```sh
+bun run check         # full: typecheck + bun test + every tool --test + oracle on every goldens/
+bun run check:quick   # fast: typecheck + bun test only (~3s; for the inner edit loop)
+bun run goldens       # regenerate goldens (replaces existing files)
+bun run goldens:check # fail if any current tool output disagrees with a stored golden
+```
+
+Failing CI is failing contract.
+
+---
+
+## File layout
+
+```
+PRD-v0.2.md              design spec — canonical for design questions
+README.md                this file — operational reference for agents
+LICENSE                  AGPL-3.0-or-later
+
+packages/
+  protocol/              value protocol; canonical encoder, parser, hash, validator
+  contract/              runTool dispatcher, provenance store, registry helpers, GoldenSpec
+  cas-core/              multivariate Q[x_1,…,x_n] / Q(x_1,…,x_n) arithmetic
+
+tools/
+  <name>/
+    tool.ts              entry point — calls runTool({...})
+    package.json         workspace manifest
+    README.md            one-page tool reference
+    goldens.spec.ts      `export const goldens: GoldenSpec[]`
+    goldens/             generated *.golden.json (do not edit by hand)
+
+scripts/
+  new-tool.ts            scaffold a new tool directory
+  generate-goldens.ts    regenerate goldens from goldens.spec.ts files
+  check.ts               combined health check (run via `bun run check`)
+  demo-scope.sh          ten worked examples covering the full v1 scope
+```
+
+---
+
+## What this is *not*
+
+- Not a numerics library — see PRD §1.2 (no PDE-class solvers, no GPU, no BLAS-scale, no distributed).
+- Not Mathematica replication — the legacy stack's failure mode (composition through global mutable state) is exactly what is being moved away from.
+- Not (yet) a notebook surface — Phase 4 of the roadmap.
+- Not (yet) proof-carrying — Phase 5; the v1 ecosystem is the *substrate* that makes proof-carrying outputs possible.
+
+The discipline that does not bend is the contract. Everything else iterates freely — duplication of tools is exploration, not waste.
+
+---
+
+## Pointers
+
+- **Design questions:** `PRD-v0.2.md`. Sections marked `[SETTLED]` are not up for debate without strong reason.
+- **Per-tool detail:** `tools/<name>/README.md`.
+- **Worked examples covering the v1 scope:** `bash scripts/demo-scope.sh`.
+- **The substrate decision (TS/Bun) is settled.** Re-read PRD §1.3 before relitigating; four pillars all need to change before the question reopens.

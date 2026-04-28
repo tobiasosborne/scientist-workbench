@@ -1,0 +1,9 @@
+node_modules/
+bun.lockb
+.cas-store/
+*.log
+.DS_Store
+dist/
+
+# bun.lock (text format) IS committed — keeps installs reproducible.
+

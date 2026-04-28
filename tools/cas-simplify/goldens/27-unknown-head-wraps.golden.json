@@ -1,0 +1,1 @@
+{"fields":{"input":{"args":[{"kind":"symbol","name":"x"}],"head":"sin","kind":"expression"},"output":{"kind":"tagged","payload":{"args":[{"kind":"symbol","name":"x"}],"head":"sin","kind":"expression"},"tag":"cas-simplify/out-of-scope"}},"kind":"record"}

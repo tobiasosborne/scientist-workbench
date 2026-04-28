@@ -1,0 +1,1 @@
+{"fields":{"input":{"fields":{"lhs":{"args":[{"kind":"integer","value":"1"},{"kind":"integer","value":"1"}],"head":"+","kind":"expression"},"rhs":{"kind":"integer","value":"2"}},"kind":"record"},"output":{"fields":{"equal":{"kind":"boolean","value":true}},"kind":"record"}},"kind":"record"}

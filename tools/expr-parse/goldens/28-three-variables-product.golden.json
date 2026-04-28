@@ -1,0 +1,1 @@
+{"fields":{"input":{"kind":"string","value":"a * b * c"},"output":{"args":[{"args":[{"kind":"symbol","name":"a"},{"kind":"symbol","name":"b"}],"head":"*","kind":"expression"},{"kind":"symbol","name":"c"}],"head":"*","kind":"expression"}},"kind":"record"}

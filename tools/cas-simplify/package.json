@@ -1,0 +1,11 @@
+{
+  "name": "@workbench/tool-cas-simplify",
+  "version": "0.2.0",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@workbench/protocol": "workspace:*",
+    "@workbench/contract": "workspace:*",
+    "@workbench/cas-core": "workspace:*"
+  }
+}

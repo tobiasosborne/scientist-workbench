@@ -1,0 +1,1 @@
+{"fields":{"input":{"kind":"boolean","value":true},"output":{"kind":"tagged","payload":{"kind":"boolean","value":true},"tag":"cas-simplify/out-of-scope"}},"kind":"record"}
