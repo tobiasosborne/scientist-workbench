@@ -28,6 +28,7 @@ import {
   ratEq,
   ratIsZero,
   ratMul,
+  RAT_RING,
   ratFnAdd,
   ratFnEq,
   ratFnMul,
@@ -136,10 +137,10 @@ describe("Poly ring axioms", () => {
       const a = makeSimplePoly(rng);
       const b = makeSimplePoly(rng);
       const c = makeSimplePoly(rng);
-      expect(polyEq(polyAdd(a, b), polyAdd(b, a))).toBe(true);
-      expect(polyEq(polyAdd(polyAdd(a, b), c), polyAdd(a, polyAdd(b, c)))).toBe(true);
-      expect(polyEq(polyMul(a, b), polyMul(b, a))).toBe(true);
-      expect(polyEq(polyMul(polyMul(a, b), c), polyMul(a, polyMul(b, c)))).toBe(true);
+      expect(polyEq(polyAdd(a, b, RAT_RING), polyAdd(b, a, RAT_RING), RAT_RING)).toBe(true);
+      expect(polyEq(polyAdd(polyAdd(a, b, RAT_RING), c, RAT_RING), polyAdd(a, polyAdd(b, c, RAT_RING), RAT_RING), RAT_RING)).toBe(true);
+      expect(polyEq(polyMul(a, b, RAT_RING), polyMul(b, a, RAT_RING), RAT_RING)).toBe(true);
+      expect(polyEq(polyMul(polyMul(a, b, RAT_RING), c, RAT_RING), polyMul(a, polyMul(b, c, RAT_RING), RAT_RING), RAT_RING)).toBe(true);
     }
   });
 
@@ -149,9 +150,9 @@ describe("Poly ring axioms", () => {
       const a = makeSimplePoly(rng);
       const b = makeSimplePoly(rng);
       const c = makeSimplePoly(rng);
-      const left = polyMul(a, polyAdd(b, c));
-      const right = polyAdd(polyMul(a, b), polyMul(a, c));
-      expect(polyEq(left, right)).toBe(true);
+      const left = polyMul(a, polyAdd(b, c, RAT_RING), RAT_RING);
+      const right = polyAdd(polyMul(a, b, RAT_RING), polyMul(a, c, RAT_RING), RAT_RING);
+      expect(polyEq(left, right, RAT_RING)).toBe(true);
     }
   });
 
@@ -160,9 +161,9 @@ describe("Poly ring axioms", () => {
     for (let i = 0; i < 30; i++) {
       const a = makeSimplePoly(rng);
       const n = rng.int(0, 5);
-      let acc = polyConst(makeRat(1n));
-      for (let j = 0; j < n; j++) acc = polyMul(acc, a);
-      expect(polyEq(polyPow(a, n), acc)).toBe(true);
+      let acc = polyConst(makeRat(1n), RAT_RING);
+      for (let j = 0; j < n; j++) acc = polyMul(acc, a, RAT_RING);
+      expect(polyEq(polyPow(a, n, RAT_RING), acc, RAT_RING)).toBe(true);
     }
   });
 
@@ -170,7 +171,7 @@ describe("Poly ring axioms", () => {
     const rng = new RNG(0x13);
     for (let i = 0; i < 100; i++) {
       const a = makeSimplePoly(rng);
-      expect(polyIsZero(polySub(a, a))).toBe(true);
+      expect(polyIsZero(polySub(a, a, RAT_RING))).toBe(true);
     }
   });
 });
@@ -179,43 +180,51 @@ describe("RatFn ring axioms", () => {
   test("ratFnAdd associative + commutative", () => {
     const rng = new RNG(0x20);
     for (let i = 0; i < 50; i++) {
-      const a = ratFnFromPoly(makeSimplePoly(rng));
-      const b = ratFnFromPoly(makeSimplePoly(rng));
-      const c = ratFnFromPoly(makeSimplePoly(rng));
-      expect(ratFnEq(ratFnAdd(a, b), ratFnAdd(b, a))).toBe(true);
-      expect(ratFnEq(ratFnAdd(ratFnAdd(a, b), c), ratFnAdd(a, ratFnAdd(b, c)))).toBe(true);
+      const a = ratFnFromPoly(makeSimplePoly(rng), RAT_RING);
+      const b = ratFnFromPoly(makeSimplePoly(rng), RAT_RING);
+      const c = ratFnFromPoly(makeSimplePoly(rng), RAT_RING);
+      expect(ratFnEq(ratFnAdd(a, b, RAT_RING), ratFnAdd(b, a, RAT_RING), RAT_RING)).toBe(true);
+      expect(ratFnEq(ratFnAdd(ratFnAdd(a, b, RAT_RING), c, RAT_RING), ratFnAdd(a, ratFnAdd(b, c, RAT_RING), RAT_RING), RAT_RING)).toBe(true);
     }
   });
 
   test("ratFnEq decides x*y/y = x", () => {
-    const x = ratFnFromPoly(polyVar("x"));
-    const y = ratFnFromPoly(polyVar("y"));
-    const lhs = ratFnMul(x, y);
-    const yInverse = ratFnPow(y, -1);
-    const result = ratFnMul(lhs, yInverse);
-    expect(ratFnEq(result, x)).toBe(true);
+    const x = ratFnFromPoly(polyVar("x", RAT_RING), RAT_RING);
+    const y = ratFnFromPoly(polyVar("y", RAT_RING), RAT_RING);
+    const lhs = ratFnMul(x, y, RAT_RING);
+    const yInverse = ratFnPow(y, -1, RAT_RING);
+    const result = ratFnMul(lhs, yInverse, RAT_RING);
+    expect(ratFnEq(result, x, RAT_RING)).toBe(true);
   });
 
   test("ratFnEq decides (x^2 - 1)/(x - 1) = x + 1", () => {
-    const x = ratFnFromPoly(polyVar("x"));
+    const x = ratFnFromPoly(polyVar("x", RAT_RING), RAT_RING);
     const lhs = {
-      num: polySub(polyPow(polyVar("x"), 2), polyConst(makeRat(1n))),
-      den: polySub(polyVar("x"), polyConst(makeRat(1n))),
+      num: polySub(polyPow(polyVar("x", RAT_RING), 2, RAT_RING), polyConst(makeRat(1n), RAT_RING), RAT_RING),
+      den: polySub(polyVar("x", RAT_RING), polyConst(makeRat(1n), RAT_RING), RAT_RING),
     };
-    const lhsR = ratFnFromPoly(lhs.num);
-    const lhsD = ratFnFromPoly(lhs.den);
-    const lhsAll = ratFnMul(lhsR, ratFnPow(lhsD, -1));
-    const rhs = ratFnAdd(x, ratFnFromPoly(polyConst(makeRat(1n))));
-    expect(ratFnEq(lhsAll, rhs)).toBe(true);
+    const lhsR = ratFnFromPoly(lhs.num, RAT_RING);
+    const lhsD = ratFnFromPoly(lhs.den, RAT_RING);
+    const lhsAll = ratFnMul(lhsR, ratFnPow(lhsD, -1, RAT_RING), RAT_RING);
+    const rhs = ratFnAdd(x, ratFnFromPoly(polyConst(makeRat(1n), RAT_RING), RAT_RING), RAT_RING);
+    expect(ratFnEq(lhsAll, rhs, RAT_RING)).toBe(true);
   });
 
   test("ratFn sign-normalised: leading coef of denominator is positive", () => {
-    const num = polyVar("x");
-    const den = polySub(polyConst(makeRat(0n)), polyVar("y")); // -y
+    const num = polyVar("x", RAT_RING);
+    const den = polySub(polyConst(makeRat(0n), RAT_RING), polyVar("y", RAT_RING), RAT_RING); // -y
     const r = { num, den };
-    const fixed = ratFnAdd(ratFnFromPoly(num), { num: polyConst(makeRat(0n)), den: polyConst(makeRat(1n)) });
+    const fixed = ratFnAdd(
+      ratFnFromPoly(num, RAT_RING),
+      { num: polyConst(makeRat(0n), RAT_RING), den: polyConst(makeRat(1n), RAT_RING) },
+      RAT_RING
+    );
     // softer: just construct via the constructor
-    const ratfn = ratFnMul(ratFnFromPoly(polyVar("x")), { num: polyConst(makeRat(1n)), den: polyVar("y") });
+    const ratfn = ratFnMul(
+      ratFnFromPoly(polyVar("x", RAT_RING), RAT_RING),
+      { num: polyConst(makeRat(1n), RAT_RING), den: polyVar("y", RAT_RING) },
+      RAT_RING
+    );
     expect(ratfn.den.terms[0]!.coef.n > 0n).toBe(true);
     void r;
     void fixed;
@@ -236,7 +245,7 @@ describe("expression bridge", () => {
       const rf = valueToRatFn(v);
       const back = casSimplify(v);
       const rf2 = valueToRatFn(back);
-      expect(ratFnEq(rf, rf2)).toBe(true);
+      expect(ratFnEq(rf, rf2, RAT_RING)).toBe(true);
     }
   });
 
@@ -244,7 +253,7 @@ describe("expression bridge", () => {
     const v = expr("*", [rat(3n, 4n), sym("x")]);
     const rf = valueToRatFn(v);
     const back = valueToRatFn(casSimplify(v));
-    expect(ratFnEq(rf, back)).toBe(true);
+    expect(ratFnEq(rf, back, RAT_RING)).toBe(true);
   });
 });
 
@@ -412,18 +421,18 @@ describe("casVerify", () => {
   });
 });
 
-function makeSimplePoly(rng: RNG): import("../src/poly.js").Poly {
+function makeSimplePoly(rng: RNG): import("../src/poly.js").Poly<import("../src/rat.js").Rat> {
   const nTerms = rng.int(1, 4);
-  let p = polyConst(makeRat(0n));
+  let p = polyConst(makeRat(0n), RAT_RING);
   for (let i = 0; i < nTerms; i++) {
     const coef = makeRat(BigInt(rng.int(-5, 5)), BigInt(rng.int(1, 3)));
     if (ratIsZero(coef)) continue;
-    let term = polyConst(coef);
+    let term = polyConst(coef, RAT_RING);
     const nVars = rng.int(0, 2);
     for (let j = 0; j < nVars; j++) {
-      term = polyMul(term, polyPow(polyVar(rng.pickVar()), rng.int(0, 3)));
+      term = polyMul(term, polyPow(polyVar(rng.pickVar(), RAT_RING), rng.int(0, 3), RAT_RING), RAT_RING);
     }
-    p = polyAdd(p, term);
+    p = polyAdd(p, term, RAT_RING);
   }
   return p;
 }

@@ -1,8 +1,15 @@
-// Bridge between expression-protocol values and RatFn/Poly internal forms.
+// Bridge between expression-protocol values and RatFn/Poly internal forms
+// over Q. This module is Q-specific by design: the bridge from a generic
+// `Value` to a `RatFn<T>` requires knowing how to map IntegerValue and
+// RationalValue to T, and that mapping is per-ring. Q is the v0.1
+// instance; the algebraic-numbers issue (scientist-workbench-1s4) lands
+// its own bridge alongside the AlgebraicRing<R> implementation.
+//
 // In-scope heads: + - * / ^   (with ^ requiring an integer literal exponent)
 // In-scope leaves: integer, rational, symbol (without namespace)
-// Everything else throws CasOutOfScopeError, which callers turn into either
-// a tagged-out-of-scope value (cas-simplify) or an out-of-scope verdict (cas-verify).
+// Everything else throws CasOutOfScopeError, which callers turn into
+// either a tagged-out-of-scope value (cas-simplify) or an out-of-scope
+// verdict (cas-verify).
 
 import {
   expr,
@@ -25,16 +32,16 @@ import {
   type RatFn,
   RATFN_ONE,
   RATFN_ZERO,
-  makeRatFn,
+  makeRatFnQ,
   ratFnAdd,
   ratFnDiv,
+  ratFnFromPoly,
   ratFnMul,
   ratFnNeg,
   ratFnPow,
   ratFnSub,
-  ratFnFromPoly,
 } from "./ratfn.js";
-import { makeRat, type Rat, ratIsOne, ratIsZero, ratIsNegOne } from "./rat.js";
+import { makeRat, type Rat, RAT_RING, ratIsOne, ratIsZero, ratIsNegOne } from "./rat.js";
 
 export class CasOutOfScopeError extends Error {
   constructor(message: string) {
@@ -45,17 +52,20 @@ export class CasOutOfScopeError extends Error {
 
 const MAX_EXPONENT = 1_000_000;
 
-export function valueToRatFn(v: Value): RatFn {
+export function valueToRatFn(v: Value): RatFn<Rat> {
   switch (v.kind) {
     case "integer":
-      return ratFnFromPoly(polyConst(makeRat(BigInt(v.value))));
+      return ratFnFromPoly(polyConst(makeRat(BigInt(v.value)), RAT_RING), RAT_RING);
     case "rational":
-      return ratFnFromPoly(polyConst(makeRat(BigInt(v.num), BigInt(v.den))));
+      return ratFnFromPoly(
+        polyConst(makeRat(BigInt(v.num), BigInt(v.den)), RAT_RING),
+        RAT_RING
+      );
     case "symbol": {
       if (v.namespace !== undefined) {
         throw new CasOutOfScopeError(`symbol with namespace: ${v.namespace}/${v.name}`);
       }
-      return ratFnFromPoly(polyVar(v.name));
+      return ratFnFromPoly(polyVar(v.name, RAT_RING), RAT_RING);
     }
     case "expression": {
       const head = v.head;
@@ -64,27 +74,27 @@ export function valueToRatFn(v: Value): RatFn {
         case "+": {
           if (args.length === 0) return RATFN_ZERO;
           let acc = valueToRatFn(args[0]!);
-          for (let i = 1; i < args.length; i++) acc = ratFnAdd(acc, valueToRatFn(args[i]!));
+          for (let i = 1; i < args.length; i++) acc = ratFnAdd(acc, valueToRatFn(args[i]!), RAT_RING);
           return acc;
         }
         case "*": {
           if (args.length === 0) return RATFN_ONE;
           let acc = valueToRatFn(args[0]!);
-          for (let i = 1; i < args.length; i++) acc = ratFnMul(acc, valueToRatFn(args[i]!));
+          for (let i = 1; i < args.length; i++) acc = ratFnMul(acc, valueToRatFn(args[i]!), RAT_RING);
           return acc;
         }
         case "-": {
           if (args.length === 0) throw new CasOutOfScopeError("- with zero args");
-          if (args.length === 1) return ratFnNeg(valueToRatFn(args[0]!));
+          if (args.length === 1) return ratFnNeg(valueToRatFn(args[0]!), RAT_RING);
           let acc = valueToRatFn(args[0]!);
-          for (let i = 1; i < args.length; i++) acc = ratFnSub(acc, valueToRatFn(args[i]!));
+          for (let i = 1; i < args.length; i++) acc = ratFnSub(acc, valueToRatFn(args[i]!), RAT_RING);
           return acc;
         }
         case "/": {
           if (args.length !== 2) {
             throw new CasOutOfScopeError(`/ expects 2 args, got ${args.length}`);
           }
-          return ratFnDiv(valueToRatFn(args[0]!), valueToRatFn(args[1]!));
+          return ratFnDiv(valueToRatFn(args[0]!), valueToRatFn(args[1]!), RAT_RING);
         }
         case "^": {
           if (args.length !== 2) {
@@ -100,7 +110,7 @@ export function valueToRatFn(v: Value): RatFn {
           }
           const n = Number(big);
           const base = valueToRatFn(args[0]!);
-          return ratFnPow(base, n);
+          return ratFnPow(base, n, RAT_RING);
         }
         default:
           throw new CasOutOfScopeError(`unknown head ${JSON.stringify(head)}`);
@@ -122,7 +132,7 @@ function ratToValue(r: Rat): Value {
   return protocolRat(r.n, r.d);
 }
 
-function monomialToValue(m: Monomial): Value {
+function monomialToValue(m: Monomial<Rat>): Value {
   if (m.exp.length === 0) return ratToValue(m.coef);
   const factors: Value[] = [];
   if (!ratIsOne(m.coef)) factors.push(ratToValue(m.coef));
@@ -137,26 +147,27 @@ function monomialToValue(m: Monomial): Value {
   return expr("*", factors);
 }
 
-export function polyToValue(p: Poly): Value {
+export function polyToValue(p: Poly<Rat>): Value {
   if (polyIsZero(p)) return int(0n);
   if (p.terms.length === 1) return monomialToValue(p.terms[0]!);
   return expr("+", p.terms.map(monomialToValue));
 }
 
-export function ratFnToValue(r: RatFn): Value {
+export function ratFnToValue(r: RatFn<Rat>): Value {
   const numV = polyToValue(r.num);
-  if (polyIsOne(r.den)) return numV;
+  if (polyIsOne(r.den, RAT_RING)) return numV;
   const denV = polyToValue(r.den);
   return expr("/", [numV, denV]);
 }
 
-// Heuristic: did this value, viewed as an expression tree, denote a single rational scalar?
-// Useful for cas-simplify so that "1+1" emits "2" rather than re-emitting an integer cleanly.
-export function ratFnConstValue(r: RatFn): Rat | null {
-  if (!polyIsOne(r.den)) return null;
-  return polyConstValue(r.num);
+// Heuristic: did this value, viewed as an expression tree, denote a single
+// rational scalar? Useful for cas-simplify so that "1+1" emits "2" rather
+// than re-emitting an integer cleanly.
+export function ratFnConstValue(r: RatFn<Rat>): Rat | null {
+  if (!polyIsOne(r.den, RAT_RING)) return null;
+  return polyConstValue(r.num, RAT_RING);
 }
 
 export function _internals() {
-  return { POLY_ZERO, RATFN_ZERO, makeRatFn, ratIsZero, ratIsNegOne };
+  return { POLY_ZERO, RATFN_ZERO, makeRatFnQ, ratIsZero, ratIsNegOne };
 }

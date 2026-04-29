@@ -23,6 +23,7 @@ What v0.1 marked OPEN that v0.2 marks SETTLED or BUILT, and what the implementat
 - **§2.4 canonical serialisation.** Pinned: strict JSON subset, sorted keys, no whitespace, no raw JSON numbers (all numerics live inside tagged kinds whose fields are strings). Specified in `packages/protocol/src/canonical.ts`.
 - **§3.2 provenance shape.** Pinned: record carrying `{tool: {name, version}, inputs: [{name, hash}], flags: record-of-symbols, output_hash: hash}`. No timestamps. Indexed on disk by output hash, under `$CAS_STORE/provenance/<hh>/<hash>.json`.
 - **§4 tool contract.** Implemented as `runTool(definition)` in `packages/contract/src/runner.ts`. Standard flags `--schema --examples --invariants --version --provenance-of --help` are all wired. As of ADR-0004, `schema` is a real `Schema` (not a sample value): the runner validates input and output against it, examples must conform, and `--schema` emits canonical bytes a registry consumer decodes via `decodeSchema`.
+- **Sturm-TS port — Phase 0 ADRs (2026-04-29).** Three ADRs land the design substrate for an upcoming quantum-programming-language port. ADR-0005 (externalised entropy) admits randomness as a typed `entropy` input plus one privileged `entropy-source` tool, preserving the determinism contract for every other tool. ADR-0006 (IR-as-Value) fixes the canonical encoding of Sturm channels as `expression "channel"` Values with a closed seven-head op vocabulary, content-addressed end-to-end. ADR-0007 (distribution-vs-sampling) splits quantum execution into a deterministic `sturm-execute` and an entropy-consuming `sturm-sample`, making Born's rule structurally explicit. The Sturm-TS principles live under `docs/sturm-ts/principles.md` (v3.1, with P2 reframed as type-level rather than channel-level).
 
 What v0.1 did not anticipate:
 
@@ -201,6 +202,8 @@ On-disk layout: `$CAS_STORE/provenance/<hh>/<hash>.json` where `<hh>` is the fir
 Every tool must be deterministic given its inputs and version. No `Date.now`, no `Math.random` without explicit seed input, no parallel reductions whose order is not part of the spec, no iteration over unsorted hash sets, no dependence on locale or environment variables. Property test: same input + same version → bit-identical output. Tools failing this property are inadmissible.
 
 Validated for the MVP via the 200-trial random-expression hash-stability test in `packages/cas-core/test/cas-core.test.ts`.
+
+**Externalised entropy (ADR-0005).** Tools that genuinely require randomness (quantum sampling, Monte Carlo, hardware execution) admit it as a typed `entropy` field in the input record (hex-encoded `S.kind("string")`) and remain deterministic given those bytes. The one privileged exception is `entropy-source`, which reads OS entropy and carries the manifest annotation `nondeterministic: true`. This is the only contract relaxation; every other tool stays strictly deterministic by default. See `docs/adr/0005-externalised-entropy.md` for the full rationale and composition pattern.
 
 ### 3.4 Tool records [OPEN]
 

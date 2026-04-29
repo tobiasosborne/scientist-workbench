@@ -41,6 +41,13 @@
       "name": "@workbench/protocol",
       "version": "0.2.0",
     },
+    "packages/sturm-ir": {
+      "name": "@workbench/sturm-ir",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/protocol": "workspace:*",
+      },
+    },
     "tools/cas-simplify": {
       "name": "@workbench/tool-cas-simplify",
       "version": "0.2.0",
@@ -118,6 +125,16 @@
         "@workbench/protocol": "workspace:*",
       },
     },
+    "tools/sturm-simplify": {
+      "name": "@workbench/tool-sturm-simplify",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/cas-core": "workspace:*",
+        "@workbench/contract": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+        "@workbench/sturm-ir": "workspace:*",
+      },
+    },
   },
   "packages": {
     "@types/bun": ["@types/bun@1.3.13", "", { "dependencies": { "bun-types": "1.3.13" } }, "sha512-9fqXWk5YIHGGnUau9TEi+qdlTYDAnOj+xLCmSTwXfAIqXr2x4tytJb43E9uCvt09zJURKXwAtkoH4nLQfzeTXw=="],
@@ -133,6 +150,8 @@
     "@workbench/mod-core": ["@workbench/mod-core@workspace:packages/mod-core"],
 
     "@workbench/protocol": ["@workbench/protocol@workspace:packages/protocol"],
+
+    "@workbench/sturm-ir": ["@workbench/sturm-ir@workspace:packages/sturm-ir"],
 
     "@workbench/tool-cas-simplify": ["@workbench/tool-cas-simplify@workspace:tools/cas-simplify"],
 
@@ -151,6 +170,8 @@
     "@workbench/tool-registry-list": ["@workbench/tool-registry-list@workspace:tools/registry-list"],
 
     "@workbench/tool-registry-search": ["@workbench/tool-registry-search@workspace:tools/registry-search"],
+
+    "@workbench/tool-sturm-simplify": ["@workbench/tool-sturm-simplify@workspace:tools/sturm-simplify"],
 
     "bun-types": ["bun-types@1.3.13", "", { "dependencies": { "@types/node": "*" } }, "sha512-QXKeHLlOLqQX9LgYaHJfzdBaV21T63HhFJnvuRCcjZiaUDpbs5ED1MgxbMra71CsryN/1dAoXuJJJwIv/2drVA=="],
 

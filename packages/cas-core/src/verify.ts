@@ -6,6 +6,7 @@
 import { bool, record, str, type Value } from "@workbench/protocol";
 import { CasOutOfScopeError, ratFnToValue, valueToRatFn } from "./expr-bridge.js";
 import { ratFnEq, ratFnSub } from "./ratfn.js";
+import { RAT_RING } from "./rat.js";
 
 export interface VerifyInput {
   readonly lhs: Value;
@@ -41,10 +42,10 @@ export function casVerify(input: VerifyInput): Value {
     }
     throw e;
   }
-  if (ratFnEq(lhsRf, rhsRf)) {
+  if (ratFnEq(lhsRf, rhsRf, RAT_RING)) {
     return record({ equal: bool(true) });
   }
-  const witness = ratFnSub(lhsRf, rhsRf);
+  const witness = ratFnSub(lhsRf, rhsRf, RAT_RING);
   return record({
     equal: bool(false),
     reason: str("not-equal"),

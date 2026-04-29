@@ -111,6 +111,7 @@ Tool-specific flags follow `--key=value` or `--key value`. See each tool's `--ex
 | `oracle` | `record{tool_path, goldens_dir, mode?}` | `record{passed, failed, total, mode, results}` | golden-master harness. Modes: `exact` (default), `structural`. Exits 1 if any golden fails. |
 | `registry-list` | `record{tools_root?}` | `list` of metadata records | discover installed tools. Schemas in the output are wire-encoded (decode via `decodeSchema`). |
 | `registry-search` | `record{tools_root?, input_kind?, output_kind?, head?, name_substring?}` | `list` of metadata records | filter the registry by schema-derived predicates. All filters AND-conjoined. |
+| `sturm-simplify` | Sturm channel IR (ADR-0006) | Sturm channel IR | IR canonicaliser. Idempotent. Eliminates `ry(0)`/`rz(0)`, fuses same-axis adjacent rotations, sorts/dedupes controls, recursively simplifies `cases` arms. No cross-axis fusion. Oracle circuits untouched. |
 
 Per-tool detail in `tools/<name>/README.md`.
 
@@ -234,7 +235,7 @@ The `tool.ts` skeleton calls `defineTool({...})` from `@workbench/contract` and 
 
 ## Hard requirements for any new tool
 
-- **Determinism.** Same input bytes + same tool version ⟹ bit-identical output bytes. No `Date.now`, no `Math.random` without seed input, no iteration over unsorted hash sets, no locale or environment dependence. Property tested in workspace tests.
+- **Determinism.** Same input bytes + same tool version ⟹ bit-identical output bytes. No `Date.now`, no `Math.random` without seed input, no iteration over unsorted hash sets, no locale or environment dependence. Property tested in workspace tests. Tools that genuinely need randomness (sampling, hardware execution) admit it as a typed `entropy` field in the input record and remain deterministic *given* those bytes; the one privileged exception is `entropy-source`, which carries the manifest annotation `nondeterministic: true`. See `docs/adr/0005-externalised-entropy.md`.
 - **Idempotence (where the operation allows).** `f(f(v)) = f(v)`. Tested per tool.
 - **Foreign-pass-through.** Subtrees outside your declared scope must round-trip verbatim (or be wrapped in a `tagged` value with your tool's name in the tag). Property tested.
 - **Honest scope.** A tool that fails on inputs outside its declared scope is correct. A tool that lies (silently produces a wrong-shaped or wrong-valued answer) is not — and is inadmissible.
@@ -272,6 +273,7 @@ packages/
   cas-core/              multivariate Q[x_1,…,x_n] / Q(x_1,…,x_n) arithmetic
   mod-core/              modular arithmetic (modPow, modInv) and Number-Theoretic Transform
   json-bridge/           translate between raw JSON and canonical Value, schema-hint-driven
+  sturm-ir/              Sturm channel IR (ADR-0006): typed Channel/Op forms, schema, well-formedness, traversal
 
 tools/
   <name>/
