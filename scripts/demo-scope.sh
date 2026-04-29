@@ -203,3 +203,37 @@ S2=$(PARSE "1 + x" | bun tools/cas-simplify/tool.ts | bun -e 'import {hash,parse
 echo "  hash of simplify(x + 1): $S1"
 echo "  hash of simplify(1 + x): $S2"
 echo "  (same hash — cas-simplify makes them content-identical)"
+
+echo
+echo "============================================================"
+echo "  Demo 13 — Channel combinators: build a channel from pieces"
+echo "          sturm-then composes a prepare-only channel with"
+echo "          an observe-only channel into a deterministic"
+echo "          prepare-and-observe pipeline."
+echo "============================================================"
+PREP_W0=$(cat <<'JSON'
+{"kind":"expression","head":"channel","args":[
+  {"kind":"list","items":[]},
+  {"kind":"list","items":[{"kind":"record","fields":{"id":{"kind":"integer","value":"0"},"kind":{"kind":"string","value":"quantum"}}}]},
+  {"kind":"list","items":[
+    {"kind":"expression","head":"prepare","args":[{"kind":"rational","num":"0","den":"1"},{"kind":"integer","value":"0"}]}
+  ]}
+]}
+JSON
+)
+OBS_W0=$(cat <<'JSON'
+{"kind":"expression","head":"channel","args":[
+  {"kind":"list","items":[{"kind":"record","fields":{"id":{"kind":"integer","value":"0"},"kind":{"kind":"string","value":"quantum"}}}]},
+  {"kind":"list","items":[]},
+  {"kind":"list","items":[
+    {"kind":"expression","head":"observe","args":[{"kind":"integer","value":"0"},{"kind":"string","value":"r"}]}
+  ]}
+]}
+JSON
+)
+COMPOSED=$(echo "{\"kind\":\"record\",\"fields\":{\"first\":${PREP_W0},\"second\":${OBS_W0}}}" \
+  | bun tools/sturm-then/tool.ts)
+echo "  composed channel:"
+echo "$COMPOSED" | SHORT
+echo "  end-to-end through sturm-execute (P(r=0) should be 1):"
+echo "$COMPOSED" | bun tools/sturm-execute/tool.ts | SHORT

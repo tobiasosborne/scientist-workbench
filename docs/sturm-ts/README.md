@@ -10,7 +10,7 @@ spec materials *as they are absorbed into scientist-workbench*.
 | File | Status | Purpose |
 |---|---|---|
 | [`principles.md`](principles.md) | landed (v3.1) | The nine non-negotiable design principles P1–P9 with the v3.1 amendment to P2. Ground truth for any Sturm-related design decision in this repo. |
-| `spec-v3.md` | **pending external paste** | The full v3 PRD body (other than §1 axioms and §3.2 channels prose, which are captured in `principles.md`). The v3 PRD lives in the user's session transcript and needs to be pasted under repo control as a follow-up. Issue scientist-workbench-0lo's first acceptance criterion is partially satisfied (spec lives under `docs/sturm-ts/`); full paste is its remaining open work. |
+| [`spec-v3.md`](spec-v3.md) | landed (v3 verbatim, with adapter preamble) | The full v3 PRD body, pasted verbatim from the source transcript on 2026-04-29. The §1 P2 row is the v3 framing; for the v3.1 amendment see `principles.md`. The file's preamble documents five open adaptation items at paste time — see beads issues `4xk` (library §8.1 verification), `r40` (when-body tracer constraints), `4iw` (run() bridge), q0b notes (Bennett-TS dependency), and the §12 Backend out-of-scope note. |
 
 ## v3.1 vs v3 — what's amended
 
