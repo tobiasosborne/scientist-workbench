@@ -49,6 +49,34 @@ describe("provenance value round-trip", () => {
     const b = canonicalize(provenanceToValue(r));
     expect(a).toBe(b);
   });
+
+  // ADR-0005: nondeterministic flag round-trips, and absence is byte-equal
+  // to a record with the field omitted (so existing deterministic provenance
+  // bytes do not shift under the amendment).
+  test("nondeterministic: true round-trips through value form", () => {
+    const r: ProvenanceRecord = {
+      tool: { name: "entropy-source", version: "0.1.0" },
+      inputs: [{ name: "stdin", hash: "e".repeat(64) }],
+      flags: {},
+      output_hash: "f".repeat(64),
+      nondeterministic: true,
+    };
+    const v = provenanceToValue(r);
+    expect(valueToProvenance(v)).toEqual(r);
+    expect(canonicalize(v).includes('"nondeterministic":')).toBe(true);
+  });
+
+  test("nondeterministic absent ⇒ field omitted (no encoding drift)", () => {
+    const r: ProvenanceRecord = {
+      tool: { name: "mod-pow", version: "0.2.0" },
+      inputs: [{ name: "stdin", hash: "1".repeat(64) }],
+      flags: {},
+      output_hash: "2".repeat(64),
+    };
+    const bytes = canonicalize(provenanceToValue(r));
+    expect(bytes.includes('"nondeterministic":')).toBe(false);
+    expect(valueToProvenance(provenanceToValue(r))).toEqual(r);
+  });
 });
 
 describe("CAS store", () => {

@@ -66,6 +66,14 @@
         "@workbench/protocol": "workspace:*",
       },
     },
+    "tools/entropy-source": {
+      "name": "@workbench/tool-entropy-source",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/contract": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+      },
+    },
     "tools/expr-parse": {
       "name": "@workbench/tool-expr-parse",
       "version": "0.2.0",
@@ -125,6 +133,32 @@
         "@workbench/protocol": "workspace:*",
       },
     },
+    "tools/sturm-equivalent": {
+      "name": "@workbench/tool-sturm-equivalent",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/contract": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+        "@workbench/sturm-ir": "workspace:*",
+      },
+    },
+    "tools/sturm-execute": {
+      "name": "@workbench/tool-sturm-execute",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/contract": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+        "@workbench/sturm-ir": "workspace:*",
+      },
+    },
+    "tools/sturm-sample": {
+      "name": "@workbench/tool-sturm-sample",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/contract": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+      },
+    },
     "tools/sturm-simplify": {
       "name": "@workbench/tool-sturm-simplify",
       "version": "0.1.0",
@@ -157,6 +191,8 @@
 
     "@workbench/tool-cas-verify": ["@workbench/tool-cas-verify@workspace:tools/cas-verify"],
 
+    "@workbench/tool-entropy-source": ["@workbench/tool-entropy-source@workspace:tools/entropy-source"],
+
     "@workbench/tool-expr-parse": ["@workbench/tool-expr-parse@workspace:tools/expr-parse"],
 
     "@workbench/tool-mod-inv": ["@workbench/tool-mod-inv@workspace:tools/mod-inv"],
@@ -170,6 +206,12 @@
     "@workbench/tool-registry-list": ["@workbench/tool-registry-list@workspace:tools/registry-list"],
 
     "@workbench/tool-registry-search": ["@workbench/tool-registry-search@workspace:tools/registry-search"],
+
+    "@workbench/tool-sturm-equivalent": ["@workbench/tool-sturm-equivalent@workspace:tools/sturm-equivalent"],
+
+    "@workbench/tool-sturm-execute": ["@workbench/tool-sturm-execute@workspace:tools/sturm-execute"],
+
+    "@workbench/tool-sturm-sample": ["@workbench/tool-sturm-sample@workspace:tools/sturm-sample"],
 
     "@workbench/tool-sturm-simplify": ["@workbench/tool-sturm-simplify@workspace:tools/sturm-simplify"],
 

@@ -1,0 +1,11 @@
+{
+  "name": "@workbench/tool-sturm-equivalent",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@workbench/protocol": "workspace:*",
+    "@workbench/contract": "workspace:*",
+    "@workbench/sturm-ir": "workspace:*"
+  }
+}

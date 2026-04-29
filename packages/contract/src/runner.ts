@@ -49,7 +49,7 @@ import {
   type Schema,
   type Value,
 } from "@workbench/protocol";
-import { provenanceToValue, readProvenance, writeProvenance } from "./provenance.js";
+import { provenanceToValue, readProvenance, writeProvenance, type ProvenanceRecord } from "./provenance.js";
 import { defaultStore } from "./store.js";
 
 // -----------------------------------------------------------------------------
@@ -90,6 +90,19 @@ export interface ToolDefinition<I extends Value = Value, O extends Value = Value
   invariants: InvariantEntry[];
   fn: (input: I, flags: Record<string, string>) => O | Promise<O>;
   test?: () => void | Promise<void>;
+  /**
+   * Manifest annotation introduced by ADR-0005. When set to `true`, this
+   * tool may emit different output bytes across runs given the same stdin —
+   * it is consuming OS-randomness or another genuinely nondeterministic
+   * source. The flag propagates into the provenance record so a consumer
+   * reading `--provenance-of <hash>` knows the output is not re-derivable
+   * from inputs alone. Default (absent / false): the tool is strictly
+   * deterministic; the existing contract holds. The privileged consumer
+   * is `entropy-source`; every other tool that needs randomness should
+   * declare an `entropy: string` field in its input schema and remain
+   * deterministic given those bytes.
+   */
+  nondeterministic?: boolean;
 }
 
 /**
@@ -407,12 +420,14 @@ export async function runTool<I extends Value, O extends Value>(
       const inputHash = hash(input);
       const outputHash = hashCanonicalBytes(outBytes);
       const store = process.env["CAS_STORE"] ?? defaultStore();
-      await writeProvenance(store, {
+      const rec: ProvenanceRecord = {
         tool: { name: def.name, version: def.version },
         inputs: [{ name: "stdin", hash: inputHash }],
         flags,
         output_hash: outputHash,
-      });
+      };
+      if (def.nondeterministic === true) rec.nondeterministic = true;
+      await writeProvenance(store, rec);
     } catch (e) {
       // Provenance failures must not destroy the user's output. Warn and move on.
       process.stderr.write(`${def.name}: warning — provenance write failed: ${(e as Error).message}\n`);

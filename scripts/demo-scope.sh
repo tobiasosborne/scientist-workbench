@@ -141,6 +141,55 @@ bun tools/cas-verify/tool.ts --provenance-of "$OUTHASH" | SHORT
 
 echo
 echo "============================================================"
+echo "  Demo 11 — Sturm channel execution: Bell pair → distribution"
+echo "          Construct a Bell-pair channel, simplify, execute analytically."
+echo "          Expect two outcomes (r0=0,r1=0) and (r0=1,r1=1), each ≈ 0.5."
+echo "============================================================"
+BELL_PAIR=$(cat <<'EOF'
+{"kind":"expression","head":"channel","args":[
+  {"kind":"list","items":[]},
+  {"kind":"list","items":[]},
+  {"kind":"list","items":[
+    {"kind":"expression","head":"prepare","args":[{"kind":"rational","num":"0","den":"1"},{"kind":"integer","value":"0"}]},
+    {"kind":"expression","head":"prepare","args":[{"kind":"rational","num":"0","den":"1"},{"kind":"integer","value":"1"}]},
+    {"kind":"expression","head":"ry","args":[{"kind":"integer","value":"0"},{"kind":"expression","head":"/","args":[{"kind":"symbol","name":"π"},{"kind":"integer","value":"2"}]},{"kind":"list","items":[]}]},
+    {"kind":"expression","head":"ry","args":[{"kind":"integer","value":"1"},{"kind":"symbol","name":"π"},{"kind":"list","items":[{"kind":"integer","value":"0"}]}]},
+    {"kind":"expression","head":"observe","args":[{"kind":"integer","value":"0"},{"kind":"string","value":"r0"}]},
+    {"kind":"expression","head":"observe","args":[{"kind":"integer","value":"1"},{"kind":"string","value":"r1"}]}
+  ]}
+]}
+EOF
+)
+echo "$BELL_PAIR" | bun tools/sturm-simplify/tool.ts | bun tools/sturm-execute/tool.ts | SHORT
+
+echo
+echo "============================================================"
+echo "  Demo 12 — Sturm equivalence: Bell pair vs Bell pair + ry(0)"
+echo "          The two circuits differ syntactically (extra ry(0) on wire 0)"
+echo "          but are equivalent. sturm-simplify removes the redundancy;"
+echo "          sturm-equivalent confirms equality."
+echo "============================================================"
+BELL_REDUNDANT=$(cat <<'EOF'
+{"kind":"expression","head":"channel","args":[
+  {"kind":"list","items":[]},
+  {"kind":"list","items":[]},
+  {"kind":"list","items":[
+    {"kind":"expression","head":"prepare","args":[{"kind":"rational","num":"0","den":"1"},{"kind":"integer","value":"0"}]},
+    {"kind":"expression","head":"prepare","args":[{"kind":"rational","num":"0","den":"1"},{"kind":"integer","value":"1"}]},
+    {"kind":"expression","head":"ry","args":[{"kind":"integer","value":"0"},{"kind":"expression","head":"/","args":[{"kind":"symbol","name":"π"},{"kind":"integer","value":"2"}]},{"kind":"list","items":[]}]},
+    {"kind":"expression","head":"ry","args":[{"kind":"integer","value":"0"},{"kind":"integer","value":"0"},{"kind":"list","items":[]}]},
+    {"kind":"expression","head":"ry","args":[{"kind":"integer","value":"1"},{"kind":"symbol","name":"π"},{"kind":"list","items":[{"kind":"integer","value":"0"}]}]},
+    {"kind":"expression","head":"observe","args":[{"kind":"integer","value":"0"},{"kind":"string","value":"r0"}]},
+    {"kind":"expression","head":"observe","args":[{"kind":"integer","value":"1"},{"kind":"string","value":"r1"}]}
+  ]}
+]}
+EOF
+)
+echo "{\"kind\":\"record\",\"fields\":{\"lhs\":${BELL_PAIR},\"rhs\":${BELL_REDUNDANT}}}" \
+  | bun tools/sturm-equivalent/tool.ts | SHORT
+
+echo
+echo "============================================================"
 echo "  Bonus — every byte everywhere is content-addressed"
 echo "============================================================"
 H1=$(PARSE "x + 1" | bun -e 'import {hash,parse} from "@workbench/protocol"; console.log(hash(parse(await Bun.stdin.text())))')
