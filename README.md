@@ -119,6 +119,7 @@ Tool-specific flags follow `--key=value` or `--key value`. See each tool's `--ex
 | `sturm-controlled` | `record{control_wire, channel}` | Sturm channel IR \| `tagged "sturm-controlled/out-of-scope"` | Channel combinator: prepends the control wire to every `ry`/`rz` (recursively through `cases` arms) and augments the channel's input/output signatures. ADR-0006's IR admits `controls` only on `ry`/`rz`, so `prepare`/`observe`/`oracle`/`discard` in the body — and any wire-id collision with the control — produce a boundary tag. |
 | `sturm-then` | `record{first, second}` of two channels | Sturm channel IR \| `tagged "sturm-then/signature-mismatch"` | Channel combinator: sequential composition `f; g`. First's wire ids are kept; second's input wires are renamed positionally to match first's outputs and second's other ids are shifted by `max(first.ids)+1`. Length, kind, or dim mismatch at the boundary → boundary tag. Classical refs flow across the boundary unchanged. |
 | `sturm-tensor` | `record{left, right}` of two channels | Sturm channel IR | Channel combinator: parallel composition (the monoidal product). Total — every pair has a tensor product. Right's wire ids are shifted by `max(left.ids)+1`; left is preserved verbatim. Identity laws and associativity hold byte-equal under the chosen rename discipline. Classical refs are NOT renamed (limitation: tensoring two channels that bind the same ref yields a duplicate-binding well-formedness flaw). |
+| `sturm-find` | `record{n_bits, marked, shots?, entropy?}` | `record{distribution, samples?, iterations}` | Grover's algorithm. Wraps `@workbench/sturm-lib`'s `find`/`equalTo`/`phaseFlipMany`, runs through `sturm-execute` for the analytic Born distribution and (when `shots > 0`) `sturm-sample` for shots. v0.1 caps at `n_bits ≤ 3` (mcz currently supports n ∈ {1,2,3}). Predicted P(marked) for n=2 single-marked is 1.0; for n=3 single-marked, ≈0.945. |
 
 Per-tool detail in `tools/<name>/README.md`.
 
@@ -281,6 +282,8 @@ packages/
   mod-core/              modular arithmetic (modPow, modInv) and Number-Theoretic Transform
   json-bridge/           translate between raw JSON and canonical Value, schema-hint-driven
   sturm-ir/              Sturm channel IR (ADR-0006): typed Channel/Op forms, schema, well-formedness, traversal
+  sturm/                 TS-native frontend DSL (ADR-0009): trace, qbool, qreg, when, not, ry/rz, observe, Channel<I,O>, execute
+  sturm-lib/             Patterns library on top of @workbench/sturm: H, X, Z, S, T, cx, cz, mcz, phaseFlip, diffuse, find, equalTo, oracleFn
 
 tools/
   <name>/

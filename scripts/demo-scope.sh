@@ -237,3 +237,15 @@ echo "  composed channel:"
 echo "$COMPOSED" | SHORT
 echo "  end-to-end through sturm-execute (P(r=0) should be 1):"
 echo "$COMPOSED" | bun tools/sturm-execute/tool.ts | SHORT
+
+echo
+echo "============================================================"
+echo "  Demo 14 — Grover's algorithm: find a marked basis state"
+echo "          n=3 search space (8 items), marked=5,"
+echo "          predicted P(observed=5) ≈ 0.945 after 2 iterations."
+echo "          The whole circuit is built top-down via"
+echo "          @workbench/sturm-lib's `find` + `equalTo`,"
+echo "          and run through sturm-execute end-to-end."
+echo "============================================================"
+echo '{"kind":"record","fields":{"n_bits":{"kind":"integer","value":"3"},"marked":{"kind":"list","items":[{"kind":"integer","value":"5"}]}}}' \
+  | bun tools/sturm-find/tool.ts | SHORT

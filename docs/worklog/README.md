@@ -34,6 +34,8 @@ write the frictions and the dead ends as well as the wins.
 | 021 | [tools/sturm-sample (Born's rule applied)](021-sturm-sample.md)           | 2026-04-29 | scientist-workbench-bir             |
 | 022 | [Sturm-TS v3 spec absorbed; §8.1 H verified buggy](022-spec-v3-absorption-and-h-verification.md) | 2026-04-29 | scientist-workbench-{4xk closed; 1td, r40, 4iw filed} |
 | 023 | [Channel combinators (sturm-controlled, sturm-then, sturm-tensor)](023-channel-combinators.md) | 2026-04-29 | scientist-workbench-o1q             |
+| 024 | [TS-native frontend DSL: agents-as-TS-experts is the spec](024-ts-native-frontend-dsl.md) | 2026-04-30 | (none — beads db not initialised; ADR-0009 is the spec) |
+| 025 | [Grover end-to-end via @workbench/sturm + sturm-lib + sturm-find](025-grover-end-to-end.md) | 2026-04-30 | (none — beads db not initialised) |
 
 ## How to add a new shard
 
