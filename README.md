@@ -298,7 +298,18 @@ scripts/
   generate-goldens.ts    regenerate goldens from goldens.spec.ts files
   check.ts               combined health check (run via `bun run check`)
   demo-scope.sh          ten worked examples covering the full v1 scope
+  setup-device.sh        one-shot per-device setup: tracked git hooks +
+                         non-destructive beads bootstrap from .beads/issues.jsonl
+
+.githooks/               tracked git hooks (auto-export beads on commit,
+                         auto-import on pull). Activated per-clone via
+                         `git config core.hooksPath .githooks` — done
+                         automatically by scripts/setup-device.sh.
 ```
+
+**Fresh clone setup:** run `sh scripts/setup-device.sh` once after
+`git clone`. Idempotent. See CLAUDE.md Rule 9 for the multi-device
+beads discipline.
 
 ---
 
