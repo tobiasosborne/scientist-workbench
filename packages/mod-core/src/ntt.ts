@@ -26,24 +26,66 @@ const P_INV = 998244351 | 0;
 const R_MOD_P = 301989884;
 const R2_MOD_P = 932051910;
 
-// Inner kernel: a · b · R^{-1} mod p in pure Number arithmetic via 16-bit
-// limb partial products. Each partial product < 2^32 (safe-integer-bounded).
+// Montgomery multiplication kernel.
+//
+// Preconditions:  a, b ∈ [0, 2^32) — both already in Montgomery form
+//                 (i.e. representing residues `a' = a·R⁻¹`,
+//                 `b' = b·R⁻¹` mod p).
+// Postcondition:  return value ∈ [0, p) equals `a · b · R⁻¹ mod p`,
+//                 i.e. the Montgomery-form product of a and b.
+//
+// Here R = 2^32, p = 998244353, and `P_INV` = -p⁻¹ mod R is the
+// REDC reduction constant. The whole point of this routine is to
+// compute t = a·b as a full 64-bit product, then reduce by R using
+// only Number arithmetic (no BigInt allocation per multiply, no
+// Math.imul-induced sign trouble) — the hot inner loop of every NTT
+// butterfly runs through here.
+//
+// Why 16-bit limbs: JavaScript Numbers are IEEE-754 binary64 with
+// 53-bit safe integer range. A 32×32-bit product overflows that;
+// splitting each 32-bit input into two 16-bit halves keeps every
+// partial product ≤ (2^16 − 1)² < 2^32, well within safe range, and
+// composes back into a 64-bit value as `(tHi, tLo)`.
+//
+// REDC outline:
+//   1. t = a · b                       (full 64-bit product)
+//   2. m = (t mod R) · P_INV mod R     (low-32 multiplication only)
+//   3. u = (t + m · p) / R             (the divisibility step: by
+//                                       construction t + m·p ≡ 0
+//                                       (mod R), so the division is
+//                                       exact)
+//   4. if u ≥ p return u − p else u    (final conditional subtract)
+//
+// Invariant: the low 32 bits of `t + m·p` are zero — that's exactly
+// what choosing m via P_INV buys us — so the output is `(t + m·p) / R`,
+// which equals the high 32 bits plus any carry from `lowAdd`.
 function mmul(a: number, b: number): number {
+  // Step 1: t = a · b, computed as a 64-bit value split into (tHi, tLo).
+  // Each limb product is at most (2^16 − 1)² < 2^32, so all of `ll`,
+  // `lh`, `hl`, `hh` fit in safe-integer range.
   const aLo = a & 0xffff, aHi = a >>> 16;
   const bLo = b & 0xffff, bHi = b >>> 16;
 
-  const ll = aLo * bLo;
-  const lh = aLo * bHi;
-  const hl = aHi * bLo;
-  const hh = aHi * bHi;
+  const ll = aLo * bLo;       // low × low,   contributes to bits  0..32
+  const lh = aLo * bHi;       // low × high,  contributes to bits 16..48
+  const hl = aHi * bLo;       // high × low,  contributes to bits 16..48
+  const hh = aHi * bHi;       // high × high, contributes to bits 32..64
 
+  // Combine the two cross terms; their low half feeds tLo and their
+  // high half rolls into tHi (along with any carry from `lowSum`).
   const cross = lh + hl;
   const lowSum = ll + (cross & 0xffff) * 0x10000;
-  const tLo = lowSum >>> 0;
-  const tHi = hh + (cross >>> 16) + (lowSum >= 0x100000000 ? 1 : 0);
+  const tLo = lowSum >>> 0;                                  // = t mod 2^32
+  const tHi = hh + (cross >>> 16) + (lowSum >= 0x100000000 ? 1 : 0); // = ⌊t / 2^32⌋
 
+  // Step 2: m = tLo · P_INV mod R. Math.imul gives us the *low* 32 bits
+  // of a 32×32 product as a signed int; `>>> 0` re-normalises to
+  // unsigned. The high bits don't matter — they will be scaled away by
+  // the division by R in step 3.
   const m = Math.imul(tLo | 0, P_INV) >>> 0;
 
+  // Step 3a: m · p, again a full 64-bit product split into (mpHi, mpLo)
+  // by the same 16-bit-limb decomposition used for a · b above.
   const mLo = m & 0xffff, mHi = m >>> 16;
   const pLo = P & 0xffff, pHi = P >>> 16;
   const mpll = mLo * pLo;
@@ -52,14 +94,24 @@ function mmul(a: number, b: number): number {
   const mphh = mHi * pHi;
 
   const mpCross = mplh + mphl;
+  // mpCross can exceed 2^32 (its operands are < 2^32 each, so sum < 2^33),
+  // so we split it manually rather than via `>>> 16` which would mask
+  // bit 32 away. Math.floor(mpCross / 0x10000) is the safe form.
   const mpCrossLo = mpCross & 0xffff;
   const mpCrossHi = Math.floor(mpCross / 0x10000);
   const mpLowSum = mpll + mpCrossLo * 0x10000;
   const mpLo = mpLowSum >>> 0;
   const mpHi = mphh + mpCrossHi + (mpLowSum >= 0x100000000 ? 1 : 0);
 
+  // Step 3b: u = (t + m · p) / R. By construction the low 32 bits of
+  // `t + m·p` are zero, so we only need the high half plus any carry
+  // bit out of `lowAdd`. We compute `lowAdd` not because we use its
+  // value but because we use its carry.
   const lowAdd = tLo + mpLo;
   const u = tHi + mpHi + (lowAdd >= 0x100000000 ? 1 : 0);
+
+  // Step 4: final reduction. `u` is in [0, 2p), so a single subtract
+  // suffices; no loop, no comparison ladder.
   return u >= P ? u - P : u;
 }
 

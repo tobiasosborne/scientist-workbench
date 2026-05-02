@@ -5,9 +5,7 @@
 import { ProtocolError } from "./errors.js";
 import { isKind } from "./kinds.js";
 import type { Value } from "./kinds.js";
-
-const INT_RE = /^-?(0|[1-9][0-9]*)$/;
-const F64_BITS_RE = /^[0-9a-f]{16}$/;
+import { INT_RE, F64_BITS_RE, gcdBigInt } from "./numerics.js";
 
 export function validateValue(x: unknown): Value {
   return walk(x, []);
@@ -74,6 +72,12 @@ function walk(x: unknown, path: readonly string[]): Value {
         throw new ProtocolError(`rational.den must be positive, got ${den}`, [...path, "den"]);
       }
       const nn = BigInt(num);
+      // O(log min(|num|, den)) per parsed rational; deliberate.
+      // The lowest-terms invariant is load-bearing for canonical-form
+      // hashing — two RationalValues that compare equal must encode
+      // identically — so trusting upstream and skipping the check
+      // would let mis-formed rationals slip through `parse()` and
+      // collide hashes on equal-but-non-canonical inputs.
       const g = gcdBigInt(nn, dn);
       if (g !== 1n) {
         throw new ProtocolError(
@@ -175,13 +179,3 @@ function requireString(obj: Record<string, unknown>, key: string, path: readonly
   return v;
 }
 
-function gcdBigInt(a: bigint, b: bigint): bigint {
-  let x = a < 0n ? -a : a;
-  let y = b < 0n ? -b : b;
-  while (y !== 0n) {
-    const t = x % y;
-    x = y;
-    y = t;
-  }
-  return x;
-}

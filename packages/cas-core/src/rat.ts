@@ -8,22 +8,12 @@
 // post-refactor, they call `R.add(a, b)` with `R = RAT_RING` for the Q
 // case.)
 
+import { gcdBigInt } from "@workbench/protocol";
 import { type Field } from "./ring.js";
 
 export interface Rat {
   readonly n: bigint;
   readonly d: bigint;
-}
-
-function gcdBigInt(a: bigint, b: bigint): bigint {
-  let x = a < 0n ? -a : a;
-  let y = b < 0n ? -b : b;
-  while (y !== 0n) {
-    const t = x % y;
-    x = y;
-    y = t;
-  }
-  return x;
 }
 
 export function makeRat(n: bigint, d: bigint = 1n): Rat {

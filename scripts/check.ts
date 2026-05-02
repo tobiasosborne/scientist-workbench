@@ -26,9 +26,6 @@ interface PhaseResult {
 
 const results: PhaseResult[] = [];
 
-// Thin alias around spawnBun so the existing call sites read unchanged.
-const spawnCmd = (_cmd: string, args: string[], stdin?: string) => spawnBun(args, stdin);
-
 async function phase(name: string, fn: () => Promise<{ ok: boolean; skipped?: boolean; detail?: string }>): Promise<void> {
   const t0 = Date.now();
   process.stdout.write(`▸ ${name} ... `);
@@ -121,12 +118,12 @@ await phase("convention: raw kind-literals outside allowlist", async () => {
 });
 
 await phase("typecheck (tsc --noEmit)", async () => {
-  const r = await spawnCmd("bun", ["tsc", "--noEmit"]);
+  const r = await spawnBun(["tsc", "--noEmit"]);
   return r.code === 0 ? { ok: true } : { ok: false, detail: r.stdout + r.stderr };
 });
 
 await phase("bun test (workspace property tests)", async () => {
-  const r = await spawnCmd("bun", ["test"]);
+  const r = await spawnBun(["test"]);
   if (r.code !== 0) return { ok: false, detail: r.stderr || r.stdout };
   // Bun writes the summary to stderr; surface the pass count line.
   const summary = (r.stderr.match(/\d+ pass[\s\S]*?expect\(\) calls/) ?? [r.stderr.split("\n").slice(-3, -1).join(" ")])[0];
@@ -145,7 +142,7 @@ if (!QUICK) {
       continue;
     }
     await phase(`tool --test: ${e.name}`, async () => {
-      const r = await spawnCmd("bun", [toolPath, "--test"]);
+      const r = await spawnBun([toolPath, "--test"]);
       if (r.code === 2) return { ok: true, skipped: true, detail: "no --test hook registered" };
       if (r.code !== 0) return { ok: false, detail: r.stderr || r.stdout };
       return { ok: true };
@@ -169,7 +166,7 @@ if (!QUICK) {
         tool_path: str(toolPath),
         goldens_dir: str(goldensDir),
       }));
-      const r = await spawnCmd("bun", [ORACLE], input);
+      const r = await spawnBun([ORACLE], input);
       if (r.code !== 0) return { ok: false, detail: r.stderr.trim() || r.stdout.slice(0, 400) };
       return { ok: true };
     });

@@ -36,6 +36,7 @@ write the frictions and the dead ends as well as the wins.
 | 023 | [Channel combinators (sturm-controlled, sturm-then, sturm-tensor)](023-channel-combinators.md) | 2026-04-29 | scientist-workbench-o1q             |
 | 024 | [TS-native frontend DSL: agents-as-TS-experts is the spec](024-ts-native-frontend-dsl.md) | 2026-04-30 | (none — beads db not initialised; ADR-0009 is the spec) |
 | 025 | [Grover end-to-end via @workbench/sturm + sturm-lib + sturm-find](025-grover-end-to-end.md) | 2026-04-30 | (none — beads db not initialised) |
+| 026 | [Code-health pass: protocol DRY, dead code, literate ntt](026-code-health-protocol-dry.md) | 2026-05-02 | scientist-workbench-{9s4, cji, y8p, 10w, hgc, 61s} |
 
 ## How to add a new shard
 

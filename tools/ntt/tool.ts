@@ -163,10 +163,24 @@ export const def = defineTool({
     return list(result.map((r) => int(r)));
   },
   test: () => {
-    // Independent oracle: O(n²) schoolbook DFT, written inline rather
-    // than imported from @workbench/mod-core so the test does not
-    // accidentally test mod-core agreeing with itself. (See beads
-    // issue scientist-workbench-hgc for the formal note.)
+    // Independent oracle for the --test hook.
+    //
+    // The schoolbook DFT below is an O(n²) reference implementation,
+    // *deliberately* written inline rather than pulled from
+    // `@workbench/mod-core`. Importing the same `pow` / `modInv`
+    // helpers that the production transform itself uses would reduce
+    // this hook to "the NTT agrees with itself" — a reflexive check
+    // that catches no algorithmic bug. The test's whole point is that
+    // a bug in the Cooley-Tukey / Bluestein machinery shows up as a
+    // mismatch against a different implementation of the *spec* (the
+    // discrete Fourier transform over `F_p` with primitive root `g`),
+    // not a mismatch against another callsite of the same code.
+    //
+    // The independence is the load-bearing property; the duplication
+    // is the deliberate cost. If a future agent is tempted to "DRY"
+    // these helpers by importing from mod-core, they will silently
+    // weaken this hook into a tautology — re-derive the rationale
+    // before doing so.
     const G = NTT_SUPPORTED_PRIMITIVE_ROOT;
     function pow(b: bigint, e: bigint, m: bigint): bigint {
       let r = 1n; let bb = b % m; let ee = e;

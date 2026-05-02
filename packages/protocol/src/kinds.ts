@@ -19,6 +19,7 @@
 // registry-search) recognise the tag and unwrap to the named kind.
 
 import { ProtocolError } from "./errors.js";
+import { INT_RE, F64_BITS_RE, gcdBigInt } from "./numerics.js";
 
 export type Hash = string;
 
@@ -98,20 +99,6 @@ const KIND_SET: ReadonlySet<string> = new Set(KINDS);
 
 export function isKind(s: unknown): s is Kind {
   return typeof s === "string" && KIND_SET.has(s);
-}
-
-const INT_RE = /^-?(0|[1-9][0-9]*)$/;
-const F64_BITS_RE = /^[0-9a-f]{16}$/;
-
-function gcdBigInt(a: bigint, b: bigint): bigint {
-  let x = a < 0n ? -a : a;
-  let y = b < 0n ? -b : b;
-  while (y !== 0n) {
-    const t = x % y;
-    x = y;
-    y = t;
-  }
-  return x;
 }
 
 function checkInt(s: string, field: string): void {
