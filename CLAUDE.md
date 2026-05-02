@@ -98,6 +98,29 @@ Numbered, non-negotiable. Re-read after compaction.
    at session start; `bd close <id1> <id2> ...` at the end. Never use
    `bd edit` (it opens $EDITOR and blocks).
 
+   **Multi-device sync.** The Dolt DB is local; the cross-device
+   sync vehicle is `.beads/issues.jsonl` (tracked in git). Tracked
+   git hooks under `.githooks/` make this automatic:
+   - **pre-commit** auto-runs `bd export -o .beads/issues.jsonl`
+     and stages it, so every commit carries a current snapshot of
+     issues + memories.
+   - **post-merge** auto-runs `bd import` after `git pull`, so
+     incoming issue state is folded into the local DB (upsert
+     semantics; never destructive).
+
+   On a fresh clone of any device, run **once**:
+   ```sh
+   sh scripts/setup-device.sh
+   ```
+   That sets `core.hooksPath` to `.githooks/` and runs `bd bootstrap
+   --yes` (the *non-destructive* sibling of `bd init` — never
+   deletes data). After that the hooks do everything; you only
+   `bd create / close` and `git commit / pull / push` as normal.
+
+   **Do not run `bd init` or `bd init --force`** — those rebuild
+   the DB and discard issues. `bd bootstrap` is the right command
+   for setup, recovery, and fresh-machine onboarding.
+
 10. **Literate programming.** Source files are exposition. Doc-comments
     expand into multi-paragraph explanations of *why* the code is
     shaped the way it is — what ground truth it embodies, what pitfalls

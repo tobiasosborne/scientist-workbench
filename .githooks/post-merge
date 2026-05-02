@@ -1,0 +1,33 @@
+#!/usr/bin/env sh
+# --- BEGIN BEADS INTEGRATION v1.0.0 ---
+# This section is managed by beads. Do not remove these markers.
+if command -v bd >/dev/null 2>&1; then
+  export BD_GIT_HOOK=1
+  _bd_timeout=${BEADS_HOOK_TIMEOUT:-300}
+  if command -v timeout >/dev/null 2>&1; then
+    timeout "$_bd_timeout" bd hooks run post-merge "$@"
+    _bd_exit=$?
+    if [ $_bd_exit -eq 124 ]; then
+      echo >&2 "beads: hook 'post-merge' timed out after ${_bd_timeout}s — continuing without beads"
+      _bd_exit=0
+    fi
+  else
+    bd hooks run post-merge "$@"
+    _bd_exit=$?
+  fi
+  if [ $_bd_exit -eq 3 ]; then
+    echo >&2 "beads: database not initialized — skipping hook 'post-merge'"
+    _bd_exit=0
+  fi
+  if [ $_bd_exit -ne 0 ]; then exit $_bd_exit; fi
+fi
+# --- END BEADS INTEGRATION v1.0.0 ---
+# --- BEGIN SCIENTIST-WORKBENCH BEADS AUTO-IMPORT ---
+# After a pull/merge brings in a newer .beads/issues.jsonl, fold it
+# into the local Dolt DB (upsert semantics; never destructive). On a
+# fresh clone where no DB yet exists, `bd bootstrap --yes` is the
+# one-time setup that primes the DB from the JSONL.
+if command -v bd >/dev/null 2>&1 && [ -f .beads/issues.jsonl ] && [ -d .beads/embeddeddolt ]; then
+  bd import .beads/issues.jsonl -q 2>/dev/null || true
+fi
+# --- END SCIENTIST-WORKBENCH BEADS AUTO-IMPORT ---
