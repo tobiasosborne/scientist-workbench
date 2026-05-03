@@ -8,6 +8,20 @@ export {
   defineTool,
   decodeSchema,
 } from "./runner.js";
+export {
+  type BoolFlag,
+  type EnumFlag,
+  type FlagSchema,
+  type FlagSpec,
+  type FlagsOf,
+  type IntFlag,
+  type ParsedFlags,
+  type StrFlag,
+  F,
+  FlagParseError,
+  parseFlagsFromArgv,
+  renderFlagsHelp,
+} from "./flags.js";
 export { exampleToValue, invariantToValue } from "./metadata.js";
 export {
   type ProvenanceRecord,

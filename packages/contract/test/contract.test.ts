@@ -7,18 +7,25 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   describeTool,
+  defineTool,
   ExitSignal,
+  F,
+  FlagParseError,
   importToolDef,
+  parseFlagsFromArgv,
   provenanceToValue,
   readProvenance,
+  renderFlagsHelp,
   runTool,
   valueToProvenance,
   writeProvenance,
   writeValue,
   readValue,
+  type FlagsOf,
   type ProvenanceRecord,
   type RunIO,
 } from "../src/index.js";
+import { S } from "@workbench/protocol";
 import { canonicalize, hash, int, parse, record, str, sym, expr } from "@workbench/protocol";
 
 let storeDir: string;
@@ -270,5 +277,319 @@ describe("ADR-0010 — defineTool / runTool split", () => {
   });
 });
 
+// =============================================================================
+// ADR-0011 — typed flag declarations
+// =============================================================================
+//
+// The parser is exhaustive over four kinds × five argv forms (switch,
+// flag=value, flag value, missing, unknown) plus enum/int validation.
+// Each test names the form being exercised and asserts the typed
+// object's shape.
+
+describe("ADR-0011 — typed flag parser", () => {
+  test("F.bool: present=true, absent=false (never undefined)", () => {
+    const decl = { verbose: F.bool("verbose mode") };
+    const present = parseFlagsFromArgv(["--verbose"], decl);
+    expect(present.flags.verbose).toBe(true);
+    expect(present.explicit["verbose"]).toBe("true");
+    const absent = parseFlagsFromArgv([], decl);
+    expect(absent.flags.verbose).toBe(false);
+    expect(absent.explicit["verbose"]).toBeUndefined();
+  });
+
+  test("F.bool: =value form rejected", () => {
+    const decl = { verbose: F.bool("verbose mode") };
+    expect(() => parseFlagsFromArgv(["--verbose=true"], decl)).toThrow(FlagParseError);
+  });
+
+  test("F.str: --flag value (space-separated) and --flag=value both work", () => {
+    const decl = { name: F.str("a name") };
+    expect(parseFlagsFromArgv(["--name", "alice"], decl).flags.name).toBe("alice");
+    expect(parseFlagsFromArgv(["--name=alice"], decl).flags.name).toBe("alice");
+  });
+
+  test("F.str: with default present when absent", () => {
+    const decl = { mode: F.str("mode", { default: "exact" }) };
+    const r = parseFlagsFromArgv([], decl);
+    expect(r.flags.mode).toBe("exact");
+    expect(r.explicit["mode"]).toBeUndefined();  // default is not 'explicit'
+  });
+
+  test("F.str: without default is undefined when absent", () => {
+    const decl = { name: F.str("optional name") };
+    const r = parseFlagsFromArgv([], decl);
+    expect(r.flags.name).toBeUndefined();
+  });
+
+  test("F.int: parses base-10 integers including negatives", () => {
+    const decl = { shots: F.int("number of shots") };
+    expect(parseFlagsFromArgv(["--shots", "100"], decl).flags.shots).toBe(100n);
+    expect(parseFlagsFromArgv(["--shots=-5"], decl).flags.shots).toBe(-5n);
+    expect(parseFlagsFromArgv(["--shots", "-5"], decl).flags.shots).toBe(-5n);
+  });
+
+  test("F.int: strips underscores (--shots=10_000)", () => {
+    const decl = { shots: F.int("shots") };
+    expect(parseFlagsFromArgv(["--shots=10_000"], decl).flags.shots).toBe(10000n);
+    expect(parseFlagsFromArgv(["--shots", "1_000_000"], decl).flags.shots).toBe(1000000n);
+  });
+
+  test("F.int: rejects non-integer values", () => {
+    const decl = { shots: F.int("shots") };
+    expect(() => parseFlagsFromArgv(["--shots=abc"], decl)).toThrow(FlagParseError);
+    expect(() => parseFlagsFromArgv(["--shots=1.5"], decl)).toThrow(FlagParseError);
+  });
+
+  test("F.int: enforces declared min/max bounds", () => {
+    const decl = { shots: F.int("shots", { min: 1n, max: 1000n }) };
+    expect(() => parseFlagsFromArgv(["--shots=0"], decl)).toThrow(/below declared minimum/);
+    expect(() => parseFlagsFromArgv(["--shots=1001"], decl)).toThrow(/above declared maximum/);
+    expect(parseFlagsFromArgv(["--shots=500"], decl).flags.shots).toBe(500n);
+  });
+
+  test("F.enum: accepts declared values, rejects others", () => {
+    const decl = { mode: F.enum(["exact", "structural"] as const, "comparison mode") };
+    expect(parseFlagsFromArgv(["--mode=exact"], decl).flags.mode).toBe("exact");
+    expect(parseFlagsFromArgv(["--mode", "structural"], decl).flags.mode).toBe("structural");
+    expect(() => parseFlagsFromArgv(["--mode=loose"], decl)).toThrow(FlagParseError);
+  });
+
+  test("F.enum: with default", () => {
+    const decl = { mode: F.enum(["exact", "structural"] as const, "mode", { default: "exact" }) };
+    expect(parseFlagsFromArgv([], decl).flags.mode).toBe("exact");
+  });
+
+  test("unknown flag rejected with suggestion listing valid flags", () => {
+    const decl = { mode: F.str("mode"), shots: F.int("shots") };
+    let err: FlagParseError | null = null;
+    try { parseFlagsFromArgv(["--moed=exact"], decl); }
+    catch (e) { if (e instanceof FlagParseError) err = e; }
+    expect(err).not.toBeNull();
+    expect(err?.message).toMatch(/unknown flag --moed/);
+    expect(err?.suggestion).toMatch(/--mode.*--shots|--shots.*--mode/);
+  });
+
+  test("value flag missing its value rejected", () => {
+    const decl = { name: F.str("name") };
+    expect(() => parseFlagsFromArgv(["--name"], decl)).toThrow(/requires a value/);
+  });
+
+  test("strict arity: --bool followed by positional leaves positional", () => {
+    const decl = { equal: F.bool("equality flag") };
+    const r = parseFlagsFromArgv(["--equal", "1"], decl);
+    expect(r.flags.equal).toBe(true);
+    expect(r.positional).toEqual(["1"]);
+  });
+
+  test("-h alias resolves to --help in explicit map", () => {
+    const decl = { help: F.bool("show help") };
+    const r = parseFlagsFromArgv(["-h"], decl);
+    expect(r.flags.help).toBe(true);
+    expect(r.explicit["help"]).toBe("true");
+  });
+
+  test("renderFlagsHelp aligns columns and reports defaults", () => {
+    const decl = {
+      verbose: F.bool("show extra detail"),
+      shots: F.int("number of shots", { default: 100n }),
+      mode: F.enum(["exact", "structural"] as const, "comparison mode", { default: "exact" }),
+    };
+    const lines = renderFlagsHelp(decl);
+    expect(lines.length).toBe(3);
+    expect(lines.join("\n")).toMatch(/--shots <int> \(default: 100\)/);
+    expect(lines.join("\n")).toMatch(/--mode <"exact"\|"structural"> \(default: "exact"\)/);
+  });
+
+  // Type-level fixture: this code only typechecks if the inference
+  // is correct. The runtime asserts are duplicates of earlier tests;
+  // the value here is the static type assignment.
+  test("FlagsOf<F> inference: defaults non-undefined, enum literals preserved", () => {
+    const decl = {
+      verbose: F.bool("v"),
+      shots: F.int("s", { default: 100n }),
+      mode: F.enum(["exact", "structural"] as const, "m", { default: "exact" }),
+      name: F.str("n"),
+    } as const;
+    type Flags = FlagsOf<typeof decl>;
+    // Compile-time: these assignments only typecheck if inference is right.
+    const fixture: Flags = {
+      verbose: true,
+      shots: 100n,
+      mode: "exact",
+      name: undefined,  // no default → string | undefined
+    };
+    expect(fixture.verbose).toBe(true);
+    expect(fixture.shots).toBe(100n);
+    expect(fixture.mode).toBe("exact");
+    expect(fixture.name).toBeUndefined();
+  });
+});
+
+// =============================================================================
+// runTool end-to-end with a tool that declares flags
+// =============================================================================
+//
+// Build a minimal in-memory tool with one flag of each kind, then drive
+// it through runTool with various argv shapes. Catches integration bugs
+// the parser tests can miss (merge with std flags, dispatch, provenance).
+
+describe("ADR-0011 — runTool with declared flags", () => {
+  const echoDef = defineTool({
+    name: "test-echo",
+    version: "0.0.1",
+    schema: {
+      input: S.kind("string"),
+      output: S.record({
+        echoed: S.kind("string"),
+        verbose: S.kind("boolean"),
+        shots: S.kind("integer"),
+        mode: S.kind("string"),
+      }),
+    },
+    flags: {
+      verbose: F.bool("emit detail"),
+      shots: F.int("number of shots", { default: 100n }),
+      mode: F.enum(["fast", "slow"] as const, "speed", { default: "fast" }),
+    },
+    examples: [
+      {
+        description: "round-trip with defaults",
+        input: str("hi"),
+        output: record({
+          echoed: str("hi"),
+          verbose: { kind: "boolean", value: false },
+          shots: int(100n),
+          mode: str("fast"),
+        }),
+      },
+    ],
+    invariants: [{ name: "echoes-input", statement: "echoed == input.value", machine_checkable: true }],
+    fn: (input, flags) => record({
+      echoed: input,
+      verbose: { kind: "boolean", value: flags.verbose },
+      shots: int(flags.shots),
+      mode: str(flags.mode),
+    }),
+  });
+
+  test("defaults applied when no flags passed", async () => {
+    let captured = "";
+    const storeDir = await mkdtemp(join(tmpdir(), "wb-runtool-flags-"));
+    try {
+      await runTool(echoDef, {
+        argv: [],
+        stdin: async () => canonicalize(str("hi")),
+        stdout: (c) => { captured += c; },
+        stderr: () => {},
+        env: { CAS_STORE: storeDir },
+        exit: (code) => { throw new ExitSignal(code); },
+      });
+      const v = parse(captured);
+      expect(v.kind).toBe("record");
+      if (v.kind === "record") {
+        expect(v.fields["verbose"]).toEqual({ kind: "boolean", value: false });
+        expect(v.fields["shots"]).toEqual(int(100n));
+        expect(v.fields["mode"]).toEqual(str("fast"));
+      }
+    } finally {
+      await rm(storeDir, { recursive: true, force: true });
+    }
+  });
+
+  test("explicit flags override defaults; provenance records only explicit", async () => {
+    let captured = "";
+    const storeDir = await mkdtemp(join(tmpdir(), "wb-runtool-flags-"));
+    try {
+      await runTool(echoDef, {
+        argv: ["--verbose", "--shots=10_000", "--mode", "slow"],
+        stdin: async () => canonicalize(str("hello")),
+        stdout: (c) => { captured += c; },
+        stderr: () => {},
+        env: { CAS_STORE: storeDir },
+        exit: (code) => { throw new ExitSignal(code); },
+      });
+      const v = parse(captured);
+      if (v.kind === "record") {
+        expect(v.fields["verbose"]).toEqual({ kind: "boolean", value: true });
+        expect(v.fields["shots"]).toEqual(int(10000n));
+        expect(v.fields["mode"]).toEqual(str("slow"));
+      }
+      // Provenance: only explicit tool flags recorded (verbose, shots, mode all explicit here)
+      const outputHash = hash(v);
+      const rec = await readProvenance(storeDir, outputHash);
+      expect(rec).not.toBeNull();
+      expect(rec?.flags).toEqual({ verbose: "true", shots: "10_000", mode: "slow" });
+    } finally {
+      await rm(storeDir, { recursive: true, force: true });
+    }
+  });
+
+  test("unknown flag triggers loud rejection on stderr + exit 1", async () => {
+    let stderrCaptured = "";
+    let signal: ExitSignal | null = null;
+    try {
+      await runTool(echoDef, {
+        argv: ["--moed=exact"],
+        stdin: async () => canonicalize(str("hi")),
+        stdout: () => {},
+        stderr: (c) => { stderrCaptured += c; },
+        env: { WB_SKIP_SCHEMA_CHECK: "1" },
+        exit: (code) => { throw new ExitSignal(code); },
+      });
+    } catch (e) {
+      if (e instanceof ExitSignal) signal = e;
+      else throw e;
+    }
+    expect(signal?.code).toBe(1);
+    expect(stderrCaptured).toMatch(/unknown flag --moed/);
+  });
+
+  test("--help renders standard + tool flags", async () => {
+    let captured = "";
+    await runTool(echoDef, {
+      argv: ["--help"],
+      stdin: async () => "",
+      stdout: (c) => { captured += c; },
+      stderr: () => {},
+      env: { WB_SKIP_SCHEMA_CHECK: "1" },
+      exit: (code) => { throw new ExitSignal(code); },
+    });
+    expect(captured).toMatch(/Standard flags:/);
+    expect(captured).toMatch(/Tool flags:/);
+    expect(captured).toMatch(/--verbose/);
+    expect(captured).toMatch(/--shots <int> \(default: 100\)/);
+    expect(captured).toMatch(/--mode/);
+  });
+
+  test("standard-flag collision in tool def fails fast at runTool entry", async () => {
+    const collidingDef = defineTool({
+      name: "test-collide",
+      version: "0.0.1",
+      schema: { input: S.kind("string"), output: S.kind("string") },
+      flags: { version: F.bool("conflicts with std --version") },
+      examples: [{ description: "x", input: str("x"), output: str("x") }],
+      invariants: [],
+      fn: (input) => input,
+    });
+    let stderrCaptured = "";
+    let signal: ExitSignal | null = null;
+    try {
+      await runTool(collidingDef, {
+        argv: ["--help"],
+        stdin: async () => "",
+        stdout: () => {},
+        stderr: (c) => { stderrCaptured += c; },
+        env: { WB_SKIP_SCHEMA_CHECK: "1" },
+        exit: (code) => { throw new ExitSignal(code); },
+      });
+    } catch (e) {
+      if (e instanceof ExitSignal) signal = e;
+      else throw e;
+    }
+    expect(signal?.code).toBe(1);
+    expect(stderrCaptured).toMatch(/collides with a standard flag/);
+  });
+});
+
 // silence the unused-import lint when these helpers aren't otherwise reached
-void sym; void expr; void hash;
+void sym; void expr;

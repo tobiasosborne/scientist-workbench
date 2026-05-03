@@ -49,10 +49,10 @@ import {
   str,
   type Value,
 } from "@workbench/protocol";
-import { defineTool, runTool, spawnBun } from "@workbench/contract";
+import { defineTool, F, runTool, spawnBun } from "@workbench/contract";
 
 const NAME = "oracle";
-const VERSION = "0.3.0";
+const VERSION = "0.4.0";
 
 const inputSchema = S.record(
   {
@@ -143,6 +143,14 @@ export const def = defineTool({
   name: NAME,
   version: VERSION,
   schema: { input: inputSchema, output: outputSchema },
+  flags: {
+    // ADR-0011 demo flag. When set, the oracle emits one stderr line
+    // per golden as it runs ("✓ name.golden.json" or "✗ name.golden.json:
+    // <reason>") so a developer running `bun tools/oracle/tool.ts
+    // --verbose` against a noisy goldens directory sees progress without
+    // having to wait for the final summary record. Off by default.
+    verbose: F.bool("emit per-golden progress lines to stderr"),
+  },
   examples: [
     {
       description: "run cas-simplify against its goldens — output omitted; verifier checks shape",
@@ -164,7 +172,7 @@ export const def = defineTool({
       machine_checkable: false,
     },
   ],
-  fn: async (input, _flags) => {
+  fn: async (input, flags) => {
     // Schema runner has narrowed input to {tool_path, goldens_dir, mode?}.
     const mode = (input.fields.mode?.value ?? "exact") as "exact" | "structural";
     const toolPath = input.fields.tool_path.value;
@@ -216,6 +224,11 @@ export const def = defineTool({
       results.push(r);
       if (r.passed) passed++;
       else failed++;
+      if (flags.verbose) {
+        const tag = r.passed ? "✓" : "✗";
+        const detail = r.passed ? "" : `: ${r.error ?? "(no detail)"}`;
+        process.stderr.write(`oracle: ${tag} ${r.filename}${detail}\n`);
+      }
     }
 
     if (failed > 0) {

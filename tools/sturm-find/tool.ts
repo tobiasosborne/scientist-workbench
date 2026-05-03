@@ -190,7 +190,7 @@ export const def = defineTool({
       machine_checkable: true,
     },
   ],
-  fn: async (input: Value, _flags: Record<string, string>): Promise<Value> => {
+  fn: async (input, _flags): Promise<Value> => {
     if (input.kind !== "record") {
       throw new ToolError(`${NAME}: expected record input`, {
         suggestion: "input must be a record { n_bits, marked, shots?, entropy? }",

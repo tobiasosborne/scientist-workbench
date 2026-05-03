@@ -36,6 +36,10 @@ The harness pipes `canonicalize(input)` to the tool's stdin (with `flags` joined
 
 Process exits 1 if any golden fails.
 
+## Tool flags
+
+- `--verbose` — emit one line per golden to stderr as it runs (`✓ name.golden.json` or `✗ name.golden.json: <reason>`). Off by default; the canonical results record on stdout is unchanged either way. Useful for noisy goldens directories where you want progress before the final summary.
+
 ## Standard flags
 
 `--schema --examples --invariants --version --help --provenance-of <hash> --test`

@@ -9,43 +9,48 @@
 //
 // What this module does
 // ---------------------
-// 1. Parses argv into switches + named flags (no positional args except the
-//    optional value for --provenance-of).
-// 2. Dispatches the standard flags. --schema, --examples, --invariants,
+// 1. Merges the runner's standard flag table with the tool's declared
+//    flags (ADR-0011). Any name collision fails at load time.
+// 2. Parses argv against the merged FlagSchema with strict declared
+//    arity — bool flags are switches, value flags consume the next
+//    token. Unknown flags or unexpected positionals reject loudly.
+// 3. Dispatches the standard flags. --schema, --examples, --invariants,
 //    --version emit canonical JSON metadata. --provenance-of looks up a
 //    derivation by output hash. --test runs the tool's optional in-process
 //    property tests.
-// 3. In the work case: parses stdin, *validates* the parsed Value against
-//    `def.schema.input`, runs `def.fn`, validates the output against
-//    `def.schema.output`, writes canonical bytes to stdout, and writes a
-//    provenance record.
+// 4. In the work case: parses stdin, *validates* the parsed Value against
+//    `def.schema.input`, runs `def.fn` with a typed `flags` object,
+//    validates the output against `def.schema.output`, writes canonical
+//    bytes to stdout, and writes a provenance record.
 //
+// ADR-0004 — schema validation
+// ----------------------------
 // The schema validation hooks (added in ADR-0004) replace the hand-rolled
 // `expectIntegerField` / `parseFooInput` shims that every tool used to
-// carry. Tool authors now declare a `Schema<I>` and the runner narrows
-// the parsed Value to `I` before calling `fn`. The `fn` body sees an
-// already-typed input.
-//
-// Output validation is not optional. A tool that returns a Value not
-// conforming to its declared output schema is, by ADR-0004's rules,
-// lying — and the project's "honest scope" discipline (PRD §6.1) is
-// about declining work, not misreporting it. We surface the violation
-// loudly as a ToolError.
+// carry. Tool authors declare a `Schema<I>` and the runner narrows the
+// parsed Value to `I` before calling `fn`. The `fn` body sees an
+// already-typed input. Output non-conformance is surfaced as a loud
+// ToolError ("internal contract violation") rather than passed silently.
 //
 // ADR-0010 — defineTool / runTool split
 // -------------------------------------
 // `defineTool({...})` is a typed identity wrapper that returns the
-// ToolDefinition unchanged but fixes its `I` and `O` type parameters
-// from the inline schema. `runTool(def, io?)` then performs the
-// IO-bound dispatch above. Because every tool entry point gates the
-// `runTool` call on `import.meta.main`, importing a tool module from
-// elsewhere yields the live `def` without spawning a subprocess and
-// without consuming stdin. The registry uses this to read tool
-// metadata in-process; tests use it to call `def.fn(input, flags)`
-// directly. The optional `RunIO` parameter is the second half of
-// the same change: tests inject argv / stdin / stdout / stderr /
-// exit / env so the dispatcher itself is exercisable without a child
-// process.
+// ToolDefinition unchanged but fixes its `I`, `O`, and `Fl` type
+// parameters from the inline schema. `runTool(def, io?)` then performs
+// the IO-bound dispatch above. Because every tool entry point gates
+// `runTool` on `import.meta.main`, importing a tool module yields the
+// live `def` without spawning a subprocess. The optional `RunIO`
+// parameter is the IO half: tests inject argv / stdin / stdout /
+// stderr / exit / env so the dispatcher itself is exercisable without
+// a child process.
+//
+// ADR-0011 — typed flags
+// ----------------------
+// `ToolDefinition` gains a third generic `Fl extends FlagSchema = {}`.
+// A tool's `flags` field declares CLI flags via `F.bool/.str/.int/.enum`;
+// the typed object handed to `fn` is `FlagsOf<Fl>`. Defaults are
+// non-undefined; absent declared flags without defaults are
+// `T | undefined`; bool flags are always present (false when absent).
 
 import {
   canonicalize,
@@ -63,6 +68,14 @@ import {
   type Schema,
   type Value,
 } from "@workbench/protocol";
+import {
+  F,
+  FlagParseError,
+  parseFlagsFromArgv,
+  renderFlagsHelp,
+  type FlagSchema,
+  type FlagsOf,
+} from "./flags.js";
 import { exampleToValue, invariantToValue } from "./metadata.js";
 import { provenanceToValue, readProvenance, writeProvenance, type ProvenanceRecord } from "./provenance.js";
 import { defaultStore } from "./store.js";
@@ -71,10 +84,10 @@ import { defaultStore } from "./store.js";
 // Public types
 // -----------------------------------------------------------------------------
 //
-// `ToolDefinition<I, O>` is generic in the input and output Value types
-// inferred from the schema. Tools that import `defineTool` and pass an
-// inline schema get tight `fn` typing for free; the cost is invisible at
-// the call site.
+// `ToolDefinition<I, O, Fl>` is generic in the input Value type, the
+// output Value type, and the flag schema. Tools that import
+// `defineTool` and pass an inline schema get tight typing for free;
+// the cost is invisible at the call site.
 
 // `NoInfer<I>` makes the example's `input` checked against `I` without
 // contributing to its inference. Otherwise TS picks `I` from the
@@ -97,13 +110,23 @@ export interface InvariantEntry {
   machine_checkable?: boolean;
 }
 
-export interface ToolDefinition<I extends Value = Value, O extends Value = Value> {
+// Default flag schema: an empty record. Tools that declare no flags
+// keep their `fn(input, _flags)` signature unchanged because
+// `FlagsOf<{}>` is `{}`.
+type EmptyFlags = Record<string, never>;
+
+export interface ToolDefinition<
+  I extends Value = Value,
+  O extends Value = Value,
+  Fl extends FlagSchema = EmptyFlags,
+> {
   name: string;
   version: string;
   schema: { input: Schema<I>; output: Schema<O> };
+  flags?: Fl;
   examples: ExampleEntry<I, O>[];
   invariants: InvariantEntry[];
-  fn: (input: I, flags: Record<string, string>) => O | Promise<O>;
+  fn: (input: I, flags: FlagsOf<Fl>) => O | Promise<O>;
   test?: () => void | Promise<void>;
   /**
    * Manifest annotation introduced by ADR-0005. When set to `true`, this
@@ -122,28 +145,53 @@ export interface ToolDefinition<I extends Value = Value, O extends Value = Value
 
 /**
  * Identity wrapper around a `ToolDefinition` that exists purely so that
- * TypeScript can infer the `I` and `O` type parameters from the inline
- * `schema` argument at the call site. Authors write
+ * TypeScript can infer the `I`, `O`, and `Fl` type parameters from the
+ * inline `schema` and `flags` arguments at the call site. Authors write
  *
  *     export const def = defineTool({
- *       name: "mod-pow", version: "0.1.0",
+ *       name: "mod-pow", version: "0.2.0",
  *       schema: { input: S.record({...}), output: S.kind("integer") },
- *       fn: (input, flags) => ...    // input is typed as the record, output as IntegerValue
+ *       flags: { verbose: F.bool("emit per-step trace") },
+ *       fn: (input, flags) => /* flags.verbose: boolean *\/ ...
  *     });
- *
- * Without `defineTool`, `runTool({...})` swallows the inference and `fn`'s
- * `input` parameter widens back to `Value`.
  *
  * Pure data: this function performs no IO. The companion `runTool` is
  * the IO-bound dispatcher; the split (ADR-0010) is what lets the
  * registry import `def` directly to read metadata in-process and lets
  * tests call `def.fn(input, flags)` without spawning a subprocess.
  */
-export function defineTool<I extends Value, O extends Value>(
-  def: ToolDefinition<I, O>
-): ToolDefinition<I, O> {
+export function defineTool<
+  I extends Value,
+  O extends Value,
+  const Fl extends FlagSchema = EmptyFlags,
+>(def: ToolDefinition<I, O, Fl>): ToolDefinition<I, O, Fl> {
   return def;
 }
+
+// -----------------------------------------------------------------------------
+// Standard flags — owned by the runner, merged with the tool's at parse time
+// -----------------------------------------------------------------------------
+//
+// ADR-0011: the runner declares the seven standard flags as a
+// `FlagSchema` once. Tools never redeclare them; a name collision
+// between a tool's flags and the standard set is caught at runTool
+// entry. This is the *only* place where flag-name uniqueness across
+// the workbench is checked.
+//
+// `provenance-of` is the only value-flag in the standard set; the
+// rest are switches.
+
+const STANDARD_FLAGS = {
+  help:           F.bool("show this help"),
+  version:        F.bool("emit {name, version}"),
+  schema:         F.bool("emit input/output schema (encodeSchema'd Values)"),
+  examples:       F.bool("emit list of examples"),
+  invariants:     F.bool("emit list of invariants"),
+  test:           F.bool("run this tool's property tests in-process (if any)"),
+  "provenance-of": F.str("emit derivation tree for value-hash"),
+} as const satisfies FlagSchema;
+
+type StdFlags = FlagsOf<typeof STANDARD_FLAGS>;
 
 // -----------------------------------------------------------------------------
 // Injectable IO
@@ -201,62 +249,6 @@ function resolveIO(io: RunIO | undefined): ResolvedIO {
 }
 
 // -----------------------------------------------------------------------------
-// Argv parsing
-// -----------------------------------------------------------------------------
-//
-// Three forms are recognised:
-//   --flag           switch (flag in `switches`)
-//   --flag=value     named (named[flag] = value)
-//   --flag value     named, when the flag is in STD_TAKES_VALUE or the
-//                    next arg does not start with `-`. This last
-//                    heuristic is the historical footgun (see beads
-//                    issue scientist-workbench-rej for the planned
-//                    typed-flag overhaul); for now keep behaviour
-//                    compatible with v0.2 callers.
-
-interface ParsedArgv {
-  switches: Set<string>;
-  named: Record<string, string>;
-  positional: string[];
-}
-
-const STD_TAKES_VALUE = new Set(["provenance-of"]);
-
-function parseArgv(argv: string[]): ParsedArgv {
-  const switches = new Set<string>();
-  const named: Record<string, string> = {};
-  const positional: string[] = [];
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i]!;
-    if (arg.startsWith("--")) {
-      const stripped = arg.slice(2);
-      const eq = stripped.indexOf("=");
-      if (eq >= 0) {
-        named[stripped.slice(0, eq)] = stripped.slice(eq + 1);
-      } else if (
-        STD_TAKES_VALUE.has(stripped) ||
-        (i + 1 < argv.length && !argv[i + 1]!.startsWith("-"))
-      ) {
-        const next = argv[i + 1];
-        if (next === undefined) {
-          switches.add(stripped);
-        } else {
-          named[stripped] = next;
-          i++;
-        }
-      } else {
-        switches.add(stripped);
-      }
-    } else if (arg === "-h") {
-      switches.add("help");
-    } else {
-      positional.push(arg);
-    }
-  }
-  return { switches, named, positional };
-}
-
-// -----------------------------------------------------------------------------
 // Stdin (default binding)
 // -----------------------------------------------------------------------------
 
@@ -274,30 +266,24 @@ async function readStdin(): Promise<string> {
 // Help text
 // -----------------------------------------------------------------------------
 
-function helpText<I extends Value, O extends Value>(def: ToolDefinition<I, O>): string {
+function helpText<I extends Value, O extends Value, Fl extends FlagSchema>(
+  def: ToolDefinition<I, O, Fl>,
+  toolFlags: FlagSchema,
+): string {
   const lines: string[] = [];
   lines.push(`${def.name} ${def.version}`);
   lines.push("");
   lines.push("Reads a JSON value from stdin and writes a JSON value to stdout.");
   lines.push("");
   lines.push("Standard flags:");
-  lines.push("  --schema           emit input/output schema (encodeSchema'd Values)");
-  lines.push("  --examples         emit list of examples");
-  lines.push("  --invariants       emit list of invariants");
-  lines.push("  --version          emit {name, version}");
-  lines.push("  --provenance-of H  emit derivation tree for value-hash H if known");
-  lines.push("  --test             run this tool's property tests in-process (if any)");
-  lines.push("  -h, --help         this message");
-  return lines.join("\n");
-}
-
-function ensureExtractFlags(named: Record<string, string>): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(named)) {
-    if (k === "provenance-of") continue;
-    out[k] = v;
+  for (const l of renderFlagsHelp(STANDARD_FLAGS)) lines.push(l);
+  lines.push("  -h                                 alias for --help");
+  if (Object.keys(toolFlags).length > 0) {
+    lines.push("");
+    lines.push("Tool flags:");
+    for (const l of renderFlagsHelp(toolFlags)) lines.push(l);
   }
-  return out;
+  return lines.join("\n");
 }
 
 // -----------------------------------------------------------------------------
@@ -312,7 +298,9 @@ function ensureExtractFlags(named: Record<string, string>): Record<string, strin
 // Cost: linear in the example payload, capped by the example count
 // (typically 10–30). Well under the 100ms cold-start budget.
 
-function checkExamplesAgainstSchema<I extends Value, O extends Value>(def: ToolDefinition<I, O>): void {
+function checkExamplesAgainstSchema<I extends Value, O extends Value, Fl extends FlagSchema>(
+  def: ToolDefinition<I, O, Fl>,
+): void {
   for (let i = 0; i < def.examples.length; i++) {
     const e = def.examples[i]!;
     const inputCheck = validate(e.input, def.schema.input);
@@ -335,18 +323,40 @@ function checkExamplesAgainstSchema<I extends Value, O extends Value>(def: ToolD
 }
 
 // -----------------------------------------------------------------------------
+// Standard / tool flag merge + collision check
+// -----------------------------------------------------------------------------
+
+function mergedFlags(toolFlags: FlagSchema): FlagSchema {
+  const out: FlagSchema = { ...STANDARD_FLAGS };
+  for (const [k, spec] of Object.entries(toolFlags)) {
+    if (k in STANDARD_FLAGS) {
+      throw new Error(
+        `tool declares flag --${k} which collides with a standard flag; ` +
+        `standard flags reserved: ${Object.keys(STANDARD_FLAGS).join(", ")}`,
+      );
+    }
+    out[k] = spec;
+  }
+  return out;
+}
+
+// -----------------------------------------------------------------------------
 // Public API: runTool
 // -----------------------------------------------------------------------------
 
-export async function runTool<I extends Value, O extends Value>(
-  def: ToolDefinition<I, O>,
+export async function runTool<I extends Value, O extends Value, Fl extends FlagSchema>(
+  def: ToolDefinition<I, O, Fl>,
   io?: RunIO,
 ): Promise<void> {
   const r = resolveIO(io);
   const writeOut = (v: Value): void => { r.stdout(canonicalize(v)); };
-  const parsed = parseArgv(r.argv);
+  const toolFlags = (def.flags ?? ({} as FlagSchema)) as FlagSchema;
 
   try {
+    // Collision check runs inside the try block so a tool that
+    // declares a colliding flag name surfaces as a normal-shaped
+    // ToolError on stderr + exit 1, not as an unhandled exception.
+    const merged = mergedFlags(toolFlags);
     // Examples-conform-to-schema is a load-time invariant. Run it once on
     // every entry into runTool — most invocations are cheap (validation
     // on small examples), and we want the failure surfaced early on the
@@ -356,16 +366,50 @@ export async function runTool<I extends Value, O extends Value>(
       checkExamplesAgainstSchema(def);
     }
 
-    if (parsed.switches.has("help")) {
-      r.stdout(helpText(def));
+    // ADR-0011: parse argv against the merged FlagSchema. Strict
+    // declared arity, no heuristics. Unknown flags and unexpected
+    // positionals reject here.
+    let parsed;
+    try {
+      parsed = parseFlagsFromArgv(r.argv, merged);
+    } catch (e) {
+      if (e instanceof FlagParseError) {
+        const opts: { suggestion?: string; detail?: unknown } = { detail: { reason: "flag-parse" } };
+        if (e.suggestion !== undefined) opts.suggestion = e.suggestion;
+        throw new ToolError(`${def.name}: ${e.message}`, opts);
+      }
+      throw e;
+    }
+    if (parsed.positional.length > 0) {
+      throw new ToolError(
+        `${def.name}: unexpected positional argument(s): ${parsed.positional.map((p) => JSON.stringify(p)).join(", ")}`,
+        {
+          suggestion:
+            "this tool reads its input from stdin and configures itself via flags; " +
+            "no positional arguments are accepted",
+        },
+      );
+    }
+    const stdFlags = parsed.flags as unknown as StdFlags;
+    // Tool flags are derived by stripping the standard names from the
+    // typed object. The runtime cost is one shallow object copy per
+    // invocation; the type narrowing reflects what the tool author
+    // declared in `def.flags`.
+    const toolFlagsTyped: Record<string, unknown> = {};
+    for (const k of Object.keys(toolFlags)) {
+      toolFlagsTyped[k] = (parsed.flags as Record<string, unknown>)[k];
+    }
+
+    if (stdFlags.help) {
+      r.stdout(helpText(def, toolFlags));
       r.stdout("\n");
       return;
     }
-    if (parsed.switches.has("version")) {
+    if (stdFlags.version) {
       writeOut(record({ name: str(def.name), version: str(def.version) }));
       return;
     }
-    if (parsed.switches.has("schema")) {
+    if (stdFlags.schema) {
       writeOut(
         record({
           input: encodeSchema(def.schema.input),
@@ -374,16 +418,16 @@ export async function runTool<I extends Value, O extends Value>(
       );
       return;
     }
-    if (parsed.switches.has("examples")) {
+    if (stdFlags.examples) {
       writeOut(list(def.examples.map(exampleToValue)));
       return;
     }
-    if (parsed.switches.has("invariants")) {
+    if (stdFlags.invariants) {
       writeOut(list(def.invariants.map(invariantToValue)));
       return;
     }
-    if (parsed.named["provenance-of"] !== undefined) {
-      const h = parsed.named["provenance-of"];
+    if (stdFlags["provenance-of"] !== undefined) {
+      const h = stdFlags["provenance-of"];
       const store = r.env["CAS_STORE"] ?? defaultStore();
       const rec = await readProvenance(store, h);
       if (rec === null) {
@@ -393,7 +437,7 @@ export async function runTool<I extends Value, O extends Value>(
       writeOut(provenanceToValue(rec));
       return;
     }
-    if (parsed.switches.has("test")) {
+    if (stdFlags.test) {
       const t = def.test;
       if (t === undefined) {
         r.stderr(`${def.name}: no --test suite registered\n`);
@@ -412,13 +456,15 @@ export async function runTool<I extends Value, O extends Value>(
     // 2. Parse to a Value (rejects raw numbers, unknown kinds).
     // 3. Validate input against schema.input. Failure here is user-facing:
     //    the agent gave a wrong-shaped value.
-    // 4. Call fn with the narrowed input.
+    // 4. Call fn with the narrowed input and the typed flag object.
     // 5. Validate output against schema.output. Failure here is internal:
     //    the tool produced a value that doesn't match its own contract.
     // 6. Canonicalise output bytes (one-shot — used both for stdout and
     //    for the provenance hash; see beads issue scientist-workbench-wmh).
     // 7. Write to stdout. Write provenance (best-effort; failures here
-    //    must not destroy the user's output).
+    //    must not destroy the user's output). The provenance record uses
+    //    only the *explicitly-set* flag values (ADR-0011) so a tool's
+    //    defaults don't bloat recorded bytes.
 
     const stdinText = await r.stdin();
     if (stdinText.trim().length === 0) {
@@ -439,8 +485,7 @@ export async function runTool<I extends Value, O extends Value>(
         }
       );
     }
-    const flags = ensureExtractFlags(parsed.named);
-    const output = await def.fn(input as I, flags);
+    const output = await def.fn(input as I, toolFlagsTyped as FlagsOf<Fl>);
 
     const outputCheck = validate(output, def.schema.output);
     if (!outputCheck.ok) {
@@ -461,14 +506,21 @@ export async function runTool<I extends Value, O extends Value>(
 
     // Provenance: append-only, content-addressed. Hash from the canonical
     // bytes we already have rather than re-canonicalising via hash().
+    // The recorded `flags` are only those tool flags explicitly set on
+    // argv — defaults are not recorded so two invocations differing only
+    // in default-overlap produce the same provenance bytes.
     try {
       const inputHash = hash(input);
       const outputHash = hashCanonicalBytes(outBytes);
       const store = r.env["CAS_STORE"] ?? defaultStore();
+      const explicitToolFlags: Record<string, string> = {};
+      for (const k of Object.keys(toolFlags)) {
+        if (parsed.explicit[k] !== undefined) explicitToolFlags[k] = parsed.explicit[k]!;
+      }
       const rec: ProvenanceRecord = {
         tool: { name: def.name, version: def.version },
         inputs: [{ name: "stdin", hash: inputHash }],
-        flags,
+        flags: explicitToolFlags,
         output_hash: outputHash,
       };
       if (def.nondeterministic === true) rec.nondeterministic = true;

@@ -94,7 +94,7 @@ Errors go to stderr with non-zero exit. The `ToolError` shape carries a `suggest
 | `--test` | run in-process property tests; exits 0 pass, 1 fail, 2 no hook |
 | `--help`, `-h` | human-readable usage |
 
-Tool-specific flags follow `--key=value` or `--key value`. See each tool's `--examples`.
+Tool-specific flags follow `--key=value` or `--key value`. Tools declare their flags via the `F.*` constructors (`F.bool`, `F.str`, `F.int`, `F.enum`) on the `flags` field of `defineTool`; the runner parses argv against the merged standard + tool flag schema with **strict declared arity** (ADR-0011). A boolean switch followed by a positional leaves the positional unconsumed; a value-flag without an inline `=` consumes exactly the next argv token regardless of shape (so `--shots -2` works as expected). Unknown flags, unexpected positionals, or out-of-range int values reject loudly with a suggestion. `F.int` accepts underscore-grouped literals (`--shots=10_000`). Run any tool with `--help` to see the auto-rendered flag table.
 
 ---
 

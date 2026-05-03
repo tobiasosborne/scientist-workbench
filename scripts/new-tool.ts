@@ -224,7 +224,7 @@ import {
   ToolError,
   type Value,
 } from "@workbench/protocol";
-import { defineTool, runTool } from "@workbench/contract";
+import { defineTool, F, runTool } from "@workbench/contract";
 ${usesImports}
 
 const NAME = "${name}";
@@ -233,6 +233,12 @@ const VERSION = "0.1.0";
 // ADR-0010: every tool exports \`def\` (pure data) and gates \`runTool\` on
 // \`import.meta.main\` so the registry and tests can import the module
 // without spawning a subprocess or consuming stdin.
+//
+// ADR-0011: declare CLI flags via the \`flags\` field using \`F.bool\` /
+// \`F.str\` / \`F.int\` / \`F.enum\`. The runner merges them with the
+// standard flag table, parses argv strictly against declared arity,
+// and hands \`fn\` a typed \`flags\` object. Tools without flags omit the
+// field entirely; \`fn\` then sees \`flags\` as \`{}\`.
 export const def = defineTool({
   name: NAME,
   version: VERSION,
@@ -243,6 +249,12 @@ export const def = defineTool({
     input: S.any(),
     output: S.any(),
   },
+  // Optional. Drop this field entirely if the tool takes no CLI flags.
+  // flags: {
+  //   verbose: F.bool("emit per-step trace to stderr"),
+  //   shots:   F.int("number of samples", { default: 100n, min: 1n }),
+  //   mode:    F.enum(["fast", "slow"] as const, "speed knob", { default: "fast" }),
+  // },
   examples: [
     // PRD §6.1: aim for one example per code-path branch + edge cases,
     // ≥10 once the tool is "done." For v0.1 prototypes the soft floor is
@@ -262,11 +274,14 @@ export const def = defineTool({
     // Add domain-specific invariants here. Each should be a one-line
     // statement of a property that holds for *every* in-scope input.
   ],
-  fn: (input: Value, _flags: Record<string, string>): Value => {
+  fn: (input, _flags): Value => {
     // TODO: implement. The runner has already parsed and validated the
-    // input against schema.input before this function runs; tighten the
-    // schema and the input parameter type narrows automatically.
+    // input against schema.input before this function runs; tighten
+    // schema.input and the \`input\` parameter type narrows automatically.
+    // Once you declare \`flags\`, \`_flags\` becomes typed (rename to
+    // \`flags\` and access \`flags.<name>\` directly).
     void bool;
+    void F;
     void list;
     void rat;
     void record;
