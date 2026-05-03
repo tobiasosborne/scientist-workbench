@@ -114,6 +114,41 @@ export interface InvariantEntry {
 // `FlagsOf<{}>` is `{}`.
 type EmptyFlags = Record<string, never>;
 
+/**
+ * Extract the input Value type from a `ToolDefinition`'s static type.
+ * Used by the generated typed barrel (`@workbench/compose/wb`) to
+ * derive each tool's TS-side input shape from the schema's inferred
+ * generic. Equivalent type-extractors for the output and flags
+ * follow.
+ *
+ *     type ModPowInput = InputOf<typeof modPowDef>;
+ *     // → { kind: "record"; fields: { base: Integer; exponent: Integer; modulus: Integer } }
+ *
+ * Implementation note: we match on the *structural* shape rather than
+ * positional generics on `ToolDefinition`. The positional form
+ * (`D extends ToolDefinition<infer I, Value, FlagSchema>`) fails when
+ * the def's actual `O`/`Fl` slots are narrower than `Value` /
+ * `FlagSchema` — TS won't widen them to make the match. The schema
+ * field of every `ToolDefinition` already carries `input: Schema<I>`,
+ * so matching `{ schema: { input: Schema<infer I> } }` extracts I
+ * directly without any widening dance.
+ */
+export type InputOf<D> = D extends { schema: { input: Schema<infer I> } } ? I : never;
+export type OutputOf<D> = D extends { schema: { output: Schema<infer O> } } ? O : never;
+/**
+ * Caller-side flag shape: `Partial<FlagsOf<Fl>>`. Defaults flow through
+ * `resolveFlagsForCall`, so a caller is free to omit any flag that
+ * has a declared default. Bool flags absent default to `false`. A
+ * tool with no declared flags resolves to `Partial<{}>` ≅ `{}`, i.e.
+ * the parameter is functionally absent.
+ */
+export type FlagsArgOf<D> =
+  D extends { flags?: infer Fl }
+    ? Fl extends FlagSchema
+      ? Partial<FlagsOf<Fl>>
+      : Record<string, never>
+    : Record<string, never>;
+
 export interface ToolDefinition<
   I extends Value = Value,
   O extends Value = Value,

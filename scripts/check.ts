@@ -117,6 +117,37 @@ await phase("convention: raw kind-literals outside allowlist", async () => {
   return { ok: true, detail: `${violations.length} drift sites (non-fatal)` };
 });
 
+// Codegen the typed barrel before typecheck. ADR-0012 / issue
+// scientist-workbench-4t5. The generated file
+// (`packages/compose/src/generated/wb.ts`) is committed; regeneration
+// against an unchanged tool set is byte-stable. The drift check is
+// "regenerate, compare bytes against the file we read before
+// regeneration" — drift means a new tool was added, an existing tool
+// renamed, or a schema/flag changed since the last commit; the
+// developer should `bun scripts/gen-workbench-barrel.ts` and commit.
+await phase("codegen: workbench typed barrel", async () => {
+  const barrelPath = join(ROOT, "packages", "compose", "src", "generated", "wb.ts");
+  let before: string | null = null;
+  try {
+    before = await readFile(barrelPath, "utf8");
+  } catch {
+    // file doesn't exist yet — fine, regen will create it; we still
+    // flag it as drift because we expect the file to be committed.
+  }
+  const gen = await spawnBun(["scripts/gen-workbench-barrel.ts"]);
+  if (gen.code !== 0) return { ok: false, detail: gen.stderr || gen.stdout };
+  const after = await readFile(barrelPath, "utf8");
+  if (before === null || before !== after) {
+    return {
+      ok: false,
+      detail:
+        "packages/compose/src/generated/wb.ts is out of date with tools/. " +
+        "Run `bun scripts/gen-workbench-barrel.ts` and commit the diff.",
+    };
+  }
+  return { ok: true };
+});
+
 await phase("typecheck (tsc --noEmit)", async () => {
   const r = await spawnBun(["tsc", "--noEmit"]);
   return r.code === 0 ? { ok: true } : { ok: false, detail: r.stdout + r.stderr };

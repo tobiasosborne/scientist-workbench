@@ -1,0 +1,196 @@
+// =============================================================================
+// gen-workbench-barrel — emit the typed `wb` object for @workbench/compose
+// =============================================================================
+//
+// Substrate: ADR-0012, issue scientist-workbench-4t5.
+//
+// This script walks `tools/`, imports each tool's `def`, and emits
+// `packages/compose/src/generated/wb.ts` — a TS module exporting two
+// names:
+//
+//   * `TypedWorkbench` — an interface whose methods are the camelCase
+//     of each tool's `def.name`, typed via `InputOf<typeof tooldef>`,
+//     `Partial<FlagsOf<...>>`, and `Promise<OutputOf<typeof tooldef>>`.
+//   * `typed(workbench)` — a factory that takes a runtime `Workbench`
+//     (from `loadWorkbench`) and returns a `TypedWorkbench` whose
+//     methods call `workbench.run(...)`.
+//
+// The whole point is that the *types* flow through imports, not
+// through schema introspection at runtime: `InputOf<typeof
+// modPowDef>` extracts the `I` parameter from `ToolDefinition<I, O,
+// Fl>` directly, no decode step. The generated module is therefore a
+// thin wrapper of imports + named methods, deterministic for the
+// same tool set.
+//
+// Why commit the generated file (deviation from ADR-0012's
+// "gitignored")
+// ----------------------------------------------------------------
+// The ADR called for gitignored output. In practice that meant fresh
+// clones and CI runs would have a missing-import error until the
+// first `bun run check`. Committing it instead:
+//
+//   * keeps imports of `@workbench/compose` working out of the box;
+//   * makes drift visible via `git status` (regenerating with no tool
+//     changes is a no-op; regenerating after a tool change shows up
+//     as a diff alongside the tool change);
+//   * costs ~50 lines of mostly-imports per regeneration.
+//
+// The drift check is a phase of `bun run check`: regenerate, then
+// `git diff --quiet packages/compose/src/generated/wb.ts`. Any diff
+// is a failed phase that names the tool that changed.
+
+import { readdir, stat, writeFile } from "node:fs/promises";
+import { dirname, join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
+import { findToolsRoot, importToolDef } from "@workbench/contract";
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const ROOT = dirname(HERE);
+const COMPOSE_GEN_DIR = join(ROOT, "packages", "compose", "src", "generated");
+const OUT_PATH = join(COMPOSE_GEN_DIR, "wb.ts");
+
+/**
+ * Convert a kebab-case tool name to camelCase for the JS method name.
+ * `cas-simplify` → `casSimplify`, `mod-pow` → `modPow`, `linalg-solve`
+ * → `linalgSolve`. Single words (no hyphen) pass through unchanged.
+ */
+function camelCase(s: string): string {
+  return s.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+}
+
+async function main(): Promise<void> {
+  const toolsRoot = await findToolsRoot(ROOT);
+  if (toolsRoot === null) {
+    throw new Error("findToolsRoot returned null; run from inside the workbench checkout");
+  }
+
+  // Walk tools/ deterministically — we sort by directory name so the
+  // generated file is byte-stable.
+  const entries = await readdir(toolsRoot, { withFileTypes: true });
+  const toolDirs = entries
+    .filter((e) => e.isDirectory())
+    .map((e) => e.name)
+    .sort();
+
+  type Tool = { dir: string; defName: string; modulePath: string };
+  const tools: Tool[] = [];
+  for (const dir of toolDirs) {
+    const toolPath = join(toolsRoot, dir, "tool.ts");
+    try {
+      await stat(toolPath);
+    } catch {
+      continue;
+    }
+    let def;
+    try {
+      def = await importToolDef(toolPath);
+    } catch (e) {
+      // We cannot include a tool in the typed barrel if its module
+      // doesn't import. The error is loud; the user fixes the tool
+      // and reruns.
+      throw new Error(`gen-workbench-barrel: failed to import ${toolPath}: ${(e as Error).message}`);
+    }
+    // Compute the relative path from the generated file's directory
+    // to the tool's tool.ts. We rewrite the `.ts` extension to `.js`
+    // because TS's `moduleResolution: "bundler"` (the workbench's
+    // setting) emits the import for the runtime sibling and rejects
+    // explicit `.ts` paths. Bun resolves the `.js` to the actual
+    // `.ts` file at runtime — same trick the rest of the codebase
+    // uses for cross-module imports.
+    const rel = relative(COMPOSE_GEN_DIR, toolPath).replace(/\\/g, "/").replace(/\.ts$/, ".js");
+    tools.push({ dir, defName: def.name, modulePath: rel });
+  }
+
+  // Emit the file. Format:
+  //
+  //   <header>
+  //   <imports — one per tool, aliased>
+  //   <type helpers re-exported>
+  //   <interface TypedWorkbench { ... }>
+  //   <export function typed(...): TypedWorkbench { ... }>
+
+  const lines: string[] = [];
+  lines.push("// =============================================================================");
+  lines.push("// AUTOGENERATED — do not edit by hand.");
+  lines.push("// Regenerate with `bun scripts/gen-workbench-barrel.ts`.");
+  lines.push("// =============================================================================");
+  lines.push("//");
+  lines.push("// The typed-barrel surface for @workbench/compose. ADR-0012 §");
+  lines.push("// 'Generated typed barrel'. Each method's input / output / flags shape is");
+  lines.push("// extracted from the corresponding tool's `def` via the type helpers");
+  lines.push("// `InputOf` / `OutputOf` / `FlagsArgOf` from @workbench/contract — types");
+  lines.push("// flow through imports, no schema introspection at runtime.");
+  lines.push("//");
+  lines.push("// Generated method names are the camelCase of each tool's `def.name`:");
+  lines.push("//   `cas-simplify` → `wb.casSimplify`");
+  lines.push("//   `linalg-solve` → `wb.linalgSolve`");
+  lines.push("//");
+  lines.push("// Use:");
+  lines.push("//");
+  lines.push("//   import { loadWorkbench, typed } from '@workbench/compose';");
+  lines.push("//   const wb = typed(await loadWorkbench());");
+  lines.push("//   const out = await wb.modPow({ base: int(2n), exponent: int(10n), modulus: int(1000n) });");
+  lines.push("");
+  lines.push("import type { FlagsArgOf, InputOf, OutputOf } from \"@workbench/contract\";");
+  lines.push("import type { Workbench } from \"../types.js\";");
+  lines.push("");
+
+  // Imports — alias each `def` to a unique name derived from the
+  // method name to keep grep-ability high.
+  for (const t of tools) {
+    const alias = `${camelCase(t.defName)}Def`;
+    lines.push(`import { def as ${alias} } from "${t.modulePath}";`);
+  }
+  lines.push("");
+
+  // The interface. Each method:
+  //   methodName: (input: InputOf<typeof xDef>, flags?: FlagsArgOf<typeof xDef>) => Promise<OutputOf<typeof xDef>>;
+  lines.push("export interface TypedWorkbench {");
+  for (const t of tools) {
+    const method = camelCase(t.defName);
+    const alias = `${method}Def`;
+    lines.push(
+      `  ${method}(input: InputOf<typeof ${alias}>, flags?: FlagsArgOf<typeof ${alias}>): Promise<OutputOf<typeof ${alias}>>;`,
+    );
+  }
+  lines.push("}");
+  lines.push("");
+
+  // The factory. Takes a Workbench, returns a TypedWorkbench whose
+  // methods call workbench.run.
+  lines.push("export function typed(workbench: Workbench): TypedWorkbench {");
+  lines.push("  return {");
+  for (const t of tools) {
+    const method = camelCase(t.defName);
+    const alias = `${method}Def`;
+    lines.push(`    ${method}(input, flags) {`);
+    lines.push(`      return workbench.run(${JSON.stringify(t.defName)}, input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof ${alias}>>;`);
+    lines.push(`    },`);
+  }
+  lines.push("  };");
+  lines.push("}");
+  lines.push("");
+
+  // The runtime alias keeps each `*Def` import live so TS doesn't
+  // tree-shake the typeof reference. We export it as `defs` for any
+  // consumer that wants the live ToolDefinitions keyed by camelCase
+  // name (tests, the registry).
+  lines.push("/**");
+  lines.push(" * Live ToolDefinitions, keyed by their camelCase method name. Useful");
+  lines.push(" * for tests and any consumer that wants the def objects directly.");
+  lines.push(" */");
+  lines.push("export const defs = {");
+  for (const t of tools) {
+    const method = camelCase(t.defName);
+    const alias = `${method}Def`;
+    lines.push(`  ${method}: ${alias},`);
+  }
+  lines.push("} as const;");
+  lines.push("");
+
+  const content = lines.join("\n");
+  await writeFile(OUT_PATH, content);
+  process.stdout.write(`wrote ${relative(ROOT, OUT_PATH)} (${tools.length} tools)\n`);
+}
+
+await main();

@@ -24,5 +24,14 @@
 // silently get a half-baked Workbench.
 
 export { CompositionError } from "./errors.js";
-export type { Workbench, LoadWorkbenchOptions } from "./types.js";
+export type { Workbench, LoadWorkbenchOptions, Pipe } from "./types.js";
 export { loadWorkbench } from "./load.js";
+
+// The typed-barrel surface (issue scientist-workbench-4t5).
+//
+// Generated from `tools/*/tool.ts` by `bun scripts/gen-workbench-barrel.ts`,
+// which is a phase of `bun run check`. The generated file is checked
+// in (deviation from ADR-0012 — see worklog 033 for the rationale)
+// so imports of `@workbench/compose` work in fresh clones without
+// running the codegen first.
+export { typed, defs, type TypedWorkbench } from "./generated/wb.js";

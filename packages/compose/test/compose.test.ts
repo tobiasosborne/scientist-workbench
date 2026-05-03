@@ -18,7 +18,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { canonicalize, hash, int, parse, record, str } from "@workbench/protocol";
 import { spawnBun } from "@workbench/contract";
-import { CompositionError, loadWorkbench } from "../src/index.js";
+import { CompositionError, loadWorkbench, typed } from "../src/index.js";
 
 describe("@workbench/compose — scaffold surface", () => {
   test("CompositionError extends ToolError and carries toolName + step", () => {
@@ -161,6 +161,37 @@ describe("@workbench/compose — Workbench.run", () => {
     expect(ce.toolName).toBe("mod-pow");
     expect(ce.message).toContain("mod-pow");
     expect(ce.message).toContain("schema");
+  });
+
+  test("typed barrel: wb.modPow({...}) typechecks and computes the right value", async () => {
+    const workbench = await loadWorkbench({ store });
+    const wb = typed(workbench);
+    // The whole point of the typed barrel: input fields are TS-checked
+    // against the schema's inferred I, and the output is narrowed to
+    // OutputOf<typeof modPowDef>. A typo on a field name or a wrong
+    // value type fails the typecheck — see the // @ts-expect-error
+    // tests below.
+    const out = await wb.modPow({
+      kind: "record",
+      fields: {
+        base: int(2n),
+        exponent: int(10n),
+        modulus: int(1000n),
+      },
+    });
+    // 2^10 mod 1000 = 1024 mod 1000 = 24
+    expect(out).toEqual(int(24n));
+  });
+
+  test("typed barrel: typo on method name fails the typecheck", async () => {
+    const workbench = await loadWorkbench({ store });
+    const wb = typed(workbench);
+    // @ts-expect-error — `modPwo` is a typo; the typed surface exposes
+    // every tool method with its exact camelCase name.
+    void wb.modPwo;
+    // We do not run the typo'd call — the @ts-expect-error above is
+    // the assertion that consumers cannot construct it. The runtime
+    // void access is just to keep the line non-dead.
   });
 
   test("provenance record matches subprocess for the same input", async () => {

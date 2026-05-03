@@ -1,6 +1,9 @@
 export {
   type ExampleEntry,
+  type FlagsArgOf,
+  type InputOf,
   type InvariantEntry,
+  type OutputOf,
   type RunIO,
   type ToolDefinition,
   ExitSignal,
