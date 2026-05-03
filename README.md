@@ -103,7 +103,7 @@ Tool-specific flags follow `--key=value` or `--key value`. Tools declare their f
 | tool | input | output | summary |
 |---|---|---|---|
 | `expr-parse` | `string` | `expression` (or leaf integer / rational / symbol) | text → AST. Operators `+ − * / ^`, identifiers, integer / rational / decimal literals. LaTeX is out of scope (sister tool). |
-| `cas-simplify` | any `Value` | canonical `Value` | canonicalise over `Q[x_1,…,x_n]` / `Q(x_1,…,x_n)`. Foreign subtrees wrapped in `tagged "cas-simplify/out-of-scope"`. **No polynomial GCD reduction in v1.** Idempotent. |
+| `cas-simplify` | any `Value` | canonical `Value` | canonicalise over `Q[x_1,…,x_n]` / `Q(x_1,…,x_n)`. Foreign subtrees wrapped in `tagged "cas-simplify/out-of-scope"`. As of ADR-0013, rational functions are reduced by polynomial GCD: `(x²−1)/(x−1)` simplifies to `x+1`. Idempotent. |
 | `cas-verify` | `record{lhs, rhs}` | `record{equal, reason?, witness?, side?, detail?}` | decide A = B over `Q(x)` by cross-multiplication (sound and complete; no GCD needed). On inequality: emits `lhs - rhs` as a witness. |
 | `mod-pow` | `record{base, exponent, modulus}` | `integer` | modular exponentiation over `Z/mZ`. Square-and-multiply; canonical-residue output in `[0, m)`. |
 | `mod-inv` | `record{value, modulus}` | `record{invertible, inverse?, gcd}` | modular inverse via extended Euclid. Record-with-flag (ADR-0003): `inverse` present iff invertible; `gcd` always present. |

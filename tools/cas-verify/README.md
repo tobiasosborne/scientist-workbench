@@ -18,7 +18,7 @@ Decide `A = B` as elements of `Q(x_1,…,x_n)`.
 
 ## How
 
-Cross-multiplication: `a/b = c/d ⟺ a·d = c·b` as polynomials. Sound and complete because `Q[x_1,…,x_n]` is an integral domain. **No polynomial GCD required** — that is exactly why this tool decides `(x²−1)/(x−1) = x+1` correctly even though `cas-simplify` does not reduce it.
+Cross-multiplication: `a/b = c/d ⟺ a·d = c·b` as polynomials. Sound and complete because `Q[x_1,…,x_n]` is an integral domain. **No polynomial GCD required for the equality decision itself** — this tool's correctness has never depended on reduction. As of ADR-0013, `cas-simplify` also reduces rational functions, so the witness on inequality (`lhs − rhs`) is now in lowest terms.
 
 ## Invariants
 

@@ -27,7 +27,7 @@ What v0.1 marked OPEN that v0.2 marks SETTLED or BUILT, and what the implementat
 
 What v0.1 did not anticipate:
 
-- **No polynomial GCD in v1.** `cas-simplify` does not reduce `(x²−1)/(x−1)` to `x+1`. `cas-verify` does decide `(x²−1)/(x−1) = x+1` correctly, because it uses cross-multiplication, which is sound and complete over Q(x₁,…,xₙ) without needing GCD. Per §1.4 a separate `cas-reduce` tool covers reduction; deferred.
+- ~~**No polynomial GCD in v1.**~~ **Updated by ADR-0013 (2026-05-03):** `cas-simplify` v0.4.0+ reduces rational functions by polynomial GCD (Brown–Collins subresultant PRS, multivariate via recursion). `(x²−1)/(x−1)` simplifies to `x+1`. `cas-verify` continues to use cross-multiplication for equality decisions (still GCD-free; sound and complete over Q(x₁,…,xₙ)) and now emits reduced witnesses on inequality.
 - **Provenance has read but no write.** `--provenance-of` reads the store; no tool currently writes to it. Phase 0 hole, see §10.
 
 The substrate question (TS/Bun) was relitigated and resolved in conversation; it remains SETTLED. See §1.3 for the four pillars.
@@ -419,7 +419,7 @@ Implemented in `packages/cas-core`:
 
 Explicitly out of scope for v1:
 
-- Polynomial GCD and reduction. `cas-simplify` does not reduce `(x²−1)/(x−1)` to `x+1`. `cas-verify` does decide that equality correctly. A separate `cas-reduce` tool can do the reduction; deferred per §1.4.
+- ~~Polynomial GCD and reduction.~~ **Landed in ADR-0013** (2026-05-03). `cas-simplify` v0.4.0+ reduces rational functions to lowest terms via Brown–Collins subresultant PRS in `packages/cas-core/src/poly-gcd.ts`; `cas-verify` witnesses on inequality are now reduced. Modular GCD (Brown/Wang for sparse multivariate) is filed as a follow-up; the MVP stays subresultant-only.
 - Substitution of values for variables. Trivial follow-up.
 - Differentiation. Trivial follow-up; another tool.
 - Integration, equation solving beyond linear, special functions, series expansion, limits, anything transcendental.

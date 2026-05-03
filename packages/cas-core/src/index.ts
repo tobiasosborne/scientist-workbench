@@ -52,8 +52,17 @@ export {
   polyConst,
   polyVar,
   polyLeadingCoef,
+  polyVars,
+  polyDegInVar,
+  polyCoeffsInVar,
+  polyFromCoeffsInVar,
   compareExp,
 } from "./poly.js";
+
+export {
+  polyGcd,
+  polyDivExact,
+} from "./poly-gcd.js";
 
 export {
   type RatFn,
@@ -74,6 +83,7 @@ export {
   ratFnEq,
   ratFnIsZero,
   ratFnIsConst,
+  ratFnReduce,
   ratFnStructuralEq,
 } from "./ratfn.js";
 

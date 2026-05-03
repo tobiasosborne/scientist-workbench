@@ -272,7 +272,7 @@ describe("casSimplify", () => {
       const s2 = casSimplify(s1);
       expect(canonicalize(s2)).toBe(canonicalize(s1));
     }
-  });
+  }, 30000);  // ADR-0013: GCD reduction in makeRatFn adds real per-tree cost
 
   test("hash determinism: rebuilding a simplified value yields the same hash", () => {
     const rng = new RNG(0xbeefdead);

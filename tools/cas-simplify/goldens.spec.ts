@@ -27,7 +27,7 @@ export const goldens: GoldenSpec[] = [
   { description: "rational + rational coefficient", input: expr("+", [expr("*", [rat(1n, 2n), sym("x")]), expr("*", [rat(1n, 3n), sym("x")])]) },
   { description: "two-variable monomial", input: expr("*", [sym("x"), sym("y")]) },
   { description: "two-variable expansion", input: expr("*", [expr("+", [sym("x"), sym("y")]), expr("+", [sym("x"), sym("y")])]) },
-  { description: "rational function unreduced", input: expr("/", [expr("-", [expr("^", [sym("x"), int(2n)]), int(1n)]), expr("-", [sym("x"), int(1n)])]) },
+  { description: "(x^2 - 1) / (x - 1) reduces to x + 1 (ADR-0013: GCD-reduced)", input: expr("/", [expr("-", [expr("^", [sym("x"), int(2n)]), int(1n)]), expr("-", [sym("x"), int(1n)])]) },
   { description: "1/x stays as 1/x", input: expr("/", [int(1n), sym("x")]) },
   { description: "x/y stays as x/y", input: expr("/", [sym("x"), sym("y")]) },
   { description: "(x/y) + 1 = (x+y)/y", input: expr("+", [expr("/", [sym("x"), sym("y")]), int(1n)]) },

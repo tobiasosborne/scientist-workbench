@@ -37,6 +37,7 @@ import {
   polySub,
   polyZero,
 } from "./poly.js";
+import { polyDivExact, polyGcd } from "./poly-gcd.js";
 import { type Field } from "./ring.js";
 import { type Rat, ratIsNegative } from "./rat.js";
 
@@ -61,12 +62,41 @@ export function makeRatFn<T>(
 ): RatFn<T> {
   if (polyIsZero(den)) throw new Error("ratFn: zero denominator");
   if (polyIsZero(num)) return ratFnZero(R);
-  const lc = polyLeadingCoef(den, R);
+  // ADR-0013: reduce to lowest terms before sign-normalisation. Every
+  // RatFn produced through `makeRatFn` is in canonical lowest-terms
+  // form, so `ratFnStructuralEq` becomes the strong equality (no two
+  // representations of the same field element survive in different
+  // shapes). The cost is one polyGcd per construction; acceptable for
+  // the workbench's typical input sizes.
+  const reduced = ratFnReduce({ num, den }, R);
+  const lc = polyLeadingCoef(reduced.den, R);
   const flip = opts?.signNormalise?.(lc) ?? false;
   if (flip) {
-    return { num: polyNeg(num, R), den: polyNeg(den, R) };
+    return { num: polyNeg(reduced.num, R), den: polyNeg(reduced.den, R) };
   }
-  return { num, den };
+  return reduced;
+}
+
+/**
+ * Reduce a rational function to lowest terms by dividing num and den
+ * by their polynomial GCD. Idempotent on already-reduced inputs (the
+ * GCD is `R.one`, so no division happens).
+ *
+ * Most callers should not need to invoke this directly — `makeRatFn`
+ * already calls it. It's exported for callers that bypass the
+ * constructor (e.g., consumers reading a stored RatFn whose origin
+ * predates ADR-0013) or that want to make the cost explicit at a
+ * particular call site.
+ */
+export function ratFnReduce<T>(rf: RatFn<T>, R: Field<T>): RatFn<T> {
+  if (polyIsZero(rf.num)) return rf;
+  if (polyIsOne(rf.den, R)) return rf;
+  const g = polyGcd(rf.num, rf.den, R);
+  if (polyIsOne(g, R)) return rf;
+  return {
+    num: polyDivExact(rf.num, g, R),
+    den: polyDivExact(rf.den, g, R),
+  };
 }
 
 // Q-specific shortcut: the Q `signNormalise` flips sign when the

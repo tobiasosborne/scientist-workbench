@@ -230,3 +230,136 @@ export function polyLeadingCoef<T>(a: Poly<T>, R: Ring<T>): T {
   if (polyIsZero(a)) return R.zero;
   return a.terms[0]!.coef;
 }
+
+// -----------------------------------------------------------------------------
+// Variable-view helpers
+// -----------------------------------------------------------------------------
+//
+// Polynomial GCD (ADR-0013) and any future algorithm that needs to treat
+// a multivariate polynomial as univariate in some chosen variable —
+// pseudo-division, content/primitive-part decomposition, Hermite
+// reduction, partial-fraction decomposition — all need the same set
+// of small operations: ask the degree in a variable, peel off the
+// coefficient at each power of that variable (which is itself a
+// polynomial in the *other* variables), rebuild the whole from such
+// a decomposition.
+//
+// These functions are intentionally ring-aware (they take a `Ring<T>`
+// for the coefficient operations), but they don't need a field — they
+// don't divide. Treat them as the algebraic counterpart to `compareExp`
+// + `expAdd`: low-level structural manipulation that any higher-level
+// algorithm can layer on.
+
+/**
+ * Returns the set of distinct variable names that appear with non-zero
+ * exponent anywhere in `a`, sorted alphabetically. The empty array
+ * means `a` is constant (or zero).
+ */
+export function polyVars<T>(a: Poly<T>): string[] {
+  const s = new Set<string>();
+  for (const t of a.terms) {
+    for (const [v] of t.exp) s.add(v);
+  }
+  return [...s].sort();
+}
+
+/**
+ * Degree of `a` in the variable `v`. Returns 0 if `v` does not appear
+ * (the polynomial is constant in `v`); returns `-1` for the zero
+ * polynomial. The `-1` sentinel matches the convention `deg(0) = -∞`
+ * collapsed onto an integer; callers must handle the zero case
+ * specially anyway.
+ */
+export function polyDegInVar<T>(a: Poly<T>, v: string): number {
+  if (polyIsZero(a)) return -1;
+  let max = 0;
+  for (const t of a.terms) {
+    for (const [name, exp] of t.exp) {
+      if (name === v && exp > max) max = exp;
+    }
+  }
+  return max;
+}
+
+/**
+ * View `a` as a univariate polynomial in `v` over the polynomial ring
+ * of the other variables: returns `[c_0, c_1, ..., c_d]` where each
+ * `c_i` is itself a `Poly<T>` (in the variables other than `v`) and
+ * `a = c_0 + c_1 · v + c_2 · v² + ... + c_d · v^d`.
+ *
+ * The coefficient list always has length `polyDegInVar(a, v) + 1`
+ * (or zero, for the zero polynomial). Trailing zeros are not trimmed;
+ * if the actual coefficient at some power is zero, the corresponding
+ * slot holds `polyZero`.
+ */
+export function polyCoeffsInVar<T>(a: Poly<T>, v: string, R: Ring<T>): Poly<T>[] {
+  if (polyIsZero(a)) return [];
+  const d = polyDegInVar(a, v);
+  const out: Map<number, Monomial<T>[]> = new Map();
+  for (let i = 0; i <= d; i++) out.set(i, []);
+  for (const t of a.terms) {
+    let powerOfV = 0;
+    const restExp: [string, number][] = [];
+    for (const [name, exp] of t.exp) {
+      if (name === v) powerOfV = exp;
+      else restExp.push([name, exp]);
+    }
+    out.get(powerOfV)!.push({ exp: restExp, coef: t.coef });
+  }
+  const result: Poly<T>[] = [];
+  for (let i = 0; i <= d; i++) {
+    const terms = out.get(i)!;
+    // Each term has its variable list already missing `v`; its exp is
+    // already sorted because the source `t.exp` was sorted and we
+    // just deleted one entry. Coefficients are still non-zero
+    // (canonical-form invariant of `a`).
+    result.push({ terms });
+  }
+  return result;
+}
+
+/**
+ * Inverse of `polyCoeffsInVar`: given coefficient polynomials
+ * `[c_0, ..., c_d]` (each in variables other than `v`), build the
+ * polynomial `c_0 + c_1 · v + ... + c_d · v^d`.
+ *
+ * Each `c_i` may be the zero polynomial; those terms contribute
+ * nothing. The result is in canonical form (sorted, deduplicated, no
+ * zero-coef terms).
+ */
+export function polyFromCoeffsInVar<T>(
+  coeffs: readonly Poly<T>[],
+  v: string,
+  R: Ring<T>,
+): Poly<T> {
+  const m = new Map<string, Monomial<T>>();
+  for (let i = 0; i < coeffs.length; i++) {
+    const c = coeffs[i]!;
+    if (polyIsZero(c)) continue;
+    for (const t of c.terms) {
+      // Splice `v^i` into the (already sorted) exponent list.
+      const newExp: [string, number][] = [];
+      let inserted = false;
+      for (const [name, exp] of t.exp) {
+        if (!inserted && name > v && i > 0) {
+          newExp.push([v, i]);
+          inserted = true;
+        }
+        newExp.push([name, exp]);
+      }
+      if (!inserted && i > 0) newExp.push([v, i]);
+      const key = JSON.stringify(newExp);
+      const existing = m.get(key);
+      if (existing) {
+        const sum = R.add(existing.coef, t.coef);
+        if (R.isZero(sum)) m.delete(key);
+        else m.set(key, { exp: newExp, coef: sum });
+      } else {
+        m.set(key, { exp: newExp, coef: t.coef });
+      }
+    }
+  }
+  const arr = [...m.values()];
+  arr.sort((a, b) => compareExp(a.exp, b.exp));
+  return { terms: arr };
+}
