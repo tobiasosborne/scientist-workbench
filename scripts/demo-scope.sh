@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 # Ten demos exercising the full scope of the workbench.
 # Each demo prints a header and the (post-processed) tool output.
+#
+# The TS port at `scripts/demo-scope.ts` (worklog 035) is the
+# preferred way to run these — one bun process, ~7× faster, typed
+# call sites. This shell version is preserved as a sanity-check the
+# subprocess surface is healthy, and as a fallback example for
+# anyone debugging without TS.
 
 set -e
 cd "$(dirname "$0")/.."

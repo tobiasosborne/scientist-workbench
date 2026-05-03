@@ -145,7 +145,14 @@ async function main(): Promise<void> {
 
   // The interface. Each method:
   //   methodName: (input: InputOf<typeof xDef>, flags?: FlagsArgOf<typeof xDef>) => Promise<OutputOf<typeof xDef>>;
-  lines.push("export interface TypedWorkbench {");
+  //
+  // Plus all non-tool Workbench surfaces (pipe, lookup, runMemoized,
+  // run, tools, errors, store). The TypedWorkbench is therefore a
+  // full superset of Workbench, so the TS expert holds *one* object
+  // that does both typed tool calls and fluent / loose / cached
+  // invocation. ADR-0012 §"Generated typed barrel" — the
+  // `typed(workbench)` factory binds the registry once.
+  lines.push("export interface TypedWorkbench extends Workbench {");
   for (const t of tools) {
     const method = camelCase(t.defName);
     const alias = `${method}Def`;
@@ -157,9 +164,22 @@ async function main(): Promise<void> {
   lines.push("");
 
   // The factory. Takes a Workbench, returns a TypedWorkbench whose
-  // methods call workbench.run.
+  // tool methods are typed wrappers around workbench.run AND whose
+  // non-tool methods passthrough to the underlying Workbench. The
+  // explicit `bind`s preserve `this`-correctness in case a future
+  // Workbench impl uses class methods.
   lines.push("export function typed(workbench: Workbench): TypedWorkbench {");
   lines.push("  return {");
+  // Non-tool passthroughs first so the structure is greppable.
+  lines.push("    // Workbench passthroughs.");
+  lines.push("    get tools() { return workbench.tools; },");
+  lines.push("    get errors() { return workbench.errors; },");
+  lines.push("    get store() { return workbench.store; },");
+  lines.push("    run: workbench.run.bind(workbench),");
+  lines.push("    pipe: workbench.pipe.bind(workbench),");
+  lines.push("    lookup: workbench.lookup.bind(workbench),");
+  lines.push("    runMemoized: workbench.runMemoized.bind(workbench),");
+  lines.push("    // Generated tool methods.");
   for (const t of tools) {
     const method = camelCase(t.defName);
     const alias = `${method}Def`;

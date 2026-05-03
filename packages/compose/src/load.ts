@@ -41,6 +41,7 @@ import type { ToolDefinition } from "@workbench/contract";
 import type { Value } from "@workbench/protocol";
 import { CompositionError } from "./errors.js";
 import { lookupWorkbench, runMemoizedWorkbench } from "./lookup.js";
+import { makePipe } from "./pipe.js";
 import { runWorkbench } from "./run.js";
 import type { LoadWorkbenchOptions, Pipe, Workbench } from "./types.js";
 
@@ -158,10 +159,7 @@ class InProcessWorkbench implements Workbench {
     return runMemoizedWorkbench<O>(this.tools, name, input, flags, this.store);
   }
 
-  pipe<I extends Value>(_input: I): Pipe {
-    throw new CompositionError(
-      "Workbench.pipe is not yet implemented (waits on scientist-workbench-46z)",
-      { toolName: "<pipe>" },
-    );
+  pipe<I extends Value>(input: I): Pipe {
+    return makePipe(this.tools, this.store, input);
   }
 }

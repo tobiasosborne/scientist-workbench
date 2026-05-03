@@ -255,6 +255,50 @@ describe("@workbench/compose — Workbench.run", () => {
     expect((caught as CompositionError).message).toContain("nondeterministic");
   });
 
+  test("Workbench.pipe: chained .through(...) produces the right Value", async () => {
+    const wb = await loadWorkbench({ store });
+    const out = await wb
+      .pipe(str("(x+1)*(x-1)"))
+      .through("expr-parse")
+      .through("cas-simplify")
+      .value();
+    // (x+1)*(x-1) → x^2 + (-1)
+    expect(out.kind).toBe("expression");
+  });
+
+  test("Workbench.pipe: immutable builder — branches share a prefix without aliasing", async () => {
+    const wb = await loadWorkbench({ store });
+    const prefix = wb.pipe(str("(x+1)*(x-1)")).through("expr-parse");
+    // Two independent terminals from the same prefix.
+    const simplified = await prefix.through("cas-simplify").value();
+    const reparseAttempt = prefix.through("cas-simplify");
+    const simp2 = await reparseAttempt.value();
+    expect(canonicalize(simplified)).toBe(canonicalize(simp2));
+    // Mutating one chain's `.through` never mutated `prefix`; if it
+    // had, the second `.value()` would have run an extra step.
+  });
+
+  test("Workbench.pipe: step-numbered errors name the failing step", async () => {
+    const wb = await loadWorkbench({ store });
+    let caught: unknown = null;
+    try {
+      // expr-parse on a non-string input fails. Step 1 is expr-parse.
+      await wb
+        .pipe(int(42n))
+        .through("expr-parse")
+        .through("cas-simplify")
+        .value();
+    } catch (e) {
+      caught = e;
+    }
+    expect(caught).toBeInstanceOf(CompositionError);
+    const ce = caught as CompositionError;
+    expect(ce.step).toBe(1);
+    expect(ce.toolName).toBe("expr-parse");
+    expect(ce.message).toContain("step 1");
+    expect(ce.message).toContain("expr-parse");
+  });
+
   test("provenance record matches subprocess for the same input", async () => {
     const wb = await loadWorkbench({ store });
     const input = record({ base: int(2n), exponent: int(10n), modulus: int(1000n) });

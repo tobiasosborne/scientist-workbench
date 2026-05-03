@@ -338,5 +338,5 @@ The discipline that does not bend is the contract. Everything else iterates free
 
 - **Design questions:** `PRD-v0.2.md`. Sections marked `[SETTLED]` are not up for debate without strong reason.
 - **Per-tool detail:** `tools/<name>/README.md`.
-- **Worked examples covering the v1 scope:** `bash scripts/demo-scope.sh`.
+- **Worked examples covering the v1 scope:** `bun scripts/demo-scope.ts` (in-process, typed; ~0.6s for the full 14-demo suite). The shell version `bash scripts/demo-scope.sh` runs the same demos through subprocess pipes and is preserved as a sanity-check / fallback (~4.5s).
 - **The substrate decision (TS/Bun) is settled.** Re-read PRD §1.3 before relitigating; four pillars all need to change before the question reopens.

@@ -42,7 +42,7 @@ import { def as sturmSimplifyDef } from "../../../../tools/sturm-simplify/tool.j
 import { def as sturmTensorDef } from "../../../../tools/sturm-tensor/tool.js";
 import { def as sturmThenDef } from "../../../../tools/sturm-then/tool.js";
 
-export interface TypedWorkbench {
+export interface TypedWorkbench extends Workbench {
   casSimplify(input: InputOf<typeof casSimplifyDef>, flags?: FlagsArgOf<typeof casSimplifyDef>): Promise<OutputOf<typeof casSimplifyDef>>;
   casVerify(input: InputOf<typeof casVerifyDef>, flags?: FlagsArgOf<typeof casVerifyDef>): Promise<OutputOf<typeof casVerifyDef>>;
   entropySource(input: InputOf<typeof entropySourceDef>, flags?: FlagsArgOf<typeof entropySourceDef>): Promise<OutputOf<typeof entropySourceDef>>;
@@ -66,6 +66,15 @@ export interface TypedWorkbench {
 
 export function typed(workbench: Workbench): TypedWorkbench {
   return {
+    // Workbench passthroughs.
+    get tools() { return workbench.tools; },
+    get errors() { return workbench.errors; },
+    get store() { return workbench.store; },
+    run: workbench.run.bind(workbench),
+    pipe: workbench.pipe.bind(workbench),
+    lookup: workbench.lookup.bind(workbench),
+    runMemoized: workbench.runMemoized.bind(workbench),
+    // Generated tool methods.
     casSimplify(input, flags) {
       return workbench.run("cas-simplify", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof casSimplifyDef>>;
     },

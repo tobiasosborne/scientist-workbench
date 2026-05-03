@@ -45,6 +45,7 @@ write the frictions and the dead ends as well as the wins.
 | 032 | [Composition layer MVP (`@workbench/compose`) + provenance lockstep (ADR-0012)](032-composition-layer-mvp.md) | 2026-05-03 | scientist-workbench-{c24, inm, 9n1, 23i, o8t} closed; remaining: -46z, -4t5, -mtw, -csa, -e0h |
 | 033 | [Typed barrel for `@workbench/compose` (`wb.modPow({...})`)](033-typed-barrel.md) | 2026-05-03 | scientist-workbench-4t5 |
 | 034 | [`Workbench.lookup` + `runMemoized`: cache by input hash](034-lookup-and-runMemoized.md) | 2026-05-03 | scientist-workbench-{mtw, csa} |
+| 035 | [Fluent `wb.pipe(...)` + demo-scope.ts migration (full DAG closed)](035-pipe-and-demo-migration.md) | 2026-05-03 | scientist-workbench-{46z, e0h} |
 
 ## How to add a new shard
 
