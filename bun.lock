@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "scientist-workbench",
@@ -28,6 +29,10 @@
       "dependencies": {
         "@workbench/protocol": "workspace:*",
       },
+    },
+    "packages/linalg-core": {
+      "name": "@workbench/linalg-core",
+      "version": "0.1.0",
     },
     "packages/mod-core": {
       "name": "@workbench/mod-core",
@@ -97,6 +102,15 @@
       "version": "0.2.0",
       "dependencies": {
         "@workbench/contract": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+      },
+    },
+    "tools/linalg-solve": {
+      "name": "@workbench/tool-linalg-solve",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/contract": "workspace:*",
+        "@workbench/linalg-core": "workspace:*",
         "@workbench/protocol": "workspace:*",
       },
     },
@@ -236,6 +250,8 @@
 
     "@workbench/json-bridge": ["@workbench/json-bridge@workspace:packages/json-bridge"],
 
+    "@workbench/linalg-core": ["@workbench/linalg-core@workspace:packages/linalg-core"],
+
     "@workbench/mod-core": ["@workbench/mod-core@workspace:packages/mod-core"],
 
     "@workbench/protocol": ["@workbench/protocol@workspace:packages/protocol"],
@@ -253,6 +269,8 @@
     "@workbench/tool-entropy-source": ["@workbench/tool-entropy-source@workspace:tools/entropy-source"],
 
     "@workbench/tool-expr-parse": ["@workbench/tool-expr-parse@workspace:tools/expr-parse"],
+
+    "@workbench/tool-linalg-solve": ["@workbench/tool-linalg-solve@workspace:tools/linalg-solve"],
 
     "@workbench/tool-mod-inv": ["@workbench/tool-mod-inv@workspace:tools/mod-inv"],
 

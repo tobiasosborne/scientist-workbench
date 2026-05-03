@@ -120,6 +120,7 @@ Tool-specific flags follow `--key=value` or `--key value`. Tools declare their f
 | `sturm-then` | `record{first, second}` of two channels | Sturm channel IR \| `tagged "sturm-then/signature-mismatch"` | Channel combinator: sequential composition `f; g`. First's wire ids are kept; second's input wires are renamed positionally to match first's outputs and second's other ids are shifted by `max(first.ids)+1`. Length, kind, or dim mismatch at the boundary → boundary tag. Classical refs flow across the boundary unchanged. |
 | `sturm-tensor` | `record{left, right}` of two channels | Sturm channel IR | Channel combinator: parallel composition (the monoidal product). Total — every pair has a tensor product. Right's wire ids are shifted by `max(left.ids)+1`; left is preserved verbatim. Identity laws and associativity hold byte-equal under the chosen rename discipline. Classical refs are NOT renamed (limitation: tensoring two channels that bind the same ref yields a duplicate-binding well-formedness flaw). |
 | `sturm-find` | `record{n_bits, marked, shots?, entropy?}` | `record{distribution, samples?, iterations}` | Grover's algorithm. Wraps `@workbench/sturm-lib`'s `find`/`equalTo`/`phaseFlipMany`, runs through `sturm-execute` for the analytic Born distribution and (when `shots > 0`) `sturm-sample` for shots. v0.1 caps at `n_bits ≤ 3` (mcz currently supports n ∈ {1,2,3}). Predicted P(marked) for n=2 single-marked is 1.0; for n=3 single-marked, ≈0.945. |
+| `linalg-solve` | `record{A: list<list<float64>>, b: list<float64>}` | `record{x, residual_norm, b_norm, condition_estimate, growth_factor, method, iterations, warnings}` \| `tagged "linalg-solve/singular"` | First numerical-tier tool (ADR-0014). LU with partial pivoting + iterative refinement + Hager 1-norm condition estimate. Pure TS on `Float64Array`, capped at `n ≤ 200` for v0.1. Output is *agent-honest*: not just `x` but the residual, condition, growth factor, and warnings — everything a planner needs to decide whether to trust the answer. Singular A → `tagged`; non-square / NaN / oversized → `ToolError`. |
 
 Per-tool detail in `tools/<name>/README.md`.
 
@@ -291,6 +292,7 @@ packages/
   sturm-ir/              Sturm channel IR (ADR-0006): typed Channel/Op forms, schema, well-formedness, traversal
   sturm/                 TS-native frontend DSL (ADR-0009): trace, qbool, qreg, when, not, ry/rz, observe, Channel<I,O>, execute
   sturm-lib/             Patterns library on top of @workbench/sturm: H, X, Z, S, T, cx, cz, mcz, phaseFlip, diffuse, find, equalTo, oracleFn
+  linalg-core/           First numerical-tier package (ADR-0014): dense Float64Array Matrix, LU + partial pivoting, solve with iterative refinement, Hager 1-norm condition estimator. Pure TS, single platform, no FFI.
 
 tools/
   <name>/
@@ -322,7 +324,7 @@ beads discipline.
 
 ## What this is *not*
 
-- Not a numerics library — see PRD §1.2 (no PDE-class solvers, no GPU, no BLAS-scale, no distributed).
+- Not a BLAS-scale numerics library — see PRD §1.2 (no PDE-class solvers, no GPU, no distributed). The bounded numerical tier (ADR-0014, currently `linalg-solve` at `n ≤ 200`) lives alongside the symbolic core; it is small, honest about its scope, and capped where the wire encoding starts hurting.
 - Not Mathematica replication — the legacy stack's failure mode (composition through global mutable state) is exactly what is being moved away from.
 - Not (yet) a notebook surface — Phase 4 of the roadmap.
 - Not (yet) proof-carrying — Phase 5; the v1 ecosystem is the *substrate* that makes proof-carrying outputs possible.

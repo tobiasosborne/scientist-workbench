@@ -41,6 +41,7 @@ write the frictions and the dead ends as well as the wins.
 | 028 | [defineTool / runTool split, registry without spawning](028-define-runtool-split.md) | 2026-05-03 | scientist-workbench-yth |
 | 029 | [Typed flag declarations on ToolDefinition](029-typed-flags.md) | 2026-05-03 | scientist-workbench-rej (5gl filed as follow-up) |
 | 030 | [Polynomial GCD in cas-core](030-polynomial-gcd.md) | 2026-05-03 | scientist-workbench-djr (6uc filed as v0.2 modular follow-up) |
+| 031 | [First numerical tier — linalg-core + linalg-solve (ADR-0014)](031-first-numerical-tier.md) | 2026-05-03 | scientist-workbench-n2a (epic), -abj (ADR), -0ky (pkg), -ynd (tool), -gyb (docs), -bf0 (this shard); follow-ups -71f -wmm -0ck -e7y -va1 |
 
 ## How to add a new shard
 
