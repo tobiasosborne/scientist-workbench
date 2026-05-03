@@ -5,30 +5,43 @@
 // The registry exists for one user: an agent (or a human acting agent-
 // shaped) that wants to plan a composition without first running every
 // candidate tool. `findToolsRoot` locates the tools/ directory; for each
-// directory containing a `tool.ts`, `describeTool` invokes the tool's
-// standard metadata flags (`--version`, `--schema`, `--examples`,
-// `--invariants`) and assembles a `ToolMetadata` record.
+// directory containing a `tool.ts`, `describeTool` imports the tool's
+// module, reads the live `def` (a `ToolDefinition`), and assembles a
+// `ToolMetadata` record.
 //
 // Schema-aware reads
 // ------------------
-// As of ADR-0004 a tool's `--schema` output is the encoded form of a
-// real `Schema` (not a sample value). `describeTool` decodes that wire
-// form here, so callers (registry-list, registry-search) work with
-// `Schema` objects directly. Filtering by kind, by expression head, or
-// by deep-mention is then a clean call into the schema helpers
-// (`schemaTopKind`, `schemaMentionsKind`, `schemaExpressionHead`).
+// A tool's `def.schema.input` / `def.schema.output` are already real
+// `Schema` objects (ADR-0004) — there is no decode step on this path
+// because nothing was ever encoded for transport. Filtering by kind, by
+// expression head, or by deep-mention is a clean call into the schema
+// helpers (`schemaTopKind`, `schemaMentionsKind`, `schemaExpressionHead`).
 //
-// Latency note
+// Why dynamic import, not a subprocess
+// -------------------------------------
+// Earlier versions of `describeTool` shelled out four times per tool
+// (`--version`, `--schema`, `--examples`, `--invariants`). With ~20
+// tools, a `registry-list` call paid ~80 spawns. ADR-0010 made every
+// `tool.ts` an importable module: it exports `def` unconditionally and
+// gates `runTool(def)` on `import.meta.main`. The registry now does
+// `await import(toolPath)` once per tool, reads `mod.def`, and
+// renders the metadata via the same helpers the runner uses for its
+// `--examples` / `--invariants` flags. Output bytes are byte-identical
+// to the spawn-era output. See beads issue scientist-workbench-tyq for
+// the follow-up cache.
+//
+// Failure mode
 // ------------
-// `describeTool` shells out four times per tool. With many tools that
-// becomes the registry's dominant cost (see beads issue
-// scientist-workbench-tyq for the planned cache, which depends on the
-// `defineTool` / `runTool` split tracked by scientist-workbench-yth).
+// A tool whose module fails to import, or whose module does not export
+// `def`, surfaces as a `ToolMetadata`-shaped error in registry-list's
+// output (the `error` field carries the message). `describeTool` itself
+// throws so callers that want to fail-fast can do so.
 
 import { readdir, stat } from "node:fs/promises";
 import { join } from "node:path";
-import { decodeSchema, parse, type Schema, type Value } from "@workbench/protocol";
-import { spawnBun } from "./spawn.js";
+import { type Schema, type Value } from "@workbench/protocol";
+import { exampleToValue, invariantToValue } from "./metadata.js";
+import type { ToolDefinition } from "./runner.js";
 
 export interface ToolMetadata {
   name: string;
@@ -73,51 +86,44 @@ export async function listToolEntries(toolsRoot: string): Promise<{ name: string
   return out;
 }
 
-async function queryFlag(toolPath: string, flag: string): Promise<Value> {
-  const r = await spawnBun([toolPath, `--${flag}`]);
-  if (r.code !== 0) {
-    throw new Error(`tool ${toolPath} failed --${flag}: ${r.stderr.trim()}`);
+/**
+ * Import a tool module and return its exported `def`. Tool modules are
+ * required (ADR-0010) to `export const def = defineTool({...})` and to
+ * gate any `runTool(def)` call on `import.meta.main`, so importing for
+ * metadata is side-effect free. A module that violates either part of
+ * that contract surfaces as a thrown Error here.
+ */
+export async function importToolDef(toolPath: string): Promise<ToolDefinition> {
+  const mod = (await import(toolPath)) as { def?: unknown };
+  const def = mod.def;
+  if (def === undefined) {
+    throw new Error(
+      `tool module at ${toolPath} does not export 'def'; ` +
+      `every tool.ts must \`export const def = defineTool({...})\` (ADR-0010)`,
+    );
   }
-  return parse(r.stdout);
+  // Light structural check — the type system enforces the shape at
+  // compile time for tool authors using `defineTool`, but the registry
+  // is consuming TS modules at runtime so we still want a clear error
+  // if something foreign-shaped is exported.
+  const d = def as { name?: unknown; version?: unknown; schema?: unknown; fn?: unknown };
+  if (typeof d.name !== "string" || typeof d.version !== "string" || typeof d.fn !== "function") {
+    throw new Error(
+      `tool module at ${toolPath} exports a 'def' that is not a ToolDefinition ` +
+      `(missing one of: name, version, fn)`,
+    );
+  }
+  return def as ToolDefinition;
 }
 
 export async function describeTool(toolPath: string, name: string): Promise<ToolMetadata> {
-  const versionVal = await queryFlag(toolPath, "version");
-  const schemaVal = await queryFlag(toolPath, "schema");
-  const examplesVal = await queryFlag(toolPath, "examples");
-  const invariantsVal = await queryFlag(toolPath, "invariants");
-
-  if (versionVal.kind !== "record") throw new Error(`${name}: --version not a record`);
-  const versionStr = versionVal.fields["version"];
-  if (!versionStr || versionStr.kind !== "string") {
-    throw new Error(`${name}: --version.version not a string`);
-  }
-
-  if (schemaVal.kind !== "record") throw new Error(`${name}: --schema not a record`);
-  const schemaInputV = schemaVal.fields["input"];
-  const schemaOutputV = schemaVal.fields["output"];
-  if (!schemaInputV || !schemaOutputV) throw new Error(`${name}: --schema missing input/output`);
-
-  // ADR-0004: --schema output is encoded `Schema`. Decode here so callers
-  // get a real Schema object, not a wire-form Value.
-  let inputSchema: Schema;
-  let outputSchema: Schema;
-  try {
-    inputSchema = decodeSchema(schemaInputV);
-    outputSchema = decodeSchema(schemaOutputV);
-  } catch (e) {
-    throw new Error(`${name}: --schema decode failed: ${(e as Error).message}`);
-  }
-
-  const examples: Value[] = examplesVal.kind === "list" ? [...examplesVal.items] : [];
-  const invariants: Value[] = invariantsVal.kind === "list" ? [...invariantsVal.items] : [];
-
+  const def = await importToolDef(toolPath);
   return {
-    name,
-    version: versionStr.value,
+    name: def.name,
+    version: def.version,
     path: toolPath,
-    schema: { input: inputSchema, output: outputSchema },
-    examples,
-    invariants,
+    schema: { input: def.schema.input, output: def.schema.output },
+    examples: def.examples.map(exampleToValue),
+    invariants: def.invariants.map(invariantToValue),
   };
 }

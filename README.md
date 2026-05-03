@@ -237,7 +237,14 @@ bun run new-tool ntt         --uses mod-core
 bun run new-tool geom-orient --uses geom-predicates,float-utils   # multiple substrate packages
 ```
 
-The `tool.ts` skeleton calls `defineTool({...})` from `@workbench/contract` and then runs it via `runTool(def)`. The runner handles every standard flag, parses stdin, validates against the schema, runs your `fn`, validates the output, emits canonical bytes, and writes provenance. Treat the file as **literate** (per `CLAUDE.md`): the comments at the top are a chapter introducing the tool's intent, with prose explaining the algorithm, references, invariants, and out-of-scope decisions. The implementation file *is* its own primary documentation.
+The `tool.ts` skeleton calls `defineTool({...})` from `@workbench/contract` and then runs it via `runTool(def)`. The dispatcher call is gated on `import.meta.main` (ADR-0010) so importing the module yields the live `def` without spawning a subprocess or consuming stdin. The trailing line of every tool reads:
+
+```ts
+export const def = defineTool({...});
+if (import.meta.main) void runTool(def);
+```
+
+The runner handles every standard flag, parses stdin, validates against the schema, runs your `fn`, validates the output, emits canonical bytes, and writes provenance. `runTool(def, io?)` accepts an optional `RunIO` that overrides any subset of `argv`/`stdin`/`stdout`/`stderr`/`exit`/`env`, so the dispatcher is exercisable from `bun test` without a child process. Treat the file as **literate** (per `CLAUDE.md`): the comments at the top are a chapter introducing the tool's intent, with prose explaining the algorithm, references, invariants, and out-of-scope decisions. The implementation file *is* its own primary documentation.
 
 ---
 

@@ -175,6 +175,13 @@ re-check the relevant ADR.
   inside the body. The TS type of `input` already reflects the schema.
   Hand-rolled `expectIntegerField` shims were deleted in shard 008;
   do not reintroduce.
+- **Tool entry points must stay side-effect-free at import time.**
+  The trailing line of every `tools/*/tool.ts` is `if (import.meta.main)
+  void runTool(def);` — gated, never bare. The registry, tests, and
+  any other harness import the module to read `def` (ADR-0010); a
+  module that runs work, prints to stdout, or reads stdin at top
+  level breaks all three. If you need module-level setup, inline it
+  inside `def.fn` or behind the `import.meta.main` gate.
 
 ## Worklog
 
@@ -214,10 +221,10 @@ When the session is winding down:
 2. If a meaningful chunk closed, add or extend a worklog shard.
 3. If a non-obvious lesson surfaced, save it to memory and update
    `MEMORY.md` index.
-
-This repo is in **stealth mode** — no git push, no remote sync, no PR
-creation unless the user explicitly asks. The session-close protocol
-is beads + worklog + memory, not git.
+4. `git add` + `git commit` the work, then `git push` to `origin/main`.
+   The remote is `git@github.com:tobiasosborne/scientist-workbench.git`
+   and is the canonical sync vehicle for both code and `.beads/issues.jsonl`
+   (worklog 027). Push at the end of every session by default.
 
 ## Tool-of-last-resort
 

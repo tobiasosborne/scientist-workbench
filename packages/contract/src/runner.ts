@@ -31,9 +31,23 @@
 // lying — and the project's "honest scope" discipline (PRD §6.1) is
 // about declining work, not misreporting it. We surface the violation
 // loudly as a ToolError.
+//
+// ADR-0010 — defineTool / runTool split
+// -------------------------------------
+// `defineTool({...})` is a typed identity wrapper that returns the
+// ToolDefinition unchanged but fixes its `I` and `O` type parameters
+// from the inline schema. `runTool(def, io?)` then performs the
+// IO-bound dispatch above. Because every tool entry point gates the
+// `runTool` call on `import.meta.main`, importing a tool module from
+// elsewhere yields the live `def` without spawning a subprocess and
+// without consuming stdin. The registry uses this to read tool
+// metadata in-process; tests use it to call `def.fn(input, flags)`
+// directly. The optional `RunIO` parameter is the second half of
+// the same change: tests inject argv / stdin / stdout / stderr /
+// exit / env so the dispatcher itself is exercisable without a child
+// process.
 
 import {
-  bool,
   canonicalize,
   decodeSchema,
   encodeSchema,
@@ -49,6 +63,7 @@ import {
   type Schema,
   type Value,
 } from "@workbench/protocol";
+import { exampleToValue, invariantToValue } from "./metadata.js";
 import { provenanceToValue, readProvenance, writeProvenance, type ProvenanceRecord } from "./provenance.js";
 import { defaultStore } from "./store.js";
 
@@ -118,11 +133,71 @@ export interface ToolDefinition<I extends Value = Value, O extends Value = Value
  *
  * Without `defineTool`, `runTool({...})` swallows the inference and `fn`'s
  * `input` parameter widens back to `Value`.
+ *
+ * Pure data: this function performs no IO. The companion `runTool` is
+ * the IO-bound dispatcher; the split (ADR-0010) is what lets the
+ * registry import `def` directly to read metadata in-process and lets
+ * tests call `def.fn(input, flags)` without spawning a subprocess.
  */
 export function defineTool<I extends Value, O extends Value>(
   def: ToolDefinition<I, O>
 ): ToolDefinition<I, O> {
   return def;
+}
+
+// -----------------------------------------------------------------------------
+// Injectable IO
+// -----------------------------------------------------------------------------
+//
+// `runTool` defaults to the real process bindings (argv, stdin, stdout,
+// stderr, exit, env). Passing a `RunIO` overrides any subset of those —
+// useful for tests, in-process composition, and any future surface that
+// wants to run the dispatcher without owning the parent process.
+//
+// `exit` returns `never` because the production binding terminates the
+// process. The test binding throws a typed `ExitSignal` that callers
+// catch; either way, no code after `io.exit(...)` runs.
+
+export interface RunIO {
+  argv?: string[];
+  stdin?: () => Promise<string>;
+  stdout?: (chunk: string) => void;
+  stderr?: (chunk: string) => void;
+  exit?: (code: number) => never;
+  env?: Record<string, string | undefined>;
+}
+
+interface ResolvedIO {
+  argv: string[];
+  stdin: () => Promise<string>;
+  stdout: (chunk: string) => void;
+  stderr: (chunk: string) => void;
+  exit: (code: number) => never;
+  env: Record<string, string | undefined>;
+}
+
+/**
+ * Thrown by the test-side `exit` binding so that `runTool` halts cleanly
+ * when invoked in-process. The production binding (process.exit) does
+ * not throw; this class is only observed when callers supply their own
+ * `io.exit`.
+ */
+export class ExitSignal extends Error {
+  constructor(public readonly code: number) {
+    super(`runTool exit ${code}`);
+    this.name = "ExitSignal";
+  }
+}
+
+function resolveIO(io: RunIO | undefined): ResolvedIO {
+  return {
+    argv: io?.argv ?? process.argv.slice(2),
+    stdin: io?.stdin ?? readStdin,
+    stdout: io?.stdout ?? ((c: string) => { process.stdout.write(c); }),
+    stderr: io?.stderr ?? ((c: string) => { process.stderr.write(c); }),
+    exit: io?.exit ?? ((code: number) => process.exit(code)),
+    env: io?.env ?? (process.env as Record<string, string | undefined>),
+  };
 }
 
 // -----------------------------------------------------------------------------
@@ -182,37 +257,7 @@ function parseArgv(argv: string[]): ParsedArgv {
 }
 
 // -----------------------------------------------------------------------------
-// Metadata emission
-// -----------------------------------------------------------------------------
-
-function exampleToValue(e: ExampleEntry): Value {
-  const fields: Record<string, Value> = {
-    description: str(e.description),
-    input: e.input,
-  };
-  if (e.output !== undefined) fields["output"] = e.output;
-  if (e.error !== undefined) fields["error"] = str(e.error);
-  if (e.flags !== undefined) {
-    const ff: Record<string, Value> = {};
-    for (const [k, v] of Object.entries(e.flags)) ff[k] = str(v);
-    fields["flags"] = record(ff);
-  }
-  return record(fields);
-}
-
-function invariantToValue(inv: InvariantEntry): Value {
-  const fields: Record<string, Value> = {
-    name: str(inv.name),
-    statement: str(inv.statement),
-  };
-  if (inv.machine_checkable !== undefined) {
-    fields["machine_checkable"] = bool(inv.machine_checkable);
-  }
-  return record(fields);
-}
-
-// -----------------------------------------------------------------------------
-// Stdin / stdout
+// Stdin (default binding)
 // -----------------------------------------------------------------------------
 
 async function readStdin(): Promise<string> {
@@ -223,10 +268,6 @@ async function readStdin(): Promise<string> {
   let s = "";
   for await (const chunk of process.stdin) s += chunk;
   return s;
-}
-
-function writeOut(v: Value): void {
-  process.stdout.write(canonicalize(v));
 }
 
 // -----------------------------------------------------------------------------
@@ -298,10 +339,12 @@ function checkExamplesAgainstSchema<I extends Value, O extends Value>(def: ToolD
 // -----------------------------------------------------------------------------
 
 export async function runTool<I extends Value, O extends Value>(
-  def: ToolDefinition<I, O>
+  def: ToolDefinition<I, O>,
+  io?: RunIO,
 ): Promise<void> {
-  const argv = process.argv.slice(2);
-  const parsed = parseArgv(argv);
+  const r = resolveIO(io);
+  const writeOut = (v: Value): void => { r.stdout(canonicalize(v)); };
+  const parsed = parseArgv(r.argv);
 
   try {
     // Examples-conform-to-schema is a load-time invariant. Run it once on
@@ -309,13 +352,13 @@ export async function runTool<I extends Value, O extends Value>(
     // on small examples), and we want the failure surfaced early on the
     // metadata paths too (--examples, --schema), not just in the work
     // case. Skipping is opt-in for genuinely-pathological surfaces.
-    if (process.env["WB_SKIP_SCHEMA_CHECK"] !== "1") {
+    if (r.env["WB_SKIP_SCHEMA_CHECK"] !== "1") {
       checkExamplesAgainstSchema(def);
     }
 
     if (parsed.switches.has("help")) {
-      process.stdout.write(helpText(def));
-      process.stdout.write("\n");
+      r.stdout(helpText(def));
+      r.stdout("\n");
       return;
     }
     if (parsed.switches.has("version")) {
@@ -341,7 +384,7 @@ export async function runTool<I extends Value, O extends Value>(
     }
     if (parsed.named["provenance-of"] !== undefined) {
       const h = parsed.named["provenance-of"];
-      const store = process.env["CAS_STORE"] ?? defaultStore();
+      const store = r.env["CAS_STORE"] ?? defaultStore();
       const rec = await readProvenance(store, h);
       if (rec === null) {
         writeOut(tagged("provenance/not-found", str(h)));
@@ -351,12 +394,14 @@ export async function runTool<I extends Value, O extends Value>(
       return;
     }
     if (parsed.switches.has("test")) {
-      if (def.test === undefined) {
-        process.stderr.write(`${def.name}: no --test suite registered\n`);
-        process.exit(2);
+      const t = def.test;
+      if (t === undefined) {
+        r.stderr(`${def.name}: no --test suite registered\n`);
+        r.exit(2);
+        return;  // unreachable in production (process.exit), reachable when io.exit throws or no-ops
       }
-      await def.test();
-      process.stdout.write(`${def.name} ${def.version}: tests passed\n`);
+      await t();
+      r.stdout(`${def.name} ${def.version}: tests passed\n`);
       return;
     }
 
@@ -375,7 +420,7 @@ export async function runTool<I extends Value, O extends Value>(
     // 7. Write to stdout. Write provenance (best-effort; failures here
     //    must not destroy the user's output).
 
-    const stdinText = await readStdin();
+    const stdinText = await r.stdin();
     if (stdinText.trim().length === 0) {
       throw new ToolError(`${def.name}: no input on stdin`, {
         suggestion: "pipe a canonical JSON value to stdin or use --help",
@@ -412,14 +457,14 @@ export async function runTool<I extends Value, O extends Value>(
     }
 
     const outBytes = canonicalize(output);
-    process.stdout.write(outBytes);
+    r.stdout(outBytes);
 
     // Provenance: append-only, content-addressed. Hash from the canonical
     // bytes we already have rather than re-canonicalising via hash().
     try {
       const inputHash = hash(input);
       const outputHash = hashCanonicalBytes(outBytes);
-      const store = process.env["CAS_STORE"] ?? defaultStore();
+      const store = r.env["CAS_STORE"] ?? defaultStore();
       const rec: ProvenanceRecord = {
         tool: { name: def.name, version: def.version },
         inputs: [{ name: "stdin", hash: inputHash }],
@@ -430,12 +475,13 @@ export async function runTool<I extends Value, O extends Value>(
       await writeProvenance(store, rec);
     } catch (e) {
       // Provenance failures must not destroy the user's output. Warn and move on.
-      process.stderr.write(`${def.name}: warning — provenance write failed: ${(e as Error).message}\n`);
+      r.stderr(`${def.name}: warning — provenance write failed: ${(e as Error).message}\n`);
     }
   } catch (e) {
+    if (e instanceof ExitSignal) throw e;  // already an explicit exit; propagate
     const msg = e instanceof Error ? e.message : String(e);
-    process.stderr.write(`${def.name}: ${msg}\n`);
-    process.exit(1);
+    r.stderr(`${def.name}: ${msg}\n`);
+    r.exit(1);
   }
 }
 

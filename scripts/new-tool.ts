@@ -213,31 +213,35 @@ const toolTs = `// =============================================================
 
 import {
   bool,
-  expr,
   int,
   list,
   rat,
   record,
+  S,
   str,
   sym,
   tagged,
   ToolError,
   type Value,
 } from "@workbench/protocol";
-import { runTool } from "@workbench/contract";
+import { defineTool, runTool } from "@workbench/contract";
 ${usesImports}
 
 const NAME = "${name}";
 const VERSION = "0.1.0";
 
-void runTool({
+// ADR-0010: every tool exports \`def\` (pure data) and gates \`runTool\` on
+// \`import.meta.main\` so the registry and tests can import the module
+// without spawning a subprocess or consuming stdin.
+export const def = defineTool({
   name: NAME,
   version: VERSION,
   schema: {
-    // Replace with a representative input value describing the shape.
-    input: expr("<describe-input>", []),
-    // Replace with a representative output value describing the shape.
-    output: expr("<describe-output>", []),
+    // Replace these with concrete S.* schema constructors. \`S.any()\` is
+    // the loosest possible declaration — accepts any Value — and is a
+    // placeholder, not a destination.
+    input: S.any(),
+    output: S.any(),
   },
   examples: [
     // PRD §6.1: aim for one example per code-path branch + edge cases,
@@ -260,7 +264,8 @@ void runTool({
   ],
   fn: (input: Value, _flags: Record<string, string>): Value => {
     // TODO: implement. The runner has already parsed and validated the
-    // input as a canonical Value; pattern-match on input.kind.
+    // input against schema.input before this function runs; tighten the
+    // schema and the input parameter type narrows automatically.
     void bool;
     void list;
     void rat;
@@ -277,6 +282,8 @@ void runTool({
   // workspace tests live in packages/<pkg>/test/.
   // test: () => { ... },
 });
+
+if (import.meta.main) void runTool(def);
 `;
 
 const readmeMd = `# ${name}

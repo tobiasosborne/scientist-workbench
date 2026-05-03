@@ -717,4 +717,4 @@ function mulberry32EntropyHex(seed: number, nBytes: number): string {
   return out;
 }
 
-void runTool(def);
+if (import.meta.main) void runTool(def);

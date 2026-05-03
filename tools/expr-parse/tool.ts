@@ -326,4 +326,4 @@ export const def = defineTool({
   },
 });
 
-void runTool(def);
+if (import.meta.main) void runTool(def);

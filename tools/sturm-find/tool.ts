@@ -373,4 +373,4 @@ function probOf(
   return total;
 }
 
-void runTool(def);
+if (import.meta.main) void runTool(def);

@@ -1,11 +1,14 @@
 export {
   type ExampleEntry,
   type InvariantEntry,
+  type RunIO,
   type ToolDefinition,
+  ExitSignal,
   runTool,
   defineTool,
   decodeSchema,
 } from "./runner.js";
+export { exampleToValue, invariantToValue } from "./metadata.js";
 export {
   type ProvenanceRecord,
   provenanceToValue,
@@ -27,6 +30,7 @@ export {
   findToolsRoot,
   listToolEntries,
   describeTool,
+  importToolDef,
 } from "./registry.js";
 export { type GoldenSpec } from "./goldens.js";
 export { resolveBunBinary, spawnBun, _resetBunBinaryCache, type SpawnResult } from "./spawn.js";
