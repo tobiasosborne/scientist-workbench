@@ -40,6 +40,7 @@ import {
 import type { ToolDefinition } from "@workbench/contract";
 import type { Value } from "@workbench/protocol";
 import { CompositionError } from "./errors.js";
+import { lookupWorkbench, runMemoizedWorkbench } from "./lookup.js";
 import { runWorkbench } from "./run.js";
 import type { LoadWorkbenchOptions, Pipe, Workbench } from "./types.js";
 
@@ -145,22 +146,16 @@ class InProcessWorkbench implements Workbench {
     return runWorkbench<O>(this.tools, name, input, flags, { store: this.store });
   }
 
-  async lookup<O extends Value = Value>(name: string, _input: Value): Promise<O | null> {
-    throw new CompositionError(
-      "Workbench.lookup is not yet implemented (waits on scientist-workbench-mtw)",
-      { toolName: name },
-    );
+  async lookup<O extends Value = Value>(name: string, input: Value): Promise<O | null> {
+    return lookupWorkbench<O>(this.tools, name, input, this.store);
   }
 
   async runMemoized<O extends Value = Value>(
     name: string,
-    _input: Value,
-    _flags?: Record<string, unknown>,
+    input: Value,
+    flags: Record<string, unknown> = {},
   ): Promise<O> {
-    throw new CompositionError(
-      "Workbench.runMemoized is not yet implemented (waits on scientist-workbench-csa)",
-      { toolName: name },
-    );
+    return runMemoizedWorkbench<O>(this.tools, name, input, flags, this.store);
   }
 
   pipe<I extends Value>(_input: I): Pipe {

@@ -41,13 +41,16 @@ export {
   readProvenance,
 } from "./provenance.js";
 export {
+  byInputPath,
   defaultStore,
-  valuePath,
   provenancePath,
-  writeValue,
-  readValue,
-  writeRawProvenance,
+  readByInputIndex,
   readRawProvenance,
+  readValue,
+  valuePath,
+  writeByInputIndex,
+  writeRawProvenance,
+  writeValue,
 } from "./store.js";
 export {
   type ToolMetadata,

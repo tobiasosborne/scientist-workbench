@@ -20,11 +20,17 @@ const out = await wb
   .through("cas-simplify")
   .value();
 
-// Cache-by-input-hash for idempotent tools.
+// Cache-by-input-hash for idempotent tools (lookup-or-run).
 const cached = await wb.runMemoized(
   "mod-pow",
   record({ base: int(2n), exponent: int(10n), modulus: int(1000n) }),
 );
+
+// Pure lookup (no execution on miss).
+const maybe = await wb.lookup("mod-pow", input);
+if (maybe !== null) {
+  // hit — the stored output Value, byte-identical to the original run.
+}
 ```
 
 The typed barrel lifts this to the inferred-call-signature surface a

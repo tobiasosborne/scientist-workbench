@@ -42,7 +42,11 @@ import {
   writeProvenance,
   type ProvenanceRecord,
 } from "./provenance.js";
-import { defaultStore } from "./store.js";
+import {
+  defaultStore,
+  writeByInputIndex,
+  writeValue,
+} from "./store.js";
 import type { ToolDefinition } from "./runner.js";
 
 export interface ExecuteResult<O extends Value> {
@@ -160,11 +164,27 @@ export async function executeToolDef<
   const outputHash = hashCanonicalBytes(outputBytes);
   const inputHash = hash(input);
 
-  // 5. Provenance write — best-effort. Resolve the store from
-  //    `opts.store`, then env, then the default. The recorded `flags`
-  //    are *only* the explicitly-set ones (ADR-0011); defaults are
-  //    not recorded so two invocations differing only in
-  //    default-overlap produce byte-identical provenance bytes.
+  // 5. Persistence — best-effort, three writes:
+  //    (a) the output Value at $CAS_STORE/values/<hh>/<output>.json,
+  //    (b) the provenance record at $CAS_STORE/provenance/...,
+  //    (c) the reverse index $CAS_STORE/by-input/<hh>/<input>--<tool>--<version>.json
+  //        pointing to the output hash, so `Workbench.lookup` is O(1).
+  //
+  //    We serialise the writes to keep the order deterministic — if
+  //    the value write succeeds but provenance fails, the next
+  //    invocation can still find the value but won't have the
+  //    derivation. The reverse index goes last, after both: a hit on
+  //    the index implies the value exists and has provenance.
+  //
+  //    For `nondeterministic: true` tools (entropy-source), we *skip*
+  //    the reverse-index write — looking up a previous invocation
+  //    would silently invent determinism the contract does not
+  //    promise. The forward provenance is still written (the
+  //    derivation is recorded; the record's `nondeterministic` flag
+  //    tells consumers what the record means).
+  //
+  //    Failure on any step is captured into `persistenceError` and
+  //    returned; the caller's output is never destroyed.
   const env = opts.env ?? (process.env as Record<string, string | undefined>);
   const store = opts.store ?? env["CAS_STORE"] ?? defaultStore();
 
@@ -176,11 +196,15 @@ export async function executeToolDef<
   };
   if (def.nondeterministic === true) rec.nondeterministic = true;
 
-  let provenanceError: Error | null = null;
+  let persistenceError: Error | null = null;
   try {
+    await writeValue(store, output);
     await writeProvenance(store, rec);
+    if (def.nondeterministic !== true) {
+      await writeByInputIndex(store, inputHash, def.name, def.version, outputHash);
+    }
   } catch (e) {
-    provenanceError = e instanceof Error ? e : new Error(String(e));
+    persistenceError = e instanceof Error ? e : new Error(String(e));
   }
 
   return {
@@ -188,7 +212,7 @@ export async function executeToolDef<
     outputBytes,
     outputHash,
     inputHash,
-    provenanceError,
+    provenanceError: persistenceError,
   };
 }
 

@@ -194,6 +194,67 @@ describe("@workbench/compose — Workbench.run", () => {
     // void access is just to keep the line non-dead.
   });
 
+  test("Workbench.lookup misses on a fresh store, hits after run", async () => {
+    const wb = await loadWorkbench({ store });
+    const input = record({ base: int(7n), exponent: int(13n), modulus: int(101n) });
+    // Miss before any run.
+    const miss = await wb.lookup("mod-pow", input);
+    expect(miss).toBeNull();
+    // Run, then hit.
+    const computed = await wb.run("mod-pow", input);
+    const hit = await wb.lookup("mod-pow", input);
+    expect(hit).not.toBeNull();
+    expect(hit).toEqual(computed);
+  });
+
+  test("Workbench.lookup hits are byte-identical to a fresh run", async () => {
+    const wb = await loadWorkbench({ store });
+    const input = record({ base: int(11n), exponent: int(20n), modulus: int(7919n) });
+    const fresh = await wb.run("mod-pow", input);
+    const cached = await wb.lookup("mod-pow", input);
+    // Canonical bytes must match — same content-hash, same value.
+    expect(canonicalize(cached!)).toBe(canonicalize(fresh));
+    expect(hash(cached!)).toBe(hash(fresh));
+  });
+
+  test("Workbench.lookup refuses on nondeterministic tools", async () => {
+    const wb = await loadWorkbench({ store });
+    let caught: unknown = null;
+    try {
+      await wb.lookup("entropy-source", record({ n_bytes: int(8n) }));
+    } catch (e) {
+      caught = e;
+    }
+    expect(caught).toBeInstanceOf(CompositionError);
+    expect((caught as CompositionError).toolName).toBe("entropy-source");
+    expect((caught as CompositionError).message).toContain("nondeterministic");
+  });
+
+  test("Workbench.runMemoized: first call runs, second call hits cache", async () => {
+    const wb = await loadWorkbench({ store });
+    const input = record({ base: int(2n), exponent: int(15n), modulus: int(31n) });
+    // Use a fresh-ish input to avoid any earlier test polluting the
+    // cache. The store is the test-local mkdtemp; the writes from
+    // earlier tests for different inputs do not collide.
+    const a = await wb.runMemoized("mod-pow", input);
+    const b = await wb.runMemoized("mod-pow", input);
+    expect(canonicalize(a)).toBe(canonicalize(b));
+    // 2^15 mod 31 = 32768 mod 31 = 32768 - 1057*31 = 32768 - 32767 = 1
+    expect(a).toEqual(int(1n));
+  });
+
+  test("Workbench.runMemoized refuses on nondeterministic tools", async () => {
+    const wb = await loadWorkbench({ store });
+    let caught: unknown = null;
+    try {
+      await wb.runMemoized("entropy-source", record({ n_bytes: int(8n) }));
+    } catch (e) {
+      caught = e;
+    }
+    expect(caught).toBeInstanceOf(CompositionError);
+    expect((caught as CompositionError).message).toContain("nondeterministic");
+  });
+
   test("provenance record matches subprocess for the same input", async () => {
     const wb = await loadWorkbench({ store });
     const input = record({ base: int(2n), exponent: int(10n), modulus: int(1000n) });
