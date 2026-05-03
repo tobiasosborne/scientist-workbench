@@ -293,6 +293,7 @@ packages/
   sturm/                 TS-native frontend DSL (ADR-0009): trace, qbool, qreg, when, not, ry/rz, observe, Channel<I,O>, execute
   sturm-lib/             Patterns library on top of @workbench/sturm: H, X, Z, S, T, cx, cz, mcz, phaseFlip, diffuse, find, equalTo, oracleFn
   linalg-core/           First numerical-tier package (ADR-0014): dense Float64Array Matrix, LU + partial pivoting, solve with iterative refinement, Hager 1-norm condition estimator. Pure TS, single platform, no FFI.
+  compose/               In-process composition layer (ADR-0012): `loadWorkbench()` returns a live registry of every tool's `def`; `wb.run(name, input, flags)` invokes a tool in the orchestrator process under the same schema-validation + provenance contract as the subprocess surface. The TS-expert call site for the workbench.
 
 tools/
   <name>/

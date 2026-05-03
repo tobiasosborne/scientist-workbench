@@ -181,7 +181,24 @@ re-check the relevant ADR.
   any other harness import the module to read `def` (ADR-0010); a
   module that runs work, prints to stdout, or reads stdin at top
   level breaks all three. If you need module-level setup, inline it
-  inside `def.fn` or behind the `import.meta.main` gate.
+  inside `def.fn` or behind the `import.meta.main` gate. With
+  `@workbench/compose` (ADR-0012) the same modules are now invoked
+  *in the orchestrator process*; a stray top-level effect blasts the
+  caller, not just a child. The rule was load-bearing for the
+  registry; it is load-bearing for composition too.
+- **In-process vs subprocess invocation.** Reach for
+  `@workbench/compose` (`wb.run(...)`, `wb.pipe(...)`, the typed
+  barrel) when you are *the* orchestrator: inner-loop iteration,
+  multi-step research workflows, demo / benchmark scripts, anything
+  where the spawn-per-hop floor dominates. Reach for the subprocess
+  surface (`bun tools/<name>/tool.ts | ...`) for shell composition,
+  for tool isolation (an unknown / untrusted tool, a tool whose
+  module-level behaviour you don't yet trust), and for any context
+  where the parent process must not own the tool's failure mode. The
+  contract (schema validation, output validation, provenance write)
+  holds byte-identically on both surfaces — this is by construction
+  via `executeToolDef` (ADR-0012). If you see in-process and
+  subprocess output diverge, that is a bug, not a degree of freedom.
 
 ## Worklog
 

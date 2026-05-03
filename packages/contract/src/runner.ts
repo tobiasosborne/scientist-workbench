@@ -54,10 +54,7 @@
 
 import {
   canonicalize,
-  decodeSchema,
   encodeSchema,
-  hash,
-  hashCanonicalBytes,
   list,
   parse,
   record,
@@ -77,8 +74,10 @@ import {
   type FlagsOf,
 } from "./flags.js";
 import { exampleToValue, invariantToValue } from "./metadata.js";
-import { provenanceToValue, readProvenance, writeProvenance, type ProvenanceRecord } from "./provenance.js";
+import { provenanceToValue, readProvenance } from "./provenance.js";
 import { defaultStore } from "./store.js";
+import { decodeSchema } from "@workbench/protocol";
+import { executeToolDef } from "./execute.js";
 
 // -----------------------------------------------------------------------------
 // Public types
@@ -451,20 +450,19 @@ export async function runTool<I extends Value, O extends Value, Fl extends FlagS
 
     // ── Work case ────────────────────────────────────────────────────────
     //
-    // 1. Read stdin. Refuse on empty input — a tool shouldn't silently do
-    //    something on no input.
-    // 2. Parse to a Value (rejects raw numbers, unknown kinds).
-    // 3. Validate input against schema.input. Failure here is user-facing:
-    //    the agent gave a wrong-shaped value.
-    // 4. Call fn with the narrowed input and the typed flag object.
-    // 5. Validate output against schema.output. Failure here is internal:
-    //    the tool produced a value that doesn't match its own contract.
-    // 6. Canonicalise output bytes (one-shot — used both for stdout and
-    //    for the provenance hash; see beads issue scientist-workbench-wmh).
-    // 7. Write to stdout. Write provenance (best-effort; failures here
-    //    must not destroy the user's output). The provenance record uses
-    //    only the *explicitly-set* flag values (ADR-0011) so a tool's
-    //    defaults don't bloat recorded bytes.
+    // The five-step contract (validate input → fn → validate output →
+    // canonicalise → write provenance) lives in `executeToolDef`
+    // (ADR-0012). The runner's job here is the IO half: read stdin,
+    // parse to a Value, hand off, write the canonical bytes to stdout,
+    // and surface a provenance-write failure as a stderr warning. The
+    // contract semantics are owned by `executeToolDef` so the
+    // subprocess and in-process surfaces produce byte-identical results
+    // for the same `(tool, version, input, explicit-flags)`.
+    //
+    // The recorded `flags` are only those tool flags explicitly set on
+    // argv — `parsed.explicit` carries them in their raw string form,
+    // which is exactly what `executeToolDef` writes into the
+    // provenance record.
 
     const stdinText = await r.stdin();
     if (stdinText.trim().length === 0) {
@@ -473,61 +471,19 @@ export async function runTool<I extends Value, O extends Value, Fl extends FlagS
       });
     }
     const input = parse(stdinText);
-    const inputCheck = validate(input, def.schema.input);
-    if (!inputCheck.ok) {
-      throw new ToolError(
-        `${def.name}: input does not conform to schema (at $.${
-          inputCheck.failure.path.join(".") || "<root>"
-        }): ${inputCheck.failure.message}`,
-        {
-          suggestion: "run `--schema` to see the declared shape; check field names, kinds, and required fields",
-          detail: { path: inputCheck.failure.path },
-        }
-      );
+    const explicitToolFlags: Record<string, string> = {};
+    for (const k of Object.keys(toolFlags)) {
+      if (parsed.explicit[k] !== undefined) explicitToolFlags[k] = parsed.explicit[k]!;
     }
-    const output = await def.fn(input as I, toolFlagsTyped as FlagsOf<Fl>);
-
-    const outputCheck = validate(output, def.schema.output);
-    if (!outputCheck.ok) {
-      // Internal contract violation. Loud failure — see ADR-0004.
-      throw new ToolError(
-        `${def.name}: tool output violates declared schema (internal bug, at $.${
-          outputCheck.failure.path.join(".") || "<root>"
-        }): ${outputCheck.failure.message}`,
-        {
-          suggestion: "the tool's `fn` returned a Value that does not conform to schema.output; this is a bug in the tool, not the input",
-          detail: { path: outputCheck.failure.path },
-        }
-      );
-    }
-
-    const outBytes = canonicalize(output);
-    r.stdout(outBytes);
-
-    // Provenance: append-only, content-addressed. Hash from the canonical
-    // bytes we already have rather than re-canonicalising via hash().
-    // The recorded `flags` are only those tool flags explicitly set on
-    // argv — defaults are not recorded so two invocations differing only
-    // in default-overlap produce the same provenance bytes.
-    try {
-      const inputHash = hash(input);
-      const outputHash = hashCanonicalBytes(outBytes);
-      const store = r.env["CAS_STORE"] ?? defaultStore();
-      const explicitToolFlags: Record<string, string> = {};
-      for (const k of Object.keys(toolFlags)) {
-        if (parsed.explicit[k] !== undefined) explicitToolFlags[k] = parsed.explicit[k]!;
-      }
-      const rec: ProvenanceRecord = {
-        tool: { name: def.name, version: def.version },
-        inputs: [{ name: "stdin", hash: inputHash }],
-        flags: explicitToolFlags,
-        output_hash: outputHash,
-      };
-      if (def.nondeterministic === true) rec.nondeterministic = true;
-      await writeProvenance(store, rec);
-    } catch (e) {
-      // Provenance failures must not destroy the user's output. Warn and move on.
-      r.stderr(`${def.name}: warning — provenance write failed: ${(e as Error).message}\n`);
+    const result = await executeToolDef(
+      def,
+      input as I,
+      toolFlagsTyped as FlagsOf<Fl>,
+      { explicitFlags: explicitToolFlags, env: r.env },
+    );
+    r.stdout(result.outputBytes);
+    if (result.provenanceError !== null) {
+      r.stderr(`${def.name}: warning — provenance write failed: ${result.provenanceError.message}\n`);
     }
   } catch (e) {
     if (e instanceof ExitSignal) throw e;  // already an explicit exit; propagate

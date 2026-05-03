@@ -26,7 +26,9 @@
       "@workbench/json-bridge": ["packages/json-bridge/src/index.ts"],
       "@workbench/sturm-ir": ["packages/sturm-ir/src/index.ts"],
       "@workbench/sturm": ["packages/sturm/src/index.ts"],
-      "@workbench/sturm-lib": ["packages/sturm-lib/src/index.ts"]
+      "@workbench/sturm-lib": ["packages/sturm-lib/src/index.ts"],
+      "@workbench/linalg-core": ["packages/linalg-core/src/index.ts"],
+      "@workbench/compose": ["packages/compose/src/index.ts"]
     }
   },
   "include": [

@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "scientist-workbench",
@@ -13,6 +12,14 @@
       "name": "@workbench/cas-core",
       "version": "0.2.0",
       "dependencies": {
+        "@workbench/protocol": "workspace:*",
+      },
+    },
+    "packages/compose": {
+      "name": "@workbench/compose",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/contract": "workspace:*",
         "@workbench/protocol": "workspace:*",
       },
     },
@@ -245,6 +252,8 @@
     "@types/node": ["@types/node@25.6.0", "", { "dependencies": { "undici-types": "~7.19.0" } }, "sha512-+qIYRKdNYJwY3vRCZMdJbPLJAtGjQBudzZzdzwQYkEPQd+PJGixUL5QfvCLDaULoLv+RhT3LDkwEfKaAkgSmNQ=="],
 
     "@workbench/cas-core": ["@workbench/cas-core@workspace:packages/cas-core"],
+
+    "@workbench/compose": ["@workbench/compose@workspace:packages/compose"],
 
     "@workbench/contract": ["@workbench/contract@workspace:packages/contract"],
 

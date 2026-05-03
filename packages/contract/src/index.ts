@@ -9,6 +9,13 @@ export {
   decodeSchema,
 } from "./runner.js";
 export {
+  type ExecuteResult,
+  type ExecuteOptions,
+  executeToolDef,
+  resolveFlagsForCall,
+  explicitStringsFromPartial,
+} from "./execute.js";
+export {
   type BoolFlag,
   type EnumFlag,
   type FlagSchema,

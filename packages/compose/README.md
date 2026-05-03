@@ -1,0 +1,90 @@
+# @workbench/compose
+
+In-process composition layer for the scientist-workbench. The TS-expert
+call site for the workbench's tools.
+
+```ts
+import { loadWorkbench } from "@workbench/compose";
+import { str, int, record } from "@workbench/protocol";
+
+const wb = await loadWorkbench();
+
+// Direct call (loose-typed): name as a string, Value in, Value out.
+const parsed = await wb.run("expr-parse", str("(x+1)*(x-1)"));
+const simplified = await wb.run("cas-simplify", parsed);
+
+// Fluent chain.
+const out = await wb
+  .pipe(str("(x+1)*(x-1)"))
+  .through("expr-parse")
+  .through("cas-simplify")
+  .value();
+
+// Cache-by-input-hash for idempotent tools.
+const cached = await wb.runMemoized(
+  "mod-pow",
+  record({ base: int(2n), exponent: int(10n), modulus: int(1000n) }),
+);
+```
+
+The typed barrel (issue scientist-workbench-4t5) lifts this to the
+inferred-call-signature surface a TS expert reaches for first:
+
+```ts
+import { wb } from "@workbench/compose/wb";  // generated; gitignored
+
+const out = await wb.modPow({
+  base: int(2n),
+  exponent: int(10n),
+  modulus: int(1000n),
+});
+// `out` is `Value` (currently); typo on a method name is a compile error.
+```
+
+## Status
+
+Tracked by ADR-0012 and the implementation chain
+`inm → 9n1 → 23i → {46z, 4t5, mtw → csa, e0h}`. The current package
+is the **scaffold** (issue inm); subsequent issues fill in the methods.
+Calling `loadWorkbench()` today throws a `CompositionError` naming the
+issue that lands the discovery walker.
+
+## Why this exists
+
+The bash-pipe surface (`echo … | bun tools/expr-parse/tool.ts | bun
+tools/cas-simplify/tool.ts`) is the right shape for shell composition,
+tool isolation, and unknown-tool dispatch. It is the wrong shape for
+the inner-loop iteration that dominates how an agent actually uses
+the workbench: every `|` is a fresh subprocess, ~50 ms of spawn
+ceremony per hop. A 7-tool chain pays seven of those.
+
+ADR-0010 (defineTool / runTool split) made every tool module
+side-effect-free at import time. ADR-0011 (typed flags) made the
+`FlagsOf<Fl>` object constructible from a TS call site. ADR-0004
+(schemas as first-class) made `def.schema.input` a real `Schema<I>`
+whose `I` matches the TS shape the caller wants to construct.
+
+The three together make `@workbench/compose` a thin facade over the
+contract dispatcher's *work case*, with the same schema-validation +
+output-validation + provenance-write guarantees as the subprocess
+surface. ADR-0012 documents the design.
+
+## When to reach for in-process vs subprocess
+
+| Reach for `@workbench/compose` when... | Reach for `bun tools/<name>/tool.ts` when... |
+|---|---|
+| Inner-loop iteration (debugging an expression) | Shell composition, ad-hoc one-liners |
+| Multi-step research workflows | Tool isolation (unknown / untrusted tool) |
+| Demo scripts (`scripts/demo-scope.ts`) | The orchestrator must not own the tool's failure mode |
+| Benchmarks where spawn cost dominates | Module-level side-effect risk |
+
+The contract holds byte-identically on both surfaces. If in-process
+and subprocess output ever diverge for the same `(tool, version,
+input)`, that is a bug, not a degree of freedom.
+
+## See also
+
+- ADR-0012 — design rationale, three-move plan, alternatives
+- ADR-0010 — `defineTool` / `runTool` split (the foundation)
+- ADR-0011 — typed flags (flow through unchanged)
+- ADR-0004 — schemas (validation contract preserved)
