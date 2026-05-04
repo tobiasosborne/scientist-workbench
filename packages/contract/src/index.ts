@@ -61,3 +61,13 @@ export {
 } from "./registry.js";
 export { type GoldenSpec } from "./goldens.js";
 export { resolveBunBinary, spawnBun, _resetBunBinaryCache, type SpawnResult } from "./spawn.js";
+export {
+  type PlatformRecord,
+  currentPlatform,
+  currentPlatformHash,
+  platformToValue,
+  valueToPlatform,
+  platformHash,
+  platformFingerprintValue,
+  platformFingerprintBytes,
+} from "./platform.js";

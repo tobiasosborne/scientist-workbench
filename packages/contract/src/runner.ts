@@ -78,6 +78,7 @@ import { provenanceToValue, readProvenance } from "./provenance.js";
 import { defaultStore } from "./store.js";
 import { decodeSchema } from "@workbench/protocol";
 import { executeToolDef } from "./execute.js";
+import { platformFingerprintBytes } from "./platform.js";
 
 // -----------------------------------------------------------------------------
 // Public types
@@ -175,6 +176,29 @@ export interface ToolDefinition<
    * deterministic given those bytes.
    */
   nondeterministic?: boolean;
+  /**
+   * Manifest annotation introduced by ADR-0015. When set to `true`, this
+   * tool may use IEEE-754 float ops in a way that depends on the running
+   * platform's float runtime — bit-identical *given the platform
+   * fingerprint* `{arch, os, runtime}`, not necessarily across platforms.
+   *
+   * The flag is the *tool author's declaration* that the tier may apply.
+   * The runtime decision (whether the platform fingerprint is recorded)
+   * happens per-execution in `executeToolDef`: a numerical-tier output
+   * that contains at least one float64 leaf gets a `platform` field on
+   * its provenance record; an output of pure-exact leaves does not. Same
+   * tool, different inputs can produce different-tier outputs (precedent:
+   * ADR-0007's `precision: "exact" | "float64"` field).
+   *
+   * Mutually exclusive with `nondeterministic: true` in practice — a
+   * stochastic tool has no determinism contract, so the numerical
+   * distinction does not apply. Asserting both is a load-time contract
+   * violation.
+   *
+   * Default (absent / false): the tool is symbolic — bit-identical
+   * cross-platform forever, the unconditional rule.
+   */
+  numerical?: boolean;
 }
 
 /**
@@ -222,7 +246,8 @@ const STANDARD_FLAGS = {
   examples:       F.bool("emit list of examples"),
   invariants:     F.bool("emit list of invariants"),
   test:           F.bool("run this tool's property tests in-process (if any)"),
-  "provenance-of": F.str("emit derivation tree for value-hash"),
+  "provenance-of":         F.str("emit derivation tree for value-hash"),
+  "platform-fingerprint":  F.bool("emit running {arch, os, runtime} fingerprint + hash (ADR-0015)"),
 } as const satisfies FlagSchema;
 
 type StdFlags = FlagsOf<typeof STANDARD_FLAGS>;
@@ -469,6 +494,14 @@ export async function runTool<I extends Value, O extends Value, Fl extends FlagS
         return;
       }
       writeOut(provenanceToValue(rec));
+      return;
+    }
+    if (stdFlags["platform-fingerprint"]) {
+      // ADR-0015 discoverability surface: emit the running platform's
+      // fingerprint *without* doing any work. An agent's planner can read
+      // a stored provenance record's `platform` field and compare to this
+      // before deciding whether the cached output is admissible.
+      r.stdout(platformFingerprintBytes());
       return;
     }
     if (stdFlags.test) {

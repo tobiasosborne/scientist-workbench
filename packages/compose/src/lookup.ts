@@ -25,6 +25,7 @@
 // contract does not promise. The user is told to call `run` directly.
 
 import {
+  currentPlatformHash,
   readByInputIndex,
   readValue,
   type ToolDefinition,
@@ -64,8 +65,19 @@ export async function lookupWorkbench<O extends Value = Value>(
     );
   }
 
+  // ADR-0015: numerical-tier lookups condition on the running
+  // platform's fingerprint. The reverse-index filename for numerical
+  // records includes the platform hash; from a different platform's
+  // perspective, the cached record is honestly a miss (its bytes would
+  // not match what running the tool here would produce). Symbolic
+  // tools have no platform suffix on the index, so the lookup behaves
+  // exactly as before — bit-identical cross-platform forever.
+  const platformHashForLookup = def.numerical === true ? currentPlatformHash() : null;
+
   const inputHash = hash(input);
-  const outputHash = await readByInputIndex(store, inputHash, def.name, def.version);
+  const outputHash = await readByInputIndex(
+    store, inputHash, def.name, def.version, platformHashForLookup,
+  );
   if (outputHash === null) return null;
   const out = await readValue(store, outputHash);
   if (out === null) {

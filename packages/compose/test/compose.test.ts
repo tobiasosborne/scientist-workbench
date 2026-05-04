@@ -16,8 +16,17 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { canonicalize, hash, int, parse, record, str } from "@workbench/protocol";
-import { spawnBun } from "@workbench/contract";
+import { canonicalize, float64FromNumber, hash, int, list, parse, record, str, type Value } from "@workbench/protocol";
+import {
+  currentPlatform,
+  currentPlatformHash,
+  platformHash,
+  spawnBun,
+  writeByInputIndex,
+  writeProvenance,
+  writeValue,
+  type PlatformRecord,
+} from "@workbench/contract";
 import { CompositionError, loadWorkbench, typed } from "../src/index.js";
 
 describe("@workbench/compose — scaffold surface", () => {
@@ -328,5 +337,144 @@ describe("@workbench/compose — Workbench.run", () => {
         expect(recordedInputHash).toEqual(str(hash(input)));
       }
     }
+  });
+});
+
+// =============================================================================
+// ADR-0015: cross-platform cache-miss for numerical-tier tools
+// =============================================================================
+//
+// The lookup-key extension is the load-bearing payoff of ADR-0015. From the
+// running platform's perspective, a cached numerical record produced on a
+// different platform is honestly a miss — its bytes would not match what
+// running the tool here would produce. The two records coexist in the store
+// without conflict because the by-input index filename includes the
+// platform hash for numerical tools.
+//
+// We exercise the contract from both directions: a same-platform numerical
+// record hits cache (the normal happy path), and a fabricated foreign-
+// platform record (constructed by writing the index with a fake platform
+// hash) does NOT hit cache from the running platform's perspective.
+
+describe("@workbench/compose — ADR-0015 cross-platform cache miss", () => {
+  let store: string;
+  let restoreStore: string | undefined;
+
+  beforeAll(() => {
+    store = mkdtempSync(join(tmpdir(), "wb-platform-store-"));
+    restoreStore = process.env["CAS_STORE"];
+    process.env["CAS_STORE"] = store;
+  });
+
+  afterAll(() => {
+    if (restoreStore === undefined) delete process.env["CAS_STORE"];
+    else process.env["CAS_STORE"] = restoreStore;
+    rmSync(store, { recursive: true, force: true });
+  });
+
+  test("linalg-solve same-platform: lookup hits after a run", async () => {
+    const wb = await loadWorkbench({ store });
+    const t = typed(wb);
+
+    const inp = record({
+      A: list([
+        list([float64FromNumber(2), float64FromNumber(1)]),
+        list([float64FromNumber(1), float64FromNumber(3)]),
+      ]),
+      b: list([float64FromNumber(4), float64FromNumber(5)]),
+    });
+
+    const out1 = await t.linalgSolve(inp);
+    const cached = await wb.lookup("linalg-solve", inp);
+    expect(cached).not.toBeNull();
+    // The hit should be byte-identical.
+    expect(canonicalize(cached!)).toEqual(canonicalize(out1));
+  });
+
+  test("linalg-solve foreign-platform record: lookup misses honestly", async () => {
+    const wb = await loadWorkbench({ store });
+
+    // A *fresh* input that hasn't been computed under the running platform.
+    // We fabricate a foreign-platform record by directly writing the index
+    // with a different platform hash, and verify that wb.lookup from this
+    // platform sees a miss (returns null), not the fabricated bytes.
+    const inp = record({
+      A: list([
+        list([float64FromNumber(7), float64FromNumber(0)]),
+        list([float64FromNumber(0), float64FromNumber(7)]),
+      ]),
+      b: list([float64FromNumber(14), float64FromNumber(21)]),
+    });
+
+    // Concoct a foreign platform that is NOT the running one.
+    const here = currentPlatform();
+    const foreign: PlatformRecord = {
+      arch: here.arch === "aarch64" ? "x86_64" : "aarch64",
+      os: here.os === "darwin" ? "linux" : "darwin",
+      runtime: here.runtime,
+    };
+    expect(platformHash(foreign)).not.toBe(currentPlatformHash());
+
+    // Fabricate: write a value, write a provenance record carrying the
+    // foreign platform, and write the by-input index under the foreign
+    // platform's filename suffix. This is exactly what executeToolDef
+    // would have done if the same tool had been run on the foreign machine.
+    const fakeOutput = record({
+      x: list([float64FromNumber(2), float64FromNumber(3)]),
+      residual_norm: float64FromNumber(0),
+      b_norm: float64FromNumber(25),
+      condition_estimate: float64FromNumber(1),
+      growth_factor: float64FromNumber(1),
+      method: str("lu-partial-pivot"),
+      iterations: int(0n),
+      warnings: list([]),
+    });
+    const fakeOutputHash = await writeValue(store, fakeOutput);
+    await writeProvenance(store, {
+      tool: { name: "linalg-solve", version: "0.1.0" },
+      inputs: [{ name: "stdin", hash: hash(inp) }],
+      flags: {},
+      output_hash: fakeOutputHash,
+      platform: foreign,
+    });
+    await writeByInputIndex(
+      store,
+      hash(inp),
+      "linalg-solve",
+      "0.1.0",
+      fakeOutputHash,
+      platformHash(foreign),
+    );
+
+    // From the running platform's perspective, this is a miss.
+    const cached = await wb.lookup("linalg-solve", inp);
+    expect(cached).toBeNull();
+
+    // But the foreign record IS still in the store — `--provenance-of`
+    // would find it, building cross-platform-evidence as a side effect.
+    const recBytes = await Bun.file(
+      join(store, "provenance", fakeOutputHash.substring(0, 2), `${fakeOutputHash}.json`),
+    ).text();
+    const rec = parse(recBytes);
+    expect(rec.kind).toBe("record");
+    if (rec.kind === "record") {
+      expect(rec.fields["platform"]).toBeDefined();
+    }
+  });
+
+  test("symbolic tool's lookup is unaffected by platform (mod-pow)", async () => {
+    // The unconditional symbolic contract: same-input → same-output → cache
+    // hit, regardless of platform. We sanity-check that the platform
+    // extension didn't break this.
+    const wb = await loadWorkbench({ store });
+    const inp = record({
+      base: int(2n),
+      exponent: int(8n),
+      modulus: int(1000n),
+    });
+    const out1 = await wb.run("mod-pow", inp);
+    const cached = await wb.lookup("mod-pow", inp);
+    expect(cached).not.toBeNull();
+    expect(canonicalize(cached!)).toEqual(canonicalize(out1 as Value));
   });
 });

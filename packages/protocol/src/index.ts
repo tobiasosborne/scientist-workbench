@@ -34,6 +34,7 @@ export { canonicalize, encodeString } from "./canonical.js";
 export { parse } from "./parse.js";
 export { validateValue } from "./validate.js";
 export { hash, hashCanonicalBytes } from "./hash.js";
+export { containsFloat64 } from "./walk.js";
 export { INT_RE, F64_BITS_RE, gcdBigInt } from "./numerics.js";
 export {
   type Schema,

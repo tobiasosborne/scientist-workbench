@@ -92,12 +92,13 @@ export async function readRawProvenance(store: string, outputHash: Hash): Promis
 }
 
 // -----------------------------------------------------------------------------
-// Reverse index: (input hash, tool, version) → output hash
+// Reverse index: (input hash, tool, version[, platform hash]) → output hash
 // -----------------------------------------------------------------------------
 //
 // The forward provenance file is keyed by output hash. For
 // `Workbench.lookup`, we need the reverse: given an input hash and a
-// `(tool, version)`, find the output hash without scanning every
+// `(tool, version)` (and per ADR-0015, optionally a platform hash for
+// numerical-tier records), find the output hash without scanning every
 // provenance record. The reverse index file encodes that lookup as a
 // single stat + read (sub-millisecond on a warm fs cache), keeping
 // `lookup` O(1) regardless of store size.
@@ -105,21 +106,34 @@ export async function readRawProvenance(store: string, outputHash: Hash): Promis
 // The index file's *content* is the output hash as a hex string —
 // nothing more. The file's existence is the cache-presence signal,
 // and its content is the pointer into `values/<hh>/<output>.json`.
+//
+// For numerical-tier records the filename carries the platform hash
+// suffix (`...--<tool>--<version>--<platform>.json`); for symbolic
+// records the suffix is absent (`...--<tool>--<version>.json`). Two
+// platforms producing different output_hashes for the same numerical
+// input thus coexist as two distinct index files. Symbolic records
+// remain at their pre-ADR-0015 path verbatim — no migration needed.
 
-/** Index-file path. Tool name + version go into the filename, not the directory. */
+/**
+ * Index-file path. Tool name + version go into the filename, not the
+ * directory. Pass `platformHash` (32-byte hex string) for numerical-
+ * tier records; pass `null` for symbolic records.
+ */
 export function byInputPath(
   store: string,
   inputHash: Hash,
   toolName: string,
   version: string,
+  platformHash: Hash | null = null,
 ): string {
   const safeTool = toolName.replace(/[^a-z0-9-]/g, "_");
   const safeVersion = version.replace(/[^a-z0-9.\-]/gi, "_");
+  const platformSuffix = platformHash !== null ? `--${platformHash}` : "";
   return join(
     store,
     "by-input",
     inputHash.substring(0, 2),
-    `${inputHash}--${safeTool}--${safeVersion}.json`,
+    `${inputHash}--${safeTool}--${safeVersion}${platformSuffix}.json`,
   );
 }
 
@@ -129,8 +143,9 @@ export async function writeByInputIndex(
   toolName: string,
   version: string,
   outputHash: Hash,
+  platformHash: Hash | null = null,
 ): Promise<void> {
-  await writeAtomic(byInputPath(store, inputHash, toolName, version), outputHash);
+  await writeAtomic(byInputPath(store, inputHash, toolName, version, platformHash), outputHash);
 }
 
 export async function readByInputIndex(
@@ -138,10 +153,11 @@ export async function readByInputIndex(
   inputHash: Hash,
   toolName: string,
   version: string,
+  platformHash: Hash | null = null,
 ): Promise<Hash | null> {
   try {
     const raw = await readFile(
-      byInputPath(store, inputHash, toolName, version),
+      byInputPath(store, inputHash, toolName, version, platformHash),
       "utf8",
     );
     const trimmed = raw.trim();

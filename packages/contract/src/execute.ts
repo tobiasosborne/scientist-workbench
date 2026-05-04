@@ -30,6 +30,7 @@
 
 import {
   canonicalize,
+  containsFloat64,
   hash,
   hashCanonicalBytes,
   ToolError,
@@ -38,6 +39,7 @@ import {
   type Value,
 } from "@workbench/protocol";
 import type { FlagSchema, FlagsOf } from "./flags.js";
+import { currentPlatform, currentPlatformHash } from "./platform.js";
 import {
   writeProvenance,
   type ProvenanceRecord,
@@ -119,6 +121,25 @@ export async function executeToolDef<
   flags: FlagsOf<Fl>,
   opts: ExecuteOptions = {},
 ): Promise<ExecuteResult<O>> {
+  // 0. Mutual-exclusion check on tier annotations (ADR-0015). A tool
+  //    that asserts both `nondeterministic: true` (no determinism
+  //    contract — entropy-source) and `numerical: true` (platform-
+  //    conditional contract) is a load-time contract violation: the
+  //    tiers describe different relaxations of the determinism rule
+  //    and a tool cannot be in both at once. Caught here (rather than
+  //    in `defineTool`) so the failure surfaces consistently across
+  //    every entry point — including in-process callers that bypass
+  //    the runner.
+  if (def.nondeterministic === true && def.numerical === true) {
+    throw new ToolError(
+      `${def.name}: cannot be both nondeterministic and numerical (ADR-0015)`,
+      {
+        suggestion:
+          "stochastic tools have no determinism contract; numerical tools have a platform-conditional one. Pick one.",
+      },
+    );
+  }
+
   // 1. Input validation. ADR-0004 names this as the contract; the
   //    in-process surface honours it identically to the subprocess
   //    surface. Cost: O(value size); dwarfed by anything else.
@@ -196,12 +217,33 @@ export async function executeToolDef<
   };
   if (def.nondeterministic === true) rec.nondeterministic = true;
 
+  // ADR-0015: per-execution determinism-tier conditioning. A tool
+  // annotated `numerical: true` is platform-conditional *iff* the
+  // actual output contains float64 leaves. Same tool, different inputs
+  // can produce different-tier outputs (precedent: ADR-0007's
+  // `precision: "exact" | "float64"` field). We capture the running
+  // platform fingerprint only for the genuinely-platform-conditional
+  // executions; symbolic outputs of a numerical tool (Clifford+T
+  // exact-symbolic when sturm-execute's exact path lands, bead `jfj`)
+  // get no platform field.
+  let platformHashForIndex: Hash | null = null;
+  if (def.numerical === true && containsFloat64(output)) {
+    rec.platform = currentPlatform();
+    platformHashForIndex = currentPlatformHash();
+  }
+
   let persistenceError: Error | null = null;
   try {
     await writeValue(store, output);
     await writeProvenance(store, rec);
     if (def.nondeterministic !== true) {
-      await writeByInputIndex(store, inputHash, def.name, def.version, outputHash);
+      // The reverse index encodes the platform hash when the record
+      // carries a `platform` field — different-platform records coexist
+      // under distinct index filenames, so a future `lookup` from a
+      // different platform sees a miss instead of stale bytes.
+      await writeByInputIndex(
+        store, inputHash, def.name, def.version, outputHash, platformHashForIndex,
+      );
     }
   } catch (e) {
     persistenceError = e instanceof Error ? e : new Error(String(e));

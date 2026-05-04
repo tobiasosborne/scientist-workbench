@@ -145,6 +145,14 @@ export const def = defineTool({
   name: NAME,
   version: VERSION,
   schema: { input: inputSchema, output: outputSchema },
+  // ADR-0015: numerical tier. Output bytes are bit-identical *given the
+  // platform fingerprint* {arch, os, runtime}; cross-platform divergence
+  // is honestly recorded in the provenance record's `platform` field, and
+  // `runMemoized` skips cache hits whose platform doesn't match the
+  // running platform. Every linalg-solve output contains float64, so the
+  // platform field is recorded on every successful run (per ADR-0007's
+  // per-output-tier-conditioning precedent).
+  numerical: true,
   flags: {
     method: F.enum(["lu"] as const, "decomposition method", { default: "lu" }),
   },

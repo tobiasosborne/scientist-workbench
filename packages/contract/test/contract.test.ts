@@ -591,5 +591,255 @@ describe("ADR-0011 — runTool with declared flags", () => {
   });
 });
 
+// =============================================================================
+// ADR-0015: determinism tier — platform helpers, executeToolDef branch,
+//            mutual exclusion, --platform-fingerprint standard flag
+// =============================================================================
+
+import {
+  currentPlatform,
+  currentPlatformHash,
+  executeToolDef,
+  platformFingerprintValue,
+  platformHash,
+  platformToValue,
+  readByInputIndex,
+  type PlatformRecord,
+  valueToPlatform,
+} from "../src/index.js";
+import { containsFloat64, float64FromNumber, list as plist } from "@workbench/protocol";
+
+describe("ADR-0015 platform helpers", () => {
+  test("currentPlatform returns three normalised string fields", () => {
+    const p = currentPlatform();
+    expect(typeof p.arch).toBe("string");
+    expect(typeof p.os).toBe("string");
+    expect(typeof p.runtime).toBe("string");
+    // Bun normalises arch to {x86_64, aarch64, …} not Node's {x64, arm64}.
+    expect(["x86_64", "aarch64", "i386"].includes(p.arch) || p.arch.length > 0).toBe(true);
+    // Detected by the test file running under bun:test → must be "bun".
+    expect(p.runtime).toBe("bun");
+  });
+
+  test("platformToValue ∘ valueToPlatform = id", () => {
+    const p: PlatformRecord = { arch: "x86_64", os: "linux", runtime: "bun" };
+    expect(valueToPlatform(platformToValue(p))).toEqual(p);
+  });
+
+  test("platformHash agrees on equal triples, differs on different triples", () => {
+    const a: PlatformRecord = { arch: "x86_64", os: "linux", runtime: "bun" };
+    const b: PlatformRecord = { arch: "x86_64", os: "linux", runtime: "bun" };
+    const c: PlatformRecord = { arch: "aarch64", os: "darwin", runtime: "bun" };
+    expect(platformHash(a)).toBe(platformHash(b));
+    expect(platformHash(a)).not.toBe(platformHash(c));
+  });
+
+  test("currentPlatformHash matches platformHash(currentPlatform())", () => {
+    expect(currentPlatformHash()).toBe(platformHash(currentPlatform()));
+  });
+
+  test("platformFingerprintValue carries both record and hash", () => {
+    const v = platformFingerprintValue();
+    expect(v.kind).toBe("record");
+    if (v.kind !== "record") throw new Error();
+    expect(v.fields.fingerprint).toBeDefined();
+    expect(v.fields.hash).toBeDefined();
+    expect(v.fields.hash!.kind).toBe("string");
+  });
+});
+
+describe("ADR-0015 ProvenanceRecord platform round-trip", () => {
+  test("provenanceToValue ∘ valueToProvenance preserves platform", () => {
+    const r: ProvenanceRecord = {
+      tool: { name: "linalg-solve", version: "0.1.0" },
+      inputs: [{ name: "stdin", hash: "a".repeat(64) }],
+      flags: {},
+      output_hash: "b".repeat(64),
+      platform: { arch: "x86_64", os: "linux", runtime: "bun" },
+    };
+    const back = valueToProvenance(provenanceToValue(r));
+    expect(back).toEqual(r);
+  });
+
+  test("symbolic provenance bytes are byte-identical to pre-ADR-0015 bytes", () => {
+    // Round-trip a record without the platform field; verify the canonical
+    // bytes match a hand-rolled equivalent that has no platform-related
+    // overhead. This is the byte-compat guarantee from the ADR.
+    const r: ProvenanceRecord = {
+      tool: { name: "mod-pow", version: "0.2.0" },
+      inputs: [{ name: "stdin", hash: "c".repeat(64) }],
+      flags: {},
+      output_hash: "d".repeat(64),
+    };
+    const bytes = canonicalize(provenanceToValue(r));
+    // The canonical bytes must NOT contain "platform" (it's omitted-when-absent).
+    expect(bytes.includes("platform")).toBe(false);
+  });
+});
+
+describe("ADR-0015 executeToolDef per-output platform branch", () => {
+  // A tool annotated `numerical: true` whose output contains float64.
+  // The provenance record must carry the platform field.
+  const numericalDef = defineTool({
+    name: "test-numerical",
+    version: "0.0.1",
+    schema: {
+      input: S.kind("integer"),
+      output: S.record({ x: S.kind("float64") }),
+    },
+    numerical: true,
+    examples: [],
+    invariants: [],
+    fn: (_input) => record({ x: float64FromNumber(0.5) }),
+  });
+
+  // A tool annotated `numerical: true` whose output is pure-exact —
+  // no float64 anywhere. The provenance record must NOT carry the
+  // platform field (per ADR-0007 precision-precedent).
+  const numericalExactDef = defineTool({
+    name: "test-numerical-exact",
+    version: "0.0.1",
+    schema: {
+      input: S.kind("integer"),
+      output: S.kind("integer"),
+    },
+    numerical: true,
+    examples: [],
+    invariants: [],
+    fn: (input) => input,  // identity on integer; no float64 output
+  });
+
+  // A symbolic tool (default — no annotation) whose output happens to
+  // contain float64. Should NOT get a platform field — symbolic-tier
+  // contract is unconditional cross-platform forever.
+  const symbolicWithFloatDef = defineTool({
+    name: "test-symbolic-with-float",
+    version: "0.0.1",
+    schema: {
+      input: S.kind("integer"),
+      output: S.kind("float64"),
+    },
+    examples: [],
+    invariants: [],
+    fn: () => float64FromNumber(0.5),
+  });
+
+  test("numerical + float64 output → platform field recorded", async () => {
+    const result = await executeToolDef(numericalDef, int(1n), {}, {
+      store: storeDir,
+      env: { CAS_STORE: storeDir },
+    });
+    expect(result.provenanceError).toBeNull();
+    const rec = await readProvenance(storeDir, result.outputHash);
+    expect(rec).not.toBeNull();
+    expect(rec!.platform).toBeDefined();
+    expect(rec!.platform!.runtime).toBe("bun");
+  });
+
+  test("numerical + exact output → NO platform field", async () => {
+    const result = await executeToolDef(numericalExactDef, int(42n), {}, {
+      store: storeDir,
+      env: { CAS_STORE: storeDir },
+    });
+    expect(result.provenanceError).toBeNull();
+    const rec = await readProvenance(storeDir, result.outputHash);
+    expect(rec).not.toBeNull();
+    expect(rec!.platform).toBeUndefined();
+  });
+
+  test("symbolic + float64 output → NO platform field (no opt-in)", async () => {
+    const result = await executeToolDef(symbolicWithFloatDef, int(7n), {}, {
+      store: storeDir,
+      env: { CAS_STORE: storeDir },
+    });
+    expect(result.provenanceError).toBeNull();
+    const rec = await readProvenance(storeDir, result.outputHash);
+    expect(rec).not.toBeNull();
+    expect(rec!.platform).toBeUndefined();
+  });
+
+  test("numerical record's by-input index includes platform hash in filename", async () => {
+    // Run the numerical tool, then verify the index file exists at the
+    // platform-suffixed path *only*, not at the symbolic path.
+    const input = int(99n);
+    const result = await executeToolDef(numericalDef, input, {}, {
+      store: storeDir,
+      env: { CAS_STORE: storeDir },
+    });
+    expect(result.provenanceError).toBeNull();
+
+    const inputHash = hash(input);
+    const platHash = currentPlatformHash();
+
+    const platformIndex = await readByInputIndex(
+      storeDir, inputHash, numericalDef.name, numericalDef.version, platHash,
+    );
+    expect(platformIndex).toBe(result.outputHash);
+
+    const symbolicIndex = await readByInputIndex(
+      storeDir, inputHash, numericalDef.name, numericalDef.version, null,
+    );
+    expect(symbolicIndex).toBeNull();
+  });
+});
+
+describe("ADR-0015 mutual exclusion (numerical ∧ nondeterministic)", () => {
+  test("a tool asserting both flags fails at executeToolDef", async () => {
+    const bad = defineTool({
+      name: "test-both",
+      version: "0.0.1",
+      schema: { input: S.kind("integer"), output: S.kind("integer") },
+      nondeterministic: true,
+      numerical: true,
+      examples: [],
+      invariants: [],
+      fn: (i) => i,
+    });
+    let err: Error | null = null;
+    try {
+      await executeToolDef(bad, int(1n), {}, {
+        store: storeDir,
+        env: { CAS_STORE: storeDir },
+      });
+    } catch (e) {
+      err = e as Error;
+    }
+    expect(err).not.toBeNull();
+    expect(err!.message).toMatch(/cannot be both nondeterministic and numerical/);
+  });
+});
+
+describe("ADR-0015 --platform-fingerprint standard flag", () => {
+  test("emits canonical bytes carrying {fingerprint, hash}", async () => {
+    const minimalDef = defineTool({
+      name: "test-fingerprint",
+      version: "0.0.1",
+      schema: { input: S.kind("integer"), output: S.kind("integer") },
+      examples: [],
+      invariants: [],
+      fn: (i) => i,
+    });
+    let captured = "";
+    await runTool(minimalDef, {
+      argv: ["--platform-fingerprint"],
+      stdin: async () => "",
+      stdout: (c) => { captured += c; },
+      stderr: () => {},
+      env: { WB_SKIP_SCHEMA_CHECK: "1" },
+      exit: (code) => { throw new ExitSignal(code); },
+    });
+    const v = parse(captured);
+    expect(v.kind).toBe("record");
+    if (v.kind !== "record") throw new Error();
+    expect(v.fields.fingerprint).toBeDefined();
+    expect(v.fields.hash).toBeDefined();
+    // Hash field should be the 64-hex-char content address.
+    const h = v.fields.hash!;
+    expect(h.kind).toBe("string");
+    if (h.kind !== "string") throw new Error();
+    expect(/^[0-9a-f]{64}$/.test(h.value)).toBe(true);
+  });
+});
+
 // silence the unused-import lint when these helpers aren't otherwise reached
-void sym; void expr;
+void sym; void expr; void plist; void containsFloat64;

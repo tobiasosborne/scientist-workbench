@@ -13,6 +13,14 @@
 // than encoding `false` so deterministic provenance bytes stay byte-equal
 // to their pre-amendment form (canonical encoding sorts keys; an extra
 // always-present field would shift bytes for every existing record).
+//
+// The optional `platform` field surfaces ADR-0015's numerical-tier
+// fingerprint into the on-disk record. Same omitted-when-absent
+// convention: symbolic records keep their pre-ADR-0015 bytes byte-
+// identical. When present, it carries `{arch, os, runtime}` — the
+// running platform that produced this output. `runMemoized`'s lookup
+// uses it to decide whether a stored hit is admissible from the
+// running platform's perspective.
 
 import {
   bool,
@@ -25,6 +33,7 @@ import {
   type Hash,
   type Value,
 } from "@workbench/protocol";
+import { type PlatformRecord, platformToValue, valueToPlatform } from "./platform.js";
 import { readRawProvenance, writeRawProvenance } from "./store.js";
 
 export interface ProvenanceRecord {
@@ -33,6 +42,7 @@ export interface ProvenanceRecord {
   flags: Record<string, string>;
   output_hash: Hash;
   nondeterministic?: boolean;
+  platform?: PlatformRecord;
 }
 
 export function provenanceToValue(r: ProvenanceRecord): Value {
@@ -45,6 +55,7 @@ export function provenanceToValue(r: ProvenanceRecord): Value {
     tool: record({ name: str(r.tool.name), version: str(r.tool.version) }),
   };
   if (r.nondeterministic === true) fields["nondeterministic"] = bool(true);
+  if (r.platform !== undefined) fields["platform"] = platformToValue(r.platform);
   return record(fields);
 }
 
@@ -91,6 +102,10 @@ export function valueToProvenance(v: Value): ProvenanceRecord {
       throw new ProtocolError(`provenance.nondeterministic not a boolean (got ${nd.kind})`);
     }
     if (nd.value === true) out.nondeterministic = true;
+  }
+  const plat = f["platform"];
+  if (plat !== undefined) {
+    out.platform = valueToPlatform(plat);
   }
   return out;
 }
