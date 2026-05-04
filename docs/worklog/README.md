@@ -46,6 +46,7 @@ write the frictions and the dead ends as well as the wins.
 | 033 | [Typed barrel for `@workbench/compose` (`wb.modPow({...})`)](033-typed-barrel.md) | 2026-05-03 | scientist-workbench-4t5 |
 | 034 | [`Workbench.lookup` + `runMemoized`: cache by input hash](034-lookup-and-runMemoized.md) | 2026-05-03 | scientist-workbench-{mtw, csa} |
 | 035 | [Fluent `wb.pipe(...)` + demo-scope.ts migration (full DAG closed)](035-pipe-and-demo-migration.md) | 2026-05-03 | scientist-workbench-{46z, e0h} |
+| 036 | [ADR-0015: determinism tier (numerical contract relaxation)](036-determinism-tier.md) | 2026-05-04 | scientist-workbench-0ck (closes); -auz, -2t4 filed |
 
 ## How to add a new shard
 

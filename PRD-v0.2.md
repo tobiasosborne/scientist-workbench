@@ -347,7 +347,7 @@ The properties below are not soft preferences. They are hard requirements: a too
 
 ### 6.1 Properties of a tool an agent will reach for
 
-- **Bit-deterministic.** Same input, same version → bit-identical output. Always.
+- **Bit-deterministic.** Same input, same version → bit-identical output. Tiered as of ADR-0015 (2026-05-04): the symbolic majority is bit-identical *cross-platform, forever* (the unconditional rule); numerical tools annotated `numerical: true` are bit-identical *given the platform fingerprint* (`{arch, os, runtime}`), with cross-platform divergence honestly recorded in the provenance record's `platform` field. Stochastic tools annotated `nondeterministic: true` (ADR-0005, today only `entropy-source`) opt out of the determinism contract entirely. The three annotations are mutually exclusive in practice. See `docs/adr/0015-determinism-tier.md` for the per-output tier conditioning, the `runMemoized` semantics, and the cross-Bun-version measurement that fixes the fingerprint shape.
 - **Schema-discoverable.** `--schema` returns a value the agent can read once and immediately know exactly what is required, optional, types, output shape. Schemas are precise (no `any`, no `object`); ambiguity is a bug.
 - **Example-rich.** `--examples` returns many varied (input, output) pairs covering common cases, edge cases, and at least one error case. Five examples is too few; thirty is reasonable; a hundred is fine. *MVP currently sits at 5–10 per tool; this is below threshold and should be raised before declaring Phase 1 done.*
 - **Forgiving on input, strict on output.** Accept multiple representations; normalise internally; emit one canonical form.
