@@ -210,6 +210,49 @@ describe("evalNumericExpr — closed-vocabulary numeric evaluation", () => {
     // 1/0 = +Inf
     expect(evalNumericExpr(expr("/", [int(1n), int(0n)]), new Map())).toBe(Infinity);
   });
+
+  // Tier-1 transcendentals (2026-05-04). One probe per head verifying
+  // numeric agreement with the corresponding `Math.*` at an in-domain
+  // point. Domain restrictions are exercised on the boundaries
+  // (asin/acos/atanh need |x| < 1; acosh needs x ≥ 1).
+  test("tier-1: inverse trig dispatch matches Math.*", () => {
+    const at = (head: string, v: number): number =>
+      evalNumericExpr(expr(head, [float64FromNumber(v)]), new Map());
+    expect(at("asin", 0.4)).toBe(Math.asin(0.4));
+    expect(at("acos", 0.4)).toBe(Math.acos(0.4));
+    expect(at("atan", 1.7)).toBe(Math.atan(1.7));
+  });
+
+  test("tier-1: hyperbolic dispatch matches Math.*", () => {
+    const at = (head: string, v: number): number =>
+      evalNumericExpr(expr(head, [float64FromNumber(v)]), new Map());
+    expect(at("sinh", 0.6)).toBe(Math.sinh(0.6));
+    expect(at("cosh", 0.6)).toBe(Math.cosh(0.6));
+    expect(at("tanh", 0.6)).toBe(Math.tanh(0.6));
+    expect(at("asinh", 1.5)).toBe(Math.asinh(1.5));
+    expect(at("acosh", 2.5)).toBe(Math.acosh(2.5));
+    expect(at("atanh", 0.4)).toBe(Math.atanh(0.4));
+  });
+
+  test("tier-1: log2 / log10 match Math.*", () => {
+    const at = (head: string, v: number): number =>
+      evalNumericExpr(expr(head, [float64FromNumber(v)]), new Map());
+    expect(at("log2", 8)).toBe(Math.log2(8));     // exactly 3
+    expect(at("log10", 1000)).toBe(Math.log10(1000)); // exactly 3
+  });
+
+  test("tier-1: out-of-domain inputs surface as IEEE-754 NaN (no silent zeroing)", () => {
+    const at = (head: string, v: number): number =>
+      evalNumericExpr(expr(head, [float64FromNumber(v)]), new Map());
+    // asin(2) is NaN
+    expect(Number.isNaN(at("asin", 2))).toBe(true);
+    // acosh(0.5) is NaN
+    expect(Number.isNaN(at("acosh", 0.5))).toBe(true);
+    // atanh(±1) is ±Infinity (boundary), atanh(2) is NaN
+    expect(Number.isNaN(at("atanh", 2))).toBe(true);
+    // log2 of a non-positive value is NaN
+    expect(Number.isNaN(at("log2", -1))).toBe(true);
+  });
 });
 
 // -----------------------------------------------------------------------------

@@ -52,6 +52,7 @@ write the frictions and the dead ends as well as the wins.
 | 039 | [`integrate-1d` ships; orchestration meta-experiment yields code-vs-summary divergence](039-integrate-1d-and-orchestration-experiment.md) | 2026-05-04 | (none — meta-experiment + tool ship) |
 | 040 | [`optimize-lbfgs-projected` ships: third numerical-tier tool, L-BFGS-B class](040-optimize-lbfgs-projected.md) | 2026-05-04 | (none filed) |
 | 041 | [`cas-diff` ships: symbolic differentiation over the closed numerical vocabulary](041-cas-diff.md) | 2026-05-04 | scientist-workbench-cnv |
+| 042 | [tier-1 vocabulary extension: inverse trig + hyperbolics + log bases](042-tier1-vocab-extension.md) | 2026-05-04 | scientist-workbench-0jn |
 
 ## How to add a new shard
 

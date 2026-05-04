@@ -221,6 +221,104 @@ describe("differentiate — transcendentals (chain rule)", () => {
 });
 
 // -----------------------------------------------------------------------------
+// Tier-1 transcendentals (inverse trig, hyperbolics, log bases)
+// -----------------------------------------------------------------------------
+
+describe("differentiate — tier-1 transcendentals", () => {
+  test("d(asin(x))/dx = 1 / sqrt(1 - x²)", () => {
+    expect(
+      eq(
+        diff(expr("asin", [x])),
+        expr("/", [int(1n), expr("sqrt", [expr("-", [int(1n), expr("^", [x, int(2n)])])])]),
+      ),
+    ).toBe(true);
+  });
+
+  test("d(acos(x))/dx = neg(1) / sqrt(1 - x²)", () => {
+    expect(
+      eq(
+        diff(expr("acos", [x])),
+        expr("/", [
+          expr("neg", [int(1n)]),
+          expr("sqrt", [expr("-", [int(1n), expr("^", [x, int(2n)])])]),
+        ]),
+      ),
+    ).toBe(true);
+  });
+
+  test("d(atan(x))/dx = 1 / (1 + x²)", () => {
+    expect(
+      eq(
+        diff(expr("atan", [x])),
+        expr("/", [int(1n), expr("+", [int(1n), expr("^", [x, int(2n)])])]),
+      ),
+    ).toBe(true);
+  });
+
+  test("d(sinh(x))/dx = cosh(x)", () => {
+    expect(eq(diff(expr("sinh", [x])), expr("cosh", [x]))).toBe(true);
+  });
+
+  test("d(cosh(x))/dx = sinh(x)  (note: positive, unlike d(cos)/dx)", () => {
+    expect(eq(diff(expr("cosh", [x])), expr("sinh", [x]))).toBe(true);
+  });
+
+  test("d(tanh(x))/dx = 1 - tanh(x)²", () => {
+    expect(
+      eq(
+        diff(expr("tanh", [x])),
+        expr("-", [int(1n), expr("^", [expr("tanh", [x]), int(2n)])]),
+      ),
+    ).toBe(true);
+  });
+
+  test("d(asinh(x))/dx = 1 / sqrt(1 + x²)", () => {
+    expect(
+      eq(
+        diff(expr("asinh", [x])),
+        expr("/", [int(1n), expr("sqrt", [expr("+", [int(1n), expr("^", [x, int(2n)])])])]),
+      ),
+    ).toBe(true);
+  });
+
+  test("d(acosh(x))/dx = 1 / sqrt(x² - 1)", () => {
+    expect(
+      eq(
+        diff(expr("acosh", [x])),
+        expr("/", [int(1n), expr("sqrt", [expr("-", [expr("^", [x, int(2n)]), int(1n)])])]),
+      ),
+    ).toBe(true);
+  });
+
+  test("d(atanh(x))/dx = 1 / (1 - x²)", () => {
+    expect(
+      eq(
+        diff(expr("atanh", [x])),
+        expr("/", [int(1n), expr("-", [int(1n), expr("^", [x, int(2n)])])]),
+      ),
+    ).toBe(true);
+  });
+
+  test("d(log2(x))/dx = 1 / (x · log(2))", () => {
+    expect(
+      eq(
+        diff(expr("log2", [x])),
+        expr("/", [int(1n), expr("*", [x, expr("log", [int(2n)])])]),
+      ),
+    ).toBe(true);
+  });
+
+  test("d(log10(x))/dx = 1 / (x · log(10))", () => {
+    expect(
+      eq(
+        diff(expr("log10", [x])),
+        expr("/", [int(1n), expr("*", [x, expr("log", [int(10n)])])]),
+      ),
+    ).toBe(true);
+  });
+});
+
+// -----------------------------------------------------------------------------
 // Out-of-scope refusals
 // -----------------------------------------------------------------------------
 
@@ -312,6 +410,22 @@ const FD_CORPUS: FdProbe[] = [
       expr("+", [expr("^", [x, int(2n)]), int(-49n)]),
     ]),
     points: [-0.9, -0.3, 0.4, 0.9] },
+  // Tier-1 transcendentals — each probe stays inside its function's
+  // natural domain. asin/acos/atanh need |x| < 1; acosh needs x > 1;
+  // log2/log10 need x > 0.
+  { description: "asin(x)", expr: expr("asin", [x]), points: [-0.7, -0.2, 0.3, 0.8] },
+  { description: "acos(x)", expr: expr("acos", [x]), points: [-0.7, -0.2, 0.3, 0.8] },
+  { description: "atan(x)", expr: expr("atan", [x]), points: [-2, 0, 1.5, 5] },
+  { description: "sinh(x)", expr: expr("sinh", [x]), points: [-1.5, 0, 1.2, 2] },
+  { description: "cosh(x)", expr: expr("cosh", [x]), points: [-1.5, 0, 1.2, 2] },
+  { description: "tanh(x)", expr: expr("tanh", [x]), points: [-2, 0, 0.7, 3] },
+  { description: "asinh(x)", expr: expr("asinh", [x]), points: [-2, 0, 1.5, 5] },
+  { description: "acosh(x) (x > 1)", expr: expr("acosh", [x]), points: [1.5, 2.7, 4.2] },
+  { description: "atanh(x) (|x| < 1)", expr: expr("atanh", [x]), points: [-0.7, -0.2, 0.3, 0.8] },
+  { description: "log2(x) (x > 0)", expr: expr("log2", [x]), points: [0.3, 1, 4, 100] },
+  { description: "log10(x) (x > 0)", expr: expr("log10", [x]), points: [0.3, 1, 4, 100] },
+  // One chain-rule composition over a tier-1 head, to stress the chain.
+  { description: "atan(2·x)", expr: expr("atan", [expr("*", [int(2n), x])]), points: [-1.5, 0, 0.7] },
 ];
 
 describe("differentiate — finite-difference cross-check (orthogonal oracle)", () => {

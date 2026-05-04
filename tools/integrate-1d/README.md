@@ -34,11 +34,19 @@ The integrand `f` is a `Value` tree over the closed vocabulary admitted
 by `@workbench/quadrature`'s `evalNumericExpr`:
 
 - **Heads:** `+`, `-`, `*`, `/`, `^`, `neg`, `exp`, `sin`, `cos`,
-  `tan`, `log`, `sqrt`, `abs`.
+  `tan`, `log`, `sqrt`, `abs`, `asin`, `acos`, `atan`, `sinh`, `cosh`,
+  `tanh`, `asinh`, `acosh`, `atanh`, `log2`, `log10`.
 - **Constants:** `pi`, `e`.
 - **Numeric leaves:** `integer`, `rational`, `float64`.
 - **Variable:** any `symbol` matching the `var` field; other symbols
   → `ToolError`.
+
+`log` is natural log; `log2` and `log10` are explicit-base sister
+heads. Inverse trig (`asin`/`acos`/`atan`) and inverse hyperbolic
+(`asinh`/`acosh`/`atanh`) integrands evaluate as `Math.*`; out-of-
+domain inputs (e.g. `asin(2)`, `acosh(0.5)`) surface as `non-finite-
+during-eval` boundary tags at the first quadrature node where they
+trip.
 
 Bounds must be finite IEEE-754 binary64; `a < b` strictly. `a >= b`
 returns the `degenerate-interval` boundary tag (the tool refuses the

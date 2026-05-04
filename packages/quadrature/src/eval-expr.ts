@@ -26,7 +26,14 @@
 //                                            `-` (alias `neg`)
 //   `neg`                                  — unary negation
 //   `exp`, `sin`, `cos`, `tan`,            — unary, math.h sense
-//   `log`, `sqrt`, `abs`
+//   `log`, `sqrt`, `abs`                     (`log` is natural log)
+//   `asin`, `acos`, `atan`                 — inverse trig (tier-1
+//                                            extension, 2026-05-04)
+//   `sinh`, `cosh`, `tanh`                 — hyperbolic
+//   `asinh`, `acosh`, `atanh`              — inverse hyperbolic.
+//                                            `acosh` defined for x ≥ 1;
+//                                            `atanh` for |x| < 1.
+//   `log2`, `log10`                        — log base 2 / base 10
 //
 // Symbols:
 //   `pi` (≡ `Math.PI`), `e` (≡ `Math.E`)
@@ -42,12 +49,15 @@
 //
 // Out of scope (deliberate, v0.1)
 // -------------------------------
-// No `arctan` / `arcsin` / `arccos` (the integrand families in the
-// reference manifest don't need them). No `floor`/`ceil`/`mod` (not
-// useful in numerical integrands). No piecewise/`Heaviside` (a
-// quadrature method that hits a step function should refuse, not
-// silently ring; the manifest's discontinuous case handles this by
-// being defined as `exp(2x)` over the truncated support).
+// No `floor`/`ceil`/`round`/`trunc`/`sign`/`mod` (non-smooth — would
+// force eval-vocab and diff-vocab to diverge; deferred to a tier-2
+// ADR). No `min`/`max`/`atan2` (multi-arg shape change). No
+// piecewise/`Heaviside` (a quadrature method that hits a step function
+// should refuse, not silently ring; the manifest's discontinuous case
+// handles this by being defined as `exp(2x)` over the truncated
+// support). No `gamma`/`erf`/Bessel functions (require a numerical
+// implementation beyond `Math.*`; tier-3, file separately when
+// motivated).
 //
 // The vocabulary list above is the README's `valid heads` list — the
 // tool's `ToolError` suggestion when an unknown head shows up should
@@ -70,6 +80,19 @@ export const ADMITTED_HEADS: readonly string[] = [
   "log",
   "sqrt",
   "abs",
+  // Tier-1 extension (2026-05-04): inverse trig, hyperbolics, log
+  // bases. All single-argument; map directly to `Math.*`.
+  "asin",
+  "acos",
+  "atan",
+  "sinh",
+  "cosh",
+  "tanh",
+  "asinh",
+  "acosh",
+  "atanh",
+  "log2",
+  "log10",
 ];
 
 /** Symbols admitted as constants. Variables are resolved via `env`. */
@@ -206,6 +229,35 @@ function applyHead(head: string, args: readonly Value[], env: Map<string, number
       return Math.sqrt(unaryArg("sqrt", args, env));
     case "abs":
       return Math.abs(unaryArg("abs", args, env));
+    // Tier-1 transcendentals. Each is unary; out-of-domain inputs
+    // return the IEEE-754 result Math.* produces (NaN for asin/acos
+    // outside [-1,1], NaN for acosh below 1, ±Infinity for atanh at
+    // ±1, NaN for log2/log10 of non-positive values). The quadrature
+    // driver catches non-finite results at quadrature nodes and
+    // surfaces them as the boundary tag — same discipline as
+    // log(negative).
+    case "asin":
+      return Math.asin(unaryArg("asin", args, env));
+    case "acos":
+      return Math.acos(unaryArg("acos", args, env));
+    case "atan":
+      return Math.atan(unaryArg("atan", args, env));
+    case "sinh":
+      return Math.sinh(unaryArg("sinh", args, env));
+    case "cosh":
+      return Math.cosh(unaryArg("cosh", args, env));
+    case "tanh":
+      return Math.tanh(unaryArg("tanh", args, env));
+    case "asinh":
+      return Math.asinh(unaryArg("asinh", args, env));
+    case "acosh":
+      return Math.acosh(unaryArg("acosh", args, env));
+    case "atanh":
+      return Math.atanh(unaryArg("atanh", args, env));
+    case "log2":
+      return Math.log2(unaryArg("log2", args, env));
+    case "log10":
+      return Math.log10(unaryArg("log10", args, env));
   }
   // Unreachable — the head-set guard above ensures only recognised
   // heads land here. The exhaustive switch keeps TS honest.

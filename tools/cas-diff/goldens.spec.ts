@@ -62,6 +62,20 @@ export const goldens: GoldenSpec[] = [
   { description: "d(sqrt(x))/dx = 1/(2·sqrt(x))", input: record({ f: expr("sqrt", [x]), var: x }) },
   { description: "d(|x|)/dx = x/|x|", input: record({ f: expr("abs", [x]), var: x }) },
 
+  // Tier-1 transcendentals (2026-05-04). One golden per new head.
+  { description: "d(asin(x))/dx", input: record({ f: expr("asin", [x]), var: x }) },
+  { description: "d(acos(x))/dx", input: record({ f: expr("acos", [x]), var: x }) },
+  { description: "d(atan(x))/dx", input: record({ f: expr("atan", [x]), var: x }) },
+  { description: "d(sinh(x))/dx = cosh(x)", input: record({ f: expr("sinh", [x]), var: x }) },
+  { description: "d(cosh(x))/dx = sinh(x) (positive — not the dual of d(cos))",
+    input: record({ f: expr("cosh", [x]), var: x }) },
+  { description: "d(tanh(x))/dx = 1 − tanh(x)²", input: record({ f: expr("tanh", [x]), var: x }) },
+  { description: "d(asinh(x))/dx", input: record({ f: expr("asinh", [x]), var: x }) },
+  { description: "d(acosh(x))/dx", input: record({ f: expr("acosh", [x]), var: x }) },
+  { description: "d(atanh(x))/dx", input: record({ f: expr("atanh", [x]), var: x }) },
+  { description: "d(log2(x))/dx = 1/(x · log(2))", input: record({ f: expr("log2", [x]), var: x }) },
+  { description: "d(log10(x))/dx", input: record({ f: expr("log10", [x]), var: x }) },
+
   // Chain rule
   { description: "d(sin(2·x))/dx (chain rule, smart-constructor folds the constant factor)",
     input: record({ f: expr("sin", [expr("*", [int(2n), x])]), var: x }) },

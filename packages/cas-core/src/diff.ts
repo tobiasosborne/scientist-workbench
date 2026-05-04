@@ -35,12 +35,23 @@
 //                            = aᵇ·log(a)·db              if a ⊥ wrt (exp rule)
 //                            = aᵇ·(db·log(a) + b·da/a)   general (log-chain)
 //   exp          d(exp a)/dx = exp(a)·da
-//   log          d(log a)/dx = da/a
+//   log          d(log a)/dx = da/a                          (natural log)
 //   sin          d(sin a)/dx = cos(a)·da
 //   cos          d(cos a)/dx = -sin(a)·da
 //   tan          d(tan a)/dx = da / cos(a)²
 //   sqrt         d(√a)/dx    = da / (2·√a)
 //   abs          d(|a|)/dx   = (a/|a|)·da   (singular at a=0; correct on R\{0})
+//   asin         d(asin a)/dx  = da / √(1 − a²)              (|a| < 1)
+//   acos         d(acos a)/dx  = −da / √(1 − a²)             (|a| < 1)
+//   atan         d(atan a)/dx  = da / (1 + a²)
+//   sinh         d(sinh a)/dx  = cosh(a) · da
+//   cosh         d(cosh a)/dx  = sinh(a) · da
+//   tanh         d(tanh a)/dx  = (1 − tanh(a)²) · da
+//   asinh        d(asinh a)/dx = da / √(1 + a²)
+//   acosh        d(acosh a)/dx = da / √(a² − 1)              (a > 1)
+//   atanh        d(atanh a)/dx = da / (1 − a²)               (|a| < 1)
+//   log2         d(log₂ a)/dx  = da / (a · log(2))
+//   log10        d(log₁₀ a)/dx = da / (a · log(10))
 //
 // Boundary discipline
 // -------------------
@@ -99,6 +110,21 @@ export const DIFF_ADMITTED_HEADS: readonly string[] = [
   "log",
   "sqrt",
   "abs",
+  // Tier-1 extension (2026-05-04). Vocabulary tracks
+  // @workbench/quadrature's ADMITTED_HEADS so cas-diff →
+  // integrate-1d / optimize-lbfgs-projected continues to compose
+  // without vocabulary mismatches.
+  "asin",
+  "acos",
+  "atan",
+  "sinh",
+  "cosh",
+  "tanh",
+  "asinh",
+  "acosh",
+  "atanh",
+  "log2",
+  "log10",
 ];
 
 const DIFF_ADMITTED_HEADS_SET = new Set(DIFF_ADMITTED_HEADS);
@@ -253,6 +279,100 @@ function diffExpression(e: ExpressionValue, wrt: SymbolValue): Value {
       const a = args[0]!;
       const da = differentiate(a, wrt);
       return mkTimes(mkDiv(a, expr("abs", [a])), da);
+    }
+    // -------------------------------------------------------------------
+    // Tier-1 transcendentals (2026-05-04). Domain restrictions are
+    // recorded here as comments — they are *not* enforced by cas-diff,
+    // which is purely symbolic. Domain violations surface at evaluation
+    // time as NaN / ±Infinity, which the integrator / optimiser tag as
+    // `non-finite-during-eval` boundary failures (same discipline as
+    // `log(negative)` and `1/x at x=0`).
+    // -------------------------------------------------------------------
+    case "asin": {
+      // d(asin(a))/dx = da / √(1 − a²)              (|a| < 1)
+      const a = args[0]!;
+      const da = differentiate(a, wrt);
+      return mkDiv(
+        da,
+        expr("sqrt", [mkMinus(int(1n), mkPower(a, int(2n)))]),
+      );
+    }
+    case "acos": {
+      // d(acos(a))/dx = −da / √(1 − a²)             (|a| < 1)
+      const a = args[0]!;
+      const da = differentiate(a, wrt);
+      return mkDiv(
+        mkNeg(da),
+        expr("sqrt", [mkMinus(int(1n), mkPower(a, int(2n)))]),
+      );
+    }
+    case "atan": {
+      // d(atan(a))/dx = da / (1 + a²)
+      const a = args[0]!;
+      const da = differentiate(a, wrt);
+      return mkDiv(da, mkPlus([int(1n), mkPower(a, int(2n))]));
+    }
+    case "sinh": {
+      // d(sinh(a))/dx = cosh(a) · da
+      const a = args[0]!;
+      const da = differentiate(a, wrt);
+      return mkTimes(expr("cosh", [a]), da);
+    }
+    case "cosh": {
+      // d(cosh(a))/dx = sinh(a) · da   (note: positive, unlike d(cos)/dx)
+      const a = args[0]!;
+      const da = differentiate(a, wrt);
+      return mkTimes(expr("sinh", [a]), da);
+    }
+    case "tanh": {
+      // d(tanh(a))/dx = (1 − tanh(a)²) · da. The textbook identity
+      // sech²(a) = 1 − tanh²(a) keeps the derivative expressible in
+      // the existing vocabulary without introducing a `sech` head.
+      const a = args[0]!;
+      const da = differentiate(a, wrt);
+      return mkTimes(
+        mkMinus(int(1n), mkPower(expr("tanh", [a]), int(2n))),
+        da,
+      );
+    }
+    case "asinh": {
+      // d(asinh(a))/dx = da / √(1 + a²)             (defined on all R)
+      const a = args[0]!;
+      const da = differentiate(a, wrt);
+      return mkDiv(
+        da,
+        expr("sqrt", [mkPlus([int(1n), mkPower(a, int(2n))])]),
+      );
+    }
+    case "acosh": {
+      // d(acosh(a))/dx = da / √(a² − 1)             (a > 1)
+      const a = args[0]!;
+      const da = differentiate(a, wrt);
+      return mkDiv(
+        da,
+        expr("sqrt", [mkMinus(mkPower(a, int(2n)), int(1n))]),
+      );
+    }
+    case "atanh": {
+      // d(atanh(a))/dx = da / (1 − a²)              (|a| < 1)
+      const a = args[0]!;
+      const da = differentiate(a, wrt);
+      return mkDiv(da, mkMinus(int(1n), mkPower(a, int(2n))));
+    }
+    case "log2": {
+      // d(log₂(a))/dx = da / (a · log(2))   — change-of-base identity
+      // log₂(x) = log(x) / log(2). `log` here is natural log (the
+      // existing head); `log(2)` evaluates as a constant at numeric
+      // eval time.
+      const a = args[0]!;
+      const da = differentiate(a, wrt);
+      return mkDiv(da, mkTimes(a, expr("log", [int(2n)])));
+    }
+    case "log10": {
+      // d(log₁₀(a))/dx = da / (a · log(10))
+      const a = args[0]!;
+      const da = differentiate(a, wrt);
+      return mkDiv(da, mkTimes(a, expr("log", [int(10n)])));
     }
   }
   // Unreachable: head was checked against DIFF_ADMITTED_HEADS_SET above.

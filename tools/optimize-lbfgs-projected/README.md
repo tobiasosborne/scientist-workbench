@@ -57,7 +57,8 @@ const r = lbfgsProjected(
 admitted by `@workbench/quadrature`'s `evalNumericExpr`:
 
 - **Heads:** `+`, `-`, `*`, `/`, `^`, `neg`, `exp`, `sin`, `cos`,
-  `tan`, `log`, `sqrt`, `abs`.
+  `tan`, `log`, `sqrt`, `abs`, `asin`, `acos`, `atan`, `sinh`, `cosh`,
+  `tanh`, `asinh`, `acosh`, `atanh`, `log2`, `log10`.
 - **Constants:** `pi`, `e`.
 - **Numeric leaves:** `integer`, `rational`, `float64`.
 - **Variables:** any symbol in the `vars` list; other free symbols
@@ -197,8 +198,10 @@ References:
 - Bound-constrained least squares (`optimize-bvls` deferred).
 - Finite-difference gradients (caller must supply analytic grad).
 - Vector-valued or complex objectives.
-- Vocabulary beyond `+ - * / ^ neg exp sin cos tan log sqrt abs`
-  plus constants `pi`, `e` — extension would be additive.
+- Vocabulary beyond `+ - * / ^ neg exp sin cos tan log sqrt abs asin
+  acos atan sinh cosh tanh asinh acosh atanh log2 log10` plus constants
+  `pi`, `e` — extension would be additive (next tier: `min`/`max` with
+  smooth-relaxation tags, special functions like `gamma`/`erf`).
 - Cross-platform bit-identity guarantee. ADR-0015's `numerical:
   true` applies: the tool's output bytes are bit-identical *given
   the platform fingerprint* `{arch, os, runtime}`. The fingerprint

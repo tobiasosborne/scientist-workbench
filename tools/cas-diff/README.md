@@ -1,8 +1,8 @@
 # cas-diff
 
 Compute `∂f/∂var` for an expression `f` over the closed numerical
-vocabulary `{+ − * / ^ neg exp sin cos tan log sqrt abs}` plus
-constants `pi`, `e`. The output is itself an expression in the same
+vocabulary `{+ − * / ^ neg exp sin cos tan log sqrt abs asin acos atan
+sinh cosh tanh asinh acosh atanh log2 log10}` plus constants `pi`, `e`. The output is itself an expression in the same
 vocabulary, so it composes directly with `integrate-1d` (Leibniz-rule
 parametric integrals) and with `optimize-lbfgs-projected` (which takes
 `grad` as a list of expressions). Sister to `cas-simplify` —
@@ -99,6 +99,17 @@ Rule table:
 | `tan(a)` | `da / cos(a)²` |
 | `sqrt(a)` | `da / (2·sqrt(a))` |
 | `abs(a)` | `(a / |a|) · da` (singular at 0; correct on R\\{0}) |
+| `asin(a)` | `da / sqrt(1 − a²)` (defined for `|a| < 1`) |
+| `acos(a)` | `neg(da) / sqrt(1 − a²)` (defined for `|a| < 1`) |
+| `atan(a)` | `da / (1 + a²)` |
+| `sinh(a)` | `cosh(a) · da` |
+| `cosh(a)` | `sinh(a) · da` (positive — not the dual of `cos`) |
+| `tanh(a)` | `(1 − tanh(a)²) · da` |
+| `asinh(a)` | `da / sqrt(1 + a²)` |
+| `acosh(a)` | `da / sqrt(a² − 1)` (defined for `a > 1`) |
+| `atanh(a)` | `da / (1 − a²)` (defined for `|a| < 1`) |
+| `log2(a)` | `da / (a · log(2))` (change-of-base; `log` here is natural) |
+| `log10(a)` | `da / (a · log(10))` |
 
 Smart constructors absorb the chain rule's pure book-keeping:
 `0 + x → x`, `1·x → x`, `x·0 → 0`, `x⁰ → 1`, `x¹ → x`,
@@ -134,10 +145,11 @@ table and smart-constructor design at the level cas-diff implements.
   `cas-diff` per variable, then `list([df_dx, df_dy, …])` to feed
   into `optimize-lbfgs-projected`.
 - Implicit differentiation. The `var` is named explicitly.
-- Vocabulary beyond `+ − * / ^ neg exp sin cos tan log sqrt abs` plus
-  constants `pi`, `e` — extension is additive when motivated. (Same
-  vocabulary as `integrate-1d` and `optimize-lbfgs-projected` —
-  matched deliberately so the three tools compose without vocabulary
+- Vocabulary beyond `+ − * / ^ neg exp sin cos tan log sqrt abs asin
+  acos atan sinh cosh tanh asinh acosh atanh log2 log10` plus constants
+  `pi`, `e` — extension is additive when motivated. (Same vocabulary as
+  `integrate-1d` and `optimize-lbfgs-projected` — matched deliberately
+  so the three tools compose without vocabulary
   mismatches.)
 - Symbolic simplification of the result. The output uses smart
   constructors only; pipe through `cas-simplify` for full reduction.
