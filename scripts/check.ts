@@ -7,7 +7,7 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
-import { canonicalize, record, str } from "@workbench/protocol";
+import { canonicalize, parse, record, str } from "@workbench/protocol";
 import { spawnBun } from "@workbench/contract";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -198,7 +198,43 @@ if (!QUICK) {
         goldens_dir: str(goldensDir),
       }));
       const r = await spawnBun([ORACLE], input);
-      if (r.code !== 0) return { ok: false, detail: r.stderr.trim() || r.stdout.slice(0, 400) };
+      if (r.code !== 0) {
+        // Non-zero exit from the oracle itself means the oracle ran into
+        // a real error (malformed input, broken goldens dir, etc.) — not
+        // a per-golden failure. Surface stderr or a stdout snippet.
+        return { ok: false, detail: r.stderr.trim() || r.stdout.slice(0, 400) };
+      }
+      // Bead `qf1` (worklog 038): oracle now always returns the results
+      // record on stdout — pass or fail. CI inspects `failed` for the
+      // exit decision instead of relying on `process.exit(1)`.
+      const out = parse(r.stdout);
+      if (out.kind !== "record") {
+        return { ok: false, detail: `oracle output not a record: ${JSON.stringify(out).slice(0, 200)}` };
+      }
+      const failedField = out.fields["failed"];
+      if (failedField === undefined || failedField.kind !== "integer") {
+        return { ok: false, detail: "oracle output missing integer `failed` field" };
+      }
+      if (failedField.value !== "0") {
+        // List the failing goldens from the results array, mirroring
+        // the stderr summary the oracle itself wrote.
+        const detail: string[] = [`${failedField.value}/${names.length} goldens failed`];
+        const resultsField = out.fields["results"];
+        if (resultsField !== undefined && resultsField.kind === "list") {
+          for (const item of resultsField.items) {
+            if (item.kind !== "record") continue;
+            const passed = item.fields["passed"];
+            if (passed?.kind === "boolean" && passed.value === false) {
+              const fname = item.fields["filename"];
+              const err = item.fields["error"];
+              const fnameStr = fname?.kind === "string" ? fname.value : "?";
+              const errStr = err?.kind === "string" ? err.value : "(no detail)";
+              detail.push(`  FAIL ${fnameStr}: ${errStr}`);
+            }
+          }
+        }
+        return { ok: false, detail: detail.join("\n") };
+      }
       return { ok: true };
     });
   }

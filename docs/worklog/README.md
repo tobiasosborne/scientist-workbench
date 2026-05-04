@@ -48,6 +48,7 @@ write the frictions and the dead ends as well as the wins.
 | 035 | [Fluent `wb.pipe(...)` + demo-scope.ts migration (full DAG closed)](035-pipe-and-demo-migration.md) | 2026-05-03 | scientist-workbench-{46z, e0h} |
 | 036 | [ADR-0015: determinism tier (numerical contract relaxation)](036-determinism-tier.md) | 2026-05-04 | scientist-workbench-0ck (closes); -auz, -2t4 filed |
 | 037 | [ADR-0015 implementation: numerical tier wired end-to-end](037-determinism-tier-implementation.md) | 2026-05-04 | implementation behind 0ck (already closed); 24 new tests, 3 mutations proven |
+| 038 | [oracle: return record on every path; CI exits via output inspection](038-oracle-throw-not-exit.md) | 2026-05-04 | scientist-workbench-qf1 |
 
 ## How to add a new shard
 

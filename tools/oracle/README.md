@@ -34,7 +34,14 @@ The harness pipes `canonicalize(input)` to the tool's stdin (with `flags` joined
 {"failed": <int>, "mode": <str>, "passed": <int>, "total": <int>, "results": [<per-golden record>]}
 ```
 
-Process exits 1 if any golden fails.
+`fn` always returns this record — pass or fail — and never calls
+`process.exit`. Provenance is written for every successful invocation
+of the oracle itself; a CI consumer that wants exit-1-on-failed-golden
+inspects `output.failed > 0` and exits accordingly. `scripts/check.ts`
+does this for the workbench's own oracle phase. Bead `qf1` /
+worklog 038 records the rationale: in-process callers
+(`@workbench/compose`'s `wb.run("oracle", ...)`) cannot catch
+`process.exit`, so the exit decision belongs at the caller.
 
 ## Tool flags
 

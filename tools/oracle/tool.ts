@@ -26,17 +26,35 @@
 //
 // Process exit
 // ------------
-// On golden failure the oracle still emits its full results record
-// to stdout (so consumers learn *which* goldens failed), then exits
-// 1 from outside `fn`. We rely on `runTool`'s ToolError path: throw
-// a ToolError carrying the result detail, and the runner emits the
-// stderr line and exits non-zero. The result record is also returned
-// from fn so a successful run produces a normal canonical output.
+// `fn` always *returns* the results record — pass or fail — and never
+// calls `process.exit`. This was the design fixed by bead `qf1`
+// (worklog 038). Two consequences fall out of the change:
+//
+//   1. **Provenance is written for both pass and fail records.** The
+//      runner's normal flow takes over: the record is canonicalised,
+//      output-validated against the schema, and persisted into the
+//      provenance store. A failed-golden run produces an output_hash
+//      a CI consumer can `--provenance-of` to get the full per-golden
+//      breakdown without re-running.
+//   2. **In-process callers can't be killed mid-pipeline.** A
+//      `wb.run("oracle", ...)` from `@workbench/compose` (ADR-0012)
+//      gets back a Value, never a `process.exit` that takes down the
+//      orchestrator. The cache-by-input-hash machinery (ADR-0012's
+//      `runMemoized`) works on oracle outputs like any other tool's.
+//
+// CI exits-on-fail by inspecting the `failed` field of the returned
+// record. `scripts/check.ts` does this for every per-tool oracle
+// phase. Other consumers that want exit-1-on-fail behaviour write
+// the same trivial check on the parsed stdout. The contract is
+// "oracle is a pure function from (tool, goldens, mode) to a results
+// record"; the exit decision lives where it belongs — at the caller.
 //
 // PRD §4.5.
 
-import { readdir, readFile, stat } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   bool,
   canonicalize,
@@ -162,8 +180,13 @@ export const def = defineTool({
   ],
   invariants: [
     {
-      name: "exit-iff-fail",
-      statement: "process exits 0 iff every golden's canonical output matches expected",
+      name: "fail-count-iff-mismatch",
+      statement: "output.failed equals the count of goldens whose actual canonical bytes differ from expected",
+      machine_checkable: true,
+    },
+    {
+      name: "always-returns-record",
+      statement: "fn always returns a well-formed record (never process.exit); CI inspects output.failed for the exit decision",
       machine_checkable: true,
     },
     {
@@ -240,23 +263,67 @@ export const def = defineTool({
       }
     }
 
-    const out = record({
+    return record({
       failed: int(BigInt(failed)),
       mode: str(mode),
       passed: int(BigInt(passed)),
       results: list(results.map(resultToValue)),
       total: int(BigInt(results.length)),
     });
+  },
+  test: async () => {
+    // Exercises the load-bearing contract change from bead `qf1` /
+    // worklog 038: `fn` *returns* the results record even when goldens
+    // fail, never `process.exit`-ing. Before the fix, the failing-
+    // golden branch would have killed this test process; after, the
+    // fn returns, the assertions run, and the temp dir is cleaned up.
+    //
+    // We use mod-pow as a real tool-under-test (its module is in the
+    // workspace and `--test`-time resolution finds it via the file's
+    // own URL). Two synthetic goldens: one with the right answer
+    // (`2^3 mod 1000 == 8`), one with a deliberately-wrong expected
+    // value (9). Pass-count must be 1; fail-count must be 1.
+    const HERE = dirname(fileURLToPath(import.meta.url));     // tools/oracle/
+    const ROOT = resolve(HERE, "..", "..");                   // repo root
+    const modPowPath = join(ROOT, "tools", "mod-pow", "tool.ts");
 
-    // Failed goldens still produce a well-formed record, but we want
-    // CI to see a non-zero exit. Emit the record on stdout and exit 1
-    // before the runner's normal flow takes over. (Replacing this
-    // pattern is tracked under beads issue scientist-workbench-qf1.)
-    if (failed > 0) {
-      process.stdout.write(canonicalize(out));
-      process.exit(1);
+    const dir = await mkdtemp(join(tmpdir(), "oracle-self-test-"));
+    try {
+      const passingGolden = canonicalize(record({
+        input: record({ base: int(2n), exponent: int(3n), modulus: int(1000n) }),
+        output: int(8n),
+      }));
+      const failingGolden = canonicalize(record({
+        input: record({ base: int(2n), exponent: int(3n), modulus: int(1000n) }),
+        output: int(9n),  // deliberately wrong; mod-pow returns 8
+      }));
+      await writeFile(join(dir, "01-pass.golden.json"), passingGolden);
+      await writeFile(join(dir, "02-fail.golden.json"), failingGolden);
+
+      const result = await def.fn(
+        record({
+          tool_path: str(modPowPath),
+          goldens_dir: str(dir),
+        }) as Parameters<typeof def.fn>[0],
+        { verbose: false } as Parameters<typeof def.fn>[1],
+      );
+
+      if (result.kind !== "record") throw new Error("test: expected record output");
+      const failedField = result.fields.failed;
+      const passedField = result.fields.passed;
+      const totalField = result.fields.total;
+      if (failedField.kind !== "integer" || failedField.value !== "1") {
+        throw new Error(`test: expected failed=1, got ${JSON.stringify(failedField)}`);
+      }
+      if (passedField.kind !== "integer" || passedField.value !== "1") {
+        throw new Error(`test: expected passed=1, got ${JSON.stringify(passedField)}`);
+      }
+      if (totalField.kind !== "integer" || totalField.value !== "2") {
+        throw new Error(`test: expected total=2, got ${JSON.stringify(totalField)}`);
+      }
+    } finally {
+      await rm(dir, { recursive: true, force: true });
     }
-    return out;
   },
 });
 
