@@ -28,6 +28,8 @@
       "@workbench/sturm": ["packages/sturm/src/index.ts"],
       "@workbench/sturm-lib": ["packages/sturm-lib/src/index.ts"],
       "@workbench/linalg-core": ["packages/linalg-core/src/index.ts"],
+      "@workbench/quadrature": ["packages/quadrature/src/index.ts"],
+      "@workbench/lbfgs-projected": ["packages/lbfgs-projected/src/index.ts"],
       "@workbench/compose": ["packages/compose/src/index.ts"]
     }
   },

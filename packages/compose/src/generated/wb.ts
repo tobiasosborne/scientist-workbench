@@ -31,6 +31,7 @@ import { def as linalgSolveDef } from "../../../../tools/linalg-solve/tool.js";
 import { def as modInvDef } from "../../../../tools/mod-inv/tool.js";
 import { def as modPowDef } from "../../../../tools/mod-pow/tool.js";
 import { def as nttDef } from "../../../../tools/ntt/tool.js";
+import { def as optimizeLbfgsProjectedDef } from "../../../../tools/optimize-lbfgs-projected/tool.js";
 import { def as oracleDef } from "../../../../tools/oracle/tool.js";
 import { def as registryListDef } from "../../../../tools/registry-list/tool.js";
 import { def as registrySearchDef } from "../../../../tools/registry-search/tool.js";
@@ -53,6 +54,7 @@ export interface TypedWorkbench extends Workbench {
   modInv(input: InputOf<typeof modInvDef>, flags?: FlagsArgOf<typeof modInvDef>): Promise<OutputOf<typeof modInvDef>>;
   modPow(input: InputOf<typeof modPowDef>, flags?: FlagsArgOf<typeof modPowDef>): Promise<OutputOf<typeof modPowDef>>;
   ntt(input: InputOf<typeof nttDef>, flags?: FlagsArgOf<typeof nttDef>): Promise<OutputOf<typeof nttDef>>;
+  optimizeLbfgsProjected(input: InputOf<typeof optimizeLbfgsProjectedDef>, flags?: FlagsArgOf<typeof optimizeLbfgsProjectedDef>): Promise<OutputOf<typeof optimizeLbfgsProjectedDef>>;
   oracle(input: InputOf<typeof oracleDef>, flags?: FlagsArgOf<typeof oracleDef>): Promise<OutputOf<typeof oracleDef>>;
   registryList(input: InputOf<typeof registryListDef>, flags?: FlagsArgOf<typeof registryListDef>): Promise<OutputOf<typeof registryListDef>>;
   registrySearch(input: InputOf<typeof registrySearchDef>, flags?: FlagsArgOf<typeof registrySearchDef>): Promise<OutputOf<typeof registrySearchDef>>;
@@ -104,6 +106,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     ntt(input, flags) {
       return workbench.run("ntt", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof nttDef>>;
     },
+    optimizeLbfgsProjected(input, flags) {
+      return workbench.run("optimize-lbfgs-projected", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof optimizeLbfgsProjectedDef>>;
+    },
     oracle(input, flags) {
       return workbench.run("oracle", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof oracleDef>>;
     },
@@ -154,6 +159,7 @@ export const defs = {
   modInv: modInvDef,
   modPow: modPowDef,
   ntt: nttDef,
+  optimizeLbfgsProjected: optimizeLbfgsProjectedDef,
   oracle: oracleDef,
   registryList: registryListDef,
   registrySearch: registrySearchDef,

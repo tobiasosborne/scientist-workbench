@@ -38,6 +38,10 @@
         "@workbench/protocol": "workspace:*",
       },
     },
+    "packages/lbfgs-projected": {
+      "name": "@workbench/lbfgs-projected",
+      "version": "0.1.0",
+    },
     "packages/linalg-core": {
       "name": "@workbench/linalg-core",
       "version": "0.1.0",
@@ -165,6 +169,16 @@
         "@workbench/protocol": "workspace:*",
       },
     },
+    "tools/optimize-lbfgs-projected": {
+      "name": "@workbench/tool-optimize-lbfgs-projected",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/contract": "workspace:*",
+        "@workbench/lbfgs-projected": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+        "@workbench/quadrature": "workspace:*",
+      },
+    },
     "tools/oracle": {
       "name": "@workbench/tool-oracle",
       "version": "0.2.0",
@@ -276,6 +290,8 @@
 
     "@workbench/json-bridge": ["@workbench/json-bridge@workspace:packages/json-bridge"],
 
+    "@workbench/lbfgs-projected": ["@workbench/lbfgs-projected@workspace:packages/lbfgs-projected"],
+
     "@workbench/linalg-core": ["@workbench/linalg-core@workspace:packages/linalg-core"],
 
     "@workbench/mod-core": ["@workbench/mod-core@workspace:packages/mod-core"],
@@ -307,6 +323,8 @@
     "@workbench/tool-mod-pow": ["@workbench/tool-mod-pow@workspace:tools/mod-pow"],
 
     "@workbench/tool-ntt": ["@workbench/tool-ntt@workspace:tools/ntt"],
+
+    "@workbench/tool-optimize-lbfgs-projected": ["@workbench/tool-optimize-lbfgs-projected@workspace:tools/optimize-lbfgs-projected"],
 
     "@workbench/tool-oracle": ["@workbench/tool-oracle@workspace:tools/oracle"],
 
