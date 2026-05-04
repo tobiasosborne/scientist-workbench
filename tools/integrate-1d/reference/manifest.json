@@ -1,0 +1,640 @@
+{
+  "_meta": {
+    "tool": "integrate-1d",
+    "reference": "scipy.integrate.quad (QUADPACK QAGS, Fortran)",
+    "scipy_version": "1.17.1",
+    "cross_validator": "mpmath.quad at 50-digit precision",
+    "mpmath_version": "1.4.1",
+    "n_cases": 30,
+    "n_cross_validated": 12,
+    "purpose": "Orthogonal oracle for the TypeScript pure-TS adaptive Gauss-Kronrod implementation in tools/integrate-1d. The TS impl must match these values within the documented tolerance; it MUST NOT generate its own expected values.",
+    "tolerance_recommendation": {
+      "smooth-easy": {
+        "atol": "1e-12",
+        "rtol": "1e-12"
+      },
+      "smooth-hard": {
+        "atol": "1e-9",
+        "rtol": "1e-9"
+      },
+      "standard-family": {
+        "atol": "1e-9",
+        "rtol": "1e-9"
+      },
+      "nonsmooth-interior": {
+        "atol": "1e-7",
+        "rtol": "1e-7"
+      },
+      "oscillatory": {
+        "atol": "1e-9",
+        "rtol": "1e-9"
+      },
+      "timing-stress": {
+        "atol": "1e-3",
+        "rtol": "1e-3",
+        "note": "may report converged=false; in that case match within reported error_estimate"
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "01-smooth-poly-quad",
+      "description": "degree-4 polynomial",
+      "category": "smooth-easy",
+      "interval": {
+        "a": 0.0,
+        "b": 2.0,
+        "a_bits": "0000000000000000",
+        "b_bits": "4000000000000000"
+      },
+      "kind": "value",
+      "scipy": {
+        "value": 3.066666666666667,
+        "value_bits": "4008888888888889",
+        "abserr": 3.4046839421838136e-14,
+        "abserr_bits": "3d232aaaaaaaaaab"
+      }
+    },
+    {
+      "id": "02-smooth-exp-linear",
+      "description": "exp(x) on [0,1]",
+      "category": "smooth-easy",
+      "interval": {
+        "a": 0.0,
+        "b": 1.0,
+        "a_bits": "0000000000000000",
+        "b_bits": "3ff0000000000000"
+      },
+      "kind": "value",
+      "scipy": {
+        "value": 1.7182818284590453,
+        "value_bits": "3ffb7e151628aed3",
+        "abserr": 1.9076760487502457e-14,
+        "abserr_bits": "3d157a80794fc895"
+      }
+    },
+    {
+      "id": "03-smooth-trig-sin",
+      "description": "sin(x) on [0,pi]",
+      "category": "smooth-easy",
+      "interval": {
+        "a": 0.0,
+        "b": 3.141592653589793,
+        "a_bits": "0000000000000000",
+        "b_bits": "400921fb54442d18"
+      },
+      "kind": "value",
+      "scipy": {
+        "value": 2.0,
+        "value_bits": "4000000000000000",
+        "abserr": 2.220446049250313e-14,
+        "abserr_bits": "3d19000000000000"
+      }
+    },
+    {
+      "id": "04-smooth-poly-cubic",
+      "description": "odd cubic on symmetric interval",
+      "category": "smooth-easy",
+      "interval": {
+        "a": -1.0,
+        "b": 1.0,
+        "a_bits": "bff0000000000000",
+        "b_bits": "3ff0000000000000"
+      },
+      "kind": "value",
+      "scipy": {
+        "value": 0.0,
+        "value_bits": "0000000000000000",
+        "abserr": 5.509631585592647e-15,
+        "abserr_bits": "3cf8d02c38863222"
+      }
+    },
+    {
+      "id": "05-smooth-exp-cos",
+      "description": "exp(x)*cos(x) on [0,pi/2]",
+      "category": "smooth-easy",
+      "interval": {
+        "a": 0.0,
+        "b": 1.5707963267948966,
+        "a_bits": "0000000000000000",
+        "b_bits": "3ff921fb54442d18"
+      },
+      "kind": "value",
+      "scipy": {
+        "value": 1.9052386904826757,
+        "value_bits": "3ffe7bdb90ab26be",
+        "abserr": 2.1152398615805485e-14,
+        "abserr_bits": "3d17d0c38905b644"
+      }
+    },
+    {
+      "id": "06-smooth-narrow-gauss",
+      "description": "narrow Gaussian peak",
+      "category": "smooth-hard",
+      "interval": {
+        "a": 0.0,
+        "b": 1.0,
+        "a_bits": "0000000000000000",
+        "b_bits": "3ff0000000000000"
+      },
+      "kind": "value",
+      "scipy": {
+        "value": 0.1772453850902791,
+        "value_bits": "3fc6affa0e2a32c8",
+        "abserr": 4.6261358879594265e-15,
+        "abserr_bits": "3cf4d59251000000"
+      },
+      "mpmath": {
+        "value": 0.1772453850902791,
+        "value_bits": "3fc6affa0e2a32c8",
+        "diff_vs_scipy": 0.0,
+        "rel_diff_vs_scipy": 0.0
+      }
+    },
+    {
+      "id": "07-smooth-product-peak",
+      "description": "Genz product peak (1D)",
+      "category": "smooth-hard",
+      "interval": {
+        "a": 0.0,
+        "b": 1.0,
+        "a_bits": "0000000000000000",
+        "b_bits": "3ff0000000000000"
+      },
+      "kind": "value",
+      "scipy": {
+        "value": 11.902899496825322,
+        "value_bits": "4027ce48d7c4e115",
+        "abserr": 7.167068072355676e-08,
+        "abserr_bits": "3e733d2bf3000000"
+      },
+      "mpmath": {
+        "value": 11.902899496825317,
+        "value_bits": "4027ce48d7c4e112",
+        "diff_vs_scipy": 5.329070518200751e-15,
+        "rel_diff_vs_scipy": 4.477119646034224e-16
+      }
+    },
+    {
+      "id": "08-smooth-corner-peak",
+      "description": "Genz corner peak (1D)",
+      "category": "smooth-hard",
+      "interval": {
+        "a": 0.0,
+        "b": 1.0,
+        "a_bits": "0000000000000000",
+        "b_bits": "3ff0000000000000"
+      },
+      "kind": "value",
+      "scipy": {
+        "value": 0.14285714285714288,
+        "value_bits": "3fc2492492492493",
+        "abserr": 3.188726229640163e-10,
+        "abserr_bits": "3df5e9aaa03ee000"
+      }
+    },
+    {
+      "id": "09-smooth-c0-exponential",
+      "description": "Genz C0 family (1D, kink at 0.4)",
+      "category": "smooth-hard",
+      "interval": {
+        "a": 0.0,
+        "b": 1.0,
+        "a_bits": "0000000000000000",
+        "b_bits": "3ff0000000000000"
+      },
+      "kind": "value",
+      "scipy": {
+        "value": 0.1331598558575332,
+        "value_bits": "3fc10b61d5062abc",
+        "abserr": 4.7313966078377234e-09,
+        "abserr_bits": "3e345239c0000000"
+      }
+    },
+    {
+      "id": "10-smooth-high-freq-trig",
+      "description": "sin(30x)*exp(-x) on [0,pi]",
+      "category": "smooth-hard",
+      "interval": {
+        "a": 0.0,
+        "b": 3.141592653589793,
+        "a_bits": "0000000000000000",
+        "b_bits": "400921fb54442d18"
+      },
+      "kind": "value",
+      "scipy": {
+        "value": 0.031857472199874386,
+        "value_bits": "3fa04f9f6276a007",
+        "abserr": 4.798973330809482e-11,
+        "abserr_bits": "3dca61f45c400000"
+      },
+      "mpmath": {
+        "value": 0.0318574721998744,
+        "value_bits": "3fa04f9f6276a009",
+        "diff_vs_scipy": 1.3877787807814457e-17,
+        "rel_diff_vs_scipy": 4.35621122754026e-16
+      }
+    },
+    {
+      "id": "11-genz-oscillatory",
+      "description": "Genz oscillatory family (1D)",
+      "category": "standard-family",
+      "interval": {
+        "a": 0.0,
+        "b": 1.0,
+        "a_bits": "0000000000000000",
+        "b_bits": "3ff0000000000000"
+      },
+      "kind": "value",
+      "scipy": {
+        "value": -0.047040002686622534,
+        "value_bits": "bfa815a092491c8c",
+        "abserr": 6.888388797100725e-15,
+        "abserr_bits": "3cff05c58605bf61"
+      },
+      "mpmath": {
+        "value": -0.04704000268662241,
+        "value_bits": "bfa815a092491c7a",
+        "diff_vs_scipy": 1.249000902703301e-16,
+        "rel_diff_vs_scipy": 2.6551888421947336e-15
+      }
+    },
+    {
+      "id": "12-genz-discontinuous",
+      "description": "Genz discontinuous (truncated to support)",
+      "category": "standard-family",
+      "interval": {
+        "a": 0.0,
+        "b": 0.6,
+        "a_bits": "0000000000000000",
+        "b_bits": "3fe3333333333333"
+      },
+      "kind": "value",
+      "scipy": {
+        "value": 1.1600584613682738,
+        "value_bits": "3ff28f99761065a5",
+        "abserr": 1.2879236137222903e-14,
+        "abserr_bits": "3d0d005fc8799ed2"
+      }
+    },
+    {
+      "id": "13-quadpack-qag-example",
+      "description": "QUADPACK QAG ex.: 2/(2+sin(10*pi*x))",
+      "category": "standard-family",
+      "interval": {
+        "a": 0.0,
+        "b": 1.0,
+        "a_bits": "0000000000000000",
+        "b_bits": "3ff0000000000000"
+      },
+      "kind": "value",
+      "scipy": {
+        "value": 1.1547005383792537,
+        "value_bits": "3ff279a745903326",
+        "abserr": 3.760495621671332e-09,
+        "abserr_bits": "3e3026b56ae346c0"
+      },
+      "mpmath": {
+        "value": 1.1547005383792515,
+        "value_bits": "3ff279a74590331c",
+        "diff_vs_scipy": 2.220446049250313e-15,
+        "rel_diff_vs_scipy": 1.922962686383564e-15
+      }
+    },
+    {
+      "id": "14-davis-rabinowitz-log",
+      "description": "log(x+1) on [0,1] (D&R baseline)",
+      "category": "standard-family",
+      "interval": {
+        "a": 0.0,
+        "b": 1.0,
+        "a_bits": "0000000000000000",
+        "b_bits": "3ff0000000000000"
+      },
+      "kind": "value",
+      "scipy": {
+        "value": 0.38629436111989063,
+        "value_bits": "3fd8b90bfbe8e7bd",
+        "abserr": 4.288728939981675e-15,
+        "abserr_bits": "3cf350915ccdf50c"
+      }
+    },
+    {
+      "id": "15-patterson-algebraic",
+      "description": "1/(1+x^2) on [0,1] = pi/4",
+      "category": "standard-family",
+      "interval": {
+        "a": 0.0,
+        "b": 1.0,
+        "a_bits": "0000000000000000",
+        "b_bits": "3ff0000000000000"
+      },
+      "kind": "value",
+      "scipy": {
+        "value": 0.7853981633974484,
+        "value_bits": "3fe921fb54442d19",
+        "abserr": 8.719671245021581e-15,
+        "abserr_bits": "3d03a28c59d5433c"
+      }
+    },
+    {
+      "id": "16-squire-trig-product",
+      "description": "sin(x)^2*cos(x) on [0,pi/2]",
+      "category": "standard-family",
+      "interval": {
+        "a": 0.0,
+        "b": 1.5707963267948966,
+        "a_bits": "0000000000000000",
+        "b_bits": "3ff921fb54442d18"
+      },
+      "kind": "value",
+      "scipy": {
+        "value": 0.3333333333333333,
+        "value_bits": "3fd5555555555555",
+        "abserr": 3.700743415417188e-15,
+        "abserr_bits": "3cf0aaaaaaaaaaaa"
+      }
+    },
+    {
+      "id": "17-kink-abs-centre",
+      "description": "|x - 0.3| kink interior",
+      "category": "nonsmooth-interior",
+      "interval": {
+        "a": 0.0,
+        "b": 1.0,
+        "a_bits": "0000000000000000",
+        "b_bits": "3ff0000000000000"
+      },
+      "kind": "value",
+      "scipy": {
+        "value": 0.2899999999999998,
+        "value_bits": "3fd28f5c28f5c28c",
+        "abserr": 3.219646771412952e-16,
+        "abserr_bits": "3cb733333333332f"
+      }
+    },
+    {
+      "id": "18-kink-abs-double",
+      "description": "|x-0.7| + |x-0.3| (two kinks)",
+      "category": "nonsmooth-interior",
+      "interval": {
+        "a": 0.0,
+        "b": 1.0,
+        "a_bits": "0000000000000000",
+        "b_bits": "3ff0000000000000"
+      },
+      "kind": "value",
+      "scipy": {
+        "value": 0.5800000000000001,
+        "value_bits": "3fe28f5c28f5c290",
+        "abserr": 6.439293542825909e-16,
+        "abserr_bits": "3cc7333333333334"
+      }
+    },
+    {
+      "id": "19-near-sing-interior",
+      "description": "1/sqrt(|x-0.5|+0.01) (cusp)",
+      "category": "nonsmooth-interior",
+      "interval": {
+        "a": 0.0,
+        "b": 1.0,
+        "a_bits": "0000000000000000",
+        "b_bits": "3ff0000000000000"
+      },
+      "kind": "value",
+      "scipy": {
+        "value": 2.45657137141716,
+        "value_bits": "4003a70ee424366b",
+        "abserr": 1.9290429963628598e-08,
+        "abserr_bits": "3e54b68354c8b800"
+      },
+      "mpmath": {
+        "value": 2.457351276766854,
+        "value_bits": "4003a8a7c943fad8",
+        "diff_vs_scipy": 0.0007799053496939656,
+        "rel_diff_vs_scipy": 0.00031737641950811766
+      },
+      "reference_disagreement": {
+        "scipy": 2.45657137141716,
+        "mpmath": 2.457351276766854,
+        "abs_diff": 0.0007799053496939656,
+        "comment": "SciPy and mpmath disagree beyond expected tolerance \u2014 investigate before trusting this golden"
+      }
+    },
+    {
+      "id": "20-osc-sin-k20-fullperiods",
+      "description": "sin(20x) on [0,2pi] = 0",
+      "category": "oscillatory",
+      "interval": {
+        "a": 0.0,
+        "b": 6.283185307179586,
+        "a_bits": "0000000000000000",
+        "b_bits": "401921fb54442d18"
+      },
+      "kind": "value",
+      "scipy": {
+        "value": 5.1456772268808615e-15,
+        "value_bits": "3cf72c8fdaafab1f",
+        "abserr": 4.223372688402914e-14,
+        "abserr_bits": "3d27c68580914f87"
+      },
+      "mpmath": {
+        "value": 5.99903913064743e-31,
+        "value_bits": "39a855c226ecf49a",
+        "diff_vs_scipy": 5.145677226880861e-15,
+        "rel_diff_vs_scipy": 8577502354657132.0
+      }
+    },
+    {
+      "id": "21-osc-sin-k7-partial",
+      "description": "sin(7x) on [0,1]",
+      "category": "oscillatory",
+      "interval": {
+        "a": 0.0,
+        "b": 1.0,
+        "a_bits": "0000000000000000",
+        "b_bits": "3ff0000000000000"
+      },
+      "kind": "value",
+      "scipy": {
+        "value": 0.03515682080809934,
+        "value_bits": "3fa20013273448f0",
+        "abserr": 6.7488482723804425e-15,
+        "abserr_bits": "3cfe64e46e1246dd"
+      },
+      "mpmath": {
+        "value": 0.035156820808099336,
+        "value_bits": "3fa20013273448ef",
+        "diff_vs_scipy": 6.938893903907228e-18,
+        "rel_diff_vs_scipy": 1.9736977759686007e-16
+      }
+    },
+    {
+      "id": "22-osc-cos-exp-decay",
+      "description": "cos(10x)*exp(-x) on [0,pi]",
+      "category": "oscillatory",
+      "interval": {
+        "a": 0.0,
+        "b": 3.141592653589793,
+        "a_bits": "0000000000000000",
+        "b_bits": "400921fb54442d18"
+      },
+      "kind": "value",
+      "scipy": {
+        "value": 0.00947312952214089,
+        "value_bits": "3f8366a5ebe82d14",
+        "abserr": 6.760825886409991e-15,
+        "abserr_bits": "3cfe72b399000000"
+      },
+      "mpmath": {
+        "value": 0.009473129522140864,
+        "value_bits": "3f8366a5ebe82d05",
+        "diff_vs_scipy": 2.6020852139652106e-17,
+        "rel_diff_vs_scipy": 2.746806330351067e-15
+      }
+    },
+    {
+      "id": "23-refuse-pole-interior",
+      "description": "1/(x-0.5) \u2014 +Inf at x=0.5",
+      "category": "refusal",
+      "interval": {
+        "a": 0.0,
+        "b": 1.0,
+        "a_bits": "0000000000000000",
+        "b_bits": "3ff0000000000000"
+      },
+      "kind": "refusal",
+      "expected_refusal_reason": "non-finite-during-eval"
+    },
+    {
+      "id": "24-refuse-log-negative",
+      "description": "log(x-0.5) \u2014 NaN for x<0.5",
+      "category": "refusal",
+      "interval": {
+        "a": 0.0,
+        "b": 1.0,
+        "a_bits": "0000000000000000",
+        "b_bits": "3ff0000000000000"
+      },
+      "kind": "refusal",
+      "expected_refusal_reason": "non-finite-during-eval"
+    },
+    {
+      "id": "25-refuse-degenerate-empty",
+      "description": "a == b empty interval",
+      "category": "refusal",
+      "interval": {
+        "a": 1.0,
+        "b": 1.0,
+        "a_bits": "3ff0000000000000",
+        "b_bits": "3ff0000000000000"
+      },
+      "kind": "refusal",
+      "expected_refusal_reason": "degenerate-interval"
+    },
+    {
+      "id": "26-refuse-reversed-interval",
+      "description": "a > b reversed",
+      "category": "refusal",
+      "interval": {
+        "a": 2.0,
+        "b": 0.0,
+        "a_bits": "4000000000000000",
+        "b_bits": "0000000000000000"
+      },
+      "kind": "refusal",
+      "expected_refusal_reason": "degenerate-interval"
+    },
+    {
+      "id": "27-refuse-sqrt-negative",
+      "description": "sqrt(x-0.5) \u2014 NaN for x<0.5",
+      "category": "refusal",
+      "interval": {
+        "a": 0.0,
+        "b": 1.0,
+        "a_bits": "0000000000000000",
+        "b_bits": "3ff0000000000000"
+      },
+      "kind": "refusal",
+      "expected_refusal_reason": "non-finite-during-eval"
+    },
+    {
+      "id": "28-stress-ultra-narrow-gauss",
+      "description": "exp(-1e6*(x-0.5)^2) \u2014 ultra-narrow peak",
+      "category": "timing-stress",
+      "interval": {
+        "a": 0.0,
+        "b": 1.0,
+        "a_bits": "0000000000000000",
+        "b_bits": "3ff0000000000000"
+      },
+      "kind": "value",
+      "scipy": {
+        "value": 0.001772453850905523,
+        "value_bits": "3f5d0a35d4b1160e",
+        "abserr": 7.768262042574011e-12,
+        "abserr_bits": "3da115248b980000"
+      },
+      "mpmath": {
+        "value": 0.003068462994339979,
+        "value_bits": "3f69230886b5ab5f",
+        "diff_vs_scipy": 0.001296009143434456,
+        "rel_diff_vs_scipy": 0.42236427352229655
+      },
+      "reference_disagreement": {
+        "scipy": 0.001772453850905523,
+        "mpmath": 0.003068462994339979,
+        "abs_diff": 0.001296009143434456,
+        "comment": "SciPy and mpmath disagree beyond expected tolerance \u2014 investigate before trusting this golden"
+      }
+    },
+    {
+      "id": "29-stress-high-freq-osc",
+      "description": "sin(1000x) on [0,1] \u2014 ~160 half-periods",
+      "category": "timing-stress",
+      "interval": {
+        "a": 0.0,
+        "b": 1.0,
+        "a_bits": "0000000000000000",
+        "b_bits": "3ff0000000000000"
+      },
+      "kind": "value",
+      "scipy": {
+        "value": 0.00043762092370923844,
+        "value_bits": "3f3cae0f8e2d2756",
+        "abserr": 1.4470848969121938e-08,
+        "abserr_bits": "3e4f136ef0335919"
+      },
+      "mpmath": {
+        "value": 0.000437620923709297,
+        "value_bits": "3f3cae0f8e2d2b8e",
+        "diff_vs_scipy": 5.854691731421724e-17,
+        "rel_diff_vs_scipy": 1.3378454763536125e-13
+      }
+    },
+    {
+      "id": "30-stress-two-scale",
+      "description": "exp(-x) + exp(-1000(x-0.8)^2) two scales",
+      "category": "timing-stress",
+      "interval": {
+        "a": 0.0,
+        "b": 1.0,
+        "a_bits": "0000000000000000",
+        "b_bits": "3ff0000000000000"
+      },
+      "kind": "value",
+      "scipy": {
+        "value": 0.6881704709925369,
+        "value_bits": "3fe6057e145f8c30",
+        "abserr": 4.272944315048091e-09,
+        "abserr_bits": "3e325a26e6cce780"
+      },
+      "mpmath": {
+        "value": 0.6881704709925369,
+        "value_bits": "3fe6057e145f8c30",
+        "diff_vs_scipy": 0.0,
+        "rel_diff_vs_scipy": 0.0
+      }
+    }
+  ]
+}

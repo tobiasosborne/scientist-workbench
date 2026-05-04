@@ -53,6 +53,13 @@
       "name": "@workbench/protocol",
       "version": "0.2.0",
     },
+    "packages/quadrature": {
+      "name": "@workbench/quadrature",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/protocol": "workspace:*",
+      },
+    },
     "packages/sturm": {
       "name": "@workbench/sturm",
       "version": "0.1.0",
@@ -111,6 +118,15 @@
       "dependencies": {
         "@workbench/contract": "workspace:*",
         "@workbench/protocol": "workspace:*",
+      },
+    },
+    "tools/integrate-1d": {
+      "name": "@workbench/tool-integrate-1d",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/contract": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+        "@workbench/quadrature": "workspace:*",
       },
     },
     "tools/linalg-solve": {
@@ -266,6 +282,8 @@
 
     "@workbench/protocol": ["@workbench/protocol@workspace:packages/protocol"],
 
+    "@workbench/quadrature": ["@workbench/quadrature@workspace:packages/quadrature"],
+
     "@workbench/sturm": ["@workbench/sturm@workspace:packages/sturm"],
 
     "@workbench/sturm-ir": ["@workbench/sturm-ir@workspace:packages/sturm-ir"],
@@ -279,6 +297,8 @@
     "@workbench/tool-entropy-source": ["@workbench/tool-entropy-source@workspace:tools/entropy-source"],
 
     "@workbench/tool-expr-parse": ["@workbench/tool-expr-parse@workspace:tools/expr-parse"],
+
+    "@workbench/tool-integrate-1d": ["@workbench/tool-integrate-1d@workspace:tools/integrate-1d"],
 
     "@workbench/tool-linalg-solve": ["@workbench/tool-linalg-solve@workspace:tools/linalg-solve"],
 

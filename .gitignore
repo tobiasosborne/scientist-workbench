@@ -12,3 +12,6 @@ dist/
 .dolt/
 *.db
 .beads-credential-key
+.venv/
+__pycache__/
+*.pyc

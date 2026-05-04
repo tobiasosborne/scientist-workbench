@@ -53,9 +53,15 @@ const OUT_PATH = join(COMPOSE_GEN_DIR, "wb.ts");
  * Convert a kebab-case tool name to camelCase for the JS method name.
  * `cas-simplify` → `casSimplify`, `mod-pow` → `modPow`, `linalg-solve`
  * → `linalgSolve`. Single words (no hyphen) pass through unchanged.
+ *
+ * Tool names may contain digits in addition to lowercase letters
+ * (e.g. `integrate-1d` → `integrate1d`, `mod-2` → `mod2`). The
+ * post-hyphen character is preserved verbatim if it is a digit (no
+ * `toUpperCase` to apply); only an alphabetic character is upcased.
+ * The regex accepts `[a-z0-9]` to cover both cases.
  */
 function camelCase(s: string): string {
-  return s.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+  return s.replace(/-([a-z0-9])/g, (_, c: string) => c.toUpperCase());
 }
 
 async function main(): Promise<void> {
