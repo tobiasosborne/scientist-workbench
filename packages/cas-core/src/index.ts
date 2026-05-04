@@ -99,6 +99,14 @@ export { SIMPLIFY_TAG, casSimplify } from "./simplify.js";
 export { type VerifyInput, casVerify } from "./verify.js";
 
 export {
+  DIFF_TAG,
+  DIFF_ADMITTED_HEADS,
+  DIFF_ADMITTED_CONSTANTS,
+  CasDiffOutOfScopeError,
+  differentiate,
+} from "./diff.js";
+
+export {
   type AlgebraicElement,
   type AlgebraicRingSpec,
   algebraicRing,

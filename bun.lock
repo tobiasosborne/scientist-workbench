@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "scientist-workbench",
@@ -88,6 +87,16 @@
         "@workbench/protocol": "workspace:*",
         "@workbench/sturm": "workspace:*",
         "@workbench/sturm-ir": "workspace:*",
+      },
+    },
+    "tools/cas-diff": {
+      "name": "@workbench/tool-cas-diff",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/cas-core": "workspace:*",
+        "@workbench/contract": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+        "@workbench/quadrature": "workspace:*",
       },
     },
     "tools/cas-simplify": {
@@ -305,6 +314,8 @@
     "@workbench/sturm-ir": ["@workbench/sturm-ir@workspace:packages/sturm-ir"],
 
     "@workbench/sturm-lib": ["@workbench/sturm-lib@workspace:packages/sturm-lib"],
+
+    "@workbench/tool-cas-diff": ["@workbench/tool-cas-diff@workspace:tools/cas-diff"],
 
     "@workbench/tool-cas-simplify": ["@workbench/tool-cas-simplify@workspace:tools/cas-simplify"],
 

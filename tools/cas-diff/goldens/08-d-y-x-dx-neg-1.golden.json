@@ -1,0 +1,1 @@
+{"fields":{"input":{"fields":{"f":{"args":[{"kind":"symbol","name":"y"},{"kind":"symbol","name":"x"}],"head":"-","kind":"expression"},"var":{"kind":"symbol","name":"x"}},"kind":"record"},"output":{"args":[{"kind":"integer","value":"1"}],"head":"neg","kind":"expression"}},"kind":"record"}
