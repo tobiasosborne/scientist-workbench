@@ -52,6 +52,14 @@
         "@workbench/protocol": "workspace:*",
       },
     },
+    "packages/ode-core": {
+      "name": "@workbench/ode-core",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/protocol": "workspace:*",
+        "@workbench/quadrature": "workspace:*",
+      },
+    },
     "packages/protocol": {
       "name": "@workbench/protocol",
       "version": "0.2.0",
@@ -138,6 +146,16 @@
       "version": "0.1.0",
       "dependencies": {
         "@workbench/contract": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+        "@workbench/quadrature": "workspace:*",
+      },
+    },
+    "tools/integrate-ode-ivp": {
+      "name": "@workbench/tool-integrate-ode-ivp",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/contract": "workspace:*",
+        "@workbench/ode-core": "workspace:*",
         "@workbench/protocol": "workspace:*",
         "@workbench/quadrature": "workspace:*",
       },
@@ -332,6 +350,8 @@
 
     "@workbench/mod-core": ["@workbench/mod-core@workspace:packages/mod-core"],
 
+    "@workbench/ode-core": ["@workbench/ode-core@workspace:packages/ode-core"],
+
     "@workbench/protocol": ["@workbench/protocol@workspace:packages/protocol"],
 
     "@workbench/quadrature": ["@workbench/quadrature@workspace:packages/quadrature"],
@@ -353,6 +373,8 @@
     "@workbench/tool-expr-parse": ["@workbench/tool-expr-parse@workspace:tools/expr-parse"],
 
     "@workbench/tool-integrate-1d": ["@workbench/tool-integrate-1d@workspace:tools/integrate-1d"],
+
+    "@workbench/tool-integrate-ode-ivp": ["@workbench/tool-integrate-ode-ivp@workspace:tools/integrate-ode-ivp"],
 
     "@workbench/tool-linalg-eigh": ["@workbench/tool-linalg-eigh@workspace:tools/linalg-eigh"],
 

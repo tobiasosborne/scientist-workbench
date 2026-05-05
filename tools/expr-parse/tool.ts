@@ -9,9 +9,18 @@
 //   mul      := unary (('*' | '/') unary)*        — left-assoc, binary
 //   unary    := '-' unary | '+' unary | pow
 //   pow      := atom ('^' unary)?                 — right-assoc
-//   atom     := number | identifier | '(' expr ')'
+//   atom     := number | call | identifier | '(' expr ')'
+//   call     := identifier '(' expr (',' expr)* ')'
 //   number   := digits ('/' digits | '.' digits)?
 //   ident    := [A-Za-z_][A-Za-z_0-9]*
+//
+// Function-call shape (`sin(x)`, `cos(2*t)`, `exp(neg(t))`) was added in
+// v0.4.0 to support the closed vocabulary shared with `cas-diff`,
+// `integrate-1d`, `optimize-lbfgs-projected`, and `integrate-ode-ivp`.
+// The set of admitted heads is open at the parse layer (any identifier
+// followed by `(` becomes an `expression` with that head); semantic
+// vocabulary checking is the consumer's job (`evalNumericExpr` in
+// `@workbench/quadrature` rejects unknown heads with a suggestion).
 //
 // LaTeX is out of scope for v1 — that's a sister tool (PRD §9.2).
 
@@ -29,17 +38,17 @@ import {
 import { defineTool, runTool } from "@workbench/contract";
 
 const NAME = "expr-parse";
-const VERSION = "0.3.0";
+const VERSION = "0.4.0";
 
-// Output is "an expression of head + - * / ^, or a leaf integer /
-// rational / symbol." That's a literal-driven union — exactly the
-// shape ADR-0004's schema language was designed for.
+// Output is "an expression value of any head, or a leaf integer /
+// rational / symbol." Function-call notation (`sin(x)`, `exp(neg t)`)
+// produces an expression with that head; the head is *not* gated at
+// the parse layer — a consumer's vocabulary check (e.g.
+// `evalNumericExpr`) rejects unknown heads with a suggestion. The
+// schema therefore admits any expression kind plus the three leaf
+// kinds expr-parse can emit.
 const outputSchema = S.union([
-  S.expression("+"),
-  S.expression("-"),
-  S.expression("*"),
-  S.expression("/"),
-  S.expression("^"),
+  S.kind("expression"),
   S.kind("integer"),
   S.kind("rational"),
   S.kind("symbol"),
@@ -199,6 +208,34 @@ class Parser {
   parseIdentifier(): Value {
     let id = "";
     while (!this.eof() && /[A-Za-z_0-9]/.test(this.peekChar()!)) id += this.advance();
+    // Function call: an identifier immediately followed by '(' is a
+    // call. We *don't* skip whitespace between identifier and '(' —
+    // `sin (x)` would still be `sin * (x)` if we allowed that, which
+    // is the expected reading; `sin(x)` is the canonical function
+    // syntax. (sympy's parse_expr distinguishes these the same way.)
+    if (this.peekChar() === "(") {
+      this.advance();
+      const args: Value[] = [];
+      this.skipWs();
+      if (this.peekChar() !== ")") {
+        args.push(this.parseAdd());
+        this.skipWs();
+        while (this.peekChar() === ",") {
+          this.advance();
+          this.skipWs();
+          args.push(this.parseAdd());
+          this.skipWs();
+        }
+      }
+      if (this.peekChar() !== ")") {
+        throw new ToolError(
+          `expr-parse: expected ')' to close call to ${JSON.stringify(id)} at position ${this.pos}`,
+          { suggestion: "balance your parentheses" },
+        );
+      }
+      this.advance();
+      return expr(id, args);
+    }
     return sym(id);
   }
 
@@ -275,6 +312,16 @@ export const def = defineTool({
       ]),
     },
     {
+      description: "function call: sin(x)",
+      input: str("sin(x)"),
+      output: expr("sin", [sym("x")]),
+    },
+    {
+      description: "nested call: exp(neg(t))",
+      input: str("exp(neg(t))"),
+      output: expr("exp", [expr("neg", [sym("t")])]),
+    },
+    {
       description: "lone '+' is rejected",
       input: str("+"),
       error: "expected expression",
@@ -316,6 +363,9 @@ export const def = defineTool({
       { in: "x^2", out: expr("^", [sym("x"), int(2n)]) },
       { in: "3/4", out: rat(3n, 4n) },
       { in: "1.5", out: rat(3n, 2n) },
+      { in: "sin(x)", out: expr("sin", [sym("x")]) },
+      { in: "cos(2*t)", out: expr("cos", [expr("*", [int(2n), sym("t")])]) },
+      { in: "exp(-y0)", out: expr("exp", [expr("-", [sym("y0")])]) },
     ];
     for (const c of cases) {
       const got = new Parser(c.in).parseTopLevel();

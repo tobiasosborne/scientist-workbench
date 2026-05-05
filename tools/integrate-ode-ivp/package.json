@@ -1,0 +1,12 @@
+{
+  "name": "@workbench/tool-integrate-ode-ivp",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@workbench/protocol": "workspace:*",
+    "@workbench/contract": "workspace:*",
+    "@workbench/quadrature": "workspace:*",
+    "@workbench/ode-core": "workspace:*"
+  }
+}

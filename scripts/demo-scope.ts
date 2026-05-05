@@ -358,6 +358,61 @@ if (eighResult.kind === "record") {
   }
 }
 
+header(18, "integrate-ode-ivp: Lotka-Volterra predator-prey",
+  "DOPRI5 + PI controller integrates dy/dt = f(t, y) over a non-stiff system.");
+const lvF = list([
+  // y0' = α y0 - β y0 y1, with α=1.0, β=0.1
+  expr("-", [
+    sym("y0"),
+    expr("*", [
+      expr("*", [float64FromNumber(0.1), sym("y0")]),
+      sym("y1"),
+    ]),
+  ]),
+  // y1' = δ y0 y1 - γ y1, with δ=0.075, γ=1.5
+  expr("-", [
+    expr("*", [
+      expr("*", [float64FromNumber(0.075), sym("y0")]),
+      sym("y1"),
+    ]),
+    expr("*", [float64FromNumber(1.5), sym("y1")]),
+  ]),
+]);
+const lvInput = {
+  kind: "record" as const,
+  fields: {
+    f: lvF,
+    vars: list([sym("y0"), sym("y1")]),
+    t_var: sym("t"),
+    y0: list([float64FromNumber(10.0), float64FromNumber(5.0)]),
+    t_span: { kind: "record" as const, fields: { t0: float64FromNumber(0), tf: float64FromNumber(5) } },
+    options: {
+      kind: "record" as const, fields: {
+        rtol: float64FromNumber(1e-6),
+        atol: float64FromNumber(1e-9),
+        t_eval: list([0, 1, 2, 3, 4, 5].map((x) => float64FromNumber(x))),
+      },
+    },
+  },
+};
+const ivpResult = await wb.integrateOdeIvp(lvInput as never);
+if (ivpResult.kind === "record") {
+  const traj = ivpResult.fields["trajectory"];
+  const status = ivpResult.fields["status"];
+  const nAcc = ivpResult.fields["n_steps_accepted"];
+  if (traj?.kind === "list" && status?.kind === "string" && nAcc?.kind === "integer") {
+    console.log("  status:           ", status.value);
+    console.log("  n_steps_accepted: ", String(nAcc.value));
+    const last = traj.items[traj.items.length - 1];
+    if (last?.kind === "list") {
+      const lastVals = last.items.map((it) =>
+        it.kind === "float64" ? float64ToNumber(it as never).toFixed(4) : "?",
+      );
+      console.log(`  y(5) ≈            [${lastVals.join(", ")}]   (one Lotka-Volterra orbit)`);
+    }
+  }
+}
+
 // -----------------------------------------------------------------------------
 // Bonus — content-addressing
 // -----------------------------------------------------------------------------
