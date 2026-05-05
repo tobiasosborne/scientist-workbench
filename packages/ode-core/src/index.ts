@@ -1,10 +1,12 @@
 // =============================================================================
-// @workbench/ode-core — adaptive non-stiff IVP integration on Float64Array
+// @workbench/ode-core — ODE integration substrates on Float64Array
 // =============================================================================
 //
 // Sixth numerical-tier package in scientist-workbench (after `linalg-
 // core`, `quadrature`, `lbfgs-projected`). Substrate behind
-// `tools/integrate-ode-ivp`.
+// `tools/integrate-ode-ivp` (adaptive non-stiff DOPRI5+PI) and
+// `tools/integrate-ode-symplectic` (separable-Hamiltonian Velocity
+// Verlet / Yoshida-4).
 //
 // Surface
 // -------
@@ -17,11 +19,16 @@
 //                                      `evalNumericExpr`).
 //   assessNumericalScale(...)        — measurement-driven warning
 //                                      strings (ADR-0016 pattern).
+//   verletStep / yoshida4Step        — single-step symplectic kernels
+//                                      (worklog 050).
+//   integrateHamiltonianFlow(...)    — top-level driver for separable
+//                                      Hamiltonian flows. Energy-drift
+//                                      tracking + secular discriminator.
 //
 // All surfaces are pure TypeScript on float64; the wire encoding lives
-// in the tool layer (`tools/integrate-ode-ivp/tool.ts`). ADR-0010's
-// `defineTool`/`runTool` split lets one implementation serve both the
-// in-process surface and the subprocess one.
+// in the tool layer. ADR-0010's `defineTool`/`runTool` split lets one
+// implementation serve both the in-process surface and the subprocess
+// one.
 
 export {
   type IntegrateOptions,
@@ -53,3 +60,22 @@ export {
   MIN_FACTOR as PI_MIN_FACTOR,
   MAX_FACTOR as PI_MAX_FACTOR,
 } from "./pi-controller.js";
+
+export { verletStep } from "./verlet.js";
+export { yoshida4Step, YOSHIDA_W, YOSHIDA_WEIGHTS } from "./yoshida.js";
+export {
+  type HamiltonianScheme,
+  type HamiltonianFlowOptions,
+  type HamiltonianFlowCallables,
+  type HamiltonianFlowResult,
+  HamiltonianDegenerateError,
+  HamiltonianNonFiniteError,
+  integrateHamiltonianFlow,
+} from "./hamiltonian-flow.js";
+
+export {
+  type IntegrateStiffOptions,
+  type IntegrateStiffResult,
+  OdeJacobianSingularError,
+  integrateStiff,
+} from "./integrate-stiff.js";

@@ -11,7 +11,8 @@
 //   pow      := atom ('^' unary)?                 — right-assoc
 //   atom     := number | call | identifier | '(' expr ')'
 //   call     := identifier '(' expr (',' expr)* ')'
-//   number   := digits ('/' digits | '.' digits)?
+//   number   := digits ('.' digits)? ([eE] ('+'|'-')? digits)?    (scientific notation produces a float64)
+//             | digits '/' digits                                    (rational literal)
 //   ident    := [A-Za-z_][A-Za-z_0-9]*
 //
 // Function-call shape (`sin(x)`, `cos(2*t)`, `exp(neg(t))`) was added in
@@ -27,6 +28,7 @@
 import {
   canonicalize,
   expr,
+  float64FromNumber,
   int,
   rat,
   S,
@@ -171,7 +173,9 @@ class Parser {
       intPart += this.advance();
     }
     let fracPart = "";
+    let sawDot = false;
     if (this.peekChar() === ".") {
+      sawDot = true;
       this.advance();
       while (!this.eof() && /[0-9]/.test(this.peekChar()!)) {
         fracPart += this.advance();
@@ -181,6 +185,64 @@ class Parser {
           suggestion: "decimals need digits, e.g. 0.5 not just .",
         });
       }
+    }
+
+    // Scientific-notation suffix `[eE]('+'|'-')?digits`. When present
+    // the literal becomes a float64 (the exponent often pushes the
+    // value outside the rational sweet spot — `1e-300` as a rational
+    // would be 1/10^300, allocating a 300-digit BigInt for an obvious
+    // float). Disambiguation: `e` immediately followed by a digit or
+    // sign-then-digit is the exponent; otherwise we treat the `e` as
+    // the start of an identifier (e.g. Euler's `e` constant after a
+    // bare integer like `2 e` — though that grammar slot only arises
+    // from explicit operators in practice).
+    const hasExpStart = (this.peekChar() === "e" || this.peekChar() === "E");
+    let expPart = "";
+    let expSign = 1;
+    if (hasExpStart) {
+      const save = this.pos;
+      this.advance();
+      let signCh: string | undefined;
+      if (this.peekChar() === "+" || this.peekChar() === "-") {
+        signCh = this.advance();
+      }
+      while (!this.eof() && /[0-9]/.test(this.peekChar()!)) {
+        expPart += this.advance();
+      }
+      if (expPart.length === 0) {
+        // Not an exponent (no digits) — back off; the `e` belongs to
+        // an identifier or surrounding tokenisation.
+        this.pos = save;
+      } else if (signCh === "-") {
+        expSign = -1;
+      }
+    }
+
+    if (expPart.length > 0) {
+      // Scientific-notation literal — float64. The exponent often
+      // pushes the value outside the rational sweet spot (`1e-300`
+      // as a rational allocates a 300-digit BigInt for an obvious
+      // float), so we stamp it as float64 directly. Build the
+      // decimal string and let `Number(...)` do the IEEE-754
+      // rounding — same digits, same bits across platforms
+      // (ECMAScript ToNumber is fully specified).
+      const intStr = intPart.length > 0 ? intPart : "0";
+      const fracStr = fracPart.length > 0 ? `.${fracPart}` : "";
+      const expStr = `e${expSign === -1 ? "-" : ""}${expPart}`;
+      const v = Number(`${intStr}${fracStr}${expStr}`);
+      if (!Number.isFinite(v)) {
+        throw new ToolError(
+          `expr-parse: float64 literal at position ${start} overflows IEEE-754 binary64`,
+          { suggestion: "magnitude must be representable as float64; use a smaller exponent" },
+        );
+      }
+      return float64FromNumber(v);
+    }
+
+    if (sawDot) {
+      // Pure decimal (no exponent) — emit as a rational so symbolic
+      // pipelines stay exact (preserves prior behaviour). `0.5` →
+      // `rat(1, 2)`.
       const num = BigInt(intPart || "0") * 10n ** BigInt(fracPart.length) + BigInt(fracPart || "0");
       const den = 10n ** BigInt(fracPart.length);
       return rat(num, den);

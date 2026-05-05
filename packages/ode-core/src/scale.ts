@@ -36,7 +36,7 @@ const N_COMPONENTS_VERY_LARGE = 1000; // beyond this: "FFI strongly recommended"
 const N_STEPS_LONG = 100_000;     // beyond this: "long integration; consider stiff solver"
 const N_STEPS_VERY_LONG = 1_000_000;
 
-export type Algorithm = "ode-rkf45";
+export type Algorithm = "ode-rkf45" | "ode-radau";
 
 /**
  * Estimate peak working memory in MB for a `n_components × n_eval`
@@ -62,15 +62,22 @@ export function estimatePeakMemoryMB(
  *  accepted RK steps with `n_components` state. Phone CPUs ≈ 3× slower.
  *
  *  Calibration: a single DOPRI5 step costs ~6 RHS evals × per-eval cost.
- *  For a closed-vocabulary expression of typical depth (~10 nodes), one
- *  evaluation is ~5 µs on Bun on x86-64; we round to 1 µs/eval/component
- *  as a cross-platform conservative figure.
+ *  For Radau, one accepted step costs ~3·k_newton ≈ 12 stage evals plus
+ *  one n³/3 LU factorisation; the LU dominates at moderate `n`. For the
+ *  closed-vocabulary expression of typical depth (~10 nodes), one
+ *  evaluation is ~5 µs on Bun on x86-64; we round to 1 µs/eval/component.
  */
 export function estimateWallClockSeconds(
-  _algo: Algorithm,
+  algo: Algorithm,
   nComponents: number,
   nSteps: number,
 ): number {
+  if (algo === "ode-radau") {
+    // Radau-IIA: per accepted step, ~12 stage evals + one O(n³) LU.
+    const evalCost = nSteps * 12 * nComponents * 1e-6;
+    const luCost = nSteps * (nComponents * nComponents * nComponents) / 3 * 1e-9;
+    return evalCost + luCost;
+  }
   return nSteps * (6 + 1) * nComponents * 1e-6;
 }
 
@@ -82,30 +89,38 @@ export function assessNumericalScale(
   nEvalPoints: number = 0,
 ): string[] {
   const warnings: string[] = [];
+  const isStiff = algo === "ode-radau";
 
   if (nComponents > N_COMPONENTS_VERY_LARGE) {
     warnings.push(
       `state dimension n=${nComponents} is in the regime where pure-TS ` +
       `vector evaluation becomes a bottleneck; FFI bridge to a compiled ` +
-      `RK driver strongly recommended (bead scientist-workbench-e7y for the ` +
+      `${isStiff ? "Radau" : "RK"} driver strongly recommended (bead scientist-workbench-e7y for the ` +
       `numerical-tier FFI plan)`,
     );
   } else if (nComponents > N_COMPONENTS_LARGE) {
     warnings.push(
       `state dimension n=${nComponents} above the ${N_COMPONENTS_LARGE}-component ` +
-      `well-tested threshold; per-step cost grows linearly in n and the wire-` +
+      `well-tested threshold; ${isStiff ? "per-step cost is O(n³) (LU factorisation) and the" : "per-step cost grows linearly in n and the"} wire-` +
       `encoded trajectory size grows as n × n_eval`,
     );
   }
 
   if (nStepsEstimate > N_STEPS_VERY_LONG) {
     const tSec = estimateWallClockSeconds(algo, nComponents, nStepsEstimate);
-    warnings.push(
-      `estimated step count ${nStepsEstimate.toExponential(2)} is in the regime ` +
-      `where DOPRI5 is impractical (~${tSec.toFixed(0)}s on dev-box); the ` +
-      `problem is likely stiff (consider integrate-ode-stiff, bead scientist-` +
-      `workbench-09g) or the horizon should be split`,
-    );
+    if (isStiff) {
+      warnings.push(
+        `estimated step count ${nStepsEstimate.toExponential(2)} is very long for ` +
+        `Radau (~${tSec.toFixed(0)}s on dev-box); consider an FFI-backed solver or splitting the horizon`,
+      );
+    } else {
+      warnings.push(
+        `estimated step count ${nStepsEstimate.toExponential(2)} is in the regime ` +
+        `where DOPRI5 is impractical (~${tSec.toFixed(0)}s on dev-box); the ` +
+        `problem is likely stiff (consider integrate-ode-stiff, bead scientist-` +
+        `workbench-09g) or the horizon should be split`,
+      );
+    }
   } else if (nStepsEstimate > N_STEPS_LONG) {
     const tSec = estimateWallClockSeconds(algo, nComponents, nStepsEstimate);
     warnings.push(

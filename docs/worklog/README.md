@@ -59,6 +59,8 @@ write the frictions and the dead ends as well as the wins.
 | 046 | [`linalg-svd` Golub-Reinsch path (dual-algorithm dispatch by size)](046-svd-golub-reinsch.md) | 2026-05-05 | scientist-workbench-y9u |
 | 047 | [`linalg-eigh` via the tstournament-protocol bench (46/46, 316/316)](047-linalg-eigh-via-bench.md) | 2026-05-05 | scientist-workbench-evb |
 | 048 | [`integrate-ode-ivp` via the tournament-protocol bench (29/29)](048-integrate-ode-ivp.md) | 2026-05-05 | scientist-workbench-l6p |
+| 049 | [`integrate-ode-stiff` via the tournament-protocol bench (19/19)](049-integrate-ode-stiff.md) | 2026-05-05 | scientist-workbench-09g |
+| 050 | [`integrate-ode-symplectic` via the tournament-protocol bench (17/17)](050-integrate-ode-symplectic.md) | 2026-05-05 | scientist-workbench-4gr |
 
 ## How to add a new shard
 

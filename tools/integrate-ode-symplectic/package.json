@@ -1,0 +1,13 @@
+{
+  "name": "@workbench/tool-integrate-ode-symplectic",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@workbench/protocol": "workspace:*",
+    "@workbench/contract": "workspace:*",
+    "@workbench/compose": "workspace:*",
+    "@workbench/quadrature": "workspace:*",
+    "@workbench/ode-core": "workspace:*"
+  }
+}

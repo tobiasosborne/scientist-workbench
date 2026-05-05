@@ -160,6 +160,28 @@
         "@workbench/quadrature": "workspace:*",
       },
     },
+    "tools/integrate-ode-stiff": {
+      "name": "@workbench/tool-integrate-ode-stiff",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/compose": "workspace:*",
+        "@workbench/contract": "workspace:*",
+        "@workbench/ode-core": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+        "@workbench/quadrature": "workspace:*",
+      },
+    },
+    "tools/integrate-ode-symplectic": {
+      "name": "@workbench/tool-integrate-ode-symplectic",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/compose": "workspace:*",
+        "@workbench/contract": "workspace:*",
+        "@workbench/ode-core": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+        "@workbench/quadrature": "workspace:*",
+      },
+    },
     "tools/linalg-eigh": {
       "name": "@workbench/tool-linalg-eigh",
       "version": "0.1.0",
@@ -375,6 +397,10 @@
     "@workbench/tool-integrate-1d": ["@workbench/tool-integrate-1d@workspace:tools/integrate-1d"],
 
     "@workbench/tool-integrate-ode-ivp": ["@workbench/tool-integrate-ode-ivp@workspace:tools/integrate-ode-ivp"],
+
+    "@workbench/tool-integrate-ode-stiff": ["@workbench/tool-integrate-ode-stiff@workspace:tools/integrate-ode-stiff"],
+
+    "@workbench/tool-integrate-ode-symplectic": ["@workbench/tool-integrate-ode-symplectic@workspace:tools/integrate-ode-symplectic"],
 
     "@workbench/tool-linalg-eigh": ["@workbench/tool-linalg-eigh@workspace:tools/linalg-eigh"],
 

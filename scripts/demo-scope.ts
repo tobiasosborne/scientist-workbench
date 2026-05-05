@@ -413,6 +413,144 @@ if (ivpResult.kind === "record") {
   }
 }
 
+header(19, "integrate-ode-symplectic: Kepler 2-body, energy drift bounded over 10 orbits",
+  "Velocity Verlet preserves energy O(h²) regardless of horizon; DOPRI5 would drift linearly.");
+// H = (px² + py²)/2 − 1/√(qx² + qy²): unit-mass Kepler 2-body (sun at origin).
+// Circular orbit at r=1 has period 2π and angular momentum 1; we run 10
+// such periods at h = T/100 = π/50 and report the bounded drift.
+const keplerH = expr("-", [
+  expr("/", [
+    expr("+", [
+      expr("^", [sym("px"), int(2n)]),
+      expr("^", [sym("py"), int(2n)]),
+    ]),
+    int(2n),
+  ]),
+  expr("/", [
+    int(1n),
+    expr("sqrt", [
+      expr("+", [
+        expr("^", [sym("qx"), int(2n)]),
+        expr("^", [sym("qy"), int(2n)]),
+      ]),
+    ]),
+  ]),
+]);
+const keplerInput = {
+  kind: "record" as const,
+  fields: {
+    H: keplerH,
+    q_vars: list([sym("qx"), sym("qy")]),
+    p_vars: list([sym("px"), sym("py")]),
+    t_var: sym("t"),
+    q0: list([float64FromNumber(1.0), float64FromNumber(0.0)]),
+    p0: list([float64FromNumber(0.0), float64FromNumber(1.0)]),
+    t_span: { kind: "record" as const, fields: {
+      t0: float64FromNumber(0),
+      tf: float64FromNumber(10 * 2 * Math.PI),
+    }},
+    n_steps: int(1000n),
+  },
+};
+const symplResult = await wb.integrateOdeSymplectic(keplerInput as never);
+if (symplResult.kind === "record") {
+  const drift = symplResult.fields["energy_drift_max"];
+  const secular = symplResult.fields["energy_drift_secular"];
+  const method = symplResult.fields["method"];
+  const status = symplResult.fields["status"];
+  if (drift?.kind === "float64" && secular?.kind === "boolean"
+      && method?.kind === "string" && status?.kind === "string") {
+    console.log("  status:               ", status.value);
+    console.log("  method:               ", method.value);
+    console.log("  energy_drift_max:     ", float64ToNumber(drift).toExponential(2),
+      "  (bounded — symplectic structure preserves H)");
+    console.log("  energy_drift_secular: ", String(secular.value),
+      "  (false — drift is oscillatory, not linear-growing)");
+  }
+}
+
+header(20, "integrate-ode-stiff: Robertson chemistry, t in [0, 1e6] (stiff IVP via Radau-IIA)",
+  "Explicit RK would need ~10^12 tiny steps to remain stable; Radau handles it in ~150 implicit steps.");
+// Robertson (Robertson 1966) — the canonical stiff test problem. Three
+// reactant species over a horizon spanning many orders of magnitude.
+//
+//   y0' = -0.04 y0 + 1e4 y1 y2
+//   y1' =  0.04 y0 - 1e4 y1 y2 - 3e7 y1²
+//   y2' =                          3e7 y1²
+//
+// Initial condition (1, 0, 0). The tool composes `cas-diff` in-process
+// to derive the symbolic Jacobian and pushes it into the implicit-RK
+// driver; per-step cost is dominated by the `n × n` and `2n × 2n` LU
+// factorisations (n = 3 here, so cheap).
+const robertsonF = list([
+  // -0.04 * y0 + 1e4 * y1 * y2
+  expr("+", [
+    expr("*", [float64FromNumber(-0.04), sym("y0")]),
+    expr("*", [
+      expr("*", [float64FromNumber(1e4), sym("y1")]),
+      sym("y2"),
+    ]),
+  ]),
+  // 0.04 * y0 - 1e4 * y1 * y2 - 3e7 * y1^2
+  expr("-", [
+    expr("-", [
+      expr("*", [float64FromNumber(0.04), sym("y0")]),
+      expr("*", [
+        expr("*", [float64FromNumber(1e4), sym("y1")]),
+        sym("y2"),
+      ]),
+    ]),
+    expr("*", [float64FromNumber(3e7), expr("^", [sym("y1"), int(2n)])]),
+  ]),
+  // 3e7 * y1^2
+  expr("*", [float64FromNumber(3e7), expr("^", [sym("y1"), int(2n)])]),
+]);
+const robertsonInput = {
+  kind: "record" as const,
+  fields: {
+    f: robertsonF,
+    vars: list([sym("y0"), sym("y1"), sym("y2")]),
+    t_var: sym("t"),
+    y0: list([float64FromNumber(1.0), float64FromNumber(0.0), float64FromNumber(0.0)]),
+    t_span: { kind: "record" as const, fields: {
+      t0: float64FromNumber(0),
+      tf: float64FromNumber(1e6),
+    }},
+    options: {
+      kind: "record" as const, fields: {
+        rtol: float64FromNumber(1e-6),
+        atol: float64FromNumber(1e-10),
+        t_eval: list([0, 1, 100, 1e4, 1e6].map((x) => float64FromNumber(x))),
+      },
+    },
+  },
+};
+const stiffResult = await wb.integrateOdeStiff(robertsonInput as never);
+if (stiffResult.kind === "record") {
+  const status = stiffResult.fields["status"];
+  const nAcc = stiffResult.fields["n_steps_accepted"];
+  const nJac = stiffResult.fields["n_jacobian_evals"];
+  const nLU = stiffResult.fields["n_lu_decompositions"];
+  const traj = stiffResult.fields["trajectory"];
+  if (status?.kind === "string" && nAcc?.kind === "integer"
+      && nJac?.kind === "integer" && nLU?.kind === "integer"
+      && traj?.kind === "list") {
+    console.log("  status:                ", status.value);
+    console.log("  n_steps_accepted:      ", String(nAcc.value));
+    console.log("  n_jacobian_evals:      ", String(nJac.value),
+      "  (>0 — implicit method actually uses J)");
+    console.log("  n_lu_decompositions:   ", String(nLU.value),
+      `  (≥ 2·n_jacobian_evals — real + complex pair)`);
+    const last = traj.items[traj.items.length - 1];
+    if (last?.kind === "list") {
+      const lastVals = last.items.map((it) =>
+        it.kind === "float64" ? float64ToNumber(it as never).toExponential(3) : "?",
+      );
+      console.log(`  y(1e6) ≈                [${lastVals.join(", ")}]`);
+    }
+  }
+}
+
 // -----------------------------------------------------------------------------
 // Bonus — content-addressing
 // -----------------------------------------------------------------------------

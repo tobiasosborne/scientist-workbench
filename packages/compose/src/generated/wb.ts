@@ -29,6 +29,8 @@ import { def as entropySourceDef } from "../../../../tools/entropy-source/tool.j
 import { def as exprParseDef } from "../../../../tools/expr-parse/tool.js";
 import { def as integrate1dDef } from "../../../../tools/integrate-1d/tool.js";
 import { def as integrateOdeIvpDef } from "../../../../tools/integrate-ode-ivp/tool.js";
+import { def as integrateOdeStiffDef } from "../../../../tools/integrate-ode-stiff/tool.js";
+import { def as integrateOdeSymplecticDef } from "../../../../tools/integrate-ode-symplectic/tool.js";
 import { def as linalgEighDef } from "../../../../tools/linalg-eigh/tool.js";
 import { def as linalgQrDef } from "../../../../tools/linalg-qr/tool.js";
 import { def as linalgSolveDef } from "../../../../tools/linalg-solve/tool.js";
@@ -57,6 +59,8 @@ export interface TypedWorkbench extends Workbench {
   exprParse(input: InputOf<typeof exprParseDef>, flags?: FlagsArgOf<typeof exprParseDef>): Promise<OutputOf<typeof exprParseDef>>;
   integrate1d(input: InputOf<typeof integrate1dDef>, flags?: FlagsArgOf<typeof integrate1dDef>): Promise<OutputOf<typeof integrate1dDef>>;
   integrateOdeIvp(input: InputOf<typeof integrateOdeIvpDef>, flags?: FlagsArgOf<typeof integrateOdeIvpDef>): Promise<OutputOf<typeof integrateOdeIvpDef>>;
+  integrateOdeStiff(input: InputOf<typeof integrateOdeStiffDef>, flags?: FlagsArgOf<typeof integrateOdeStiffDef>): Promise<OutputOf<typeof integrateOdeStiffDef>>;
+  integrateOdeSymplectic(input: InputOf<typeof integrateOdeSymplecticDef>, flags?: FlagsArgOf<typeof integrateOdeSymplecticDef>): Promise<OutputOf<typeof integrateOdeSymplecticDef>>;
   linalgEigh(input: InputOf<typeof linalgEighDef>, flags?: FlagsArgOf<typeof linalgEighDef>): Promise<OutputOf<typeof linalgEighDef>>;
   linalgQr(input: InputOf<typeof linalgQrDef>, flags?: FlagsArgOf<typeof linalgQrDef>): Promise<OutputOf<typeof linalgQrDef>>;
   linalgSolve(input: InputOf<typeof linalgSolveDef>, flags?: FlagsArgOf<typeof linalgSolveDef>): Promise<OutputOf<typeof linalgSolveDef>>;
@@ -109,6 +113,12 @@ export function typed(workbench: Workbench): TypedWorkbench {
     },
     integrateOdeIvp(input, flags) {
       return workbench.run("integrate-ode-ivp", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof integrateOdeIvpDef>>;
+    },
+    integrateOdeStiff(input, flags) {
+      return workbench.run("integrate-ode-stiff", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof integrateOdeStiffDef>>;
+    },
+    integrateOdeSymplectic(input, flags) {
+      return workbench.run("integrate-ode-symplectic", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof integrateOdeSymplecticDef>>;
     },
     linalgEigh(input, flags) {
       return workbench.run("linalg-eigh", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof linalgEighDef>>;
@@ -182,6 +192,8 @@ export const defs = {
   exprParse: exprParseDef,
   integrate1d: integrate1dDef,
   integrateOdeIvp: integrateOdeIvpDef,
+  integrateOdeStiff: integrateOdeStiffDef,
+  integrateOdeSymplectic: integrateOdeSymplecticDef,
   linalgEigh: linalgEighDef,
   linalgQr: linalgQrDef,
   linalgSolve: linalgSolveDef,
