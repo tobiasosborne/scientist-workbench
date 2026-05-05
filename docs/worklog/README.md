@@ -55,6 +55,7 @@ write the frictions and the dead ends as well as the wins.
 | 042 | [tier-1 vocabulary extension: inverse trig + hyperbolics + log bases](042-tier1-vocab-extension.md) | 2026-05-04 | scientist-workbench-0jn |
 | 043 | [`linalg-qr` via the tstournament-protocol bench (49/49, 343/343)](043-linalg-qr-via-bench.md) | 2026-05-05 | scientist-workbench-3jq |
 | 044 | [`linalg-svd` via the tstournament-protocol bench (49/49, 392/392)](044-linalg-svd-via-bench.md) | 2026-05-05 | scientist-workbench-c03 |
+| 045 | [Numerical-tier `n` cap lift (ADR-0016) + NIST industrial benchmarks](045-numerical-tier-cap-lift-and-industrial-bench.md) | 2026-05-05 | scientist-workbench-32s |
 
 ## How to add a new shard
 

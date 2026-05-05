@@ -37,8 +37,11 @@ const r = qr(A, "reduced");
 `A` is `m × n` (must be rectangular), each row of equal length. `mode`
 is optional: `"reduced"` (the LAPACK economy default) or `"complete"`.
 Each `float64` carries the 16-hex-char IEEE-754 binary64 bit pattern
-(PRD §0.1). v0.1 caps `m·n` at `200·200`; larger inputs are rejected
-with a pointer to the blob-by-hash follow-up bead.
+(PRD §0.1). Per ADR-0016 there is **no hard size cap** — large inputs
+run with scale-advisory warnings appended to the output's `warnings`
+field; only a true allocation OOM (RangeError on Float64Array
+allocation) raises a `ToolError`. Householder QR scales as `O(m·n²)`:
+in pure TS, `n=500 ≈ 3 s`, `n=1000 ≈ 25 s`, `n=2000 ≈ 9 min`.
 
 ## Output
 

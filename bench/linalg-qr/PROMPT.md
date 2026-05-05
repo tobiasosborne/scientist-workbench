@@ -140,8 +140,10 @@ margin to spare across the entire test set.
 | F. rank-deficient | 5 | rank-1 outer product, identity-with-zero-column, two near-equal rows, all-zeros, `H_8` with appended zero column |
 | G. tall and skinny / short and fat | 6 | `(50,3)`, `(100,5)`, `(200,10)` tall + `(3,50)`, `(5,100)`, `(10,200)` fat |
 | H. complete-mode | 4 | a representative case from each of A/B/C/G with `mode: "complete"` |
+| I. industrial (NIST harwell-boeing) | 5 | `bcsstk01..05` real structural-engineering matrices, `n ∈ {48, 66, 112, 132, 153}` |
+| J. stress (post ADR-0016) | 2 | `n ∈ {500, 1000}` random well-conditioned, in the regime where scale warnings fire |
 
-Total: **49 cases × 7 checks = 343 invariant assertions**.
+Total: **56 cases × 7 checks = 392 invariant assertions**.
 
 The Hilbert-50 case is the deliberate stress-tester: `κ(H_{50}) > 10^{18}`,
 so any non-Householder algorithm (e.g. classical Gram-Schmidt) will fail

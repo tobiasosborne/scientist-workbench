@@ -157,8 +157,10 @@ order of magnitude on every case.
 | F. rank-deficient | 5 | rank-1 outer product, identity-with-zero-column, near-equal-rows, all-zeros, Hilbert with appended zero column |
 | G. tall and skinny / short and fat | 6 | (50,3), (100,5), (200,10) tall + (3,50), (5,100), (10,200) fat |
 | H. complete-mode | 4 | a representative case from each of A/B/C/G with `mode: "complete"` |
+| I. industrial (NIST harwell-boeing) | 5 | `bcsstk01..05` real structural-engineering matrices, `n ∈ {48, 66, 112, 132, 153}` |
+| J. stress (post ADR-0016) | 1 | `n = 500` random well-conditioned (Jacobi at n=1000 is ~3.5 min — deferred to a future Golub-Reinsch port) |
 
-Total: **49 cases × 8 checks = 392 invariant assertions**.
+Total: **55 cases × 8 checks = 440 invariant assertions**.
 
 The Hilbert-50 case is the deliberate stress-tester:
 `κ(H_{50}) > 10^{18}`. Both Golub-Reinsch and one-sided Jacobi pass

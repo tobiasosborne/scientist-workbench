@@ -104,14 +104,21 @@
 //                                    algorithm has no answer to give.
 //   * `ToolError` (exit 1) for *malformed* input:
 //     - non-rectangular `A` (ragged rows)
-//     - `m · n > 200 · 200` — the v0.1 cap; suggestion points to bead
-//       `wmm` (the blob-by-hash convention follow-up)
 //     - `mode` is not "reduced" or "complete"
+//     - actual OOM (RangeError on Float64Array allocation) — caught and
+//       re-thrown as ToolError with the attempted-bytes detail.
+//       Per ADR-0016, the previous `m·n ≤ 200·200` cap is *withdrawn*;
+//       large inputs run with loud warnings instead. OOM is the only
+//       physical refusal.
 //
 // Out of scope (v0.1, all explicitly deferred)
 // --------------------------------------------
 //   * Generalised SVD, randomised SVD, truncated SVD — bead 71f
-//   * `m·n > 200·200` — bead `wmm` (blob-by-hash convention)
+//   * Per-tool size cap — *withdrawn* per ADR-0016; one-sided Jacobi
+//     scales to ~n=500 in interactive time, ~n=1000 with patience
+//     (~3.5 min). The bench measures up to n=1000; larger inputs emit
+//     a strong warning and proceed unless OOM intervenes.
+//   * Faster Golub-Reinsch SVD substrate — bead 71f follow-up
 //   * FFI to LAPACK DGESDD — bead `e7y`
 //   * Cross-platform determinism guarantee — `numerical: true` (ADR-0015)
 //
@@ -141,17 +148,18 @@ import {
   type SVDResult,
   matrixFromRows,
   svd,
+  assessNumericalScale,
+  MemoryExhaustionError,
+  withOomGuard,
 } from "@workbench/linalg-core";
 
 const NAME = "linalg-svd";
-const VERSION = "0.1.0";
+const VERSION = "0.2.0";
 
-// v0.1 cap mirroring `linalg-solve` and `linalg-qr` (ADR-0014).  A
-// request that exceeds this points the agent at bead `wmm` for the
-// blob-by-hash follow-up.  The check is `m · n > MAX_CELLS` rather
-// than per-axis because a 200×200 matrix and a 1×40000 vector both
-// encode to the same JSON byte budget at the wire boundary.
-const MAX_CELLS = 200 * 200;
+// ADR-0016 lifts the v0.1 `m · n ≤ 200 · 200` cap. Large inputs run
+// with `assessNumericalScale("svd-jacobi", ...)` warnings appended
+// to the output's `warnings` field; the only refusal is a true
+// allocation OOM (RangeError → ToolError via `withOomGuard`).
 
 // Soft warning thresholds.  These are *fields* of the output record,
 // not boundary refusals — the planner reads them and decides.  We
@@ -271,8 +279,8 @@ function inp(A: readonly (readonly number[])[], mode: string) {
   });
 }
 
-function encodeSuccess(r: SVDResult) {
-  const warnings: string[] = [];
+function encodeSuccess(r: SVDResult, scaleWarnings: readonly string[] = []) {
+  const warnings: string[] = [...scaleWarnings];
   if (r.reconstructionError > RECONSTRUCTION_WARNING) {
     warnings.push(
       `reconstruction error ${r.reconstructionError.toExponential(2)} exceeds soft floor ${RECONSTRUCTION_WARNING.toExponential(0)}`,
@@ -447,8 +455,13 @@ export const def = defineTool({
       machine_checkable: true,
     },
     {
-      name: "size-cap-rejected",
-      statement: `m·n > ${MAX_CELLS} raises ToolError pointing at the v0.2 follow-up (bead wmm)`,
+      name: "scale-warnings-emitted",
+      statement: `for max(m, n) > 500, the warnings field carries human-readable scale advisories per ADR-0016 (estimated wall-clock under one-sided Jacobi: O(n³ log² n) — n=500 ≈ 18 s, n=1000 ≈ 3.5 min). Algorithm still runs.`,
+      machine_checkable: true,
+    },
+    {
+      name: "oom-becomes-toolerror",
+      statement: `a true allocation OOM (RangeError on Float64Array allocation) is caught and re-thrown as a ToolError carrying the attempted byte count. This is the only refusal class for oversize inputs (ADR-0016).`,
       machine_checkable: true,
     },
     {
@@ -508,18 +521,11 @@ export const def = defineTool({
       }));
     }
 
-    // Size cap — refuses both `n×n > MAX` and tall/fat shapes that
-    // exceed the byte budget. ToolError because oversized input is
-    // *malformed* relative to v0.1's stated scope.
-    if (m * n > MAX_CELLS) {
-      throw new ToolError(
-        `${NAME}: m·n = ${m * n} exceeds v0.1 cap (${MAX_CELLS} = 200·200)`,
-        {
-          suggestion:
-            `for matrices with m·n > ${MAX_CELLS}, the wire encoding cost is high; see bead scientist-workbench-wmm (blob-by-hash convention) and -e7y (FFI LAPACK path)`,
-        },
-      );
-    }
+    // ADR-0016: no size cap. Compute scale-advisory warnings now (cheap,
+    // O(1)); attach to the output's `warnings` list at encode time. The
+    // only refusal for oversize inputs is a true allocation OOM caught by
+    // `withOomGuard` below.
+    const scaleWarnings = assessNumericalScale("svd-jacobi", m, n);
 
     // Walk the rows.  Two passes' worth of work in one: rectangularity
     // + non-finite detection + decoding into a flat Float64Array.  We
@@ -562,8 +568,21 @@ export const def = defineTool({
     // the validated data buffer (skipping `matrixFromRows`'s own
     // validation, which we just did).
     const A: Matrix = { rows: m, cols: n, data };
-    const result = svd(A, mode);
-    return encodeSuccess(result);
+    let result: SVDResult;
+    try {
+      result = withOomGuard(m, n, () => svd(A, mode));
+    } catch (e) {
+      if (e instanceof MemoryExhaustionError) {
+        throw new ToolError(e.message, {
+          suggestion:
+            `the requested ${m}×${n} dense problem could not be allocated. ` +
+            `For larger problems consider the FFI bridge (bead scientist-workbench-e7y).`,
+          detail: { attempted_bytes: e.attemptedBytes, m: e.dims.m, n: e.dims.n },
+        });
+      }
+      throw e;
+    }
+    return encodeSuccess(result, scaleWarnings);
   },
   test: () => {
     // Smoke probe: a 5×3 case must round-trip through the substrate

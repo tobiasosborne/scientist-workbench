@@ -35,13 +35,19 @@
 //     - non-square A
 //     - dim(A) ≠ dim(b)
 //     - non-finite (NaN / ±Inf) entries (with a path-into-tree)
-//     - n > 200 (the v0.1 cap; suggestion points to bead `wmm`)
 //     - n = 0
+//     - actual OOM (RangeError on Float64Array allocation) — caught and
+//       re-thrown as ToolError with the attempted-bytes detail.
+//       Per ADR-0016, the previous `n ≤ 200` cap is *withdrawn*; large
+//       inputs run with loud warnings instead. OOM is the only physical
+//       refusal.
 //
 // Out of scope (v0.1, all explicitly deferred)
 // --------------------------------------------
 //   * Other decompositions (QR / SVD / eigendecomposition) → bead 71f
-//   * n > 200 (would force the blob-by-hash convention) → bead wmm
+//     (qr + svd are now shipped; symmetric-eigh next)
+//   * Per-tool size cap — *withdrawn* per ADR-0016; LU runs with scale
+//     warnings up to the OOM ceiling.
 //   * FFI to OpenBLAS                                     → bead e7y
 //   * Cross-platform determinism guarantee                → bead 0ck (ADR-0015)
 //
@@ -73,14 +79,18 @@ import {
   matIdentity,
   lu as luFactor,
   solve,
+  assessNumericalScale,
+  MemoryExhaustionError,
+  withOomGuard,
 } from "@workbench/linalg-core";
 
 const NAME = "linalg-solve";
-const VERSION = "0.1.0";
+const VERSION = "0.2.0";
 
-// v0.1 cap. The forcing function: a request that exceeds this points
-// the agent at bead `wmm` for the blob-by-hash follow-up.
-const MAX_N = 200;
+// ADR-0016 lifts the v0.1 `n ≤ 200` cap. Large inputs run with
+// `assessNumericalScale("lu", n, n)` warnings appended to the output's
+// `warnings` field; the only refusal is a true allocation OOM
+// (RangeError → ToolError via `withOomGuard`).
 
 // Threshold above which we add a warning string to the output. These
 // are documented thresholds, not a hard "fail above this"; the agent
@@ -229,8 +239,13 @@ export const def = defineTool({
       machine_checkable: true,
     },
     {
-      name: "size-cap-rejected",
-      statement: `n > ${MAX_N} raises ToolError pointing at the v0.2 follow-up`,
+      name: "scale-warnings-emitted",
+      statement: `for n > 500, the warnings field carries human-readable scale advisories per ADR-0016 (estimated wall-clock for LU O(n³): n=500 ≈ 2.6 s, n=1000 ≈ 25 s). Algorithm still runs.`,
+      machine_checkable: true,
+    },
+    {
+      name: "oom-becomes-toolerror",
+      statement: `a true allocation OOM (RangeError) is caught and re-thrown as a ToolError carrying the attempted byte count. The only refusal class for oversize inputs (ADR-0016).`,
       machine_checkable: true,
     },
     {
@@ -257,17 +272,26 @@ export const def = defineTool({
         { suggestion: `set length(b) = ${A.rows}` },
       );
     }
-    if (A.rows > MAX_N) {
-      throw new ToolError(
-        `${NAME}: n = ${A.rows} exceeds v0.1 cap (${MAX_N})`,
-        {
-          suggestion:
-            `for n > ${MAX_N}, the wire encoding cost is high; see bead scientist-workbench-wmm (blob-by-hash convention) and -e7y (FFI BLAS path)`,
-        },
-      );
-    }
+    // ADR-0016: no size cap. Compute scale-advisory warnings now (cheap,
+    // O(1)); attach to the output's `warnings` list at encode time. The
+    // only refusal for oversize inputs is a true allocation OOM caught by
+    // `withOomGuard` below.
+    const scaleWarnings = assessNumericalScale("lu", A.rows, A.cols);
 
-    const result = solve(A, b);
+    let result: SolveResult | null;
+    try {
+      result = withOomGuard(A.rows, A.cols, () => solve(A, b));
+    } catch (e) {
+      if (e instanceof MemoryExhaustionError) {
+        throw new ToolError(e.message, {
+          suggestion:
+            `the requested ${A.rows}×${A.cols} dense problem could not be allocated. ` +
+            `For larger problems consider the FFI bridge (bead scientist-workbench-e7y).`,
+          detail: { attempted_bytes: e.attemptedBytes, m: e.dims.m, n: e.dims.n },
+        });
+      }
+      throw e;
+    }
     if (result === null) {
       // Find the row at which the pivot column was all-zeros. Cheap
       // diagnostic re-run; not on the hot path.
@@ -275,7 +299,7 @@ export const def = defineTool({
       return tagged(`${NAME}/singular`, record({ pivot_row: int(BigInt(pivotRow)) }));
     }
 
-    return encodeSolveResult(result);
+    return encodeSolveResult(result, scaleWarnings);
   },
   test: () => {
     // In-process probe: a successful solve's residual matches what we
@@ -358,8 +382,8 @@ function decodeVector(v: Value, fieldName: string): Float64Array {
   return out;
 }
 
-function encodeSolveResult(r: SolveResult) {
-  const warnings: string[] = [];
+function encodeSolveResult(r: SolveResult, scaleWarnings: readonly string[] = []) {
+  const warnings: string[] = [...scaleWarnings];
   if (r.growthFactor > GROWTH_FACTOR_WARNING) {
     warnings.push(
       `growth factor ${r.growthFactor.toExponential(2)} exceeds ${GROWTH_FACTOR_WARNING.toExponential(0)}; LU may be backward-unstable`,

@@ -4,6 +4,7 @@ bun.lockb
 *.log
 .DS_Store
 dist/
+.claude/
 
 # bun.lock (text format) IS committed — keeps installs reproducible.
 

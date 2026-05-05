@@ -40,8 +40,12 @@ const r = svd(A, "reduced");
 `A` is `m × n` (must be rectangular), each row of equal length. `mode`
 is optional: `"reduced"` (the LAPACK economy default) or `"complete"`.
 Each `float64` carries the 16-hex-char IEEE-754 binary64 bit pattern
-(PRD §0.1).  v0.1 caps `m·n` at `200·200`; larger inputs are rejected
-with a pointer to the blob-by-hash follow-up bead.
+(PRD §0.1).  Per ADR-0016 there is **no hard size cap** — large
+inputs run with scale-advisory warnings appended to the output's
+`warnings` field; only a true allocation OOM raises a `ToolError`.
+One-sided Jacobi scales as `O(n³ log² n)`: in pure TS, `n=500 ≈ 18 s`,
+`n=1000 ≈ 3.5 min`. The Golub-Reinsch path (deferred to bead `71f`)
+will lift the practical ceiling another ~1.5 orders of magnitude.
 
 ## Output
 
@@ -153,8 +157,8 @@ the singular values; left singular vectors come from normalising those
 columns.
 
 **Why Jacobi, not Golub-Reinsch:** both are admissible by the bench's
-tolerance regime.  Jacobi wins the implementation budget at our scale
-(`n ≤ 200`):
+tolerance regime.  Jacobi wins the implementation budget at the
+small-to-mid scale this tool routinely sees:
 
 - **Half the lines of code, no convergence-edge cases.**  Golub-Reinsch
   needs Householder bidiagonalisation, accumulation of `U₁` and `V₁`,
@@ -164,9 +168,13 @@ tolerance regime.  Jacobi wins the implementation budget at our scale
   Drmač 1997).  Bidiagonalisation followed by QR can lose half the
   digits on the smallest singular values when `A` has a wide range of
   column norms.
-- **n ≤ 200 cap means the speed gap doesn't matter.**  Jacobi is
+- **At small/mid n, the asymptotic speed gap doesn't matter.**  Jacobi is
   `O(mn² · log n)` per sweep with `O(log n)` sweeps; Golub-Reinsch is
-  `O(mn² + n³)`.  For `n ≤ 200` the constant factors dominate.
+  `O(mn² + n³)`. Up to `n ≈ 500` the constant factors dominate; beyond
+  that, ADR-0016's scale warnings start firing and the planner can
+  decide whether to wait or escalate to FFI (bead `e7y`). A future
+  Golub-Reinsch port (bead `71f` follow-up) will lift the practical
+  ceiling further without giving up Jacobi for ill-conditioned cases.
 
 The algorithm wants the worked-on matrix at least as tall as it is
 wide, so for `m < n` we transpose internally and swap `U ↔ V` at the

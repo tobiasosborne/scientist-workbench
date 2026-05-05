@@ -25,9 +25,13 @@ import numpy as np
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent / "reference"))
 sys.path.insert(0, str(HERE))
+sys.path.insert(0, str(HERE.parent.parent / "_corpus"))
 
 from svd_reference import svd  # noqa: E402
 from verify import verify  # noqa: E402
+from mm_parser import HARWELL_BOEING_SUBSET, load_harwell_boeing  # noqa: E402
+
+CORPUS_DIR = HERE.parent.parent / "_corpus" / "harwell-boeing"
 
 SEED = 20260505
 ENCODING_VERSION = 1
@@ -166,6 +170,31 @@ def main() -> None:
     for (m, n) in ((3, 50), (5, 100), (10, 200)):
         A = rng.standard_normal((m, n))
         cases.append(make_case(f"G_fat_{m}x{n}", A.tolist()))
+
+    # ── I. Industrial: NIST Matrix Market harwell-boeing dense subset ──────
+    # Real test matrices from structural-engineering / fluid-dynamics codes
+    # used by the wider numerical-computing community since the 1980s. See
+    # bench/_corpus/mm_parser.py for the curated list and provenance.
+    for name, expected_n, kind, source in HARWELL_BOEING_SUBSET:
+        try:
+            A = load_harwell_boeing(name, CORPUS_DIR)
+        except FileNotFoundError as e:
+            print(f"  WARN  Tier I skipped {name}: {e}", file=sys.stderr)
+            continue
+        if A.shape[0] != expected_n:
+            print(f"  WARN  Tier I {name} expected {expected_n}, got {A.shape[0]}",
+                  file=sys.stderr)
+        cases.append(make_case(f"I_{name}", A.tolist()))
+
+    # ── J. Stress: large random (post-ADR-0016 uncapped regime) ───────────
+    # The bench previously stopped at n=200 (the ADR-0014 cap). With the
+    # cap lifted (ADR-0016), exercise n=500 to validate that the tools
+    # actually run there and emit the expected scale warnings. n=1000 is
+    # omitted from this generator because one-sided Jacobi at that size is
+    # ~3.5 minutes per case — would slow the routine bench-run by ~5x.
+    # When the Golub-Reinsch SVD path lands (bead 71f), add J_stress_1000x1000.
+    A = random_well_conditioned(rng, 500, 500)
+    cases.append(make_case("J_stress_500x500", A.tolist()))
 
     # ── H. Complete-mode (4) ──────────────────────────────────────────────
 
