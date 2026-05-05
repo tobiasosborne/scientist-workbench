@@ -10,9 +10,14 @@
 //
 //     A = U · diag(S) · Vᵀ
 //
-// for a real m×n matrix `A` by one-sided Jacobi (Demmel-Veselić 1992).
-// Wire wrapper around `svd(A, mode)` from `@workbench/linalg-core` —
-// library and tool share one implementation per ADR-0010.
+// for a real m×n matrix `A`. Wire wrapper around `svd(A, mode, opts?)`
+// from `@workbench/linalg-core` — library and tool share one
+// implementation per ADR-0010. The substrate dispatches between two
+// backends (worklog 046): one-sided Jacobi (Demmel-Veselić 1992) for
+// `max(m, n) ≤ 500` and Golub-Reinsch (Householder bidiagonalisation
+// + Demmel-Kahan implicit-shift QR sweeps; Demmel & Kahan 1990) above.
+// The dispatch is internal; the `method` field of the output reports
+// which backend ran.
 //
 // What makes SVD the *general-purpose rank-revealing tool*
 // --------------------------------------------------------
@@ -48,7 +53,7 @@
 //       orthogonality_error_Vt,  // ||Vᵀ·V − I_q||_F  (== ||Vt·Vtᵀ − I_q||_F)
 //       condition_number,        // S[0] / max(S[k-1], EPS · S[0])
 //       rank_estimate,           // count of S_i > max(m,n) · EPS · S[0]
-//       method,                  // "one-sided-jacobi"
+//       method,                  // "one-sided-jacobi" or "golub-reinsch"
 //       warnings,                // soft thresholds the planner may match on
 //     }
 //
@@ -59,28 +64,29 @@
 // all three and rejects the candidate if they disagree by more than 1e-6
 // relative — agent-honest is *enforced*, not just convention.
 //
-// Why one-sided Jacobi, not Golub-Reinsch
-// ---------------------------------------
-// Both are admissible by the bench's tolerance regime.  One-sided Jacobi
-// (Demmel-Veselić 1992) wins the implementation budget at our scale:
+// Why dual-algorithm dispatch (worklog 046)
+// -----------------------------------------
+// Both algorithms are admissible by the bench's tolerance regime.
+// They have complementary strengths:
 //
-//   1. **Half the lines of code, no convergence-edge cases.** Golub-
-//      Reinsch needs Householder bidiagonalisation, accumulation of U₁
-//      and V₁, Demmel-Kahan implicit-shift QR sweeps with shift
-//      selection, deflation, post-sort.  Each piece has subtle corner
-//      cases.  Jacobi has one loop: rotate column pairs until off-
-//      diagonals are below tolerance.
+//   * **One-sided Jacobi** has high relative accuracy on every
+//     singular value regardless of κ(A) (Demmel-Veselić 1992) — the
+//     decisive property when reading off the smallest singular value
+//     of an ill-conditioned matrix. Cost is O(mn² log² n); interactive
+//     to ~n=500.
 //
-//   2. **Superior accuracy on small singular values.** Demmel-Veselić
-//      proved Jacobi computes every singular value to high relative
-//      accuracy regardless of κ(A).  Bidiagonalisation followed by QR
-//      can lose half the digits on the smallest singular values when A
-//      has a wide range of column norms.
+//   * **Golub-Reinsch** has the textbook O(mn² + n³) cost with small
+//     constants and no log factor, lifting the practical pure-TS
+//     ceiling from ~n=500 (Jacobi) to ~n=2000 (~5 min on dev-box;
+//     ~25 s at n=1000 vs Jacobi's ~3.5 min — the 5–10× speedup is
+//     the dispatch headline). Forward error on small singular values
+//     is bounded by ε·‖A‖, not ε·σ — half the digits on the smallest
+//     σ when κ is large.
 //
-//   3. **n ≤ 200 cap means the speed gap doesn't matter.** Jacobi is
-//      O(mn² · log n) per sweep with O(log n) sweeps; Golub-Reinsch is
-//      O(mn² + n³). For n ≤ 200 the constant factors dominate and
-//      correctness wins over asymptotic speed.
+// The auto-dispatch threshold sits at max(m, n) = 500 — the boundary
+// of the "well-tested" regime per scale.ts and ADR-0016. Below it,
+// Jacobi's small-σ accuracy wins; above it, Golub-Reinsch's speed
+// dominates and the n³ Jacobi scaling becomes the binding constraint.
 //
 // The substrate (`packages/linalg-core/src/svd.ts`) carries the full
 // literate algorithm prose; this file is only the wire-encoding wrapper.
@@ -111,23 +117,20 @@
 //       large inputs run with loud warnings instead. OOM is the only
 //       physical refusal.
 //
-// Out of scope (v0.1, all explicitly deferred)
-// --------------------------------------------
+// Out of scope (all explicitly deferred)
+// --------------------------------------
 //   * Generalised SVD, randomised SVD, truncated SVD — bead 71f
-//   * Per-tool size cap — *withdrawn* per ADR-0016; one-sided Jacobi
-//     scales to ~n=500 in interactive time, ~n=1000 with patience
-//     (~3.5 min). The bench measures up to n=1000; larger inputs emit
-//     a strong warning and proceed unless OOM intervenes.
-//   * Faster Golub-Reinsch SVD substrate — bead 71f follow-up
+//   * Per-tool size cap — *withdrawn* per ADR-0016. With dual-algorithm
+//     dispatch (worklog 046), the practical pure-TS ceiling is ~n=2000
+//     (Golub-Reinsch); larger inputs emit a strong warning and proceed
+//     unless OOM intervenes.
 //   * FFI to LAPACK DGESDD — bead `e7y`
 //   * Cross-platform determinism guarantee — `numerical: true` (ADR-0015)
 //
 // Algorithm
 // ---------
-// One-sided Jacobi (Demmel-Veselić 1992; Drmač 1997 for the per-pair
-// tolerance test; Golub & Van Loan §8.5).  See
-// `packages/linalg-core/src/svd.ts` for the full literate algorithm
-// prose.
+// Dual-algorithm dispatch — see `packages/linalg-core/src/svd.ts`
+// for the full literate prose on both backends and the dispatch rule.
 
 import {
   float64FromNumber,
@@ -311,7 +314,7 @@ function encodeSuccess(r: SVDResult, scaleWarnings: readonly string[] = []) {
     orthogonality_error_Vt: float64FromNumber(r.orthogonalityErrorVt),
     condition_number: float64FromNumber(r.conditionNumber),
     rank_estimate: int(BigInt(r.rankEstimate)),
-    method: str("one-sided-jacobi"),
+    method: str(r.method),
     warnings: list(warnings.map((w) => str(w))),
   });
 }
@@ -333,11 +336,18 @@ export const def = defineTool({
   // those.  Mutually exclusive with `nondeterministic: true`.
   numerical: true,
   flags: {
-    // The `--method` flag exists for symmetry with `linalg-solve` and
-    // `linalg-qr`.  Currently the only choice is "one-sided-jacobi".
-    // Adding "golub-reinsch" later is schema-additive.
-    method: F.enum(["one-sided-jacobi"] as const, "SVD algorithm", {
-      default: "one-sided-jacobi",
+    // The `--method` flag selects the SVD backend explicitly. Default
+    // `"auto"` dispatches by problem size: one-sided Jacobi for
+    // `max(m, n) ≤ 500` (high relative accuracy on small singular
+    // values; Demmel-Veselić 1992) and Golub-Reinsch (Householder
+    // bidiagonalisation + Demmel-Kahan implicit-shift QR sweeps;
+    // Demmel & Kahan 1990) above. Forcing "one-sided-jacobi" or
+    // "golub-reinsch" is useful for tests and benchmarks. The
+    // `method` field of the success record always reports the
+    // backend that actually ran. See `packages/linalg-core/src/svd.ts`
+    // for the dispatch rationale.
+    method: F.enum(["auto", "one-sided-jacobi", "golub-reinsch"] as const, "SVD algorithm", {
+      default: "auto",
     }),
   },
   examples: [

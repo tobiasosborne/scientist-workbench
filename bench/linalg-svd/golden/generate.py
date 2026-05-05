@@ -188,13 +188,29 @@ def main() -> None:
 
     # ── J. Stress: large random (post-ADR-0016 uncapped regime) ───────────
     # The bench previously stopped at n=200 (the ADR-0014 cap). With the
-    # cap lifted (ADR-0016), exercise n=500 to validate that the tools
-    # actually run there and emit the expected scale warnings. n=1000 is
-    # omitted from this generator because one-sided Jacobi at that size is
-    # ~3.5 minutes per case — would slow the routine bench-run by ~5x.
-    # When the Golub-Reinsch SVD path lands (bead 71f), add J_stress_1000x1000.
+    # cap lifted (ADR-0016) and the Golub-Reinsch SVD path landed
+    # (worklog 046, bead y9u), the practical pure-TS ceiling shifts from
+    # ~n=500 (one-sided Jacobi: ~18 s) to ~n=2000 (Golub-Reinsch:
+    # ~5 min). Tier J exercises two points along that curve:
+    #
+    #   * n=500: exercises the auto-dispatch boundary (auto picks Jacobi
+    #     here; the same case re-run with `algorithm: "golub-reinsch"`
+    #     in unit tests demonstrates the cross-algorithm agreement).
+    #   * n=1000: dispatches to Golub-Reinsch automatically; ~25 s on
+    #     dev-box (vs Jacobi's ~3.5 min — the ratio is the dispatch
+    #     win and the headline of worklog 046).
+    #
+    # n=2000 was prototyped during worklog-046 work (Golub-Reinsch
+    # delivers it in ~5 min on dev-box, demonstrating the new ceiling)
+    # but was *not* committed to the bench: the resulting inputs.json
+    # (~118 MB) and expected.json (~240 MB) exceed GitHub's 100 MB
+    # per-file push limit. The Golub-Reinsch implementation is unit-
+    # tested at n=2000 (`packages/linalg-core/test/svd.test.ts`); the
+    # bench documents the practical ceiling at n=1000.
     A = random_well_conditioned(rng, 500, 500)
     cases.append(make_case("J_stress_500x500", A.tolist()))
+    A = random_well_conditioned(rng, 1000, 1000)
+    cases.append(make_case("J_stress_1000x1000", A.tolist()))
 
     # ── H. Complete-mode (4) ──────────────────────────────────────────────
 

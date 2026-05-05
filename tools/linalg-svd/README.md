@@ -1,15 +1,18 @@
 # linalg-svd
 
 Singular value decomposition `A = U · diag(S) · Vᵀ` for a real `m × n`
-matrix by one-sided Jacobi (Demmel-Veselić 1992).  Fourth numerical-tier
-tool (after `linalg-solve` ADR-0014, `integrate-1d` ADR-0015 follow-on,
-and `linalg-qr` worklog 043).  Returns *not just* `(U, S, Vᵀ)` but a
-record carrying the reconstruction error `‖U·diag(S)·Vᵀ − A‖_F /
-max(‖A‖_F, 1)`, both orthogonality errors `‖UᵀU − I‖_F` and
-`‖Vt·Vtᵀ − I‖_F`, the condition number `S[0]/S[k-1]`, and the numerical
-rank — everything an agent's planner needs to decide whether to trust the
-factorisation, treat the matrix as rank-deficient, or escalate the
-precision warning.
+matrix.  Fourth numerical-tier tool (after `linalg-solve` ADR-0014,
+`integrate-1d` ADR-0015 follow-on, and `linalg-qr` worklog 043).
+**Dual-algorithm dispatch** (worklog 046): one-sided Jacobi
+(Demmel-Veselić 1992) for `max(m, n) ≤ 500`, Golub-Reinsch (Householder
+bidiagonalisation + Demmel-Kahan implicit-shift QR; Demmel & Kahan 1990)
+above. Returns *not just* `(U, S, Vᵀ)` but a record carrying the
+reconstruction error `‖U·diag(S)·Vᵀ − A‖_F / max(‖A‖_F, 1)`, both
+orthogonality errors `‖UᵀU − I‖_F` and `‖Vt·Vtᵀ − I‖_F`, the condition
+number `S[0]/S[k-1]`, the numerical rank, and the `method` field that
+names the backend that ran — everything an agent's planner needs to
+decide whether to trust the factorisation, treat the matrix as
+rank-deficient, or escalate the precision warning.
 
 Library surface (TS-side, no JSON):
 
@@ -43,9 +46,11 @@ Each `float64` carries the 16-hex-char IEEE-754 binary64 bit pattern
 (PRD §0.1).  Per ADR-0016 there is **no hard size cap** — large
 inputs run with scale-advisory warnings appended to the output's
 `warnings` field; only a true allocation OOM raises a `ToolError`.
-One-sided Jacobi scales as `O(n³ log² n)`: in pure TS, `n=500 ≈ 18 s`,
-`n=1000 ≈ 3.5 min`. The Golub-Reinsch path (deferred to bead `71f`)
-will lift the practical ceiling another ~1.5 orders of magnitude.
+The dispatch threshold (`max(m, n) ≤ 500`) routes between two
+backends: one-sided Jacobi scales as `O(n³ log² n)` and is
+interactive to ~n=500 (~18 s); Golub-Reinsch scales as `O(n³)` and
+extends the practical ceiling to ~n=2000 (~5 min on dev-box; ~25 s
+at n=1000 vs Jacobi's ~3.5 min — the dispatch headline).
 
 ## Output
 
@@ -66,7 +71,7 @@ Three shapes (ADR-0003 categories):
     "orthogonality_error_Vt":  {"kind": "float64", ...},   // ||Vt·Vtᵀ − I||_F
     "condition_number":        {"kind": "float64", ...},   // S[0] / max(S[k-1], EPS·S[0])
     "rank_estimate":           {"kind": "integer", ...},   // count of S_i > max(m,n)·EPS·S[0]
-    "method":                  {"kind": "string", "value": "one-sided-jacobi"},
+    "method":                  {"kind": "string", "value": "one-sided-jacobi" | "golub-reinsch"},
     "warnings":                {"kind": "list", "items": [<strings>]}
   }
 }
@@ -142,57 +147,68 @@ planner introspect the shape without an opaque exit-1.
 **Malformed input — `ToolError` (exit 1):**
 
 - `A` is not rectangular (rows of unequal length)
-- `m · n > 200 · 200` (suggestion points to bead `wmm`)
 - `mode` is not `"reduced"` or `"complete"`
+- a true allocation OOM (`RangeError` on `Float64Array` allocation) —
+  caught and re-thrown as `ToolError` carrying attempted-bytes detail
+  (ADR-0016; the only refusal class for oversize inputs).
 
 ## How
 
-One-sided Jacobi (Demmel-Veselić 1992; Drmač 1997 for the per-pair
-tolerance test; Golub & Van Loan §8.5).  Diagonalises `AᵀA` *implicitly*
-by orthogonal column rotations of `A`: for each column pair `(p, q)`,
-compute the Jacobi rotation that diagonalises the 2×2 block of `AᵀA`,
-then apply it from the right to both `A` and the accumulated `V`.  After
-convergence, the columns of `A · V` are orthogonal with norms equal to
-the singular values; left singular vectors come from normalising those
-columns.
+Two backends, dispatched by problem size at the substrate (worklog
+046; `packages/linalg-core/src/svd.ts`):
 
-**Why Jacobi, not Golub-Reinsch:** both are admissible by the bench's
-tolerance regime.  Jacobi wins the implementation budget at the
-small-to-mid scale this tool routinely sees:
+- **One-sided Jacobi** (Demmel-Veselić 1992; Drmač 1997; Golub & Van
+  Loan §8.5).  Diagonalises `AᵀA` *implicitly* by orthogonal column
+  rotations of `A`: for each column pair `(p, q)`, compute the Jacobi
+  rotation that diagonalises the 2×2 block of `AᵀA`, then apply it
+  from the right to both `A` and the accumulated `V`.  After
+  convergence, the columns of `A · V` are orthogonal with norms equal
+  to the singular values; left singular vectors come from normalising
+  those columns.  High relative accuracy on every singular value
+  *independent of `κ(A)`* (Demmel-Veselić 1992 — the discriminator
+  vs Golub-Reinsch on the smallest singular values).  Cost
+  `O(mn² log² n)`.
 
-- **Half the lines of code, no convergence-edge cases.**  Golub-Reinsch
-  needs Householder bidiagonalisation, accumulation of `U₁` and `V₁`,
-  Demmel-Kahan implicit-shift QR sweeps with shift selection,
-  deflation, post-sort.  Each piece has subtle corner cases.
-- **Superior accuracy on small singular values** (Demmel-Veselić 1992,
-  Drmač 1997).  Bidiagonalisation followed by QR can lose half the
-  digits on the smallest singular values when `A` has a wide range of
-  column norms.
-- **At small/mid n, the asymptotic speed gap doesn't matter.**  Jacobi is
-  `O(mn² · log n)` per sweep with `O(log n)` sweeps; Golub-Reinsch is
-  `O(mn² + n³)`. Up to `n ≈ 500` the constant factors dominate; beyond
-  that, ADR-0016's scale warnings start firing and the planner can
-  decide whether to wait or escalate to FFI (bead `e7y`). A future
-  Golub-Reinsch port (bead `71f` follow-up) will lift the practical
-  ceiling further without giving up Jacobi for ill-conditioned cases.
+- **Golub-Reinsch** (Golub & Kahan 1965, Demmel & Kahan 1990, Golub &
+  Van Loan §8.6).  Two stages:
+  1. Householder bidiagonalisation `A = U₁ · B · V₁ᵀ` where `B` is
+     real upper-bidiagonal. Alternates left and right reflectors that
+     zero successive sub-diagonal columns and super-super-diagonal
+     rows.
+  2. Demmel-Kahan implicit-shift QR sweeps on `B`: chase a "bulge"
+     introduced by the Wilkinson shift down the bidiagonal via
+     alternating right and left Givens rotations until each `β[i]`
+     deflates. Update `U₁` and `V₁` in place.
+  Compose `U = U₁ · U₂`, `V = V₁ · V₂`, fix signs (negative σ ↦
+  flip column of V), sort by σ descending.  Cost `O(mn² + n³)` with
+  small constants.
 
-The algorithm wants the worked-on matrix at least as tall as it is
-wide, so for `m < n` we transpose internally and swap `U ↔ V` at the
-end.  Singular values are sorted descending after extraction; rank-
-deficient (zero-norm) columns of the worked matrix are completed via
-modified Gram-Schmidt against the already-extracted unit vectors.
-Complete-mode extends `U` and `Vᵀ` by Gram-Schmidt against the
-existing orthonormal partial bases.
+The dispatch threshold sits at `max(m, n) = 500`: below it, Jacobi's
+small-σ accuracy advantage dominates; above it, Golub-Reinsch's ~5–10×
+speed advantage dominates and the n³ scaling becomes the binding
+constraint.  The choice is configurable via the `--method` flag
+(`"auto"` is the default; `"one-sided-jacobi"` and `"golub-reinsch"`
+force a backend), and the `method` output field always names the
+backend that ran.  Both backends:
+
+- handle `m < n` by transposing internally and swapping `U ↔ V` at
+  the end (the algorithms want at least as many rows as columns);
+- sort singular values descending after extraction;
+- complete rank-deficient (zero-σ) columns via Gram-Schmidt against
+  the already-extracted unit vectors; complete-mode extends `U` and
+  `Vᵀ` by Gram-Schmidt against the existing orthonormal partial
+  bases.
 
 References: Demmel & Veselić, *SIAM J. Matrix Anal. Appl.* 13(4),
-1992; Drmač, *SIAM J. Sci. Comput.* 18(4), 1997; Golub & Van Loan,
-*Matrix Computations*, 4th ed., JHU 2013, §8.5; Higham, *Accuracy and
+1992; Drmač, *SIAM J. Sci. Comput.* 18(4), 1997; Demmel & Kahan,
+*SIAM J. Sci. Stat. Comput.* 11(5), 1990; Golub & Kahan, *J. SIAM
+Numer. Anal. Ser. B* 2(2), 1965; Golub & Van Loan, *Matrix
+Computations*, 4th ed., JHU 2013, §§8.5–8.6; Higham, *Accuracy and
 Stability of Numerical Algorithms*, 2nd ed., SIAM 2002, §20.3.
 
-Out of scope (v0.1, all explicitly deferred): generalised SVD,
-randomised SVD, truncated SVD (bead 71f); `m·n > 200·200` (bead `wmm`);
-FFI to LAPACK DGESDD (bead `e7y`); cross-platform determinism guarantee
-(`numerical: true`, ADR-0015).
+Out of scope: generalised SVD, randomised SVD, truncated SVD (bead
+71f); FFI to LAPACK DGESDD (bead `e7y`); cross-platform determinism
+guarantee (`numerical: true`, ADR-0015).
 
 ## Invariants
 
@@ -215,8 +231,12 @@ FFI to LAPACK DGESDD (bead `e7y`); cross-platform determinism guarantee
   `tagged "linalg-svd/non-finite-input"` with the offending coordinate.
 - **degenerate-shape-tagged**: `m = 0` or `n = 0` produces
   `tagged "linalg-svd/degenerate-shape"` with `(m, n)`.
-- **size-cap-rejected**: `m·n > 40000` raises `ToolError` pointing at
-  bead `wmm` (the v0.2 follow-up).
+- **scale-warnings-emitted**: `max(m, n) > 500` populates the
+  `warnings` field with measurement-driven advisories (estimated
+  wall-clock + memory footprint per ADR-0016); the algorithm still
+  runs.
+- **oom-becomes-toolerror**: a true allocation OOM is caught and
+  re-thrown as `ToolError` carrying attempted-byte count.
 - **non-rectangular-rejected**: ragged `A` raises `ToolError`.
 
 ## Run
@@ -226,9 +246,9 @@ echo '{"kind":"record","fields":{"A":...,"mode":{"kind":"string","value":"reduce
   | bun tools/linalg-svd/tool.ts
 ```
 
-Method flag (typed, ADR-0011): `--method=one-sided-jacobi` (currently
-the only choice; the flag exists so v0.2 can add `golub-reinsch`
-non-breakingly).
+Method flag (typed, ADR-0011): `--method={auto,one-sided-jacobi,golub-reinsch}`
+(default `auto`; auto dispatches by `max(m, n)` against the 500
+threshold; the explicit values force a backend for tests/benchmarks).
 
 ## Standard flags
 

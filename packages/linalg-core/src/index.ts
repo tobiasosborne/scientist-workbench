@@ -55,7 +55,8 @@ export {
 export { hagerOneNormEstimate } from "./hager.js";
 export { type SolveResult, solve, solveWithLU } from "./solve.js";
 export { type QRResult, qr } from "./qr.js";
-export { type SVDResult, svd } from "./svd.js";
+export { type SVDResult, type SVDOptions, svd, svdJacobi, svdGolubReinsch } from "./svd.js";
+export { type EighResult, eigh } from "./eigh.js";
 export {
   type Algorithm as NumericalAlgorithm,
   MemoryExhaustionError,

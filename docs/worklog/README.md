@@ -56,6 +56,8 @@ write the frictions and the dead ends as well as the wins.
 | 043 | [`linalg-qr` via the tstournament-protocol bench (49/49, 343/343)](043-linalg-qr-via-bench.md) | 2026-05-05 | scientist-workbench-3jq |
 | 044 | [`linalg-svd` via the tstournament-protocol bench (49/49, 392/392)](044-linalg-svd-via-bench.md) | 2026-05-05 | scientist-workbench-c03 |
 | 045 | [Numerical-tier `n` cap lift (ADR-0016) + NIST industrial benchmarks](045-numerical-tier-cap-lift-and-industrial-bench.md) | 2026-05-05 | scientist-workbench-32s |
+| 046 | [`linalg-svd` Golub-Reinsch path (dual-algorithm dispatch by size)](046-svd-golub-reinsch.md) | 2026-05-05 | scientist-workbench-y9u |
+| 047 | [`linalg-eigh` via the tstournament-protocol bench (46/46, 316/316)](047-linalg-eigh-via-bench.md) | 2026-05-05 | scientist-workbench-evb |
 
 ## How to add a new shard
 

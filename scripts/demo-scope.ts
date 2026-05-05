@@ -326,6 +326,38 @@ if (svdResult.kind === "record") {
   }
 }
 
+header(17, "linalg-eigh: symmetric eigh on the Pei matrix αI + eeᵀ",
+  "Cyclic Jacobi diagonalises the symmetric n×n; n−1 eigenvalues at α and one at α+n.");
+// Pei(5, 1) = I + eeᵀ (with diagonal increment): eigenvalues = (1, 1, 1, 1, 6).
+const peiRows = [
+  [2, 1, 1, 1, 1],
+  [1, 2, 1, 1, 1],
+  [1, 1, 2, 1, 1],
+  [1, 1, 1, 2, 1],
+  [1, 1, 1, 1, 2],
+];
+const peiInput = list(
+  peiRows.map((row) => list(row.map((x) => float64FromNumber(x)))),
+);
+const eighResult = await wb.linalgEigh({
+  kind: "record",
+  fields: { A: peiInput },
+});
+if (eighResult.kind === "record") {
+  const lams = eighResult.fields["eigenvalues"];
+  const reconErr = eighResult.fields["reconstruction_error"];
+  const orthErr = eighResult.fields["orthogonality_error"];
+  if (lams?.kind === "list" && reconErr?.kind === "float64" && orthErr?.kind === "float64") {
+    const eigs = lams.items
+      .filter((it): it is { kind: "float64" } & typeof it => it.kind === "float64")
+      .map((it) => float64ToNumber(it as never).toFixed(4));
+    console.log("  eigenvalues:        [" + eigs.join(", ") + "]   (expected [1, 1, 1, 1, 6])");
+    console.log("  reconstruction err:", float64ToNumber(reconErr).toExponential(2));
+    console.log("  orthogonality err: ", float64ToNumber(orthErr).toExponential(2),
+      " (Jacobi: O(ε) independent of κ)");
+  }
+}
+
 // -----------------------------------------------------------------------------
 // Bonus — content-addressing
 // -----------------------------------------------------------------------------

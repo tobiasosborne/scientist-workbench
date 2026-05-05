@@ -28,6 +28,7 @@ import { def as casVerifyDef } from "../../../../tools/cas-verify/tool.js";
 import { def as entropySourceDef } from "../../../../tools/entropy-source/tool.js";
 import { def as exprParseDef } from "../../../../tools/expr-parse/tool.js";
 import { def as integrate1dDef } from "../../../../tools/integrate-1d/tool.js";
+import { def as linalgEighDef } from "../../../../tools/linalg-eigh/tool.js";
 import { def as linalgQrDef } from "../../../../tools/linalg-qr/tool.js";
 import { def as linalgSolveDef } from "../../../../tools/linalg-solve/tool.js";
 import { def as linalgSvdDef } from "../../../../tools/linalg-svd/tool.js";
@@ -54,6 +55,7 @@ export interface TypedWorkbench extends Workbench {
   entropySource(input: InputOf<typeof entropySourceDef>, flags?: FlagsArgOf<typeof entropySourceDef>): Promise<OutputOf<typeof entropySourceDef>>;
   exprParse(input: InputOf<typeof exprParseDef>, flags?: FlagsArgOf<typeof exprParseDef>): Promise<OutputOf<typeof exprParseDef>>;
   integrate1d(input: InputOf<typeof integrate1dDef>, flags?: FlagsArgOf<typeof integrate1dDef>): Promise<OutputOf<typeof integrate1dDef>>;
+  linalgEigh(input: InputOf<typeof linalgEighDef>, flags?: FlagsArgOf<typeof linalgEighDef>): Promise<OutputOf<typeof linalgEighDef>>;
   linalgQr(input: InputOf<typeof linalgQrDef>, flags?: FlagsArgOf<typeof linalgQrDef>): Promise<OutputOf<typeof linalgQrDef>>;
   linalgSolve(input: InputOf<typeof linalgSolveDef>, flags?: FlagsArgOf<typeof linalgSolveDef>): Promise<OutputOf<typeof linalgSolveDef>>;
   linalgSvd(input: InputOf<typeof linalgSvdDef>, flags?: FlagsArgOf<typeof linalgSvdDef>): Promise<OutputOf<typeof linalgSvdDef>>;
@@ -102,6 +104,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     },
     integrate1d(input, flags) {
       return workbench.run("integrate-1d", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof integrate1dDef>>;
+    },
+    linalgEigh(input, flags) {
+      return workbench.run("linalg-eigh", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof linalgEighDef>>;
     },
     linalgQr(input, flags) {
       return workbench.run("linalg-qr", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof linalgQrDef>>;
@@ -171,6 +176,7 @@ export const defs = {
   entropySource: entropySourceDef,
   exprParse: exprParseDef,
   integrate1d: integrate1dDef,
+  linalgEigh: linalgEighDef,
   linalgQr: linalgQrDef,
   linalgSolve: linalgSolveDef,
   linalgSvd: linalgSvdDef,

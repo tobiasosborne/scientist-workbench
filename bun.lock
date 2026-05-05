@@ -142,6 +142,15 @@
         "@workbench/quadrature": "workspace:*",
       },
     },
+    "tools/linalg-eigh": {
+      "name": "@workbench/tool-linalg-eigh",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/contract": "workspace:*",
+        "@workbench/linalg-core": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+      },
+    },
     "tools/linalg-qr": {
       "name": "@workbench/tool-linalg-qr",
       "version": "0.1.0",
@@ -344,6 +353,8 @@
     "@workbench/tool-expr-parse": ["@workbench/tool-expr-parse@workspace:tools/expr-parse"],
 
     "@workbench/tool-integrate-1d": ["@workbench/tool-integrate-1d@workspace:tools/integrate-1d"],
+
+    "@workbench/tool-linalg-eigh": ["@workbench/tool-linalg-eigh@workspace:tools/linalg-eigh"],
 
     "@workbench/tool-linalg-qr": ["@workbench/tool-linalg-qr@workspace:tools/linalg-qr"],
 
