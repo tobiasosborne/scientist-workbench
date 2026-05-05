@@ -55,3 +55,4 @@ export {
 export { hagerOneNormEstimate } from "./hager.js";
 export { type SolveResult, solve, solveWithLU } from "./solve.js";
 export { type QRResult, qr } from "./qr.js";
+export { type SVDResult, svd } from "./svd.js";

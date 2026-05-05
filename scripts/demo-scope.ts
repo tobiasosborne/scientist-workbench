@@ -298,6 +298,34 @@ if (hilbert8Result.kind === "record") {
   }
 }
 
+header(16, "linalg-svd: rank-revealing factorisation of a rank-deficient matrix",
+  "Rank-1 outer product u·vᵀ; SVD reveals exactly one nonzero singular value.");
+// Rank-1 outer product: A[i,j] = u[i] · v[j] has rank exactly 1.
+// SVD's rank_estimate should report 1; the other singular values are noise.
+const u = [1.0, 2.0, 3.0, 4.0];
+const v = [1.0, -1.0, 2.0];
+const nearSingular = u.map((ui) => v.map((vj) => ui * vj));
+const svdInput = list(
+  nearSingular.map((row) => list(row.map((x) => float64FromNumber(x)))),
+);
+const svdResult = await wb.linalgSvd({
+  kind: "record",
+  fields: { A: svdInput },
+});
+if (svdResult.kind === "record") {
+  const sList = svdResult.fields["S"];
+  const rank = svdResult.fields["rank_estimate"];
+  const cond = svdResult.fields["condition_number"];
+  if (sList?.kind === "list" && rank?.kind === "integer" && cond?.kind === "float64") {
+    const sigmas = sList.items
+      .filter((it): it is { kind: "float64" } & typeof it => it.kind === "float64")
+      .map((it) => float64ToNumber(it as never).toExponential(2));
+    console.log("  singular values:    [" + sigmas.join(", ") + "]");
+    console.log("  numerical rank:    ", Number(rank.value), " (the other σ are at machine epsilon — true rank revealed)");
+    console.log("  condition number:  ", float64ToNumber(cond).toExponential(2));
+  }
+}
+
 // -----------------------------------------------------------------------------
 // Bonus — content-addressing
 // -----------------------------------------------------------------------------

@@ -160,6 +160,15 @@
         "@workbench/protocol": "workspace:*",
       },
     },
+    "tools/linalg-svd": {
+      "name": "@workbench/tool-linalg-svd",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/contract": "workspace:*",
+        "@workbench/linalg-core": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+      },
+    },
     "tools/mod-inv": {
       "name": "@workbench/tool-mod-inv",
       "version": "0.1.0",
@@ -339,6 +348,8 @@
     "@workbench/tool-linalg-qr": ["@workbench/tool-linalg-qr@workspace:tools/linalg-qr"],
 
     "@workbench/tool-linalg-solve": ["@workbench/tool-linalg-solve@workspace:tools/linalg-solve"],
+
+    "@workbench/tool-linalg-svd": ["@workbench/tool-linalg-svd@workspace:tools/linalg-svd"],
 
     "@workbench/tool-mod-inv": ["@workbench/tool-mod-inv@workspace:tools/mod-inv"],
 

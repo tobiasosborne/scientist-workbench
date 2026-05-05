@@ -30,6 +30,7 @@ import { def as exprParseDef } from "../../../../tools/expr-parse/tool.js";
 import { def as integrate1dDef } from "../../../../tools/integrate-1d/tool.js";
 import { def as linalgQrDef } from "../../../../tools/linalg-qr/tool.js";
 import { def as linalgSolveDef } from "../../../../tools/linalg-solve/tool.js";
+import { def as linalgSvdDef } from "../../../../tools/linalg-svd/tool.js";
 import { def as modInvDef } from "../../../../tools/mod-inv/tool.js";
 import { def as modPowDef } from "../../../../tools/mod-pow/tool.js";
 import { def as nttDef } from "../../../../tools/ntt/tool.js";
@@ -55,6 +56,7 @@ export interface TypedWorkbench extends Workbench {
   integrate1d(input: InputOf<typeof integrate1dDef>, flags?: FlagsArgOf<typeof integrate1dDef>): Promise<OutputOf<typeof integrate1dDef>>;
   linalgQr(input: InputOf<typeof linalgQrDef>, flags?: FlagsArgOf<typeof linalgQrDef>): Promise<OutputOf<typeof linalgQrDef>>;
   linalgSolve(input: InputOf<typeof linalgSolveDef>, flags?: FlagsArgOf<typeof linalgSolveDef>): Promise<OutputOf<typeof linalgSolveDef>>;
+  linalgSvd(input: InputOf<typeof linalgSvdDef>, flags?: FlagsArgOf<typeof linalgSvdDef>): Promise<OutputOf<typeof linalgSvdDef>>;
   modInv(input: InputOf<typeof modInvDef>, flags?: FlagsArgOf<typeof modInvDef>): Promise<OutputOf<typeof modInvDef>>;
   modPow(input: InputOf<typeof modPowDef>, flags?: FlagsArgOf<typeof modPowDef>): Promise<OutputOf<typeof modPowDef>>;
   ntt(input: InputOf<typeof nttDef>, flags?: FlagsArgOf<typeof nttDef>): Promise<OutputOf<typeof nttDef>>;
@@ -106,6 +108,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     },
     linalgSolve(input, flags) {
       return workbench.run("linalg-solve", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof linalgSolveDef>>;
+    },
+    linalgSvd(input, flags) {
+      return workbench.run("linalg-svd", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof linalgSvdDef>>;
     },
     modInv(input, flags) {
       return workbench.run("mod-inv", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof modInvDef>>;
@@ -168,6 +173,7 @@ export const defs = {
   integrate1d: integrate1dDef,
   linalgQr: linalgQrDef,
   linalgSolve: linalgSolveDef,
+  linalgSvd: linalgSvdDef,
   modInv: modInvDef,
   modPow: modPowDef,
   ntt: nttDef,

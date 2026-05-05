@@ -1,0 +1,647 @@
+// =============================================================================
+// linalg-svd — Singular value decomposition of a real m×n matrix
+// =============================================================================
+//
+// Intent
+// ------
+// The fourth numerical-tier tool in scientist-workbench, after `linalg-solve`
+// (ADR-0014), `integrate-1d` (ADR-0015 follow-on), and `linalg-qr`
+// (worklog 043). Computes
+//
+//     A = U · diag(S) · Vᵀ
+//
+// for a real m×n matrix `A` by one-sided Jacobi (Demmel-Veselić 1992).
+// Wire wrapper around `svd(A, mode)` from `@workbench/linalg-core` —
+// library and tool share one implementation per ADR-0010.
+//
+// What makes SVD the *general-purpose rank-revealing tool*
+// --------------------------------------------------------
+// Every other dense factorisation is a special case derivable from SVD:
+//
+//   - rank from the count of nonzero S_i;
+//   - least-squares solution from V · diag(1/S) · Uᵀ b (pseudo-inverse);
+//   - spectral decomposition of AᵀA from V, S²;
+//   - condition number = S[0] / S[k-1];
+//   - principal components = columns of U;
+//   - low-rank approximations = truncate at S[r].
+//
+// `linalg-solve` solves Ax = b but fails on singular A.  `linalg-qr`
+// factorises any A but doesn't *reveal* rank — its triangular R has
+// pivot magnitudes, not singular values.  `linalg-svd` factorises any A
+// AND reveals rank as the count of singular values above the LAPACK-
+// standard threshold.  So the output record is richer than QR's: it
+// carries `condition_number` and `rank_estimate` as first-class fields.
+//
+// What makes this tool agent-honest
+// ---------------------------------
+// The output is *not* just (U, S, Vᵀ).  It is a record carrying everything
+// an agent's planner — or the bench's verifier — needs to decide what
+// to do with the answer:
+//
+//     {
+//       U,                       // m × k orthogonal factor (k depends on mode)
+//       S,                       // length-k singular values, descending
+//       Vt,                      // k × n orthogonal factor (rows orthonormal)
+//       mode,                    // "reduced" | "complete" — echoes the request
+//       reconstruction_error,    // ||U·diag(S)·Vᵀ − A||_F / max(||A||_F, 1)
+//       orthogonality_error_U,   // ||UᵀU − I_q||_F
+//       orthogonality_error_Vt,  // ||Vᵀ·V − I_q||_F  (== ||Vt·Vtᵀ − I_q||_F)
+//       condition_number,        // S[0] / max(S[k-1], EPS · S[0])
+//       rank_estimate,           // count of S_i > max(m,n) · EPS · S[0]
+//       method,                  // "one-sided-jacobi"
+//       warnings,                // soft thresholds the planner may match on
+//     }
+//
+// `reconstruction_error`, `orthogonality_error_U`, and
+// `orthogonality_error_Vt` are the *candidate's honest self-report* on
+// its own quality (precedent: `linalg-qr`'s same fields, ADR-0014).
+// The bench's verifier (`bench/linalg-svd/golden/verify.py`) recomputes
+// all three and rejects the candidate if they disagree by more than 1e-6
+// relative — agent-honest is *enforced*, not just convention.
+//
+// Why one-sided Jacobi, not Golub-Reinsch
+// ---------------------------------------
+// Both are admissible by the bench's tolerance regime.  One-sided Jacobi
+// (Demmel-Veselić 1992) wins the implementation budget at our scale:
+//
+//   1. **Half the lines of code, no convergence-edge cases.** Golub-
+//      Reinsch needs Householder bidiagonalisation, accumulation of U₁
+//      and V₁, Demmel-Kahan implicit-shift QR sweeps with shift
+//      selection, deflation, post-sort.  Each piece has subtle corner
+//      cases.  Jacobi has one loop: rotate column pairs until off-
+//      diagonals are below tolerance.
+//
+//   2. **Superior accuracy on small singular values.** Demmel-Veselić
+//      proved Jacobi computes every singular value to high relative
+//      accuracy regardless of κ(A).  Bidiagonalisation followed by QR
+//      can lose half the digits on the smallest singular values when A
+//      has a wide range of column norms.
+//
+//   3. **n ≤ 200 cap means the speed gap doesn't matter.** Jacobi is
+//      O(mn² · log n) per sweep with O(log n) sweeps; Golub-Reinsch is
+//      O(mn² + n³). For n ≤ 200 the constant factors dominate and
+//      correctness wins over asymptotic speed.
+//
+// The substrate (`packages/linalg-core/src/svd.ts`) carries the full
+// literate algorithm prose; this file is only the wire-encoding wrapper.
+//
+// Boundary categories (ADR-0003)
+// ------------------------------
+//   * `linalg-svd/non-finite-input`  (tagged): `A` contains NaN / ±Inf.
+//                                    Payload carries the row, column,
+//                                    and the offending value as a
+//                                    string. Tagged rather than
+//                                    `ToolError` because the input is
+//                                    structurally well-formed (the
+//                                    caller may reasonably ask "what
+//                                    does SVD think of this?" and our
+//                                    honest answer is "out of scope").
+//                                    Mirrors `linalg-qr`'s polarity.
+//   * `linalg-svd/degenerate-shape`  (tagged): m = 0 or n = 0. Payload
+//                                    carries m, n. Same reasoning: a
+//                                    zero-by-anything input is
+//                                    structurally valid wire-form; the
+//                                    algorithm has no answer to give.
+//   * `ToolError` (exit 1) for *malformed* input:
+//     - non-rectangular `A` (ragged rows)
+//     - `m · n > 200 · 200` — the v0.1 cap; suggestion points to bead
+//       `wmm` (the blob-by-hash convention follow-up)
+//     - `mode` is not "reduced" or "complete"
+//
+// Out of scope (v0.1, all explicitly deferred)
+// --------------------------------------------
+//   * Generalised SVD, randomised SVD, truncated SVD — bead 71f
+//   * `m·n > 200·200` — bead `wmm` (blob-by-hash convention)
+//   * FFI to LAPACK DGESDD — bead `e7y`
+//   * Cross-platform determinism guarantee — `numerical: true` (ADR-0015)
+//
+// Algorithm
+// ---------
+// One-sided Jacobi (Demmel-Veselić 1992; Drmač 1997 for the per-pair
+// tolerance test; Golub & Van Loan §8.5).  See
+// `packages/linalg-core/src/svd.ts` for the full literate algorithm
+// prose.
+
+import {
+  float64FromNumber,
+  float64ToNumber,
+  int,
+  list,
+  record,
+  S,
+  str,
+  tagged,
+  ToolError,
+  type Float64Value,
+  type Value,
+} from "@workbench/protocol";
+import { defineTool, F, runTool } from "@workbench/contract";
+import {
+  type Matrix,
+  type SVDResult,
+  matrixFromRows,
+  svd,
+} from "@workbench/linalg-core";
+
+const NAME = "linalg-svd";
+const VERSION = "0.1.0";
+
+// v0.1 cap mirroring `linalg-solve` and `linalg-qr` (ADR-0014).  A
+// request that exceeds this points the agent at bead `wmm` for the
+// blob-by-hash follow-up.  The check is `m · n > MAX_CELLS` rather
+// than per-axis because a 200×200 matrix and a 1×40000 vector both
+// encode to the same JSON byte budget at the wire boundary.
+const MAX_CELLS = 200 * 200;
+
+// Soft warning thresholds.  These are *fields* of the output record,
+// not boundary refusals — the planner reads them and decides.  We
+// piggyback on the bench's tolerance derivation (Higham 2002 §20.3
+// with 100× safety): if the candidate's reported error exceeds 1e-12,
+// the case is *probably* still correct (the bench's tolerance is
+// wider) but the planner deserves to know it's near the floor.
+const RECONSTRUCTION_WARNING = 1e-12;
+const ORTHOGONALITY_WARNING = 1e-12;
+
+// Threshold above which `condition_number` triggers a precision
+// warning. 1e12 is one order of magnitude before "near machine
+// precision" for double-precision floats; a planner consuming this
+// SVD downstream (e.g. for least-squares) deserves to know the
+// pseudo-inverse will amplify noise by 12 orders of magnitude.
+const CONDITION_WARNING = 1e12;
+
+// -----------------------------------------------------------------------------
+// Schema
+// -----------------------------------------------------------------------------
+//
+// Input is a record with required `A` (list of lists of float64) and
+// optional `mode` (string).  The bench's wire format omits `mode` for
+// the default ("reduced") and includes `mode: "complete"` only when
+// needed; the adapter (`bench/linalg-svd/run-candidate.ts`) only emits
+// the field when the caller's input has it.  We declare it as optional
+// in the schema so the runner accepts both shapes.
+//
+// (This is the lesson from worklog 043 friction 1: the QR subagent's
+// first cut declared `mode` as a required field and burned 45/49 cases
+// on schema-validation rejection. Same trap; same fix.)
+
+const inputSchema = S.record(
+  {
+    A: S.list(S.list(S.kind("float64"))),
+    mode: S.kind("string"),
+  },
+  { optional: ["mode"] as const },
+);
+
+const successOutputSchema = S.record({
+  U: S.list(S.list(S.kind("float64"))),
+  S: S.list(S.kind("float64")),
+  Vt: S.list(S.list(S.kind("float64"))),
+  mode: S.kind("string"),
+  reconstruction_error: S.kind("float64"),
+  orthogonality_error_U: S.kind("float64"),
+  orthogonality_error_Vt: S.kind("float64"),
+  condition_number: S.kind("float64"),
+  rank_estimate: S.kind("integer"),
+  method: S.kind("string"),
+  warnings: S.list(S.kind("string")),
+});
+
+const nonFiniteOutputSchema = S.tagged(
+  `${NAME}/non-finite-input`,
+  S.record({
+    row: S.kind("integer"),
+    col: S.kind("integer"),
+    value: S.kind("string"),
+  }),
+);
+
+const degenerateOutputSchema = S.tagged(
+  `${NAME}/degenerate-shape`,
+  S.record({
+    m: S.kind("integer"),
+    n: S.kind("integer"),
+  }),
+);
+
+const outputSchema = S.union([
+  successOutputSchema,
+  nonFiniteOutputSchema,
+  degenerateOutputSchema,
+]);
+
+// -----------------------------------------------------------------------------
+// Wire encoding helpers
+// -----------------------------------------------------------------------------
+
+function listOfFloat64(xs: Float64Array | readonly number[]): {
+  readonly kind: "list";
+  readonly items: readonly Float64Value[];
+} {
+  const items = new Array<Float64Value>(xs.length);
+  for (let i = 0; i < xs.length; i++) items[i] = float64FromNumber(xs[i]!);
+  return list(items);
+}
+
+function matrixToRowsValue(M: Matrix): {
+  readonly kind: "list";
+  readonly items: readonly { readonly kind: "list"; readonly items: readonly Float64Value[] }[];
+} {
+  const rows = new Array<{ readonly kind: "list"; readonly items: readonly Float64Value[] }>(M.rows);
+  for (let i = 0; i < M.rows; i++) {
+    const row = new Array<Float64Value>(M.cols);
+    for (let j = 0; j < M.cols; j++) row[j] = float64FromNumber(M.data[i * M.cols + j]!);
+    rows[i] = list(row);
+  }
+  return list(rows);
+}
+
+// -----------------------------------------------------------------------------
+// Examples — each branch of the output union covered at least once
+// -----------------------------------------------------------------------------
+//
+// The bench's `shape` check requires `mode` to echo back.  For
+// minimal-input examples (where the caller omitted `mode`), the
+// substrate's default is "reduced"; we pass "reduced" explicitly to the
+// example builder so the output's `mode` field reads correctly.
+
+function inp(A: readonly (readonly number[])[], mode: string) {
+  return record({
+    A: list(A.map((row) => listOfFloat64(row))),
+    mode: str(mode),
+  });
+}
+
+function encodeSuccess(r: SVDResult) {
+  const warnings: string[] = [];
+  if (r.reconstructionError > RECONSTRUCTION_WARNING) {
+    warnings.push(
+      `reconstruction error ${r.reconstructionError.toExponential(2)} exceeds soft floor ${RECONSTRUCTION_WARNING.toExponential(0)}`,
+    );
+  }
+  if (r.orthogonalityErrorU > ORTHOGONALITY_WARNING) {
+    warnings.push(
+      `orthogonality error U ${r.orthogonalityErrorU.toExponential(2)} exceeds soft floor ${ORTHOGONALITY_WARNING.toExponential(0)}`,
+    );
+  }
+  if (r.orthogonalityErrorVt > ORTHOGONALITY_WARNING) {
+    warnings.push(
+      `orthogonality error Vt ${r.orthogonalityErrorVt.toExponential(2)} exceeds soft floor ${ORTHOGONALITY_WARNING.toExponential(0)}`,
+    );
+  }
+  if (r.conditionNumber > CONDITION_WARNING) {
+    warnings.push(
+      `condition number ${r.conditionNumber.toExponential(2)} near machine precision; downstream pseudo-inverse will amplify noise`,
+    );
+  }
+  return record({
+    U: matrixToRowsValue(r.U),
+    S: listOfFloat64(r.S),
+    Vt: matrixToRowsValue(r.Vt),
+    mode: str(r.mode),
+    reconstruction_error: float64FromNumber(r.reconstructionError),
+    orthogonality_error_U: float64FromNumber(r.orthogonalityErrorU),
+    orthogonality_error_Vt: float64FromNumber(r.orthogonalityErrorVt),
+    condition_number: float64FromNumber(r.conditionNumber),
+    rank_estimate: int(BigInt(r.rankEstimate)),
+    method: str("one-sided-jacobi"),
+    warnings: list(warnings.map((w) => str(w))),
+  });
+}
+
+// -----------------------------------------------------------------------------
+// Tool definition
+// -----------------------------------------------------------------------------
+
+export const def = defineTool({
+  name: NAME,
+  version: VERSION,
+  schema: { input: inputSchema, output: outputSchema },
+  // ADR-0015: numerical tier.  The output always contains float64
+  // leaves on the success branch (U, S, Vt, the four error scalars,
+  // condition_number), so the platform fingerprint is recorded on
+  // every successful run.  The boundary-tag branches carry
+  // `int`/`str` payloads only — no float64 leaves — so the
+  // `containsFloat64` walker correctly skips the platform field for
+  // those.  Mutually exclusive with `nondeterministic: true`.
+  numerical: true,
+  flags: {
+    // The `--method` flag exists for symmetry with `linalg-solve` and
+    // `linalg-qr`.  Currently the only choice is "one-sided-jacobi".
+    // Adding "golub-reinsch" later is schema-additive.
+    method: F.enum(["one-sided-jacobi"] as const, "SVD algorithm", {
+      default: "one-sided-jacobi",
+    }),
+  },
+  examples: [
+    {
+      description: "1×1 reduced: A=[[3]] → S=[3]",
+      input: inp([[3]], "reduced"),
+      output: encodeSuccess(svd(matrixFromRows([[3]]), "reduced")),
+    },
+    {
+      description: "5×3 simple: standard tall case (matches bench A_5x3)",
+      input: inp(
+        [[1, 2, 3], [4, 5, 6], [7, 8, 10], [1, 0, 1], [0, 1, 0]],
+        "reduced",
+      ),
+      output: encodeSuccess(
+        svd(
+          matrixFromRows([[1, 2, 3], [4, 5, 6], [7, 8, 10], [1, 0, 1], [0, 1, 0]]),
+          "reduced",
+        ),
+      ),
+    },
+    {
+      description: "3×5 short-and-fat: m<n, U is 3×3, Vt is 3×5",
+      input: inp(
+        [[1, 2, 3, 4, 5], [2, 1, 0, -1, 1], [3, 0, -1, 2, 1]],
+        "reduced",
+      ),
+      output: encodeSuccess(
+        svd(
+          matrixFromRows([[1, 2, 3, 4, 5], [2, 1, 0, -1, 1], [3, 0, -1, 2, 1]]),
+          "reduced",
+        ),
+      ),
+    },
+    {
+      description: "complete-mode 5×3: U is 5×5, Vt is 3×3 (extra U cols span ker(Aᵀ))",
+      input: inp(
+        [[1, 2, 3], [4, 5, 6], [7, 8, 10], [1, 0, 1], [0, 1, 0]],
+        "complete",
+      ),
+      output: encodeSuccess(
+        svd(
+          matrixFromRows([[1, 2, 3], [4, 5, 6], [7, 8, 10], [1, 0, 1], [0, 1, 0]]),
+          "complete",
+        ),
+      ),
+    },
+    {
+      description: "all-zero 2×2: S=[0,0], rank=0 (degenerate but in-scope)",
+      input: inp([[0, 0], [0, 0]], "reduced"),
+      output: encodeSuccess(svd(matrixFromRows([[0, 0], [0, 0]]), "reduced")),
+    },
+    {
+      description: "non-finite input → tagged 'linalg-svd/non-finite-input'",
+      input: inp([[1, 2], [3, NaN]], "reduced"),
+      output: tagged(`${NAME}/non-finite-input`, record({
+        row: int(1n),
+        col: int(1n),
+        value: str("NaN"),
+      })),
+    },
+    {
+      description: "degenerate shape (m=0) → tagged 'linalg-svd/degenerate-shape'",
+      input: record({ A: list([]), mode: str("reduced") }),
+      output: tagged(`${NAME}/degenerate-shape`, record({
+        m: int(0n),
+        n: int(0n),
+      })),
+    },
+  ],
+  invariants: [
+    {
+      name: "deterministic-per-platform",
+      statement: "same input bytes → same output bytes (single platform; ADR-0015 platform fingerprint recorded in provenance)",
+      machine_checkable: true,
+    },
+    {
+      name: "reconstruction",
+      statement: "for every successful factorisation, ||U·diag(S)·Vᵀ − A||_F ≤ 100·ε·max(m,n)·sqrt(min(m,n))·||A||_F (Higham 2002 §20.3)",
+      machine_checkable: true,
+    },
+    {
+      name: "orthogonality-U",
+      statement: "for every successful factorisation, ||UᵀU − I_q||_F ≤ 100·ε·m·sqrt(q) — independent of κ(A) (Demmel-Veselić 1992)",
+      machine_checkable: true,
+    },
+    {
+      name: "orthogonality-Vt",
+      statement: "for every successful factorisation, ||Vᵀ·V − I_q||_F ≤ 100·ε·n·sqrt(q) — independent of κ(A)",
+      machine_checkable: true,
+    },
+    {
+      name: "S-non-negative-descending",
+      statement: "S[i] ≥ 0 for all i, and S[i] ≥ S[i+1] for all i < k−1 (within tolerance 100·ε·S[0])",
+      machine_checkable: true,
+    },
+    {
+      name: "self-reported-honesty",
+      statement: "reported reconstruction_error, orthogonality_error_U, and orthogonality_error_Vt agree with verifier's recomputation to 1e-6 relative",
+      machine_checkable: true,
+    },
+    {
+      name: "rank-estimate-LAPACK-threshold",
+      statement: "rank_estimate counts singular values exceeding max(m,n)·ε·S[0] — the LAPACK-standard numerical-rank threshold",
+      machine_checkable: true,
+    },
+    {
+      name: "non-finite-tagged",
+      statement: `any NaN or ±Inf in A → tagged "${NAME}/non-finite-input" with the offending (row, col, value) — never silently propagated through the algorithm`,
+      machine_checkable: true,
+    },
+    {
+      name: "degenerate-shape-tagged",
+      statement: `m = 0 or n = 0 → tagged "${NAME}/degenerate-shape" with (m, n) — never an unhelpful exit-1`,
+      machine_checkable: true,
+    },
+    {
+      name: "size-cap-rejected",
+      statement: `m·n > ${MAX_CELLS} raises ToolError pointing at the v0.2 follow-up (bead wmm)`,
+      machine_checkable: true,
+    },
+    {
+      name: "non-rectangular-rejected",
+      statement: "ragged A (rows of unequal length) raises ToolError",
+      machine_checkable: true,
+    },
+  ],
+  fn: (input, _flags) => {
+    // The runner has validated the input shape against `inputSchema`,
+    // so the structural invariant `A: list<list<float64>>` and (when
+    // present) `mode: string` already hold; only semantic checks
+    // remain.
+    const fields = input.fields;
+    const aValue: Value = fields.A as Value;
+    const modeValue: Value | undefined = fields.mode as Value | undefined;
+
+    // ── decode `mode` (default "reduced") and check admitted values ───
+    const modeStr =
+      modeValue === undefined
+        ? "reduced"
+        : (modeValue as { kind: "string"; value: string }).value;
+    if (modeStr !== "reduced" && modeStr !== "complete") {
+      throw new ToolError(
+        `${NAME}: mode must be "reduced" or "complete", got ${JSON.stringify(modeStr)}`,
+        { suggestion: "omit the mode field for the default ('reduced'), or set it to 'complete' for the full m×m U and n×n Vᵀ" },
+      );
+    }
+    const mode = modeStr as "reduced" | "complete";
+
+    // ── decode A row-by-row, intercepting non-finite cells ────────────
+    if (aValue.kind !== "list") {
+      throw new ToolError(`${NAME}: A must be a list of lists of float64`, {});
+    }
+    const m = aValue.items.length;
+
+    // Degenerate shape: m = 0.  We deliberately do not pre-check n
+    // here because there are no rows to read n from.
+    if (m === 0) {
+      return tagged(`${NAME}/degenerate-shape`, record({
+        m: int(0n),
+        n: int(0n),
+      }));
+    }
+
+    // Determine n from the first row, then enforce rectangularity.
+    const firstRow = aValue.items[0]!;
+    if (firstRow.kind !== "list") {
+      throw new ToolError(`${NAME}: A[0] is not a list`, {});
+    }
+    const n = firstRow.items.length;
+
+    if (n === 0) {
+      return tagged(`${NAME}/degenerate-shape`, record({
+        m: int(BigInt(m)),
+        n: int(0n),
+      }));
+    }
+
+    // Size cap — refuses both `n×n > MAX` and tall/fat shapes that
+    // exceed the byte budget. ToolError because oversized input is
+    // *malformed* relative to v0.1's stated scope.
+    if (m * n > MAX_CELLS) {
+      throw new ToolError(
+        `${NAME}: m·n = ${m * n} exceeds v0.1 cap (${MAX_CELLS} = 200·200)`,
+        {
+          suggestion:
+            `for matrices with m·n > ${MAX_CELLS}, the wire encoding cost is high; see bead scientist-workbench-wmm (blob-by-hash convention) and -e7y (FFI LAPACK path)`,
+        },
+      );
+    }
+
+    // Walk the rows.  Two passes' worth of work in one: rectangularity
+    // + non-finite detection + decoding into a flat Float64Array.  We
+    // could call `matrixFromRows` after collecting the rows, but it
+    // raises a `MatrixError` on non-finite entries; we want a *tagged*
+    // boundary value with row/col coordinates, so we walk by hand.
+    const data = new Float64Array(m * n);
+    for (let i = 0; i < m; i++) {
+      const row = aValue.items[i]!;
+      if (row.kind !== "list") {
+        throw new ToolError(`${NAME}: A[${i}] is not a list`, {});
+      }
+      if (row.items.length !== n) {
+        throw new ToolError(
+          `${NAME}: A is not rectangular (row 0 has ${n} entries, row ${i} has ${row.items.length})`,
+          { suggestion: "every row of A must have the same length" },
+        );
+      }
+      for (let j = 0; j < n; j++) {
+        const cell = row.items[j]!;
+        if (cell.kind !== "float64") {
+          throw new ToolError(`${NAME}: A[${i}][${j}] is not a float64`, {});
+        }
+        const x = float64ToNumber(cell);
+        if (!Number.isFinite(x)) {
+          // Boundary tagged: the offending coordinate plus a string
+          // rendering of the bad value (Inf / NaN / -Inf) so a planner
+          // can match on it without re-decoding the bits.
+          return tagged(`${NAME}/non-finite-input`, record({
+            row: int(BigInt(i)),
+            col: int(BigInt(j)),
+            value: str(formatNonFinite(x)),
+          }));
+        }
+        data[i * n + j] = x;
+      }
+    }
+
+    // The substrate operates on `Matrix`. Construct it directly from
+    // the validated data buffer (skipping `matrixFromRows`'s own
+    // validation, which we just did).
+    const A: Matrix = { rows: m, cols: n, data };
+    const result = svd(A, mode);
+    return encodeSuccess(result);
+  },
+  test: () => {
+    // Smoke probe: a 5×3 case must round-trip through the substrate
+    // and self-report errors that match an independent recomputation
+    // (the same check the bench's verify.py applies).
+    const A = matrixFromRows([
+      [1, 2, 3],
+      [4, 5, 6],
+      [7, 8, 10],
+      [1, 0, 1],
+      [0, 1, 0],
+    ]);
+    const r = svd(A, "reduced");
+    if (r.U.rows !== 5 || r.U.cols !== 3) {
+      throw new Error(`test: 5×3 U shape wrong — ${r.U.rows}×${r.U.cols}`);
+    }
+    if (r.S.length !== 3) {
+      throw new Error(`test: 5×3 S length wrong — ${r.S.length}`);
+    }
+    if (r.Vt.rows !== 3 || r.Vt.cols !== 3) {
+      throw new Error(`test: 5×3 Vt shape wrong — ${r.Vt.rows}×${r.Vt.cols}`);
+    }
+    if (r.reconstructionError > 1e-12) {
+      throw new Error(`test: 5×3 reconstruction ${r.reconstructionError} > 1e-12`);
+    }
+    if (r.orthogonalityErrorU > 1e-12) {
+      throw new Error(`test: 5×3 orthU ${r.orthogonalityErrorU} > 1e-12`);
+    }
+    if (r.orthogonalityErrorVt > 1e-12) {
+      throw new Error(`test: 5×3 orthVt ${r.orthogonalityErrorVt} > 1e-12`);
+    }
+    // S is non-negative descending.
+    for (let i = 0; i < r.S.length; i++) {
+      if (r.S[i]! < 0) throw new Error(`test: S[${i}] = ${r.S[i]} is negative`);
+      if (i + 1 < r.S.length && r.S[i]! < r.S[i + 1]! - 1e-12) {
+        throw new Error(`test: S not descending at i=${i}: ${r.S[i]} < ${r.S[i + 1]}`);
+      }
+    }
+
+    // Hilbert-8: the discriminator. Even at κ ≈ 1.5e10, Jacobi's
+    // orthogonality must stay near machine epsilon.
+    const H = matrixFromRows(
+      Array.from({ length: 8 }, (_, i) =>
+        Array.from({ length: 8 }, (_, j) => 1 / (i + j + 1)),
+      ),
+    );
+    const rh = svd(H, "reduced");
+    if (rh.orthogonalityErrorU > 1e-12) {
+      throw new Error(
+        `test: Hilbert-8 orthU ${rh.orthogonalityErrorU} > 1e-12 — Jacobi regression?`,
+      );
+    }
+    if (rh.orthogonalityErrorVt > 1e-12) {
+      throw new Error(
+        `test: Hilbert-8 orthVt ${rh.orthogonalityErrorVt} > 1e-12 — Jacobi regression?`,
+      );
+    }
+
+    // Rank-revealing on a rank-1 outer product.
+    const u = [1, 2, 3, 4];
+    const v = [1, -1, 2];
+    const A2 = matrixFromRows(u.map((ui) => v.map((vj) => ui * vj)));
+    const r2 = svd(A2, "reduced");
+    if (r2.rankEstimate !== 1) {
+      throw new Error(`test: rank-1 outer product rank_estimate = ${r2.rankEstimate}, expected 1`);
+    }
+  },
+});
+
+// -----------------------------------------------------------------------------
+// Helpers — formatting for the tagged-boundary payload
+// -----------------------------------------------------------------------------
+
+function formatNonFinite(v: number): string {
+  if (Number.isNaN(v)) return "NaN";
+  if (v === Infinity) return "Infinity";
+  if (v === -Infinity) return "-Infinity";
+  return String(v);
+}
+
+if (import.meta.main) void runTool(def);
