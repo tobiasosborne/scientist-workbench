@@ -53,6 +53,7 @@ write the frictions and the dead ends as well as the wins.
 | 040 | [`optimize-lbfgs-projected` ships: third numerical-tier tool, L-BFGS-B class](040-optimize-lbfgs-projected.md) | 2026-05-04 | (none filed) |
 | 041 | [`cas-diff` ships: symbolic differentiation over the closed numerical vocabulary](041-cas-diff.md) | 2026-05-04 | scientist-workbench-cnv |
 | 042 | [tier-1 vocabulary extension: inverse trig + hyperbolics + log bases](042-tier1-vocab-extension.md) | 2026-05-04 | scientist-workbench-0jn |
+| 043 | [`linalg-qr` via the tstournament-protocol bench (49/49, 343/343)](043-linalg-qr-via-bench.md) | 2026-05-05 | scientist-workbench-3jq |
 
 ## How to add a new shard
 

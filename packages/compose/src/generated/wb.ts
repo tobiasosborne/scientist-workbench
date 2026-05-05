@@ -28,6 +28,7 @@ import { def as casVerifyDef } from "../../../../tools/cas-verify/tool.js";
 import { def as entropySourceDef } from "../../../../tools/entropy-source/tool.js";
 import { def as exprParseDef } from "../../../../tools/expr-parse/tool.js";
 import { def as integrate1dDef } from "../../../../tools/integrate-1d/tool.js";
+import { def as linalgQrDef } from "../../../../tools/linalg-qr/tool.js";
 import { def as linalgSolveDef } from "../../../../tools/linalg-solve/tool.js";
 import { def as modInvDef } from "../../../../tools/mod-inv/tool.js";
 import { def as modPowDef } from "../../../../tools/mod-pow/tool.js";
@@ -52,6 +53,7 @@ export interface TypedWorkbench extends Workbench {
   entropySource(input: InputOf<typeof entropySourceDef>, flags?: FlagsArgOf<typeof entropySourceDef>): Promise<OutputOf<typeof entropySourceDef>>;
   exprParse(input: InputOf<typeof exprParseDef>, flags?: FlagsArgOf<typeof exprParseDef>): Promise<OutputOf<typeof exprParseDef>>;
   integrate1d(input: InputOf<typeof integrate1dDef>, flags?: FlagsArgOf<typeof integrate1dDef>): Promise<OutputOf<typeof integrate1dDef>>;
+  linalgQr(input: InputOf<typeof linalgQrDef>, flags?: FlagsArgOf<typeof linalgQrDef>): Promise<OutputOf<typeof linalgQrDef>>;
   linalgSolve(input: InputOf<typeof linalgSolveDef>, flags?: FlagsArgOf<typeof linalgSolveDef>): Promise<OutputOf<typeof linalgSolveDef>>;
   modInv(input: InputOf<typeof modInvDef>, flags?: FlagsArgOf<typeof modInvDef>): Promise<OutputOf<typeof modInvDef>>;
   modPow(input: InputOf<typeof modPowDef>, flags?: FlagsArgOf<typeof modPowDef>): Promise<OutputOf<typeof modPowDef>>;
@@ -98,6 +100,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     },
     integrate1d(input, flags) {
       return workbench.run("integrate-1d", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof integrate1dDef>>;
+    },
+    linalgQr(input, flags) {
+      return workbench.run("linalg-qr", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof linalgQrDef>>;
     },
     linalgSolve(input, flags) {
       return workbench.run("linalg-solve", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof linalgSolveDef>>;
@@ -161,6 +166,7 @@ export const defs = {
   entropySource: entropySourceDef,
   exprParse: exprParseDef,
   integrate1d: integrate1dDef,
+  linalgQr: linalgQrDef,
   linalgSolve: linalgSolveDef,
   modInv: modInvDef,
   modPow: modPowDef,

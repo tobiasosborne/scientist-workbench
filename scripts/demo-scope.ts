@@ -26,7 +26,7 @@
 // if you want a clean provenance store; absent, the demos use the
 // global default (`~/.scientist-workbench/cas-store`).
 
-import { hash, int, list, parse, rat, record, str, sym, expr, type Value } from "@workbench/protocol";
+import { float64FromNumber, float64ToNumber, hash, int, list, parse, rat, record, str, sym, expr, type Value } from "@workbench/protocol";
 import { canonicalize } from "@workbench/protocol";
 import { spawnBun } from "@workbench/contract";
 import { loadWorkbench, typed } from "@workbench/compose";
@@ -277,6 +277,26 @@ const grover = await wb.sturmFind({
   },
 });
 console.log("  " + short(grover));
+
+header(15, "linalg-qr: Householder QR on Hilbert-8 (κ ≈ 1.5e10)",
+  "Householder gives ‖QᵀQ − I‖_F = O(ε) independent of κ — MGS would catastrophically fail here.");
+// Hilbert(8) — the canonical ill-conditioned test.
+const hilbert8Rows = Array.from({ length: 8 }, (_, i) =>
+  list(Array.from({ length: 8 }, (_, j) => float64FromNumber(1 / (i + j + 1)))),
+);
+const hilbert8Result = await wb.linalgQr({
+  kind: "record",
+  fields: { A: list(hilbert8Rows) },
+});
+if (hilbert8Result.kind === "record") {
+  const reconErr = hilbert8Result.fields["reconstruction_error"];
+  const orthErr = hilbert8Result.fields["orthogonality_error"];
+  if (reconErr?.kind === "float64" && orthErr?.kind === "float64") {
+    console.log("  reconstruction error:", float64ToNumber(reconErr).toExponential(2));
+    console.log("  orthogonality error: ", float64ToNumber(orthErr).toExponential(2),
+      " (Householder: O(ε); MGS would be ~3e-6 here)");
+  }
+}
 
 // -----------------------------------------------------------------------------
 // Bonus — content-addressing
