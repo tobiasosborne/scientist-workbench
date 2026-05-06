@@ -10,10 +10,12 @@ function inp(f: Value): Value {
 const xPow = (k: bigint): Value =>
   k === 1n ? sym("x") : expr("^", [sym("x"), int(k)]);
 
+// Coefficient negation lives in the integer literal — `neg` head is
+// out-of-vocabulary for `valueToRatFn` (which accepts only `+ - * / ^`).
 const term = (coef: bigint, k: bigint): Value => {
   if (k === 0n) return int(coef);
   if (coef === 1n) return xPow(k);
-  if (coef === -1n) return expr("neg", [xPow(k)]);
+  if (coef === -1n) return expr("*", [int(-1n), xPow(k)]);
   return expr("*", [int(coef), xPow(k)]);
 };
 

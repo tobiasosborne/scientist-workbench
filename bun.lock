@@ -79,6 +79,15 @@
         "@workbench/protocol": "workspace:*",
       },
     },
+    "packages/solve": {
+      "name": "@workbench/solve",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/cas-core": "workspace:*",
+        "@workbench/poly-factor": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+      },
+    },
     "packages/sturm": {
       "name": "@workbench/sturm",
       "version": "0.1.0",
@@ -316,6 +325,16 @@
         "@workbench/protocol": "workspace:*",
       },
     },
+    "tools/solve": {
+      "name": "@workbench/tool-solve",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/cas-core": "workspace:*",
+        "@workbench/contract": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+        "@workbench/solve": "workspace:*",
+      },
+    },
     "tools/sturm-controlled": {
       "name": "@workbench/tool-sturm-controlled",
       "version": "0.1.0",
@@ -417,6 +436,8 @@
 
     "@workbench/quadrature": ["@workbench/quadrature@workspace:packages/quadrature"],
 
+    "@workbench/solve": ["@workbench/solve@workspace:packages/solve"],
+
     "@workbench/sturm": ["@workbench/sturm@workspace:packages/sturm"],
 
     "@workbench/sturm-ir": ["@workbench/sturm-ir@workspace:packages/sturm-ir"],
@@ -468,6 +489,8 @@
     "@workbench/tool-registry-list": ["@workbench/tool-registry-list@workspace:tools/registry-list"],
 
     "@workbench/tool-registry-search": ["@workbench/tool-registry-search@workspace:tools/registry-search"],
+
+    "@workbench/tool-solve": ["@workbench/tool-solve@workspace:tools/solve"],
 
     "@workbench/tool-sturm-controlled": ["@workbench/tool-sturm-controlled@workspace:tools/sturm-controlled"],
 

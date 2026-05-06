@@ -676,6 +676,80 @@ if (factorResult.kind === "record") {
 }
 
 // -----------------------------------------------------------------------------
+// 16. solve — Mathematica Solve[]-class dispatcher (linear + univariate)
+// -----------------------------------------------------------------------------
+//
+// The top-level entry point of solve-suite-v1. Takes equations and
+// unknowns, classifies, dispatches, returns ADR-0017's solution-set
+// shape. The demo runs both lanes in one call to demonstrate the
+// dispatcher: a linear system (bareissSolve under the hood) and a
+// univariate quadratic (factor + quadratic-formula radicals).
+
+console.log("\n" + "=".repeat(60));
+console.log("  16. solve — top-level dispatcher (linear + univariate)");
+console.log("=".repeat(60));
+console.log(
+  "Classifier decides the lane (linear / univariate-poly / refusal);\n" +
+  "dispatcher executes via Bareiss exact ℚ or poly-factor + radicals.",
+);
+const linearSolveResult = await wb.solve({
+  kind: "record",
+  fields: {
+    eqs: list([
+      { kind: "expression", head: "+", args: [{ kind: "symbol", name: "x" }, { kind: "symbol", name: "y" }, { kind: "integer", value: "-3" }] },
+      { kind: "expression", head: "-", args: [{ kind: "expression", head: "-", args: [{ kind: "symbol", name: "x" }, { kind: "symbol", name: "y" }] }, { kind: "integer", value: "1" }] },
+    ]),
+    vars: list([{ kind: "symbol", name: "x" }, { kind: "symbol", name: "y" }]),
+  },
+});
+if (linearSolveResult.kind === "record") {
+  const sols = linearSolveResult.fields["solutions"];
+  if (sols?.kind === "list" && sols.items[0]?.kind === "record") {
+    const bindings = sols.items[0].fields["bindings"];
+    if (bindings?.kind === "list") {
+      const summary = bindings.items.map((b) => {
+        if (b.kind !== "record") return "?";
+        const v = b.fields["var"], val = b.fields["value"];
+        if (v?.kind !== "symbol") return "?";
+        const valStr = val?.kind === "integer" ? val.value : "?";
+        return `${v.name} → ${valStr}`;
+      }).join(", ");
+      console.log("  linear { x + y = 3, x − y = 1 }: ", summary);
+    }
+  }
+}
+
+const polySolveResult = await wb.solve({
+  kind: "record",
+  fields: {
+    eqs: list([
+      { kind: "expression", head: "+", args: [
+        { kind: "expression", head: "^", args: [{ kind: "symbol", name: "x" }, { kind: "integer", value: "2" }] },
+        { kind: "expression", head: "*", args: [{ kind: "integer", value: "-5" }, { kind: "symbol", name: "x" }] },
+        { kind: "integer", value: "6" },
+      ] },
+    ]),
+    vars: list([{ kind: "symbol", name: "x" }]),
+  },
+});
+if (polySolveResult.kind === "record") {
+  const sols = polySolveResult.fields["solutions"];
+  if (sols?.kind === "list") {
+    const xs: string[] = [];
+    for (const sol of sols.items) {
+      if (sol.kind !== "record") continue;
+      const bindings = sol.fields["bindings"];
+      if (bindings?.kind !== "list" || bindings.items.length !== 1) continue;
+      const b = bindings.items[0];
+      if (b?.kind !== "record") continue;
+      const val = b.fields["value"];
+      if (val?.kind === "integer") xs.push(val.value);
+    }
+    console.log(`  univariate { x² − 5x + 6 = 0 }:    x ∈ {${xs.join(", ")}}`);
+  }
+}
+
+// -----------------------------------------------------------------------------
 // Bonus — content-addressing
 // -----------------------------------------------------------------------------
 
