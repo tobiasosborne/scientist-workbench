@@ -290,6 +290,16 @@
         "@workbench/protocol": "workspace:*",
       },
     },
+    "tools/poly-roots": {
+      "name": "@workbench/tool-poly-roots",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/cas-core": "workspace:*",
+        "@workbench/contract": "workspace:*",
+        "@workbench/poly-factor": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+      },
+    },
     "tools/registry-list": {
       "name": "@workbench/tool-registry-list",
       "version": "0.2.0",
@@ -452,6 +462,8 @@
     "@workbench/tool-oracle": ["@workbench/tool-oracle@workspace:tools/oracle"],
 
     "@workbench/tool-poly-factor": ["@workbench/tool-poly-factor@workspace:tools/poly-factor"],
+
+    "@workbench/tool-poly-roots": ["@workbench/tool-poly-roots@workspace:tools/poly-roots"],
 
     "@workbench/tool-registry-list": ["@workbench/tool-registry-list@workspace:tools/registry-list"],
 

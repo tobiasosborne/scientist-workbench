@@ -41,6 +41,8 @@ import { def as modPowDef } from "../../../../tools/mod-pow/tool.js";
 import { def as nttDef } from "../../../../tools/ntt/tool.js";
 import { def as optimizeLbfgsProjectedDef } from "../../../../tools/optimize-lbfgs-projected/tool.js";
 import { def as oracleDef } from "../../../../tools/oracle/tool.js";
+import { def as polyFactorDef } from "../../../../tools/poly-factor/tool.js";
+import { def as polyRootsDef } from "../../../../tools/poly-roots/tool.js";
 import { def as registryListDef } from "../../../../tools/registry-list/tool.js";
 import { def as registrySearchDef } from "../../../../tools/registry-search/tool.js";
 import { def as sturmControlledDef } from "../../../../tools/sturm-controlled/tool.js";
@@ -72,6 +74,8 @@ export interface TypedWorkbench extends Workbench {
   ntt(input: InputOf<typeof nttDef>, flags?: FlagsArgOf<typeof nttDef>): Promise<OutputOf<typeof nttDef>>;
   optimizeLbfgsProjected(input: InputOf<typeof optimizeLbfgsProjectedDef>, flags?: FlagsArgOf<typeof optimizeLbfgsProjectedDef>): Promise<OutputOf<typeof optimizeLbfgsProjectedDef>>;
   oracle(input: InputOf<typeof oracleDef>, flags?: FlagsArgOf<typeof oracleDef>): Promise<OutputOf<typeof oracleDef>>;
+  polyFactor(input: InputOf<typeof polyFactorDef>, flags?: FlagsArgOf<typeof polyFactorDef>): Promise<OutputOf<typeof polyFactorDef>>;
+  polyRoots(input: InputOf<typeof polyRootsDef>, flags?: FlagsArgOf<typeof polyRootsDef>): Promise<OutputOf<typeof polyRootsDef>>;
   registryList(input: InputOf<typeof registryListDef>, flags?: FlagsArgOf<typeof registryListDef>): Promise<OutputOf<typeof registryListDef>>;
   registrySearch(input: InputOf<typeof registrySearchDef>, flags?: FlagsArgOf<typeof registrySearchDef>): Promise<OutputOf<typeof registrySearchDef>>;
   sturmControlled(input: InputOf<typeof sturmControlledDef>, flags?: FlagsArgOf<typeof sturmControlledDef>): Promise<OutputOf<typeof sturmControlledDef>>;
@@ -152,6 +156,12 @@ export function typed(workbench: Workbench): TypedWorkbench {
     oracle(input, flags) {
       return workbench.run("oracle", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof oracleDef>>;
     },
+    polyFactor(input, flags) {
+      return workbench.run("poly-factor", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof polyFactorDef>>;
+    },
+    polyRoots(input, flags) {
+      return workbench.run("poly-roots", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof polyRootsDef>>;
+    },
     registryList(input, flags) {
       return workbench.run("registry-list", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof registryListDef>>;
     },
@@ -209,6 +219,8 @@ export const defs = {
   ntt: nttDef,
   optimizeLbfgsProjected: optimizeLbfgsProjectedDef,
   oracle: oracleDef,
+  polyFactor: polyFactorDef,
+  polyRoots: polyRootsDef,
   registryList: registryListDef,
   registrySearch: registrySearchDef,
   sturmControlled: sturmControlledDef,

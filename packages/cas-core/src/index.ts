@@ -74,6 +74,13 @@ export {
 } from "./fp.js";
 
 export {
+  linearRoot,
+  quadraticRoots,
+  cubicRoots,
+  quarticRoots,
+} from "./poly-radicals.js";
+
+export {
   type RatFn,
   type RatFnOptions,
   RATFN_ZERO,
