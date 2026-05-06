@@ -551,6 +551,76 @@ if (stiffResult.kind === "record") {
   }
 }
 
+header(21, "linsolve-q: exact rational linear solve over Hilbert-3",
+  "Bareiss fraction-free Gaussian elimination — exact in Q with bit length bounded by Hadamard.");
+// Hilbert-3 (famously ill-conditioned over ℝ — exact over ℚ).
+// The demo asserts: kind=complete, bit length stays small, x is exact
+// rational. b chosen to make x = (1/2, -3, 4) the unique solution.
+const linsolveResult = await wb.linsolveQ({
+  kind: "record",
+  fields: {
+    A: list([
+      list([
+        { kind: "integer", value: "1" },
+        { kind: "rational", num: "1", den: "2" },
+        { kind: "rational", num: "1", den: "3" },
+      ]),
+      list([
+        { kind: "rational", num: "1", den: "2" },
+        { kind: "rational", num: "1", den: "3" },
+        { kind: "rational", num: "1", den: "4" },
+      ]),
+      list([
+        { kind: "rational", num: "1", den: "3" },
+        { kind: "rational", num: "1", den: "4" },
+        { kind: "rational", num: "1", den: "5" },
+      ]),
+    ]),
+    b: list([
+      { kind: "rational", num: "1", den: "3" },
+      { kind: "rational", num: "1", den: "4" },
+      { kind: "rational", num: "13", den: "60" },
+    ]),
+  },
+});
+if (linsolveResult.kind === "record") {
+  const completeness = linsolveResult.fields["completeness"];
+  const warnings = linsolveResult.fields["warnings"];
+  if (completeness?.kind === "string") {
+    console.log("  completeness:           ", completeness.value);
+  }
+  if (warnings?.kind === "list" && warnings.items.length > 0) {
+    const w0 = warnings.items[0];
+    if (w0?.kind === "string") {
+      console.log("  ", w0.value, "  (Hadamard-bounded; naive ℚ would be 100×)");
+    }
+  }
+  const solutions = linsolveResult.fields["solutions"];
+  if (solutions?.kind === "list" && solutions.items.length === 1) {
+    const sol = solutions.items[0];
+    if (sol?.kind === "record") {
+      const bindings = sol.fields["bindings"];
+      if (bindings?.kind === "list") {
+        const summary: string[] = [];
+        for (const b of bindings.items) {
+          if (b?.kind === "record") {
+            const v = b.fields["var"];
+            const val = b.fields["value"];
+            if (v?.kind === "symbol" && val) {
+              const valStr =
+                val.kind === "integer" ? val.value
+                : val.kind === "rational" ? `${val.num}/${val.den}`
+                : "<expr>";
+              summary.push(`${v.name} → ${valStr}`);
+            }
+          }
+        }
+        console.log("  x:                      ", summary.join(", "));
+      }
+    }
+  }
+}
+
 // -----------------------------------------------------------------------------
 // Bonus — content-addressing
 // -----------------------------------------------------------------------------
