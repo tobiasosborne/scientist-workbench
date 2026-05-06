@@ -1,0 +1,742 @@
+{
+  "admitted": 46,
+  "log": [
+    {
+      "admitted": true,
+      "id": "A1-1x1-unique",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        1,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        1,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "A2-1x2-underdetermined",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "under-determined",
+        1,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "under-determined",
+        1,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "A3-2x1-overdetermined-consistent",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        1,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        1,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "A4-2x2-identity",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        2,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        2,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "A5-3x3-identity",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        3,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        3,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "B-randwell-n3",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        3,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        3,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "B-randwell-n5",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        5,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        5,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "B-randwell-n8",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        8,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        8,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "B-randwell-n12",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        12,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        12,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "B-randwell-n20",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        20,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        20,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "B-randwell-n30",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        30,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        30,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "C-hilbert-n3",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        3,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        3,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "C-hilbert-n5",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        5,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        5,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "C-hilbert-n8",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        8,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        8,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "C-hilbert-n10",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        10,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        10,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "C-pascal-n6",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        6,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        6,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "C-vandermonde-n5",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        5,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        5,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "D-dense-n10",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        10,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        10,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "D-dense-n15",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        15,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        15,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "D-tridiag-n30",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        30,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        30,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "D-arrowhead-n20",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        20,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        20,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "E-1x2",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "under-determined",
+        1,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "under-determined",
+        1,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "E-2x3",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "under-determined",
+        2,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "under-determined",
+        2,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "E-3x5",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "under-determined",
+        3,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "under-determined",
+        3,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "E-3x3-rank2-consistent",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "under-determined",
+        2,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "under-determined",
+        2,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "E-4x4-rank2-consistent",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "under-determined",
+        2,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "under-determined",
+        2,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "E-3x3-rank1-consistent",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "under-determined",
+        1,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "under-determined",
+        1,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "E-3x4-mid-free",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "under-determined",
+        3,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "under-determined",
+        3,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "E-8x8-rank1-consistent",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "under-determined",
+        1,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "under-determined",
+        1,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "F-2x1-overdet-incons",
+      "reason": "ref + sympy agree; wolfram skipped (failed)",
+      "ref_signature": [
+        "inconsistent",
+        1,
+        2
+      ],
+      "sympy_signature": [
+        "inconsistent",
+        1,
+        2
+      ],
+      "wolfram_status": "failed"
+    },
+    {
+      "admitted": true,
+      "id": "F-3x2-overdet-incons",
+      "reason": "ref + sympy agree; wolfram skipped (failed)",
+      "ref_signature": [
+        "inconsistent",
+        2,
+        3
+      ],
+      "sympy_signature": [
+        "inconsistent",
+        2,
+        3
+      ],
+      "wolfram_status": "failed"
+    },
+    {
+      "admitted": true,
+      "id": "F-4x3-overdet-incons",
+      "reason": "ref + sympy agree; wolfram skipped (failed)",
+      "ref_signature": [
+        "inconsistent",
+        3,
+        4
+      ],
+      "sympy_signature": [
+        "inconsistent",
+        3,
+        4
+      ],
+      "wolfram_status": "failed"
+    },
+    {
+      "admitted": true,
+      "id": "F-3x3-rank2-incons",
+      "reason": "ref + sympy agree; wolfram skipped (failed)",
+      "ref_signature": [
+        "inconsistent",
+        2,
+        3
+      ],
+      "sympy_signature": [
+        "inconsistent",
+        2,
+        3
+      ],
+      "wolfram_status": "failed"
+    },
+    {
+      "admitted": true,
+      "id": "F-3x3-rank1-incons",
+      "reason": "ref + sympy agree; wolfram skipped (failed)",
+      "ref_signature": [
+        "inconsistent",
+        1,
+        2
+      ],
+      "sympy_signature": [
+        "inconsistent",
+        1,
+        2
+      ],
+      "wolfram_status": "failed"
+    },
+    {
+      "admitted": true,
+      "id": "F-4x4-rank2-incons",
+      "reason": "ref + sympy agree; wolfram skipped (failed)",
+      "ref_signature": [
+        "inconsistent",
+        2,
+        3
+      ],
+      "sympy_signature": [
+        "inconsistent",
+        2,
+        3
+      ],
+      "wolfram_status": "failed"
+    },
+    {
+      "admitted": true,
+      "id": "G-blockdiag-n20",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        20,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        20,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "G-mod7-pascal-n10",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        10,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        10,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "G-bordered-banded-n15",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        15,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        15,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "G-spd-n20",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        20,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        20,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "H-rand3-n6",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        6,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        6,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "H-rand3-n8",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        8,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        8,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "H-rand3-n10",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        10,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        10,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "H-checkerboard-n10",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        10,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        10,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "H-bareiss-paper-style-4x4",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        4,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        4,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "H-fibonacci-n8",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        8,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        8,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    },
+    {
+      "admitted": true,
+      "id": "H-mod13-n10",
+      "reason": "ref + sympy + wolfram agree",
+      "ref_signature": [
+        "unique",
+        10,
+        "==rank"
+      ],
+      "sympy_signature": [
+        "unique",
+        10,
+        "==rank"
+      ],
+      "wolfram_status": "ok"
+    }
+  ],
+  "skipped": []
+}
