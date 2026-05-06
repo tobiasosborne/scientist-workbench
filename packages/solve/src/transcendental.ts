@@ -89,19 +89,39 @@ const TWO = int(2n);
  * Try to recognise `eq = 0` as a single-head transcendental equation
  * in `varName` and emit the solution set.
  *
+ * Handles two compound-arg shapes:
+ *   • `head(x) = c`              (the basic ii0 case)
+ *   • `head(a · x + b) = c`      (linear-inner-arg extension; bead 37r)
+ *
+ * For the linear case, the substitution is straightforward: invert
+ * `head` to get `a · x + b ∈ {h_1(c), …, h_k(c)}` (with branch params
+ * for multi-branched heads), then solve the linear `a · x + b = h_i(c)`
+ * for each branch to get `x = (h_i(c) − b) / a`.
+ *
  * @returns `SolveResult` (success or refusal) on a recognised pattern,
- *          or `null` if the equation does not match the simple pattern.
- *          The caller (`tools/solve`'s dispatcher) falls back to
- *          polynomial classification or refusal.
+ *          or `null` if the equation does not match.
  */
 export function tryTranscendentalInvert(
   eq: Value,
   varName: string,
 ): SolveResult | null {
-  const decomp = decomposeAsHeadEqualsConstant(eq, varName);
-  if (decomp === null) return null;
-  const { head, c } = decomp;
-  return invertHead(head, c, varName);
+  // Try the simple case first: head(x) = c.
+  const decompSimple = decomposeAsHeadEqualsConstant(eq, varName);
+  if (decompSimple !== null) {
+    return invertHead(decompSimple.head, decompSimple.c, varName);
+  }
+
+  // Try the compound linear-inner case: head(a · x + b) = c (bead 37r).
+  const decompLinear = decomposeAsHeadOfLinearEqualsConstant(eq, varName);
+  if (decompLinear !== null) {
+    const inner = invertHead(decompLinear.head, decompLinear.c, "__inner");
+    if (inner.kind !== "success") return inner;
+    return rewriteInnerLinear(
+      inner, varName, decompLinear.linearA, decompLinear.linearB,
+    );
+  }
+
+  return null;
 }
 
 // -----------------------------------------------------------------------------
@@ -169,6 +189,213 @@ function matchHeadOfVar(v: Value, varName: string): string | null {
   const arg = v.args[0]!;
   if (arg.kind !== "symbol" || arg.name !== varName) return null;
   return v.head;
+}
+
+interface HeadOfLinear {
+  readonly head: string;
+  /** `a` in `head(a · varName + b)`, with `a ≠ 0`. */
+  readonly linearA: Value;
+  /** `b` in `head(a · varName + b)`. */
+  readonly linearB: Value;
+}
+
+/**
+ * Recognise `expr(head, [linear-in-varName])` where the inner argument
+ * is `a · varName + b` (or `a · varName`, or `varName + b`) with `a, b`
+ * numeric constants. Excludes the bare `head(varName)` case (which is
+ * handled by `matchHeadOfVar`), to keep `tryTranscendentalInvert`'s
+ * logic ordering deterministic.
+ */
+function matchHeadOfLinear(v: Value, varName: string): HeadOfLinear | null {
+  if (v.kind !== "expression") return null;
+  if (!TRANSCENDENTAL_HEADS.has(v.head)) return null;
+  if (v.args.length !== 1) return null;
+  const arg = v.args[0]!;
+  // arg must be a linear function of varName: a · varName + b, with a, b
+  // numeric constants.  We accept three sub-shapes:
+  //   - expr("+", [c·varName, b]) or [b, c·varName]
+  //   - expr("-", [c·varName, b]) or [b, c·varName]
+  //   - expr("*", [c, varName]) (no constant term)
+  // Plus `varName` itself, but that's the "bare" case handled elsewhere.
+  if (arg.kind === "symbol" && arg.name === varName) return null;
+  return decomposeLinearInVar(arg, varName, v.head);
+}
+
+function decomposeLinearInVar(
+  arg: Value, varName: string, headName: string,
+): HeadOfLinear | null {
+  // Pattern: arg is a · varName + b (or sub-shapes).  We use the cas-core
+  // valueToRatFn machinery indirectly via a hand-rolled decomposition,
+  // because importing valueToRatFn here would create a circular dep
+  // (cas-core ← solve, but valueToRatFn lives in cas-core).  Instead,
+  // we recognise the structural patterns directly.
+
+  // Sub-shape A: c · varName  (no offset).
+  if (arg.kind === "expression" && arg.head === "*" && arg.args.length === 2) {
+    const a0 = arg.args[0]!;
+    const a1 = arg.args[1]!;
+    if (isNumericConstant(a0) && a1.kind === "symbol" && a1.name === varName) {
+      return { head: headName, linearA: a0, linearB: int(0n) };
+    }
+    if (isNumericConstant(a1) && a0.kind === "symbol" && a0.name === varName) {
+      return { head: headName, linearA: a1, linearB: int(0n) };
+    }
+  }
+
+  // Sub-shape B: varName + b (a = 1).
+  if (arg.kind === "expression" && arg.head === "+" && arg.args.length >= 2) {
+    let varCoef: Value | null = null;       // coefficient of varName, if seen
+    let varSeen = false;
+    const constants: Value[] = [];
+    for (const a of arg.args) {
+      if (a.kind === "symbol" && a.name === varName) {
+        if (varSeen) return null;            // multiple varName terms
+        varSeen = true;
+        varCoef = int(1n);
+      } else if (a.kind === "expression" && a.head === "*" && a.args.length === 2) {
+        const m0 = a.args[0]!, m1 = a.args[1]!;
+        if (isNumericConstant(m0) && m1.kind === "symbol" && m1.name === varName) {
+          if (varSeen) return null;
+          varSeen = true;
+          varCoef = m0;
+        } else if (isNumericConstant(m1) && m0.kind === "symbol" && m0.name === varName) {
+          if (varSeen) return null;
+          varSeen = true;
+          varCoef = m1;
+        } else if (isNumericConstant(m0) && isNumericConstant(m1)) {
+          // c1 * c2 — treat as a constant (rare; user could have written
+          // `2*3` without simplification).
+          constants.push(a);
+        } else {
+          return null;
+        }
+      } else if (isNumericConstant(a)) {
+        constants.push(a);
+      } else {
+        return null;
+      }
+    }
+    if (!varSeen || varCoef === null) return null;
+    const offset = constants.length === 0
+      ? int(0n)
+      : constants.length === 1
+        ? constants[0]!
+        : expr("+", constants);
+    return { head: headName, linearA: varCoef, linearB: offset };
+  }
+
+  // Sub-shape C: varName − b (a = 1, negative offset).
+  if (arg.kind === "expression" && arg.head === "-" && arg.args.length === 2) {
+    const left = arg.args[0]!;
+    const right = arg.args[1]!;
+    if (left.kind === "symbol" && left.name === varName && isNumericConstant(right)) {
+      return { head: headName, linearA: int(1n), linearB: negateConstant(right) };
+    }
+  }
+
+  return null;
+}
+
+function decomposeAsHeadOfLinearEqualsConstant(
+  eq: Value, varName: string,
+): { head: string; c: Value; linearA: Value; linearB: Value } | null {
+  // Reuse the same outer pattern as decomposeAsHeadEqualsConstant, but
+  // accept `head(a·x + b)` instead of just `head(x)` on the head side.
+
+  // Case A: bare `head(linear)`.
+  const bare = matchHeadOfLinear(eq, varName);
+  if (bare !== null) {
+    return { head: bare.head, c: int(0n), linearA: bare.linearA, linearB: bare.linearB };
+  }
+
+  if (eq.kind !== "expression") return null;
+
+  // Case B: `head(linear) − c` or `c − head(linear)`.
+  if (eq.head === "-" && eq.args.length === 2) {
+    const lhs = eq.args[0]!;
+    const rhs = eq.args[1]!;
+    const lhsHead = matchHeadOfLinear(lhs, varName);
+    if (lhsHead !== null && isNumericConstant(rhs)) {
+      return { head: lhsHead.head, c: rhs, linearA: lhsHead.linearA, linearB: lhsHead.linearB };
+    }
+    const rhsHead = matchHeadOfLinear(rhs, varName);
+    if (rhsHead !== null && isNumericConstant(lhs)) {
+      return { head: rhsHead.head, c: lhs, linearA: rhsHead.linearA, linearB: rhsHead.linearB };
+    }
+  }
+
+  // Case C: n-ary `+` with one head(linear) summand and constants.
+  if (eq.head === "+") {
+    let foundHead: HeadOfLinear | null = null;
+    const constants: Value[] = [];
+    for (const arg of eq.args) {
+      const m = matchHeadOfLinear(arg, varName);
+      if (m !== null) {
+        if (foundHead !== null) return null;
+        foundHead = m;
+      } else if (isNumericConstant(arg)) {
+        constants.push(arg);
+      } else {
+        return null;
+      }
+    }
+    if (foundHead !== null) {
+      const sum = sumConstants(constants);
+      return {
+        head: foundHead.head,
+        c: negateConstant(sum),
+        linearA: foundHead.linearA,
+        linearB: foundHead.linearB,
+      };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Rewrite the inner-variable `__inner` solutions of `inverseResult` as
+ * outer-variable `varName` solutions, given the linear relation
+ * `__inner = a · varName + b`.  i.e. each binding `__inner = h_i(c)`
+ * becomes `varName = (h_i(c) − b) / a`.
+ */
+function rewriteInnerLinear(
+  inverseResult: SolveResult,
+  varName: string, a: Value, b: Value,
+): SolveResult {
+  if (inverseResult.kind !== "success") return inverseResult;
+  const solutions: Solution[] = inverseResult.solutions.map((sol) => {
+    // sol.bindings[0] is `__inner = h_i(c)` (possibly with branch params).
+    const innerValue = sol.bindings[0]!.value;
+    // Build x = (innerValue − b) / a.
+    const xValue: Value =
+      isZeroLiteral(b)
+        ? (isOneLiteral(a) ? innerValue : expr("/", [innerValue, a]))
+        : (isOneLiteral(a)
+            ? expr("-", [innerValue, b])
+            : expr("/", [expr("-", [innerValue, b]), a]));
+    return {
+      bindings: [{ var: varName, value: xValue }],
+      branches: sol.branches,
+    };
+  });
+  return {
+    ...inverseResult,
+    vars: [varName],
+    solutions,
+  };
+}
+
+function isZeroLiteral(v: Value): boolean {
+  if (v.kind === "integer") return BigInt(v.value) === 0n;
+  if (v.kind === "rational") return BigInt(v.num) === 0n;
+  return false;
+}
+
+function isOneLiteral(v: Value): boolean {
+  if (v.kind === "integer") return BigInt(v.value) === 1n;
+  if (v.kind === "rational") return BigInt(v.num) === 1n && BigInt(v.den) === 1n;
+  return false;
 }
 
 function isNumericConstant(v: Value): boolean {

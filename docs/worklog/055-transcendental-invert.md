@@ -1,4 +1,4 @@
-# 055 — `solve` transcendental invert layer (ii0)
+# 055 — `solve` transcendental invert layer (ii0 + 37r linear)
 
 **Date:** 2026-05-06
 **Status:** complete
@@ -6,7 +6,7 @@
 **ADRs:** applies ADR-0017 (solution-set shape — first exercise of
 `finite-rep-of-infinite` completeness with branch parameters), ADR-
 0003 (boundary categories).
-**Issues closed:** scientist-workbench-{ii0}.
+**Issues closed:** scientist-workbench-{ii0, 37r}.
 
 ## Context
 
@@ -154,7 +154,9 @@ explicitly.
 
 - Bead `scientist-workbench-ii0`: closed.
 - Bead `scientist-workbench-37r`: substitution heuristics for
-  compound `head(g(x)) = c` — the natural extension. Open.
+  compound `head(linear · x + b) = c` — closed in this shard via
+  the `decomposeAsHeadOfLinearEqualsConstant` matcher. Polynomial-
+  in-x^k and polynomial-in-e^x patterns deferred to a follow-up.
 - Bead `scientist-workbench-l9y`: bench/solve-transcendental
   branched-solution generator + verifier (the bench acceptance
   for the transcendental lane).

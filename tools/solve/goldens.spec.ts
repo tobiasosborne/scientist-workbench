@@ -149,6 +149,19 @@ export const goldens: GoldenSpec[] = [
     input: inp([expr("-", [expr("abs", [sym("x")]), int(3n)])], ["x"]),
   },
   {
+    description: "compound: sin(2x) = 0 ⟹ x = (arcsin(0) + 2πk_0)/2 ∨ x = (π − arcsin(0) + 2πk_1)/2",
+    input: inp([expr("sin", [expr("*", [int(2n), sym("x")])])], ["x"]),
+  },
+  {
+    description: "compound: exp(3x + 1) = 5 ⟹ x = (log(5) − 1) / 3",
+    input: inp([
+      expr("-", [
+        expr("exp", [expr("+", [expr("*", [int(3n), sym("x")]), int(1n)])]),
+        int(5n),
+      ]),
+    ], ["x"]),
+  },
+  {
     description: "rational function: 1/x = 0 ⟹ tagged solve/foreign-vocabulary",
     input: inp([expr("/", [int(1n), sym("x")])], ["x"]),
   },

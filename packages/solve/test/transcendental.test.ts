@@ -150,10 +150,24 @@ describe("tryTranscendentalInvert — non-matching patterns return null", () => 
     expect(result).toBeNull();
   });
 
-  test("compound head(g(x)): sin(2x) ⟹ null (37r will handle this)", () => {
+  test("compound head(linear): sin(2x) ⟹ branched (37r linear-arg case)", () => {
     const eq = expr("sin", [expr("*", [int(2n), sym("x")])]);
     const result = tryTranscendentalInvert(eq, "x");
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    if (!result || result.kind !== "success") return;
+    expect(result.solutions.length).toBe(2);
+    expect(result.completeness).toBe("finite-rep-of-infinite");
+  });
+
+  test("compound head(linear w/ offset): cos(2x + 1) − 1/2 ⟹ branched", () => {
+    const eq = expr("-", [
+      expr("cos", [expr("+", [expr("*", [int(2n), sym("x")]), int(1n)])]),
+      protocolRat(1n, 2n),
+    ]);
+    const result = tryTranscendentalInvert(eq, "x");
+    expect(result).not.toBeNull();
+    if (!result || result.kind !== "success") return;
+    expect(result.solutions.length).toBe(2);
   });
 
   test("two heads: sin(x) + cos(x) ⟹ null", () => {
