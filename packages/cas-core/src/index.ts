@@ -118,3 +118,15 @@ export {
   qI,
   qSqrt2I,
 } from "./algebraic.js";
+
+export {
+  type Affine,
+  type LinSolveResult,
+  type LinSolveUnique,
+  type LinSolveUnderDetermined,
+  type LinSolveInconsistent,
+  bareissSolve,
+  affineToString,
+  formatRat,
+  parseRat,
+} from "./linsolve.js";
