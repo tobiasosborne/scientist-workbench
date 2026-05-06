@@ -16,3 +16,9 @@ dist/
 .venv/
 __pycache__/
 *.pyc
+
+# Ground-truth papers — PDFs and OSS clones not committed; index README is.
+docs/ground-truth/**/*.pdf
+docs/ground-truth/**/sympy/
+docs/ground-truth/**/sage/
+docs/ground-truth/**/sagemath/
