@@ -65,6 +65,7 @@ write the frictions and the dead ends as well as the wins.
 | 052 | [`poly-factor` end-to-end: Hensel + Berlekamp + recombination + tool ship (Phase 2 closes)](052-poly-factor-end-to-end.md) | 2026-05-06 | scientist-workbench-{0fy, p3d, 5k6, v13, d0o} |
 | 053 | [`poly-roots`: closed-form radical roots for deg ≤ 4 (Cardano + Ferrari)](053-poly-roots.md) | 2026-05-06 | scientist-workbench-{1yu, 58q} |
 | 054 | [`solve`: top-level dispatcher (linear + univariate-poly v0.1)](054-solve-dispatcher.md) | 2026-05-06 | scientist-workbench-{77b, cfd, fij, 80x} |
+| 055 | [`solve` transcendental invert layer (sin/cos/exp/log/...)](055-transcendental-invert.md) | 2026-05-06 | scientist-workbench-{ii0} |
 
 ## How to add a new shard
 

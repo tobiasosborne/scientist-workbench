@@ -27,3 +27,5 @@ export {
   type SolveRefusal,
   type SolveResult,
 } from "./dispatch.js";
+
+export { tryTranscendentalInvert } from "./transcendental.js";

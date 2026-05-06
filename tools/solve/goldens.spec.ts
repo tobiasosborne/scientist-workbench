@@ -129,8 +129,24 @@ export const goldens: GoldenSpec[] = [
     input: inp([poly1([[1n, 5n], [2n, 1n], [2n, 0n]])], ["x"]),
   },
   {
-    description: "transcendental sin(x) = 0 ⟹ tagged solve/foreign-vocabulary",
+    description: "transcendental sin(x) = 0 ⟹ branched: arcsin(0) + 2πk_1, π−arcsin(0) + 2πk_2",
     input: inp([expr("sin", [sym("x")])], ["x"]),
+  },
+  {
+    description: "transcendental cos(x) − 1/2 = 0 ⟹ ±arccos(1/2) + 2πk",
+    input: inp([expr("-", [expr("cos", [sym("x")]), expr("/", [int(1n), int(2n)])])], ["x"]),
+  },
+  {
+    description: "transcendental exp(x) − 5 = 0 ⟹ x = log(5) (single branch)",
+    input: inp([expr("-", [expr("exp", [sym("x")]), int(5n)])], ["x"]),
+  },
+  {
+    description: "transcendental tan(x) = 0 ⟹ arctan(0) + π·k",
+    input: inp([expr("tan", [sym("x")])], ["x"]),
+  },
+  {
+    description: "transcendental abs(x) − 3 = 0 ⟹ x ∈ {3, -3}",
+    input: inp([expr("-", [expr("abs", [sym("x")]), int(3n)])], ["x"]),
   },
   {
     description: "rational function: 1/x = 0 ⟹ tagged solve/foreign-vocabulary",

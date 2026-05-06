@@ -77,6 +77,7 @@ import {
 import {
   classifyInput,
   dispatchClassified,
+  tryTranscendentalInvert,
   type SolveResult,
   type Solution,
 } from "@workbench/solve";
@@ -253,6 +254,26 @@ export const def = defineTool({
     const { eqValues, varSyms } = decodeInput(inputRec);
     const varNames = varSyms.map((s) => s.name);
 
+    // Single-equation single-variable transcendental fast path: if
+    // valueToRatFn rejects the equation as out-of-vocabulary AND the
+    // pattern matches the v0.1 invert layer (head(x) = c), emit the
+    // branched-solution result directly without invoking the
+    // polynomial dispatcher.
+    if (eqValues.length === 1 && varSyms.length === 1) {
+      const transResult = tryTranscendentalInvert(eqValues[0]!, varSyms[0]!.name);
+      if (transResult !== null) {
+        if (transResult.kind === "refusal") {
+          return refuse(transResult.reasonClass, transResult.detail);
+        }
+        return buildSuccessOutput(
+          transResult.vars,
+          transResult.solutions,
+          transResult.completeness,
+          transResult.warnings,
+        );
+      }
+    }
+
     // Convert each equation expression to Poly<Rat>; refuse on out-of-scope.
     const polyEqs: Poly<Rat>[] = [];
     for (let i = 0; i < eqValues.length; i++) {
@@ -338,19 +359,33 @@ export const def = defineTool({
       throw new Error(`solve --test: expected 2 solutions for x²-5x+6, got ${polySols?.kind === "list" ? polySols.items.length : "?"}`);
     }
 
-    // Probe 3: refusal.
-    const refusalInput = record({
+    // Probe 3: transcendental — sin(x) = 1/2 ⟹ branched solutions.
+    const transInput = record({
       eqs: list([
         expr("-", [expr("sin", [sym("x")]), int(0n)]),
       ]),
       vars: list([sym("x")]),
     });
-    const refusalOut = def.fn(refusalInput as never, {} as never) as Value;
-    if (refusalOut.kind !== "tagged" || !refusalOut.tag.startsWith("solve/")) {
-      throw new Error("solve --test: expected solve/* tagged output for sin(x) input");
+    const transOut = def.fn(transInput as never, {} as never) as Value;
+    if (transOut.kind !== "record") throw new Error("solve --test: expected record output for sin(x) = 0");
+    const transCompleteness = transOut.fields["completeness"];
+    if (transCompleteness?.kind !== "string" || transCompleteness.value !== "finite-rep-of-infinite") {
+      throw new Error("solve --test: expected finite-rep-of-infinite completeness for sin(x) = 0");
     }
 
-    console.log(`solve --test: 3 dispatch lanes covered (linear, univariate-poly, refusal); full coverage in goldens.`);
+    // Probe 4: refusal — bilinear x · y = 1 (multivariate non-zero-dim).
+    const refusalInput = record({
+      eqs: list([
+        expr("-", [expr("*", [sym("x"), sym("y")]), int(1n)]),
+      ]),
+      vars: list([sym("x"), sym("y")]),
+    });
+    const refusalOut = def.fn(refusalInput as never, {} as never) as Value;
+    if (refusalOut.kind !== "tagged" || !refusalOut.tag.startsWith("solve/")) {
+      throw new Error("solve --test: expected solve/* tagged output for x·y = 1 input");
+    }
+
+    console.log(`solve --test: 4 dispatch lanes covered (linear, univariate-poly, transcendental, refusal); full coverage in goldens.`);
     void RAT_RING;
     void polyConst;
   },
