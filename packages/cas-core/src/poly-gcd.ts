@@ -54,6 +54,7 @@ import {
   polyConst,
   polyConstValue,
   polyDegInVar,
+  polyDivRemMonic,
   polyEq,
   polyFromCoeffsInVar,
   polyIsConst,
@@ -461,6 +462,132 @@ export function polyGcd<T>(
 
   const result = polyMul(contentGcd, primGcd, R);
   return polyMakeMonic(result, R);
+}
+
+// -----------------------------------------------------------------------------
+// Univariate extended Euclidean over a Field
+// -----------------------------------------------------------------------------
+//
+// `polyExtGcd(a, b, v, R: Field<T>)` — given univariate polynomials
+// `a, b ∈ F[v]` (`F = Field<T>`), return `{g, s, t}` such that
+//
+//     s · a + t · b = g
+//
+// where `g` is the **monic** GCD of `a` and `b` in `F[v]`. The cofactors
+// `s, t` are reduced so that `deg(s) < deg(b/g)` and `deg(t) < deg(a/g)`
+// (the standard size guarantee from the extended Euclidean algorithm).
+//
+// Why this exists separately from the multivariate `polyGcd`. The
+// multivariate Brown-Collins routine uses subresultant PRS over an
+// integral domain `D = Field<T>[other vars]`, which is not a field —
+// so cofactor extraction would have to fight the same scaling factors
+// `polyGcd` carefully cancels. Univariate over a field is the easy
+// case: classic Euclidean with field-coefficient division at each step,
+// cofactors propagated via the standard `(s, s') ← (s', s − q · s')`
+// recurrence.
+//
+// This is the substrate for Hensel lifting. The Hensel step takes
+// `f ≡ g · h (mod p)` with `gcd(g, h) = 1` in `𝔽_p[v]` and needs the
+// Bezout coefficients `s, t` with `s · g + t · h ≡ 1 (mod p)`. Those
+// come from `polyExtGcd(g, h, v, fpField(p))`.
+//
+// Throws on `gcd(a, b) = 0` (only happens when both are zero, which is
+// rejected up front so callers get a sharp error).
+//
+// Reference: Knuth TAOCP 2 §4.6.1, Algorithm E. Geddes-Czapor-Labahn
+// §2.5.
+
+export function polyExtGcd<T>(
+  a: Poly<T>,
+  b: Poly<T>,
+  v: string,
+  R: Field<T>,
+): { g: Poly<T>; s: Poly<T>; t: Poly<T> } {
+  if (polyIsZero(a) && polyIsZero(b)) {
+    throw new Error("polyExtGcd: both inputs are zero");
+  }
+  const zero = polyZero<T>();
+  const one = polyOne(R);
+  if (polyIsZero(a)) {
+    // gcd(0, b) = monic(b); 0·a + (1/lc(b))·b = monic(b).
+    const lcB = leadingCoefInVar(b, v, R);
+    const inv = R.inv(lcB);
+    return { g: scaleByConst(b, inv, R), s: zero, t: scaleByConst(one, inv, R) };
+  }
+  if (polyIsZero(b)) {
+    const lcA = leadingCoefInVar(a, v, R);
+    const inv = R.inv(lcA);
+    return { g: scaleByConst(a, inv, R), s: scaleByConst(one, inv, R), t: zero };
+  }
+
+  // Loop invariants: r_old = s_old · a + t_old · b, similarly r.
+  let r_old = a, r = b;
+  let s_old = one, s = zero;
+  let t_old = zero, t = one;
+
+  for (let safety = 0; safety < 1_000_000; safety++) {
+    if (polyIsZero(r)) break;
+    // r is non-zero, so we can long-divide r_old by r in F[v]. Make r
+    // monic-in-v first so polyDivRemMonic's pre-condition is satisfied;
+    // the corresponding scaling is propagated through s, t, r_old to
+    // keep the Bezout invariant exact.
+    const lcR = leadingCoefInVar(r, v, R);
+    if (!R.isOne(lcR)) {
+      const inv = R.inv(lcR);
+      r = scaleByConst(r, inv, R);
+      s = scaleByConst(s, inv, R);
+      t = scaleByConst(t, inv, R);
+    }
+    const { q } = polyDivRemMonic(r_old, r, v, R);
+    const r_new = polySub(r_old, polyMul(q, r, R), R);
+    const s_new = polySub(s_old, polyMul(q, s, R), R);
+    const t_new = polySub(t_old, polyMul(q, t, R), R);
+    r_old = r;
+    s_old = s;
+    t_old = t;
+    r = r_new;
+    s = s_new;
+    t = t_new;
+  }
+
+  // r_old is the gcd up to a unit (already monic from the in-loop
+  // normalisation, but defensively make it so).
+  const lcG = leadingCoefInVar(r_old, v, R);
+  if (R.isOne(lcG)) {
+    return { g: r_old, s: s_old, t: t_old };
+  }
+  const inv = R.inv(lcG);
+  return {
+    g: scaleByConst(r_old, inv, R),
+    s: scaleByConst(s_old, inv, R),
+    t: scaleByConst(t_old, inv, R),
+  };
+}
+
+// Helpers private to polyExtGcd. Both work in the *coefficient ring*
+// `R` (a Field), not in the multivariate "other-variables" polynomial
+// ring; ext-Euclidean is a univariate operation over a field.
+
+function leadingCoefInVar<T>(a: Poly<T>, v: string, R: Field<T>): T {
+  if (polyIsZero(a)) return R.zero;
+  const d = polyDegInVar(a, v);
+  // Find the term with the highest power of v; among those, terms only
+  // differ in other variables, but for univariate-in-v inputs there is
+  // a single such term whose other-variable exp slot is empty.
+  for (const t of a.terms) {
+    let pv = 0;
+    for (const [name, exp] of t.exp) if (name === v) pv = exp;
+    if (pv === d) return t.coef;
+  }
+  return R.zero; // unreachable when a ≠ 0
+}
+
+function scaleByConst<T>(a: Poly<T>, c: T, R: Field<T>): Poly<T> {
+  if (R.isZero(c)) return polyZero<T>();
+  if (R.isOne(c)) return a;
+  return {
+    terms: a.terms.map((t) => ({ exp: t.exp, coef: R.mul(t.coef, c) })),
+  };
 }
 
 // -----------------------------------------------------------------------------

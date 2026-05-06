@@ -62,6 +62,7 @@ write the frictions and the dead ends as well as the wins.
 | 049 | [`integrate-ode-stiff` via the tournament-protocol bench (19/19)](049-integrate-ode-stiff.md) | 2026-05-05 | scientist-workbench-09g |
 | 050 | [`integrate-ode-symplectic` via the tournament-protocol bench (17/17)](050-integrate-ode-symplectic.md) | 2026-05-05 | scientist-workbench-4gr |
 | 051 | [`poly-factor-q` bench + first substrate (Yun square-free, 17 tests / 607 expects)](051-poly-factor-bench-and-squarefree.md) | 2026-05-06 | scientist-workbench-{4nz, 3s2, 153} |
+| 052 | [`poly-factor` end-to-end: Hensel + Berlekamp + recombination + tool ship (Phase 2 closes)](052-poly-factor-end-to-end.md) | 2026-05-06 | scientist-workbench-{0fy, p3d, 5k6, v13, d0o} |
 
 ## How to add a new shard
 

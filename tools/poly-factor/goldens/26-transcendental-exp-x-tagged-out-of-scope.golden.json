@@ -1,0 +1,1 @@
+{"fields":{"input":{"fields":{"f":{"args":[{"kind":"symbol","name":"x"}],"head":"exp","kind":"expression"},"var":{"kind":"symbol","name":"x"}},"kind":"record"},"output":{"kind":"tagged","payload":{"fields":{"detail":{"kind":"string","value":"input is not a polynomial in 'x' over ℚ: unknown head \"exp\""}},"kind":"record"},"tag":"poly-factor/non-polynomial"}},"kind":"record"}

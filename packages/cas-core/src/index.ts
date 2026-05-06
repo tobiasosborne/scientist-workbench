@@ -57,13 +57,21 @@ export {
   polyCoeffsInVar,
   polyFromCoeffsInVar,
   polyDeriv,
+  polyDivRemMonic,
   compareExp,
 } from "./poly.js";
 
 export {
   polyGcd,
   polyDivExact,
+  polyExtGcd,
 } from "./poly-gcd.js";
+
+export {
+  INT_RING,
+  fpField,
+  polyTrunc,
+} from "./fp.js";
 
 export {
   type RatFn,

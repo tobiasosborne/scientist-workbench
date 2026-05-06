@@ -419,3 +419,84 @@ export function polyDeriv<T>(a: Poly<T>, v: string, R: Ring<T>): Poly<T> {
   out.sort((a, b) => compareExp(a.exp, b.exp));
   return { terms: out };
 }
+
+// -----------------------------------------------------------------------------
+// Univariate long division by a monic divisor
+// -----------------------------------------------------------------------------
+//
+// `polyDivRemMonic(a, b, v, R)` — view `a` and `b` as univariate
+// polynomials in `v` (their coefficients may live in the polynomial ring
+// of the other variables) and divide with remainder. Returns `(q, r)`
+// such that `a = q · b + r` with `deg_v(r) < deg_v(b)`.
+//
+// The constraint vs. the more general `polyDivExact` and `polyPseudoDivide`:
+// `b` must be **monic in `v`** — `lc_v(b) = R.one`. Long division by a
+// monic divisor needs no division at any step (each elimination
+// subtracts `lead(working) · b · v^k`), so the substrate is `Ring<T>`,
+// not `Field<T>`. This is the form the Hensel lift step needs:
+// `dup_div(s · e, h)` over ℤ[x] where `h` is monic.
+//
+// Throws on `b = 0`, on `b` not monic in `v` (so callers can't
+// silently get bad results), and on `deg_v(b) = 0` (a zero-degree
+// monic divisor is trivial — the quotient is the input scaled by 1
+// and `r = 0`; the function returns that exact result rather than
+// throwing, so the caller's loop logic doesn't need a special case).
+
+export function polyDivRemMonic<T>(
+  a: Poly<T>,
+  b: Poly<T>,
+  v: string,
+  R: Ring<T>,
+): { q: Poly<T>; r: Poly<T> } {
+  if (polyIsZero(b)) throw new Error("polyDivRemMonic: divisor is zero");
+  const degB = polyDegInVar(b, v);
+  if (degB < 0) throw new Error("polyDivRemMonic: divisor is zero");
+
+  // Verify lc_v(b) = R.one.
+  const bCoeffs = polyCoeffsInVar(b, v, R);
+  const lcB = bCoeffs[degB]!;
+  // `lcB` is itself a Poly<T> in the *other* variables; it must be the
+  // constant polynomial `R.one`. For univariate `b`, this is the
+  // single-monomial poly `{exp:[], coef:R.one}`.
+  if (!polyIsOne(lcB, R)) {
+    throw new Error("polyDivRemMonic: divisor is not monic in '" + v + "'");
+  }
+
+  if (degB === 0) {
+    // Divisor is the constant 1 (since it's monic of degree 0). q = a, r = 0.
+    return { q: a, r: polyZero<T>() };
+  }
+
+  if (polyIsZero(a)) {
+    return { q: polyZero<T>(), r: polyZero<T>() };
+  }
+  const degA = polyDegInVar(a, v);
+  if (degA < degB) {
+    return { q: polyZero<T>(), r: a };
+  }
+
+  const aCoeffs = polyCoeffsInVar(a, v, R);
+  const working: Poly<T>[] = aCoeffs.slice();
+  while (working.length < degA + 1) working.push(polyZero<T>());
+
+  const qCoeffs: Poly<T>[] = new Array(degA - degB + 1).fill(polyZero<T>());
+
+  for (let i = degA - degB; i >= 0; i--) {
+    const lead = working[degB + i]!;
+    if (polyIsZero(lead)) {
+      qCoeffs[i] = polyZero<T>();
+      continue;
+    }
+    // Monic divisor → no division required at the elimination step.
+    qCoeffs[i] = lead;
+    for (let j = 0; j <= degB; j++) {
+      working[i + j] = polySub(working[i + j]!, polyMul(lead, bCoeffs[j]!, R), R);
+    }
+  }
+
+  const rCoeffs = working.slice(0, degB);
+  return {
+    q: polyFromCoeffsInVar(qCoeffs, v, R),
+    r: polyFromCoeffsInVar(rCoeffs, v, R),
+  };
+}

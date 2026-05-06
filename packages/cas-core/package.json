@@ -7,6 +7,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "@workbench/mod-core": "workspace:*",
     "@workbench/protocol": "workspace:*"
   }
 }

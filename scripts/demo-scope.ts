@@ -622,6 +622,60 @@ if (linsolveResult.kind === "record") {
 }
 
 // -----------------------------------------------------------------------------
+// 15. poly-factor — exact univariate factorisation over ℚ
+// -----------------------------------------------------------------------------
+//
+// First Solve-tier symbolic tool (after linsolve-q): given a polynomial
+// over ℚ, return the unique irreducible factorisation. The demo shows
+// (x⁵ − x⁴ − 2x³ + 2x² + x − 1) factoring as (x − 1)³(x + 1)² —
+// multiplicity discipline + monic primitive integer factors.
+
+console.log("\n" + "=".repeat(60));
+console.log("  15. poly-factor — exact univariate factorisation over ℚ");
+console.log("=".repeat(60));
+console.log(
+  "Berlekamp 1967 over a lucky prime + Zassenhaus 1969 quadratic Hensel\n" +
+  "lift + subset-sum recombination. Pure ℤ/ℚ over BigInt — no float, no FFI.",
+);
+const factorInput = await parseExpr("x^5 - x^4 - 2*x^3 + 2*x^2 + x - 1");
+const factorResult = await wb.polyFactor({
+  kind: "record",
+  fields: { f: factorInput as never, var: { kind: "symbol", name: "x" } },
+});
+if (factorResult.kind === "record") {
+  const content = factorResult.fields["content"];
+  const factors = factorResult.fields["factors"];
+  if (content?.kind === "integer") {
+    console.log("  content:                ", content.value);
+  }
+  if (factors?.kind === "list") {
+    for (const fr of factors.items) {
+      if (fr?.kind === "record") {
+        const f = fr.fields["factor"];
+        const m = fr.fields["multiplicity"];
+        if (f && m?.kind === "integer") {
+          // Pretty-render the integer factor expression.
+          const render = (v: typeof f): string => {
+            if (v.kind === "symbol") return v.name;
+            if (v.kind === "integer") return v.value;
+            if (v.kind === "rational") return `${v.num}/${v.den}`;
+            if (v.kind === "expression") {
+              if (v.head === "+") return v.args.map(render).join(" + ").replace(/\+ -/g, "- ");
+              if (v.head === "*") return v.args.map(render).join("·");
+              if (v.head === "^") return `${render(v.args[0]!)}^${render(v.args[1]!)}`;
+              if (v.head === "neg") return `-${render(v.args[0]!)}`;
+              return `<${v.head}>`;
+            }
+            return `<${v.kind}>`;
+          };
+          console.log(`  factor:    (${render(f)})^${m.value}`);
+        }
+      }
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
 // Bonus — content-addressing
 // -----------------------------------------------------------------------------
 
