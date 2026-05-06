@@ -56,6 +56,7 @@ export {
   polyDegInVar,
   polyCoeffsInVar,
   polyFromCoeffsInVar,
+  polyDeriv,
   compareExp,
 } from "./poly.js";
 

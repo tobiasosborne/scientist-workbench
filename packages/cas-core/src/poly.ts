@@ -363,3 +363,59 @@ export function polyFromCoeffsInVar<T>(
   arr.sort((a, b) => compareExp(a.exp, b.exp));
   return { terms: arr };
 }
+
+/**
+ * Partial derivative `∂a/∂v`.
+ *
+ * For each term `c · m`, where `m` is a monomial in many variables and
+ * `m = v^k · m'` (m' has no `v`), the derivative wrt `v` is
+ * `k · c · v^(k-1) · m'`. Terms with no `v` (i.e. `k = 0`) drop out.
+ *
+ * The integer factor `k` is embedded into the coefficient ring via
+ * `R.fromInt(BigInt(k))` — every commutative ring with unity admits this
+ * embedding (`n ↦ n · 1`). `polyDeriv` therefore needs only a `Ring<T>`,
+ * not a `Field<T>` — derivative is not a Euclidean operation.
+ *
+ * Used by Yun's square-free decomposition (`packages/poly-factor`) and
+ * by future poly-aware substrate (e.g., Sturm sequences for real-root
+ * isolation).
+ */
+export function polyDeriv<T>(a: Poly<T>, v: string, R: Ring<T>): Poly<T> {
+  if (polyIsZero(a)) return polyZero<T>();
+  const out: Monomial<T>[] = [];
+  for (const t of a.terms) {
+    let powerOfV = 0;
+    let posV = -1;
+    for (let i = 0; i < t.exp.length; i++) {
+      if (t.exp[i]![0] === v) {
+        powerOfV = t.exp[i]![1];
+        posV = i;
+        break;
+      }
+    }
+    if (powerOfV === 0) continue;             // term has no `v`; derivative drops it
+    const factor = R.fromInt(BigInt(powerOfV));
+    const newCoef = R.mul(t.coef, factor);
+    if (R.isZero(newCoef)) continue;          // characteristic-p collapse (irrelevant for Q but free)
+    let newExp: [string, number][];
+    if (powerOfV === 1) {
+      // `v^1 → v^0`, drop the entry entirely.
+      newExp = [];
+      for (let i = 0; i < t.exp.length; i++) {
+        if (i !== posV) newExp.push([t.exp[i]![0], t.exp[i]![1]]);
+      }
+    } else {
+      // Decrement the exponent in place.
+      newExp = t.exp.map(([n, e], i) =>
+        i === posV ? [n, e - 1] as [string, number] : [n, e] as [string, number],
+      );
+    }
+    out.push({ exp: newExp, coef: newCoef });
+  }
+  // `out` is built in input-term order; re-sort to keep the canonical
+  // exponent ordering invariant. Duplicate keys do not arise (the
+  // input had no duplicates and we only decremented one exponent
+  // monotonically).
+  out.sort((a, b) => compareExp(a.exp, b.exp));
+  return { terms: out };
+}

@@ -61,6 +61,13 @@
         "@workbench/quadrature": "workspace:*",
       },
     },
+    "packages/poly-factor": {
+      "name": "@workbench/poly-factor",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/cas-core": "workspace:*",
+      },
+    },
     "packages/protocol": {
       "name": "@workbench/protocol",
       "version": "0.2.0",
@@ -383,6 +390,8 @@
     "@workbench/mod-core": ["@workbench/mod-core@workspace:packages/mod-core"],
 
     "@workbench/ode-core": ["@workbench/ode-core@workspace:packages/ode-core"],
+
+    "@workbench/poly-factor": ["@workbench/poly-factor@workspace:packages/poly-factor"],
 
     "@workbench/protocol": ["@workbench/protocol@workspace:packages/protocol"],
 
