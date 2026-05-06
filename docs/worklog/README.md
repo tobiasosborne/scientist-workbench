@@ -61,6 +61,7 @@ write the frictions and the dead ends as well as the wins.
 | 048 | [`integrate-ode-ivp` via the tournament-protocol bench (29/29)](048-integrate-ode-ivp.md) | 2026-05-05 | scientist-workbench-l6p |
 | 049 | [`integrate-ode-stiff` via the tournament-protocol bench (19/19)](049-integrate-ode-stiff.md) | 2026-05-05 | scientist-workbench-09g |
 | 050 | [`integrate-ode-symplectic` via the tournament-protocol bench (17/17)](050-integrate-ode-symplectic.md) | 2026-05-05 | scientist-workbench-4gr |
+| 051 | [`poly-factor-q` bench + first substrate (Yun square-free, 17 tests / 607 expects)](051-poly-factor-bench-and-squarefree.md) | 2026-05-06 | scientist-workbench-{4nz, 3s2, 153} |
 
 ## How to add a new shard
 
