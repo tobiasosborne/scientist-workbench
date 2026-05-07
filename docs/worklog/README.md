@@ -78,6 +78,7 @@ write the frictions and the dead ends as well as the wins.
 | 065 | [`tools/alg-num-arith` ships: wire envelope for `Root[poly, k]` field arithmetic](065-alg-num-arith-tool.md) | 2026-05-07 | (substrate for bead `iay`) |
 | 066 | [`bench/alg-num-arith/` ships: cross-validate against SymPy `qqbar` (iay)](066-iay-bench-alg-num-arith.md) | 2026-05-07 | scientist-workbench-iay |
 | 067 | [algNumInv `reverseCoefficients` term-order fix (5zh)](067-palindromic-minpoly-inv-fix.md) | 2026-05-07 | scientist-workbench-5zh |
+| 068 | [ADR-0020: arbitrary-precision tier (bigfloat substrate; tstournament problem-13 forcing)](068-arbitrary-precision-tier.md) | 2026-05-07 | scientist-workbench-hv0 (epic), -hv0.1 (substrate; in-progress) |
 
 ## How to add a new shard
 

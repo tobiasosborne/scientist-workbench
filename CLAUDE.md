@@ -199,16 +199,21 @@ re-check the relevant ADR.
   holds byte-identically on both surfaces — this is by construction
   via `executeToolDef` (ADR-0012). If you see in-process and
   subprocess output diverge, that is a bug, not a degree of freedom.
-- **Determinism contract is tiered, additively. Three annotations,
+- **Determinism contract is tiered, additively. Four annotations,
   mutually exclusive in practice.** Default = symbolic = bit-identical
-  *cross-platform forever* (the unconditional rule). `nondeterministic:
-  true` (ADR-0005) opts out of the determinism contract entirely —
-  today only `entropy-source`. `numerical: true` (ADR-0015) is bit-
-  identical *given the platform fingerprint* `{arch, os, runtime}`;
-  cross-platform divergence is recorded in the provenance record's
-  optional `platform` field, and `runMemoized` skips cache hits whose
-  `platform` doesn't match the running platform. Do *not* unify the
-  two flags as a discriminated `tier: ...` enum without a separate
+  *cross-platform forever* (the unconditional rule). `arbprec: true`
+  (ADR-0020) is *also* bit-identical *cross-platform forever* given an
+  explicit `--precision=<int>` standard flag — `BigInt` arithmetic is
+  bit-identical across runtimes by language specification, so the
+  `packages/bigfloat` substrate and every tool built on it carries the
+  strongest determinism contract the workbench has. `numerical: true`
+  (ADR-0015) is bit-identical *given the platform fingerprint*
+  `{arch, os, runtime}`; cross-platform divergence is recorded in the
+  provenance record's optional `platform` field, and `runMemoized`
+  skips cache hits whose `platform` doesn't match the running platform.
+  `nondeterministic: true` (ADR-0005) opts out of the determinism
+  contract entirely — today only `entropy-source`. Do *not* unify these
+  flags as a discriminated `tier: ...` enum without a separate
   (breaking) ADR — the parallel-flag pattern is load-bearing for
   byte-identical provenance compatibility. Per-output tier conditioning
   is honest: a tool with `numerical: true` only writes the `platform`
@@ -218,7 +223,11 @@ re-check the relevant ADR.
   the running fingerprint without doing any work; an agent's planner
   reads a stored provenance record's `platform` field and compares it
   to `--platform-fingerprint` to decide whether the cached output is
-  admissible *before* invoking the tool.
+  admissible *before* invoking the tool. `arbprec: true` tools inherit
+  a standard `--precision=<int>` flag (default 50, in decimal digits)
+  via the same flag-merge layer as `--schema` / `--examples` (ADR-0011);
+  the `precision` flag value is part of the input identity, so
+  different precisions cache to different output hashes.
 
 ## Worklog
 
