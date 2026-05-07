@@ -8,6 +8,16 @@
         "typescript": "^5.6.0",
       },
     },
+    "packages/alg-num": {
+      "name": "@workbench/alg-num",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/cas-core": "workspace:*",
+        "@workbench/poly-factor": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+        "@workbench/real-roots": "workspace:*",
+      },
+    },
     "packages/cas-core": {
       "name": "@workbench/cas-core",
       "version": "0.2.0",
@@ -431,6 +441,8 @@
     "@types/bun": ["@types/bun@1.3.13", "", { "dependencies": { "bun-types": "1.3.13" } }, "sha512-9fqXWk5YIHGGnUau9TEi+qdlTYDAnOj+xLCmSTwXfAIqXr2x4tytJb43E9uCvt09zJURKXwAtkoH4nLQfzeTXw=="],
 
     "@types/node": ["@types/node@25.6.0", "", { "dependencies": { "undici-types": "~7.19.0" } }, "sha512-+qIYRKdNYJwY3vRCZMdJbPLJAtGjQBudzZzdzwQYkEPQd+PJGixUL5QfvCLDaULoLv+RhT3LDkwEfKaAkgSmNQ=="],
+
+    "@workbench/alg-num": ["@workbench/alg-num@workspace:packages/alg-num"],
 
     "@workbench/cas-core": ["@workbench/cas-core@workspace:packages/cas-core"],
 
