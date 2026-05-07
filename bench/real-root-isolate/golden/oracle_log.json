@@ -1,0 +1,336 @@
+{
+  "version": 1,
+  "live_oracle": true,
+  "summary": {
+    "total": 37,
+    "admitted": 37,
+    "dropped": 0
+  },
+  "entries": [
+    {
+      "id": "A-linear-rational",
+      "tier": "A",
+      "sympy": "ok",
+      "sympy_count": 1,
+      "wolfram": "ok",
+      "wolfram_count": 1,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "A-linear-fraction-root",
+      "tier": "A",
+      "sympy": "ok",
+      "sympy_count": 1,
+      "wolfram": "ok",
+      "wolfram_count": 1,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "A-linear-negative",
+      "tier": "A",
+      "sympy": "ok",
+      "sympy_count": 1,
+      "wolfram": "ok",
+      "wolfram_count": 1,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "A-quadratic-two-real",
+      "tier": "A",
+      "sympy": "ok",
+      "sympy_count": 2,
+      "wolfram": "ok",
+      "wolfram_count": 2,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "A-quadratic-rational",
+      "tier": "A",
+      "sympy": "ok",
+      "sympy_count": 2,
+      "wolfram": "ok",
+      "wolfram_count": 2,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "B-T3",
+      "tier": "B",
+      "sympy": "ok",
+      "sympy_count": 3,
+      "wolfram": "ok",
+      "wolfram_count": 3,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "B-T4",
+      "tier": "B",
+      "sympy": "ok",
+      "sympy_count": 4,
+      "wolfram": "ok",
+      "wolfram_count": 4,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "B-T5",
+      "tier": "B",
+      "sympy": "ok",
+      "sympy_count": 5,
+      "wolfram": "ok",
+      "wolfram_count": 5,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "B-T6",
+      "tier": "B",
+      "sympy": "ok",
+      "sympy_count": 6,
+      "wolfram": "ok",
+      "wolfram_count": 6,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "B-T7",
+      "tier": "B",
+      "sympy": "ok",
+      "sympy_count": 7,
+      "wolfram": "ok",
+      "wolfram_count": 7,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "B-P3",
+      "tier": "B",
+      "sympy": "ok",
+      "sympy_count": 3,
+      "wolfram": "ok",
+      "wolfram_count": 3,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "B-P4",
+      "tier": "B",
+      "sympy": "ok",
+      "sympy_count": 4,
+      "wolfram": "ok",
+      "wolfram_count": 4,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "B-P5",
+      "tier": "B",
+      "sympy": "ok",
+      "sympy_count": 5,
+      "wolfram": "ok",
+      "wolfram_count": 5,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "C-mignotte-3-10",
+      "tier": "C",
+      "sympy": "ok",
+      "sympy_count": 3,
+      "wolfram": "ok",
+      "wolfram_count": 3,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "C-mignotte-4-10",
+      "tier": "C",
+      "sympy": "ok",
+      "sympy_count": 4,
+      "wolfram": "ok",
+      "wolfram_count": 4,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "C-mignotte-5-5",
+      "tier": "C",
+      "sympy": "ok",
+      "sympy_count": 3,
+      "wolfram": "ok",
+      "wolfram_count": 3,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "C-three-rational-cluster",
+      "tier": "C",
+      "sympy": "ok",
+      "sympy_count": 3,
+      "wolfram": "ok",
+      "wolfram_count": 3,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "C-roots-10e-6-apart",
+      "tier": "C",
+      "sympy": "ok",
+      "sympy_count": 2,
+      "wolfram": "ok",
+      "wolfram_count": 2,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "D-wilkinson-20",
+      "tier": "D",
+      "sympy": "ok",
+      "sympy_count": 20,
+      "wolfram": "ok",
+      "wolfram_count": 20,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "D-cheby-T11",
+      "tier": "D",
+      "sympy": "ok",
+      "sympy_count": 11,
+      "wolfram": "ok",
+      "wolfram_count": 11,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "D-wilkinson-50",
+      "tier": "D",
+      "sympy": "ok",
+      "sympy_count": 50,
+      "wolfram": "ok",
+      "wolfram_count": 50,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "D-cheby-T13",
+      "tier": "D",
+      "sympy": "ok",
+      "sympy_count": 13,
+      "wolfram": "ok",
+      "wolfram_count": 13,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "D-half-integer-30",
+      "tier": "D",
+      "sympy": "ok",
+      "sympy_count": 30,
+      "wolfram": "ok",
+      "wolfram_count": 30,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "E-large-coefs-quad",
+      "tier": "E",
+      "sympy": "ok",
+      "sympy_count": 2,
+      "wolfram": "ok",
+      "wolfram_count": 2,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "E-mixed-denoms-cubic",
+      "tier": "E",
+      "sympy": "ok",
+      "sympy_count": 1,
+      "wolfram": "ok",
+      "wolfram_count": 1,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "E-tiny-leading-large-root",
+      "tier": "E",
+      "sympy": "ok",
+      "sympy_count": 1,
+      "wolfram": "ok",
+      "wolfram_count": 1,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "E-rational-quartic",
+      "tier": "E",
+      "sympy": "ok",
+      "sympy_count": 0,
+      "wolfram": "ok",
+      "wolfram_count": 0,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "E-spread-roots-quad",
+      "tier": "E",
+      "sympy": "ok",
+      "sympy_count": 2,
+      "wolfram": "ok",
+      "wolfram_count": 2,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "F-not-squarefree-double",
+      "tier": "F",
+      "sympy": "refused:real-root-isolate/not-squarefree",
+      "wolfram": "ok",
+      "consensus": "wolfram-ok-workbench-bounded-scope"
+    },
+    {
+      "id": "F-not-squarefree-mixed",
+      "tier": "F",
+      "sympy": "refused:real-root-isolate/not-squarefree",
+      "wolfram": "ok",
+      "consensus": "wolfram-ok-workbench-bounded-scope"
+    },
+    {
+      "id": "F-multivariate",
+      "tier": "F",
+      "sympy": "refused:real-root-isolate/multivariate",
+      "wolfram": "ok",
+      "consensus": "wolfram-ok-workbench-bounded-scope"
+    },
+    {
+      "id": "F-non-polynomial-sin",
+      "tier": "F",
+      "sympy": "refused:real-root-isolate/non-polynomial",
+      "wolfram": "ok",
+      "consensus": "wolfram-ok-workbench-bounded-scope"
+    },
+    {
+      "id": "G-no-real-quadratic",
+      "tier": "G",
+      "sympy": "ok",
+      "sympy_count": 0,
+      "wolfram": "ok",
+      "wolfram_count": 0,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "G-no-real-quartic",
+      "tier": "G",
+      "sympy": "ok",
+      "sympy_count": 0,
+      "wolfram": "ok",
+      "wolfram_count": 0,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "G-cyclotomic-Phi12",
+      "tier": "G",
+      "sympy": "ok",
+      "sympy_count": 0,
+      "wolfram": "ok",
+      "wolfram_count": 0,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "G-cyclotomic-Phi13",
+      "tier": "G",
+      "sympy": "ok",
+      "sympy_count": 0,
+      "wolfram": "ok",
+      "wolfram_count": 0,
+      "consensus": "sympy+wolfram"
+    },
+    {
+      "id": "G-roots-with-zero",
+      "tier": "G",
+      "sympy": "ok",
+      "sympy_count": 3,
+      "wolfram": "ok",
+      "wolfram_count": 3,
+      "consensus": "sympy+wolfram"
+    }
+  ]
+}
