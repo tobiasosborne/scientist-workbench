@@ -28,6 +28,17 @@ export { rootToValue, valueToRoot } from "./encoding.js";
 
 export { makeRootByIndex } from "./by-index.js";
 
+export { sylvesterResultantInY } from "./resultant.js";
+
+export {
+  algNumNeg,
+  algNumInv,
+  algNumAdd,
+  algNumSub,
+  algNumMul,
+  algNumDiv,
+} from "./arithmetic.js";
+
 export {
   type RefineTarget,
   refineRoot,

@@ -92,18 +92,30 @@ import { squareFree } from "./squarefree.js";
 // -----------------------------------------------------------------------------
 
 /**
- * Factor a primitive monic square-free integer polynomial.
+ * Factor a primitive square-free integer polynomial.
  *
  * @param f  Polynomial in `ℤ[v]`. Must satisfy:
  *           - `polyDegInVar(f, v) ≥ 1`
- *           - leading coefficient in `v` is `1` (monic)
+ *           - **positive** leading coefficient in `v`
  *           - `gcd` of coefficients is 1 (primitive)
  *           - square-free in `ℤ[v]`
  *           These preconditions are enforced by the caller (typically
- *           the `factorIntZ` wrapper which strips content + multiplicity).
+ *           the `factorIntZ` wrapper which strips content + multiplicity
+ *           and sign-fixes).
  *
- * @returns  List of monic irreducible factors in `ℤ[v]`. The product
- *           of returned factors equals `f` exactly.
+ *           Non-monic inputs (positive `lc(f) > 1`) are handled via the
+ *           standard monic-transform trick (Cohen 1993 GTM 138 §3.5.6):
+ *           build `g(x) = lc^{n-1} · f(x/lc)` (monic in ℤ[v]), factor
+ *           `g`, and back-transform each factor `g_i(x)` to
+ *           `primPart(g_i(lc · x))`. Lifts the prior monic-only
+ *           contract to support algebraic-number arithmetic, where
+ *           inversion produces canonical minpolys like `2x² − 1`
+ *           (e.g. `Root[2x² − 1, 1] = 1/√2`).
+ *
+ * @returns  List of irreducible factors in `ℤ[v]`. Each factor is
+ *           primitive with positive leading coefficient (monic when
+ *           `lc(f) = 1`; possibly non-monic when `lc(f) > 1`). The
+ *           product of returned factors equals `f` exactly.
  */
 export function factorPrimitiveSquareFreeZ(
   f: Poly<bigint>,
@@ -113,27 +125,175 @@ export function factorPrimitiveSquareFreeZ(
   if (n < 1) throw new Error("factorPrimitiveSquareFreeZ: input must have positive degree");
   if (n === 1) return [f];
 
-  // Pick a lucky prime.
+  const lc = leadingCoefBigInt(f, v);
+  if (lc === 0n) throw new Error("factorPrimitiveSquareFreeZ: leading coefficient is zero");
+  if (lc < 0n) throw new Error("factorPrimitiveSquareFreeZ: leading coefficient must be positive (caller should sign-fix)");
+
+  if (lc === 1n) return factorMonicPrimitiveSquareFreeZ(f, v, n);
+
+  // Non-monic path. Build g(x) = ∑_k c_k · lc^{n-1-k} · x^k. This is
+  // monic in ℤ[v]; factor it (recurse one step into the monic path),
+  // then back-transform each factor by x ↦ lc · x and primitive-part.
+  const g = monicTransform(f, v, lc, n);
+  const monicFactors = factorMonicPrimitiveSquareFreeZ(g, v, n);
+  return monicFactors.map((gi) => primitivePartScaledX(gi, v, lc));
+}
+
+/** Inner monic-only path. Same Berlekamp + Hensel + recombine as before;
+ * preconditions are checked by the dispatcher above. */
+function factorMonicPrimitiveSquareFreeZ(
+  f: Poly<bigint>,
+  v: string,
+  n: number,
+): Poly<bigint>[] {
   const p = pickLuckyPrime(f, v);
   const F = fpField(p);
 
-  // Factor mod p. The reduction may have content > 1 if any coef is
-  // ≡ 0 mod p, but lc(f) ≢ 0 mod p (lucky prime); so the reduction is
-  // monic and the factor list is well-defined.
   const fModP = polyTrunc(f, p);
   const modPFactors = berlekampFactor(fModP, p, v);
 
-  // If only one mod-p factor, f is irreducible (mod-p irreducible ⟹
-  // ℤ-irreducible by Gauss-style argument).
   if (modPFactors.length === 1) return [f];
 
-  // Hensel lift to sufficient precision.
   const l = mignotteHenselExponent(f, p, v);
   const liftedFactors = henselLiftMany(f, modPFactors, p, l, v);
-
-  // Recombine.
   return recombineFactors(f, liftedFactors, p, l, v);
-  void F;  // F constructed for symmetry; not used at this level.
+  void F;
+  void n;
+}
+
+// Monic-transform helpers for the non-monic path.
+
+/** Leading coefficient of `f` in `v` as a `bigint`. Throws if `f` is
+ * the zero polynomial. */
+function leadingCoefBigInt(f: Poly<bigint>, v: string): bigint {
+  if (polyIsZero(f)) throw new Error("leadingCoefBigInt: zero polynomial");
+  const n = polyDegInVar(f, v);
+  for (const t of f.terms) {
+    let pv = 0;
+    for (const [name, exp] of t.exp) if (name === v) pv = exp;
+    if (pv === n) return t.coef;
+  }
+  throw new Error("leadingCoefBigInt: no term at leading degree (canonical-form invariant violated)");
+}
+
+/** Build `g(x) = sum_k c_k · a^{n-1-k} · x^k` from `f(x) = sum_k c_k · x^k`.
+ * Monic in `v` over ℤ when `a = lc(f)`. Used by the non-monic factor
+ * path. */
+function monicTransform(
+  f: Poly<bigint>,
+  v: string,
+  a: bigint,
+  n: number,
+): Poly<bigint> {
+  const out: { exp: readonly [string, number][]; coef: bigint }[] = [];
+  for (const t of f.terms) {
+    let pv = 0;
+    const restExp: [string, number][] = [];
+    for (const [name, exp] of t.exp) {
+      if (name === v) pv = exp;
+      else restExp.push([name, exp]);
+    }
+    const exponent = n - 1 - pv;
+    let scale: bigint = 1n;
+    if (exponent > 0) {
+      let aPow: bigint = a;
+      let e = exponent;
+      while (e > 0) {
+        if ((e & 1) === 1) scale *= aPow;
+        e >>>= 1;
+        if (e > 0) aPow = aPow * aPow;
+      }
+    } else if (exponent < 0) {
+      // exponent < 0 only at k = n, giving c_n · a^{-1}. By construction
+      // c_n = a, so c_n · a^{-1} = 1. No `aPow` to compute.
+      const newExp: [string, number][] = pv === 0 ? restExp : [...restExp, [v, pv]];
+      out.push({ exp: newExp, coef: 1n });
+      continue;
+    }
+    const newCoef = t.coef * scale;
+    if (newCoef === 0n) continue;
+    const newExp: [string, number][] = pv === 0 ? restExp : [...restExp, [v, pv]];
+    out.push({ exp: newExp, coef: newCoef });
+  }
+  return canonicalisePolyTerms(out);
+}
+
+/** Compute `primPart(g(a · x))`: substitute `x → a·x` in `g`, then
+ * divide out the integer content. Used to back-transform a monic
+ * factor of the monic-transform back into a factor of the original
+ * non-monic input. */
+function primitivePartScaledX(
+  g: Poly<bigint>,
+  v: string,
+  a: bigint,
+): Poly<bigint> {
+  // Substitute x → a · x: each term c · x^k becomes c · a^k · x^k.
+  const scaled: { exp: readonly [string, number][]; coef: bigint }[] = [];
+  for (const t of g.terms) {
+    let pv = 0;
+    const restExp: [string, number][] = [];
+    for (const [name, exp] of t.exp) {
+      if (name === v) pv = exp;
+      else restExp.push([name, exp]);
+    }
+    let scale: bigint = 1n;
+    let aPow: bigint = a;
+    let e = pv;
+    while (e > 0) {
+      if ((e & 1) === 1) scale *= aPow;
+      e >>>= 1;
+      if (e > 0) aPow = aPow * aPow;
+    }
+    const newCoef = t.coef * scale;
+    if (newCoef === 0n) continue;
+    const newExp: [string, number][] = pv === 0 ? restExp : [...restExp, [v, pv]];
+    scaled.push({ exp: newExp, coef: newCoef });
+  }
+  // Strip integer content (gcd of all |coefficients|).
+  let content: bigint = 0n;
+  for (const t of scaled) content = gcdBigAbs(content, t.coef);
+  if (content === 0n) return canonicalisePolyTerms(scaled);
+  // Divide each coefficient by content.
+  const primitive = scaled.map((t) => ({ exp: t.exp, coef: t.coef / content }));
+  return canonicalisePolyTerms(primitive);
+}
+
+/** Re-canonicalise a list of terms (sort by exponent, drop zeros).
+ * The cas-core poly invariants require sorted terms; the transforms
+ * above produce term lists that may be out of canonical order after
+ * substitution. */
+function canonicalisePolyTerms(
+  terms: readonly { exp: readonly [string, number][]; coef: bigint }[],
+): Poly<bigint> {
+  // Group by exp signature.
+  const byKey = new Map<string, bigint>();
+  const expByKey = new Map<string, [string, number][]>();
+  for (const t of terms) {
+    if (t.coef === 0n) continue;
+    const sortedExp = [...t.exp].slice().sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+    const key = sortedExp.map(([n, e]) => `${n}^${e}`).join(",");
+    byKey.set(key, (byKey.get(key) ?? 0n) + t.coef);
+    if (!expByKey.has(key)) expByKey.set(key, sortedExp);
+  }
+  const result: { exp: readonly [string, number][]; coef: bigint }[] = [];
+  for (const [key, coef] of byKey) {
+    if (coef === 0n) continue;
+    result.push({ exp: expByKey.get(key)!, coef });
+  }
+  // cas-core's poly canonical order uses compareExp; we mirror by
+  // lexicographic comparison on (var, exp) pairs (descending in total
+  // degree if needed, but the simple lex is consistent with cas-core's
+  // sorted-monomial form when monomials have a single variable).
+  result.sort((a, b) => {
+    const ae = a.exp, be = b.exp;
+    for (let i = 0; i < Math.min(ae.length, be.length); i++) {
+      if (ae[i]![0] < be[i]![0]) return -1;
+      if (ae[i]![0] > be[i]![0]) return 1;
+      if (ae[i]![1] !== be[i]![1]) return ae[i]![1] - be[i]![1];
+    }
+    return ae.length - be.length;
+  });
+  return { terms: result };
 }
 
 // -----------------------------------------------------------------------------
