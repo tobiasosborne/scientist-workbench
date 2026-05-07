@@ -495,7 +495,7 @@ function rootInHint(
  *
  * which lands at `h_d = N(p, q)` after `d` iterations.
  */
-function signAtRat(g: Poly<bigint>, r: Rat, v: string): -1 | 0 | 1 {
+export function signAtRat(g: Poly<bigint>, r: Rat, v: string): -1 | 0 | 1 {
   if (polyIsZero(g)) return 0;
   const coeffPolys = polyCoeffsInVar(g, v, INT_RING);   // low-to-high
   const d = coeffPolys.length - 1;

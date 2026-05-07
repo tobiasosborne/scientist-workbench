@@ -328,37 +328,54 @@ describe("wire bytes are canonical", () => {
 // valueToRoot — input-validation refusals
 // -----------------------------------------------------------------------------
 
-describe("valueToRoot — refusals", () => {
-  test("non-canonical (non-primitive) wire bytes throw", () => {
-    // 2x^2 − 4 in wire form: coefficients [-4, 0, 2] at low-to-high.
-    // gcd = 2 ≠ 1, so verifyCanonicalForm should refuse.
-    const v = parse(canonicalize(
-      rootToValue({
-        minpoly: intPolyLowToHigh([-2n, 0n, 1n]),
-        k: 1,
-        interval: { lo: rat(1n), hi: rat(2n) },
-      }),
-    ));
-    void v;     // sanity: a *canonical* value parses fine; we test the refusal next.
+describe("valueToRoot — non-canonical inputs canonicalise", () => {
+  // Per ADR-0018 §"Canonical form": "Direct construction with
+  // non-canonical input is not a `ToolError` — it's silently
+  // canonicalised". `valueToRoot` realises this for non-canonical
+  // wire bytes via the `makeRootByIndex` fallback (bead `6cd`).
 
-    // Construct a non-primitive wire form by hand (bypassing rootToValue).
-    const nonCanonical = parse(
+  test("non-primitive wire bytes (2x^2 − 4) canonicalise to x^2 − 2", () => {
+    const wire = parse(
       `{"args":[{"args":[{"kind":"integer","value":"-4"},{"kind":"integer","value":"0"},{"kind":"integer","value":"2"}],"head":"Polynomial","kind":"expression"},{"kind":"integer","value":"1"}],"head":"Root","kind":"expression"}`,
     );
-    expect(() => valueToRoot(nonCanonical)).toThrow(/primitive|gcd/i);
+    const r = valueToRoot(wire);
+    expect(polyEq(r.minpoly, intPolyLowToHigh([-2n, 0n, 1n]), INT_RING)).toBe(true);
+    expect(r.k).toBe(1);
   });
 
-  test("non-canonical (negative leading) wire bytes throw", () => {
-    const nonCanonical = parse(
+  test("negative-leading wire bytes (−x^2 + 2) canonicalise to x^2 − 2", () => {
+    // Real roots of (−x^2 + 2) are ±√2 in ascending order. k=1 picks +√2.
+    const wire = parse(
       `{"args":[{"args":[{"kind":"integer","value":"2"},{"kind":"integer","value":"0"},{"kind":"integer","value":"-1"}],"head":"Polynomial","kind":"expression"},{"kind":"integer","value":"1"}],"head":"Root","kind":"expression"}`,
     );
-    expect(() => valueToRoot(nonCanonical)).toThrow(/leading|positive/i);
+    const r = valueToRoot(wire);
+    expect(polyEq(r.minpoly, intPolyLowToHigh([-2n, 0n, 1n]), INT_RING)).toBe(true);
+    expect(r.k).toBe(1);
   });
 
-  test("k out of range → throws", () => {
-    const v = parse(
+  test("reducible wire bytes ((x^2 − 2)(x^2 − 3) = x^4 − 5x^2 + 6, k=2) canonicalise to Root[x^2 − 3, 1] (= +√3)", () => {
+    // Real roots of (x^2 − 2)(x^2 − 3) ascending: −√3, −√2, +√2, +√3.
+    // k=2 → +√2 (within factor x^2 − 2, internalK=1).
+    // k=3 → +√3 (within factor x^2 − 3, internalK=1).
+    const wire2 = parse(
+      `{"args":[{"args":[{"kind":"integer","value":"6"},{"kind":"integer","value":"0"},{"kind":"integer","value":"-5"},{"kind":"integer","value":"0"},{"kind":"integer","value":"1"}],"head":"Polynomial","kind":"expression"},{"kind":"integer","value":"2"}],"head":"Root","kind":"expression"}`,
+    );
+    const r2 = valueToRoot(wire2);
+    expect(polyEq(r2.minpoly, intPolyLowToHigh([-2n, 0n, 1n]), INT_RING)).toBe(true);
+    expect(r2.k).toBe(1);
+
+    const wire3 = parse(
+      `{"args":[{"args":[{"kind":"integer","value":"6"},{"kind":"integer","value":"0"},{"kind":"integer","value":"-5"},{"kind":"integer","value":"0"},{"kind":"integer","value":"1"}],"head":"Polynomial","kind":"expression"},{"kind":"integer","value":"3"}],"head":"Root","kind":"expression"}`,
+    );
+    const r3 = valueToRoot(wire3);
+    expect(polyEq(r3.minpoly, intPolyLowToHigh([-3n, 0n, 1n]), INT_RING)).toBe(true);
+    expect(r3.k).toBe(1);
+  });
+
+  test("k out of range (still) throws", () => {
+    const wire = parse(
       `{"args":[{"args":[{"kind":"integer","value":"-2"},{"kind":"integer","value":"0"},{"kind":"integer","value":"1"}],"head":"Polynomial","kind":"expression"},{"kind":"integer","value":"5"}],"head":"Root","kind":"expression"}`,
     );
-    expect(() => valueToRoot(v)).toThrow(/exceeds|degree|index/i);
+    expect(() => valueToRoot(wire)).toThrow(/exceeds|degree|index/i);
   });
 });

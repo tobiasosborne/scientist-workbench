@@ -21,6 +21,15 @@ export {
   rootCanonicalEq,
   canonicalIntegerForm,
   polyToHighToLowRat,
+  signAtRat,
 } from "./root.js";
 
 export { rootToValue, valueToRoot } from "./encoding.js";
+
+export { makeRootByIndex } from "./by-index.js";
+
+export {
+  type RefineTarget,
+  refineRoot,
+  intervalWidth,
+} from "./refine.js";
