@@ -32,7 +32,7 @@ import {
 } from "./types.js";
 import { abs, neg, sgn, cmp, eq, isZero } from "./comparison.js";
 import { add, sub, mul, div, sqrt, powInt } from "./arithmetic.js";
-import { fromInt, fromFloat64, toFloat64 } from "./conversion.js";
+import { fromInt, fromFloat64, fromString, toFloat64 } from "./conversion.js";
 
 // =============================================================================
 // Constants — cached per-precision.
@@ -365,8 +365,12 @@ export function log1p(x: BigFloat, prec: number): BigFloat {
 // =============================================================================
 
 /**
- * `atan(x)` for `|x| < 1`. Used by `pi` and (eventually) by the public
- * `atan`. Throws if `|x| ≥ 1` — the caller must handle the reduction.
+ * `atan(x)` for `|x| < 1`. Used by `pi` and by the full `atan` (via the
+ * reduction step). Throws if `|x| ≥ 1`.
+ *
+ * For best convergence, callers should reduce |x| ≤ 0.5 before invoking;
+ * we provide that reduction internally via a Möbius identity in the
+ * 0.5 < |x| < 1 range.
  */
 export function atanSmall(x: BigFloat, prec: number): BigFloat {
   // Validate |x| < 1.
@@ -375,6 +379,31 @@ export function atanSmall(x: BigFloat, prec: number): BigFloat {
     throw new RangeError(`BigFloat.atanSmall: argument |x| must be < 1`);
   }
   if (isZero(x)) return { mantissa: 0n, exponent: 0, precision: prec };
+  // For 0.5 < |x| < 1, reduce via atan(x) = π/4 + atan((x-1)/(x+1)).
+  // The transform sends 0.5 → -1/3, 0.99 → -1/199, etc., so the recursive
+  // call always lands in |·| ≤ 0.5 where Taylor converges fast.
+  const half = fromString("0.5", prec);
+  if (cmp(abs(x), half) > 0) {
+    const work = prec + 32;
+    const xW: BigFloat = { mantissa: x.mantissa, exponent: x.exponent, precision: work };
+    const oneL = fromInt(1n, work);
+    const reduced = div(sub(xW, oneL, work), add(xW, oneL, work), work);
+    const sign = sgn(x);
+    if (sign === 1) {
+      // x > 0.5: atan(x) = π/4 + atan(reduced) where reduced ∈ (-1/3, 0).
+      const piW = pi(work);
+      const piOver4 = div(piW, fromInt(4n, work), work);
+      const result = add(piOver4, atanSmall(reduced, work), work);
+      return normalise(result.mantissa, result.exponent, prec);
+    }
+    // x < -0.5: atan(x) = -π/4 + atan(reduced) where reduced ∈ (0, 1/3) is
+    // positive (since (x-1)/(x+1) is positive when x < -1, but here x ∈ (-1, -0.5)
+    // so x-1 < 0 and x+1 > 0 → reduced < 0; and we negate via symmetry of atan).
+    // Use atan(x) = -atan(-x).
+    const result = neg(atanSmall(neg(x), prec));
+    return result;
+  }
+  // |x| ≤ 0.5: direct Taylor.
   const work = prec + 32;
   // atan(x) = x - x³/3 + x⁵/5 - x⁷/7 + ...
   const x2 = mul(x, x, work);
@@ -397,4 +426,387 @@ export function atanSmall(x: BigFloat, prec: number): BigFloat {
     if (n > work + 1000) break;
   }
   return normalise(sum.mantissa, sum.exponent, prec);
+}
+
+// =============================================================================
+// Trigonometry — sin, cos, tan, asin, acos, atan, atan2
+// =============================================================================
+
+/**
+ * Reduce x to (q, r) with x = q · π/2 + r, |r| ≤ π/4, q ∈ {0,1,2,3} (mod 4).
+ *
+ * Used as the first step of sin and cos. The reduction is exact at
+ * `work` precision; the `q` is a small integer (the quadrant); `r` is
+ * a BigFloat in (-π/4, π/4].
+ */
+function reduceModPiOver2(
+  x: BigFloat,
+  work: number,
+): { q: number; r: BigFloat } {
+  const piW = pi(work);
+  const piOver2 = div(piW, fromInt(2n, work), work);
+  // q = round(x / (π/2)). Use float64 estimate, refine.
+  const xOverPiHalf = div(x, piOver2, work);
+  const xFloat = toFloat64(xOverPiHalf).value;
+  if (!Number.isFinite(xFloat) || !Number.isSafeInteger(Math.round(xFloat))) {
+    throw new RangeError(`BigFloat.sin/cos: argument too large for trig reduction`);
+  }
+  const qInt = Math.round(xFloat);
+  const r = sub(x, mul(fromInt(BigInt(qInt), work), piOver2, work), work);
+  // Normalise q to {0, 1, 2, 3}.
+  const qMod = ((qInt % 4) + 4) % 4;
+  return { q: qMod, r };
+}
+
+/**
+ * `sin(x)`. Argument reduction modulo π/2; halving + Taylor on the reduced
+ * value; quadrant lookup to recover sin from sin(r) or cos(r).
+ *
+ * Halving reduction: sin(2y) = 2·sin(y)·cos(y); we halve the reduced r
+ * `m = ceil(sqrt(prec))` times and Taylor on the halved value, then
+ * de-halve via sin/cos identities.
+ */
+export function sin(x: BigFloat, prec: number): BigFloat {
+  if (isZero(x)) return { mantissa: 0n, exponent: 0, precision: prec };
+  const work = prec + 32;
+  const { q, r } = reduceModPiOver2(x, work);
+  // After reduction, sin(x) = ±sin(r) or ±cos(r) depending on q.
+  // q=0: sin(x) = sin(r);  q=1: sin(x) = cos(r);
+  // q=2: sin(x) = -sin(r); q=3: sin(x) = -cos(r).
+  const { sin: sinR, cos: cosR } = sinCosSmall(r, work);
+  let result: BigFloat;
+  switch (q) {
+    case 0: result = sinR; break;
+    case 1: result = cosR; break;
+    case 2: result = neg(sinR); break;
+    case 3: result = neg(cosR); break;
+    default: throw new Error("unreachable");
+  }
+  return normalise(result.mantissa, result.exponent, prec);
+}
+
+/**
+ * `cos(x)`. Argument reduction modulo π/2; halving + Taylor; quadrant
+ * lookup analogous to sin.
+ */
+export function cos(x: BigFloat, prec: number): BigFloat {
+  if (isZero(x)) {
+    return { mantissa: 1n << BigInt(prec - 1), exponent: -(prec - 1), precision: prec };
+  }
+  const work = prec + 32;
+  const { q, r } = reduceModPiOver2(x, work);
+  // q=0: cos(r); q=1: -sin(r); q=2: -cos(r); q=3: sin(r).
+  const { sin: sinR, cos: cosR } = sinCosSmall(r, work);
+  let result: BigFloat;
+  switch (q) {
+    case 0: result = cosR; break;
+    case 1: result = neg(sinR); break;
+    case 2: result = neg(cosR); break;
+    case 3: result = sinR; break;
+    default: throw new Error("unreachable");
+  }
+  return normalise(result.mantissa, result.exponent, prec);
+}
+
+/**
+ * `tan(x) = sin(x) / cos(x)`. Throws when cos(x) is zero (x = π/2 + k·π).
+ */
+export function tan(x: BigFloat, prec: number): BigFloat {
+  const work = prec + 32;
+  const s = sin(x, work);
+  const c = cos(x, work);
+  if (isZero(c)) {
+    throw new RangeError(`BigFloat.tan: argument is at a pole (x = π/2 + k·π)`);
+  }
+  return div(s, c, prec);
+}
+
+/**
+ * Compute sin and cos together for |x| ≤ π/4 by halving + Taylor.
+ *
+ * Halving: pick m = ceil(sqrt(prec)); compute sin(x/2^m) and cos(x/2^m)
+ * via Taylor, then de-halve via sin(2y) = 2·sin(y)·cos(y) and
+ * cos(2y) = 1 − 2·sin²(y).
+ */
+function sinCosSmall(x: BigFloat, prec: number): { sin: BigFloat; cos: BigFloat } {
+  if (isZero(x)) {
+    return {
+      sin: { mantissa: 0n, exponent: 0, precision: prec },
+      cos: fromInt(1n, prec),
+    };
+  }
+  const m = Math.max(0, Math.ceil(Math.sqrt(prec)));
+  // x / 2^m, exact.
+  const xSmall: BigFloat = {
+    mantissa: x.mantissa,
+    exponent: x.exponent - m,
+    precision: x.precision,
+  };
+  // Taylor: sin(y) = y - y³/6 + y⁵/120 - ...
+  //         cos(y) = 1 - y²/2 + y⁴/24 - ...
+  const y2 = mul(xSmall, xSmall, prec);
+  let sinSum: BigFloat = xSmall;
+  let cosSum: BigFloat = fromInt(1n, prec);
+  let sinTerm: BigFloat = xSmall; // y^(2k+1) / (2k+1)! ; start k=0
+  let cosTerm: BigFloat = fromInt(1n, prec); // y^(2k) / (2k)! ; start k=0
+  let k = 1;
+  const stopThreshold = -(prec + 16);
+  while (true) {
+    // Update cos term: y^(2k) / (2k)! = cosTerm_{k-1} * y² / ((2k-1)·2k).
+    cosTerm = neg(div(mul(cosTerm, y2, prec), fromInt((2 * k - 1) * 2 * k, prec), prec));
+    cosSum = add(cosSum, cosTerm, prec);
+    // Update sin term: y^(2k+1) / (2k+1)! = sinTerm_{k-1} * y² / ((2k)·(2k+1)).
+    sinTerm = neg(div(mul(sinTerm, y2, prec), fromInt(2 * k * (2 * k + 1), prec), prec));
+    sinSum = add(sinSum, sinTerm, prec);
+    const cosBits = bitLength(cosTerm.mantissa < 0n ? -cosTerm.mantissa : cosTerm.mantissa);
+    const sinBits = bitLength(sinTerm.mantissa < 0n ? -sinTerm.mantissa : sinTerm.mantissa);
+    if (
+      (cosTerm.mantissa === 0n || cosTerm.exponent + cosBits < stopThreshold) &&
+      (sinTerm.mantissa === 0n || sinTerm.exponent + sinBits < stopThreshold)
+    ) {
+      break;
+    }
+    k += 1;
+    if (k > prec + 1000) break;
+  }
+  // De-halve m times: sin(2y) = 2·sin(y)·cos(y); cos(2y) = 1 − 2·sin²(y).
+  let sn = sinSum;
+  let cs = cosSum;
+  for (let i = 0; i < m; i++) {
+    const newSin = mul(mul(sn, cs, prec), fromInt(2n, prec), prec);
+    const sn2 = mul(sn, sn, prec);
+    const newCos = sub(fromInt(1n, prec), mul(sn2, fromInt(2n, prec), prec), prec);
+    sn = newSin;
+    cs = newCos;
+  }
+  return { sin: sn, cos: cs };
+}
+
+/**
+ * `atan(x)` for any finite x. Combines `atanSmall` with the standard
+ * reduction `atan(x) = sgn(x)·π/2 − atan(1/x)` for `|x| ≥ 1`. The
+ * boundary `|x| = 1` is also handled by the reciprocal path (1/1 = 1
+ * is the fixed point — but we short-circuit to ±π/4 for clarity).
+ */
+export function atan(x: BigFloat, prec: number): BigFloat {
+  if (isZero(x)) return { mantissa: 0n, exponent: 0, precision: prec };
+  const work = prec + 32;
+  const oneW = fromInt(1n, work);
+  const xW: BigFloat = { mantissa: x.mantissa, exponent: x.exponent, precision: work };
+  const cmpResult = cmp(abs(xW), oneW);
+  if (cmpResult < 0) {
+    return atanSmall(x, prec);
+  }
+  if (cmpResult === 0) {
+    // atan(±1) = ±π/4 exactly.
+    const piOver4 = div(pi(prec), fromInt(4n, prec), prec);
+    return sgn(x) === 1 ? piOver4 : neg(piOver4);
+  }
+  // |x| > 1: atan(x) = sgn(x)·π/2 − atan(1/x).
+  const reciprocal = div(oneW, xW, work);
+  const piOver2 = div(pi(work), fromInt(2n, work), work);
+  const result = sub(
+    sgn(x) === 1 ? piOver2 : neg(piOver2),
+    atanSmall(reciprocal, work),
+    work,
+  );
+  return normalise(result.mantissa, result.exponent, prec);
+}
+
+/**
+ * `atan2(y, x)`. Standard four-quadrant arctangent.
+ */
+export function atan2(y: BigFloat, x: BigFloat, prec: number): BigFloat {
+  const sx = sgn(x);
+  const sy = sgn(y);
+  if (sx === 0 && sy === 0) {
+    // Conventionally atan2(0,0) = 0.
+    return { mantissa: 0n, exponent: 0, precision: prec };
+  }
+  if (sx === 0) {
+    // ±π/2.
+    const piW = pi(prec);
+    const piOver2 = div(piW, fromInt(2n, prec), prec);
+    return sy === 1 ? piOver2 : neg(piOver2);
+  }
+  const work = prec + 32;
+  const piW = pi(work);
+  const yOverX = div(y, x, work);
+  const baseAtan = atan(yOverX, work);
+  if (sx === 1) {
+    return normalise(baseAtan.mantissa, baseAtan.exponent, prec);
+  }
+  // x < 0: atan2 = atan(y/x) ± π depending on sign of y.
+  const offset = sy >= 0 ? piW : neg(piW);
+  const result = add(baseAtan, offset, work);
+  return normalise(result.mantissa, result.exponent, prec);
+}
+
+/**
+ * `asin(x)` for `|x| ≤ 1`. Uses asin(x) = atan(x / sqrt(1 - x²)).
+ */
+export function asin(x: BigFloat, prec: number): BigFloat {
+  if (isZero(x)) return { mantissa: 0n, exponent: 0, precision: prec };
+  const work = prec + 32;
+  const oneW = fromInt(1n, work);
+  const absX = abs(x);
+  if (cmp(absX, oneW) > 0) {
+    throw new RangeError(`BigFloat.asin: argument |x| must be ≤ 1`);
+  }
+  // |x| = 1: asin(1) = π/2; asin(-1) = -π/2.
+  if (cmp(absX, oneW) === 0) {
+    const piOver2 = div(pi(prec), fromInt(2n, prec), prec);
+    return sgn(x) === 1 ? piOver2 : neg(piOver2);
+  }
+  // x / sqrt(1 - x²).
+  const x2 = mul(x, x, work);
+  const denom = sqrt(sub(oneW, x2, work), work);
+  return atan(div(x, denom, work), prec);
+}
+
+/**
+ * `acos(x)` for `|x| ≤ 1`. acos(x) = π/2 − asin(x).
+ */
+export function acos(x: BigFloat, prec: number): BigFloat {
+  const work = prec + 32;
+  const piOver2 = div(pi(work), fromInt(2n, work), work);
+  return sub(piOver2, asin(x, work), prec);
+}
+
+// =============================================================================
+// Hyperbolics — sinh, cosh, tanh, asinh, acosh, atanh
+// =============================================================================
+
+/**
+ * `sinh(x) = (exp(x) − exp(−x)) / 2`. For small |x| use Taylor to avoid
+ * subtractive cancellation.
+ */
+export function sinh(x: BigFloat, prec: number): BigFloat {
+  if (isZero(x)) return { mantissa: 0n, exponent: 0, precision: prec };
+  const xFloat = toFloat64(x).value;
+  if (Math.abs(xFloat) < 0.5) {
+    // Taylor: sinh(x) = x + x³/6 + x⁵/120 + ... (all positive terms).
+    const work = prec + 32;
+    const x2 = mul(x, x, work);
+    let sum: BigFloat = x;
+    let term: BigFloat = x;
+    let n = 1;
+    const stopThreshold = -(prec + 16);
+    while (true) {
+      term = div(mul(term, x2, work), fromInt(2 * n * (2 * n + 1), work), work);
+      sum = add(sum, term, work);
+      if (
+        term.mantissa === 0n ||
+        term.exponent + bitLength(term.mantissa < 0n ? -term.mantissa : term.mantissa) < stopThreshold
+      ) {
+        break;
+      }
+      n += 1;
+      if (n > work + 1000) break;
+    }
+    return normalise(sum.mantissa, sum.exponent, prec);
+  }
+  const work = prec + 16;
+  const ePos = exp(x, work);
+  const eNeg = exp(neg(x), work);
+  const diff = sub(ePos, eNeg, work);
+  return div(diff, fromInt(2n, work), prec);
+}
+
+/**
+ * `cosh(x) = (exp(x) + exp(−x)) / 2`. Always ≥ 1.
+ */
+export function cosh(x: BigFloat, prec: number): BigFloat {
+  if (isZero(x)) return fromInt(1n, prec);
+  const work = prec + 16;
+  const ePos = exp(x, work);
+  const eNeg = exp(neg(x), work);
+  const sum = add(ePos, eNeg, work);
+  return div(sum, fromInt(2n, work), prec);
+}
+
+/**
+ * `tanh(x) = sinh(x) / cosh(x)`. Stable formulation: for large |x| the
+ * computation can saturate; use tanh(x) = expm1(2x) / (expm1(2x) + 2)
+ * which stays in [-1, 1] cleanly.
+ */
+export function tanh(x: BigFloat, prec: number): BigFloat {
+  if (isZero(x)) return { mantissa: 0n, exponent: 0, precision: prec };
+  const work = prec + 32;
+  const twoX = mul(x, fromInt(2n, work), work);
+  const e1 = expm1(twoX, work);
+  const denom = add(e1, fromInt(2n, work), work);
+  return div(e1, denom, prec);
+}
+
+/**
+ * `asinh(x) = log(x + sqrt(x² + 1))`. Always real.
+ */
+export function asinh(x: BigFloat, prec: number): BigFloat {
+  if (isZero(x)) return { mantissa: 0n, exponent: 0, precision: prec };
+  const work = prec + 32;
+  const x2 = mul(x, x, work);
+  const root = sqrt(add(x2, fromInt(1n, work), work), work);
+  return log(add(x, root, work), prec);
+}
+
+/**
+ * `acosh(x) = log(x + sqrt(x² − 1))` for x ≥ 1.
+ */
+export function acosh(x: BigFloat, prec: number): BigFloat {
+  const oneW = fromInt(1n, prec);
+  if (cmp(x, oneW) < 0) {
+    throw new RangeError(`BigFloat.acosh: argument must be ≥ 1`);
+  }
+  const work = prec + 32;
+  const x2 = mul(x, x, work);
+  const root = sqrt(sub(x2, fromInt(1n, work), work), work);
+  return log(add(x, root, work), prec);
+}
+
+/**
+ * `atanh(x) = ½·log((1 + x)/(1 − x))` for `|x| < 1`.
+ */
+export function atanh(x: BigFloat, prec: number): BigFloat {
+  if (isZero(x)) return { mantissa: 0n, exponent: 0, precision: prec };
+  const oneW = fromInt(1n, prec);
+  if (cmp(abs(x), oneW) >= 0) {
+    throw new RangeError(`BigFloat.atanh: argument |x| must be < 1`);
+  }
+  const work = prec + 32;
+  const numer = add(fromInt(1n, work), x, work);
+  const denom = sub(fromInt(1n, work), x, work);
+  const ratio = div(numer, denom, work);
+  const half = log(ratio, work);
+  return div(half, fromInt(2n, work), prec);
+}
+
+// =============================================================================
+// General power: a^b for non-integer b.
+// =============================================================================
+
+/**
+ * `pow(a, b) = exp(b · log(a))` for `a > 0`. Throws on `a ≤ 0` (for
+ * non-integer `b`); for integer `b`, defer to `powInt`.
+ */
+export function pow(a: BigFloat, b: BigFloat, prec: number): BigFloat {
+  // Integer-power fast path.
+  const bFloat = toFloat64(b).value;
+  if (Number.isFinite(bFloat) && Number.isSafeInteger(bFloat)) {
+    // Verify b is exactly the integer (no fractional bits).
+    const bAsInt = fromInt(BigInt(bFloat), b.precision);
+    if (eq(bAsInt, b)) {
+      return powInt(a, bFloat, prec);
+    }
+  }
+  // Real-power path.
+  if (sgn(a) <= 0) {
+    if (isZero(a)) {
+      if (sgn(b) > 0) return { mantissa: 0n, exponent: 0, precision: prec };
+      throw new RangeError(`BigFloat.pow: 0^b for b ≤ 0`);
+    }
+    throw new RangeError(`BigFloat.pow: negative base for non-integer exponent`);
+  }
+  const work = prec + 32;
+  return exp(mul(b, log(a, work), work), prec);
 }
