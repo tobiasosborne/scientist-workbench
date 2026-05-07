@@ -70,3 +70,14 @@ export {
   sqrt,
   powInt,
 } from "./arithmetic.js";
+
+export {
+  ln2,
+  pi,
+  e,
+  exp,
+  log,
+  expm1,
+  log1p,
+  atanSmall,
+} from "./transcendental.js";
