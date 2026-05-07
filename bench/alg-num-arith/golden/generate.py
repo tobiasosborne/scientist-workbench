@@ -143,13 +143,14 @@ def build_cases() -> List[Dict[str, Any]]:
         SQRT_2_PLUS_SQRT3, SQRT_2_MINUS_SQRT3, _ok())
     add("B-nested-04-neg-nested", "B", "neg",
         SQRT_2_PLUS_SQRT3, None, _ok())
-    # `B-nested-05-inv-nested` (inv(√(2+√3))) is deferred — it triggers
-    # a known henselLiftPair palindromic-minpoly bug in poly-factor when
-    # algNumInv reverses the coefficients of x⁴−4x²+1 (a palindromic
-    # polynomial whose reciprocal is itself). Tracked separately; reinstate
-    # this case after the bug fix lands.
-    add("B-nested-05-add-nested-self", "B", "add",
-        SQRT_2_PLUS_SQRT3, SQRT_2_PLUS_SQRT3, _ok())
+    # `B-nested-05-inv-nested` exercises the palindromic-minpoly path:
+    # `inv(√(2+√3))` reverses the coefficients of x⁴−4x²+1 (palindromic
+    # → reciprocal is itself), then canonicalises. This was the canary
+    # case for the term-order bug in `algNumInv`'s `reverseCoefficients`
+    # helper — fixed in worklog 066. Result: 1/√(2+√3) = √(2−√3) =
+    # Root[x⁴−4x²+1, k=2].
+    add("B-nested-05-inv-nested", "B", "inv",
+        SQRT_2_PLUS_SQRT3, None, _ok())
 
     # ----- Tier C — high-degree minpolys --------------------------------------
     add("C-high-01-add-lehmer-k0-k1", "C", "add", LEHMER_K0, LEHMER_K1, _ok())

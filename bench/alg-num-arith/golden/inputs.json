@@ -847,7 +847,7 @@
       "tier": "B"
     },
     {
-      "id": "B-nested-05-add-nested-self",
+      "id": "B-nested-05-inv-nested",
       "input": {
         "a": {
           "args": [
@@ -885,43 +885,7 @@
           "head": "Root",
           "kind": "expression"
         },
-        "b": {
-          "args": [
-            {
-              "args": [
-                {
-                  "kind": "integer",
-                  "value": "1"
-                },
-                {
-                  "kind": "integer",
-                  "value": "0"
-                },
-                {
-                  "kind": "integer",
-                  "value": "-4"
-                },
-                {
-                  "kind": "integer",
-                  "value": "0"
-                },
-                {
-                  "kind": "integer",
-                  "value": "1"
-                }
-              ],
-              "head": "Polynomial",
-              "kind": "expression"
-            },
-            {
-              "kind": "integer",
-              "value": "3"
-            }
-          ],
-          "head": "Root",
-          "kind": "expression"
-        },
-        "op": "add"
+        "op": "inv"
       },
       "tier": "B"
     },

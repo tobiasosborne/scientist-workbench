@@ -37,6 +37,7 @@ import {
   algNumNeg,
   algNumSub,
   makeRoot,
+  makeRootByIndex,
   rootCanonicalEq,
   sylvesterResultantInY,
 } from "../src/index.js";
@@ -245,6 +246,25 @@ describe("algNumInv", () => {
   test("inv(0) throws", () => {
     const ZERO = algNumSub(SQRT2, SQRT2);
     expect(() => algNumInv(ZERO)).toThrow(/zero/i);
+  });
+
+  test("inv on palindromic minpoly: 1/√(2+√3) = √(2−√3) = Root[x⁴−4x²+1, k=2]", () => {
+    // Regression for the term-order bug worklog 067 fixed:
+    // `reverseCoefficients` left terms in low-to-high order while
+    // cas-core canonical is high-to-low; downstream `factorRatQ`'s
+    // henselLiftMany fired its `f ≡ g₀·h₀ (mod p)` precondition
+    // assertion. Palindromic input is the canary because the
+    // reciprocal IS the same polynomial — the only way the bug
+    // manifests is via term-order, since coefficient values are
+    // identical to input.
+    const sqrt2plussqrt3 = makeRootByIndex(
+      fromCoeffsLowToHigh([1n, 0n, -4n, 0n, 1n].map((c) => makeRat(c, 1n))),
+      3,
+      "x",
+    );
+    const inv = algNumInv(sqrt2plussqrt3);
+    expect(polyEq(inv.minpoly, intPolyLowToHigh([1n, 0n, -4n, 0n, 1n]), INT_RING)).toBe(true);
+    expect(inv.k).toBe(2);  // +√(2−√3) ≈ 0.518, the 3rd real root in ascending order
   });
 });
 

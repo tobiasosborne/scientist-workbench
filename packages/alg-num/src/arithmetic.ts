@@ -373,23 +373,38 @@ function substituteNegateX(p: Poly<bigint>): Poly<bigint> {
 }
 
 /** Coefficient-reverse a `Poly<bigint>` in `ROOT_VAR`: result is
- * `x^{deg p} · p(1/x)`. */
+ * `x^{deg p} · p(1/x)`.
+ *
+ * cas-core's canonical-form invariant is **terms sorted high-to-low
+ * by exponent** (cf. the `polyAdd`/`polyMul` combinators' canonical
+ * output). The naive `.map` over an input in canonical (high-to-low)
+ * order produces a low-to-high term array — non-canonical. Downstream
+ * `factorRatQ` (specifically the Berlekamp + henselLiftMany path) is
+ * sensitive to canonical input: with terms out of order the Hensel
+ * lift's `f ≡ g₀·h₀ (mod p)` precondition check fails because the
+ * mod-p reduction operates per-term. We restore canonical order by
+ * reversing the mapped array — which is correct when input is
+ * canonical (the smallest-exp input term becomes the largest-exp
+ * output term, so a high-to-low input maps to a low-to-high output,
+ * which `.reverse()` flips back to high-to-low). For palindromic
+ * input like `x⁴ − 4x² + 1` (which became the canary case in worklog
+ * 066), this is the difference between a successful inv and a
+ * henselLiftPair crash. */
 function reverseCoefficients(p: Poly<bigint>): Poly<bigint> {
   const n = polyDegInVar(p, ROOT_VAR);
-  return {
-    terms: p.terms.map((t) => {
-      let degOfX = 0;
-      const restExp: [string, number][] = [];
-      for (const [name, e] of t.exp) {
-        if (name === ROOT_VAR) degOfX = e;
-        else restExp.push([name, e]);
-      }
-      const newDeg = n - degOfX;
-      const newExp: [string, number][] =
-        newDeg === 0 ? restExp : [...restExp, [ROOT_VAR, newDeg]];
-      return { exp: newExp, coef: t.coef };
-    }),
-  };
+  const mapped = p.terms.map((t) => {
+    let degOfX = 0;
+    const restExp: [string, number][] = [];
+    for (const [name, e] of t.exp) {
+      if (name === ROOT_VAR) degOfX = e;
+      else restExp.push([name, e]);
+    }
+    const newDeg = n - degOfX;
+    const newExp: [string, number][] =
+      newDeg === 0 ? restExp : [...restExp, [ROOT_VAR, newDeg]];
+    return { exp: newExp, coef: t.coef };
+  });
+  return { terms: mapped.reverse() };
 }
 
 // -----------------------------------------------------------------------------
