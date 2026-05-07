@@ -66,6 +66,13 @@ write the frictions and the dead ends as well as the wins.
 | 053 | [`poly-roots`: closed-form radical roots for deg ≤ 4 (Cardano + Ferrari)](053-poly-roots.md) | 2026-05-06 | scientist-workbench-{1yu, 58q} |
 | 054 | [`solve`: top-level dispatcher (linear + univariate-poly v0.1)](054-solve-dispatcher.md) | 2026-05-06 | scientist-workbench-{77b, cfd, fij, 80x} |
 | 055 | [`solve` transcendental invert layer + linear-arg compound (sin(2x+1)…)](055-transcendental-invert.md) | 2026-05-06 | scientist-workbench-{ii0, 37r} |
+| 056 | [`bench/solve` headline bench (yq2)](056-bench-solve-headline.md) | 2026-05-07 | scientist-workbench-yq2 |
+| 057 | [`bench/poly-roots-radical` (iyj) + demo-scope solve entries (b22)](057-bench-poly-roots-radical.md) | 2026-05-07 | scientist-workbench-{iyj, b22} |
+| 058 | [`bench/real-root-isolate` (q8q): VAS-LMQ bench](058-bench-real-root-isolate.md) | 2026-05-07 | scientist-workbench-q8q |
+| 059 | [`packages/real-roots` + `tools/real-root-isolate` (rra): VAS-LMQ ship](059-real-roots-vas-lmq.md) | 2026-05-07 | scientist-workbench-rra |
+| 060 | [alg-num: `Root[poly, k]` type + canonicalisation (xyt)](060-alg-num-root-type.md) | 2026-05-07 | scientist-workbench-xyt |
+| 061 | [alg-num: `refineRoot` (xkz) + `makeRootByIndex` (6cd)](061-alg-num-refine-and-byindex.md) | 2026-05-07 | scientist-workbench-{xkz, 6cd} |
+| 062 | [alg-num: resultant arithmetic on Roots (rti)](062-alg-num-arithmetic.md) | 2026-05-07 | scientist-workbench-rti |
 
 ## How to add a new shard
 
