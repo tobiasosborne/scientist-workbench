@@ -71,6 +71,16 @@ export {
   powInt,
 } from "./arithmetic.js";
 
+export { bernoulliRational } from "./bernoulli.js";
+
+export {
+  gamma,
+  lgamma,
+  digamma,
+  trigamma,
+  polygamma,
+} from "./special.js";
+
 export {
   ln2,
   pi,
