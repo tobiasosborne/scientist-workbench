@@ -74,6 +74,17 @@ export {
 export { bernoulliRational } from "./bernoulli.js";
 
 export {
+  BIGFLOAT_TAG,
+  BIGCOMPLEX_TAG,
+  bigfloatToValue,
+  valueToBigFloat,
+  bigcomplexToValue,
+  valueToBigComplex,
+  bigfloatSchema,
+  bigcomplexSchema,
+} from "./encoding.js";
+
+export {
   type BigComplex,
   cfromReal,
   cfromInts,

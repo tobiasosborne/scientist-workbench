@@ -22,6 +22,9 @@
     "packages/bigfloat": {
       "name": "@workbench/bigfloat",
       "version": "0.1.0",
+      "dependencies": {
+        "@workbench/protocol": "workspace:*",
+      },
     },
     "packages/cas-core": {
       "name": "@workbench/cas-core",
