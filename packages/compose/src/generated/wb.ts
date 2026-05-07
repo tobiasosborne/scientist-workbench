@@ -43,6 +43,7 @@ import { def as optimizeLbfgsProjectedDef } from "../../../../tools/optimize-lbf
 import { def as oracleDef } from "../../../../tools/oracle/tool.js";
 import { def as polyFactorDef } from "../../../../tools/poly-factor/tool.js";
 import { def as polyRootsDef } from "../../../../tools/poly-roots/tool.js";
+import { def as realRootIsolateDef } from "../../../../tools/real-root-isolate/tool.js";
 import { def as registryListDef } from "../../../../tools/registry-list/tool.js";
 import { def as registrySearchDef } from "../../../../tools/registry-search/tool.js";
 import { def as solveDef } from "../../../../tools/solve/tool.js";
@@ -77,6 +78,7 @@ export interface TypedWorkbench extends Workbench {
   oracle(input: InputOf<typeof oracleDef>, flags?: FlagsArgOf<typeof oracleDef>): Promise<OutputOf<typeof oracleDef>>;
   polyFactor(input: InputOf<typeof polyFactorDef>, flags?: FlagsArgOf<typeof polyFactorDef>): Promise<OutputOf<typeof polyFactorDef>>;
   polyRoots(input: InputOf<typeof polyRootsDef>, flags?: FlagsArgOf<typeof polyRootsDef>): Promise<OutputOf<typeof polyRootsDef>>;
+  realRootIsolate(input: InputOf<typeof realRootIsolateDef>, flags?: FlagsArgOf<typeof realRootIsolateDef>): Promise<OutputOf<typeof realRootIsolateDef>>;
   registryList(input: InputOf<typeof registryListDef>, flags?: FlagsArgOf<typeof registryListDef>): Promise<OutputOf<typeof registryListDef>>;
   registrySearch(input: InputOf<typeof registrySearchDef>, flags?: FlagsArgOf<typeof registrySearchDef>): Promise<OutputOf<typeof registrySearchDef>>;
   solve(input: InputOf<typeof solveDef>, flags?: FlagsArgOf<typeof solveDef>): Promise<OutputOf<typeof solveDef>>;
@@ -164,6 +166,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     polyRoots(input, flags) {
       return workbench.run("poly-roots", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof polyRootsDef>>;
     },
+    realRootIsolate(input, flags) {
+      return workbench.run("real-root-isolate", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof realRootIsolateDef>>;
+    },
     registryList(input, flags) {
       return workbench.run("registry-list", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof registryListDef>>;
     },
@@ -226,6 +231,7 @@ export const defs = {
   oracle: oracleDef,
   polyFactor: polyFactorDef,
   polyRoots: polyRootsDef,
+  realRootIsolate: realRootIsolateDef,
   registryList: registryListDef,
   registrySearch: registrySearchDef,
   solve: solveDef,

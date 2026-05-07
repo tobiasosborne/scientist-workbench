@@ -1,0 +1,1 @@
+{"fields":{"input":{"fields":{"f":{"kind":"integer","value":"5"},"var":{"kind":"symbol","name":"x"}},"kind":"record"},"output":{"fields":{"intervals":{"items":[],"kind":"list"},"method":{"kind":"string","value":"vas-lmq"},"warnings":{"items":[],"kind":"list"}},"kind":"record"}},"kind":"record"}
