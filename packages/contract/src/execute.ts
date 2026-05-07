@@ -130,12 +130,20 @@ export async function executeToolDef<
   //    in `defineTool`) so the failure surfaces consistently across
   //    every entry point — including in-process callers that bypass
   //    the runner.
-  if (def.nondeterministic === true && def.numerical === true) {
+  // ADR-0015 + ADR-0020: the four tier annotations are mutually exclusive.
+  // Default = symbolic; `nondeterministic` opts out; `numerical` is float64
+  // platform-conditional; `arbprec` is BigInt-substrate cross-platform-
+  // deterministic with an explicit precision flag.
+  const tierCount =
+    (def.nondeterministic === true ? 1 : 0) +
+    (def.numerical === true ? 1 : 0) +
+    (def.arbprec === true ? 1 : 0);
+  if (tierCount > 1) {
     throw new ToolError(
-      `${def.name}: cannot be both nondeterministic and numerical (ADR-0015)`,
+      `${def.name}: at most one of nondeterministic / numerical / arbprec may be declared (ADR-0015 + ADR-0020)`,
       {
         suggestion:
-          "stochastic tools have no determinism contract; numerical tools have a platform-conditional one. Pick one.",
+          "stochastic tools have no determinism contract; numerical tools are platform-conditional; arbprec tools are bit-deterministic given an explicit precision flag. Pick exactly one — or none for the default symbolic tier.",
       },
     );
   }

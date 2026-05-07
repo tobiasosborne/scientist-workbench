@@ -190,15 +190,33 @@ export interface ToolDefinition<
    * tool, different inputs can produce different-tier outputs (precedent:
    * ADR-0007's `precision: "exact" | "float64"` field).
    *
-   * Mutually exclusive with `nondeterministic: true` in practice — a
-   * stochastic tool has no determinism contract, so the numerical
-   * distinction does not apply. Asserting both is a load-time contract
-   * violation.
+   * Mutually exclusive with `nondeterministic: true` and `arbprec: true`
+   * in practice. Asserting more than one is a load-time contract violation.
    *
    * Default (absent / false): the tool is symbolic — bit-identical
    * cross-platform forever, the unconditional rule.
    */
   numerical?: boolean;
+  /**
+   * Manifest annotation introduced by ADR-0020. When set to `true`, this
+   * tool ships in arbitrary precision and accepts a `--precision=<int>`
+   * standard flag (decimal digits, default 50). The output is bit-
+   * identical *cross-platform forever* given the precision flag — `BigInt`
+   * arithmetic is bit-identical across runtimes by JS language spec, so
+   * the substrate carries no platform-conditional behaviour.
+   *
+   * Internally, `arbprec: true` tools use `@workbench/bigfloat` (or another
+   * bit-deterministic substrate). No float64 in any code path that
+   * contributes to the canonical output — auxiliary float64 for heuristics
+   * is permitted iff it does not affect output bytes.
+   *
+   * Mutually exclusive with `nondeterministic: true` and `numerical: true`
+   * in practice. Asserting more than one is a load-time contract violation.
+   *
+   * Default (absent / false): the tool is symbolic and does not take a
+   * precision parameter.
+   */
+  arbprec?: boolean;
 }
 
 /**
@@ -385,13 +403,35 @@ function checkExamplesAgainstSchema<I extends Value, O extends Value, Fl extends
 // Standard / tool flag merge + collision check
 // -----------------------------------------------------------------------------
 
-function mergedFlags(toolFlags: FlagSchema): FlagSchema {
+// ADR-0020: arbprec-tier tools inherit a standard --precision flag.
+// Decimal digits, default 50, soft cap 100_000 (a tool may tighten the
+// cap by declaring its own `precision` slot — but the cannot rename or
+// retype it).
+const ARBPREC_PRECISION_FLAG = F.int(
+  "decimal digits of precision for the output (ADR-0020)",
+  { min: 1n, max: 100_000n, default: 50n },
+);
+
+function mergedFlags(
+  toolFlags: FlagSchema,
+  arbprec: boolean,
+): FlagSchema {
   const out: FlagSchema = { ...STANDARD_FLAGS };
+  if (arbprec) {
+    out["precision"] = ARBPREC_PRECISION_FLAG;
+  }
   for (const [k, spec] of Object.entries(toolFlags)) {
-    if (k in STANDARD_FLAGS) {
+    if (k in out) {
+      // Permit a tool to override only the `precision` slot for arbprec
+      // tools (so a tool can tighten the cap), but only with another
+      // F.int spec. Other standard flags are reserved.
+      if (k === "precision" && arbprec) {
+        out[k] = spec;
+        continue;
+      }
       throw new Error(
         `tool declares flag --${k} which collides with a standard flag; ` +
-        `standard flags reserved: ${Object.keys(STANDARD_FLAGS).join(", ")}`,
+        `standard flags reserved: ${Object.keys(out).join(", ")}`,
       );
     }
     out[k] = spec;
@@ -415,7 +455,7 @@ export async function runTool<I extends Value, O extends Value, Fl extends FlagS
     // Collision check runs inside the try block so a tool that
     // declares a colliding flag name surfaces as a normal-shaped
     // ToolError on stderr + exit 1, not as an unhandled exception.
-    const merged = mergedFlags(toolFlags);
+    const merged = mergedFlags(toolFlags, def.arbprec === true);
     // Examples-conform-to-schema is a load-time invariant. Run it once on
     // every entry into runTool — most invocations are cheap (validation
     // on small examples), and we want the failure surfaced early on the

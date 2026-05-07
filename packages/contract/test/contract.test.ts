@@ -783,8 +783,8 @@ describe("ADR-0015 executeToolDef per-output platform branch", () => {
   });
 });
 
-describe("ADR-0015 mutual exclusion (numerical ∧ nondeterministic)", () => {
-  test("a tool asserting both flags fails at executeToolDef", async () => {
+describe("ADR-0015 + ADR-0020 mutual exclusion (nondeterministic ∧ numerical ∧ arbprec)", () => {
+  test("nondeterministic ∧ numerical fails at executeToolDef", async () => {
     const bad = defineTool({
       name: "test-both",
       version: "0.0.1",
@@ -805,7 +805,55 @@ describe("ADR-0015 mutual exclusion (numerical ∧ nondeterministic)", () => {
       err = e as Error;
     }
     expect(err).not.toBeNull();
-    expect(err!.message).toMatch(/cannot be both nondeterministic and numerical/);
+    expect(err!.message).toMatch(/at most one of nondeterministic \/ numerical \/ arbprec/);
+  });
+
+  test("numerical ∧ arbprec fails at executeToolDef", async () => {
+    const bad = defineTool({
+      name: "test-num-arb",
+      version: "0.0.1",
+      schema: { input: S.kind("integer"), output: S.kind("integer") },
+      numerical: true,
+      arbprec: true,
+      examples: [],
+      invariants: [],
+      fn: (i) => i,
+    });
+    let err: Error | null = null;
+    try {
+      await executeToolDef(bad, int(1n), {}, {
+        store: storeDir,
+        env: { CAS_STORE: storeDir },
+      });
+    } catch (e) {
+      err = e as Error;
+    }
+    expect(err).not.toBeNull();
+    expect(err!.message).toMatch(/at most one of nondeterministic \/ numerical \/ arbprec/);
+  });
+
+  test("nondeterministic ∧ arbprec fails at executeToolDef", async () => {
+    const bad = defineTool({
+      name: "test-nondet-arb",
+      version: "0.0.1",
+      schema: { input: S.kind("integer"), output: S.kind("integer") },
+      nondeterministic: true,
+      arbprec: true,
+      examples: [],
+      invariants: [],
+      fn: (i) => i,
+    });
+    let err: Error | null = null;
+    try {
+      await executeToolDef(bad, int(1n), {}, {
+        store: storeDir,
+        env: { CAS_STORE: storeDir },
+      });
+    } catch (e) {
+      err = e as Error;
+    }
+    expect(err).not.toBeNull();
+    expect(err!.message).toMatch(/at most one of nondeterministic \/ numerical \/ arbprec/);
   });
 });
 

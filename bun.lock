@@ -195,6 +195,15 @@
         "@workbench/protocol": "workspace:*",
       },
     },
+    "tools/hypergeometric-pfq": {
+      "name": "@workbench/tool-hypergeometric-pfq",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/bigfloat": "workspace:*",
+        "@workbench/contract": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+      },
+    },
     "tools/integrate-1d": {
       "name": "@workbench/tool-integrate-1d",
       "version": "0.1.0",
@@ -510,6 +519,8 @@
     "@workbench/tool-entropy-source": ["@workbench/tool-entropy-source@workspace:tools/entropy-source"],
 
     "@workbench/tool-expr-parse": ["@workbench/tool-expr-parse@workspace:tools/expr-parse"],
+
+    "@workbench/tool-hypergeometric-pfq": ["@workbench/tool-hypergeometric-pfq@workspace:tools/hypergeometric-pfq"],
 
     "@workbench/tool-integrate-1d": ["@workbench/tool-integrate-1d@workspace:tools/integrate-1d"],
 
