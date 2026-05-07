@@ -750,6 +750,132 @@ if (polySolveResult.kind === "record") {
 }
 
 // -----------------------------------------------------------------------------
+// 17. poly-roots — symbolic radical roots over ℚ (deg ≤ 4)
+// -----------------------------------------------------------------------------
+//
+// Composes poly-factor with closed-form formulas: linear (rational),
+// quadratic (discriminant), cubic (Cardano 1545), quartic (Ferrari 1540).
+// Each root is an *exact symbolic* expression in `+ − * / ^ neg sqrt` —
+// `(-1 + √5)/2`, not `0.6180...` — so it composes downstream with
+// cas-diff / integrate-1d. The demo solves x² − x − 1 = 0 (golden ratio
+// minimal poly) to showcase the radical surface.
+
+console.log("\n" + "=".repeat(60));
+console.log("  17. poly-roots — radical roots (deg ≤ 4)");
+console.log("=".repeat(60));
+console.log(
+  "Cardano + Ferrari closed forms over poly-factor's irreducible decomposition.\n" +
+  "Exact symbolic roots — composable, not stringified.",
+);
+const phiPoly = await parseExpr("x^2 - x - 1");
+const phiRoots = await wb.polyRoots({
+  kind: "record",
+  fields: { f: phiPoly as never, var: { kind: "symbol", name: "x" } },
+});
+if (phiRoots.kind === "record") {
+  const roots = phiRoots.fields["roots"];
+  if (roots?.kind === "list") {
+    const renderRoot = (v: Value): string => {
+      if (v.kind === "symbol") return v.name;
+      if (v.kind === "integer") return v.value;
+      if (v.kind === "rational") return `${v.num}/${v.den}`;
+      if (v.kind === "expression") {
+        // Parenthesise compound subterms (head ∈ {+, -}) when they appear
+        // inside `/` or `^` numerators — `(1 + √5)/2` not `1 + √5/2`.
+        const wrap = (a: Value): string => {
+          const s = renderRoot(a);
+          if (a.kind === "expression" && (a.head === "+" || a.head === "-")) return `(${s})`;
+          return s;
+        };
+        if (v.head === "+") return v.args.map(renderRoot).join(" + ").replace(/\+ -/g, "- ");
+        if (v.head === "-") return v.args.map(renderRoot).join(" − ");
+        if (v.head === "*") return v.args.map(renderRoot).join("·");
+        if (v.head === "/") return `${wrap(v.args[0]!)}/${wrap(v.args[1]!)}`;
+        if (v.head === "^") return `${wrap(v.args[0]!)}^${renderRoot(v.args[1]!)}`;
+        if (v.head === "neg") return `-${wrap(v.args[0]!)}`;
+        if (v.head === "sqrt") return `√(${renderRoot(v.args[0]!)})`;
+        return `<${v.head}>`;
+      }
+      return `<${v.kind}>`;
+    };
+    for (const entry of roots.items) {
+      if (entry?.kind !== "record") continue;
+      const root = entry.fields["root"];
+      const mult = entry.fields["multiplicity"];
+      if (root && mult?.kind === "integer") {
+        console.log(`  root:  ${renderRoot(root)}   (multiplicity ${mult.value})`);
+      }
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 18. solve — transcendental lane with branched output (ADR-0017)
+// -----------------------------------------------------------------------------
+//
+// The third dispatch lane: single-equation single-variable `head(arg) = c`
+// for `head ∈ {sin, cos, tan, exp, log, sinh, cosh, tanh, abs}`. The v0.1
+// invert table emits *branched* solutions with explicit integer-parameter
+// symbols (`t_0, t_1, …`) — the workbench is *branch-honest*: it never
+// silently returns a principal-branch slice. The demo runs sin(x) = 1/2
+// and prints the two infinite-family solutions.
+
+console.log("\n" + "=".repeat(60));
+console.log("  18. solve — transcendental lane, branched output");
+console.log("=".repeat(60));
+console.log(
+  "ADR-0017 finite-rep-of-infinite: sin(x) = 1/2 ⟹\n" +
+  "  x = arcsin(1/2) + 2π·t_0   ∨   x = π − arcsin(1/2) + 2π·t_1.",
+);
+const transResult = await wb.solve({
+  kind: "record",
+  fields: {
+    eqs: list([
+      // sin(x) − 1/2
+      expr("-", [expr("sin", [sym("x")]), { kind: "rational", num: "1", den: "2" }]),
+    ]),
+    vars: list([sym("x")]),
+  },
+});
+if (transResult.kind === "record") {
+  const completeness = transResult.fields["completeness"];
+  if (completeness?.kind === "string") {
+    console.log("  completeness:           ", completeness.value);
+  }
+  const sols = transResult.fields["solutions"];
+  if (sols?.kind === "list") {
+    const renderTrans = (v: Value): string => {
+      if (v.kind === "symbol") return v.name;
+      if (v.kind === "integer") return v.value;
+      if (v.kind === "rational") return `${v.num}/${v.den}`;
+      if (v.kind === "expression") {
+        if (v.head === "+") return v.args.map(renderTrans).join(" + ").replace(/\+ -/g, "- ");
+        if (v.head === "-") return v.args.map(renderTrans).join(" − ");
+        if (v.head === "*") return v.args.map(renderTrans).join("·");
+        if (v.head === "/") return `${renderTrans(v.args[0]!)}/${renderTrans(v.args[1]!)}`;
+        if (v.head === "^") return `${renderTrans(v.args[0]!)}^${renderTrans(v.args[1]!)}`;
+        if (v.head === "neg") return `-${renderTrans(v.args[0]!)}`;
+        return `${v.head}(${v.args.map(renderTrans).join(", ")})`;
+      }
+      return `<${v.kind}>`;
+    };
+    for (const sol of sols.items) {
+      if (sol.kind !== "record") continue;
+      const bindings = sol.fields["bindings"];
+      const branches = sol.fields["branches"];
+      if (bindings?.kind !== "list" || branches?.kind !== "list") continue;
+      const bind = bindings.items[0];
+      if (bind?.kind !== "record") continue;
+      const v = bind.fields["var"];
+      const val = bind.fields["value"];
+      if (v?.kind !== "symbol" || !val) continue;
+      const branchSyms = branches.items.map((b) => b.kind === "symbol" ? b.name : "?").join(", ");
+      console.log(`  ${v.name} = ${renderTrans(val)}    (branches: [${branchSyms}])`);
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
 // Bonus — content-addressing
 // -----------------------------------------------------------------------------
 
