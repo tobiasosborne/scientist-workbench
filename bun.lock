@@ -19,6 +19,10 @@
         "@workbench/real-roots": "workspace:*",
       },
     },
+    "packages/bigfloat": {
+      "name": "@workbench/bigfloat",
+      "version": "0.1.0",
+    },
     "packages/cas-core": {
       "name": "@workbench/cas-core",
       "version": "0.2.0",
@@ -457,6 +461,8 @@
     "@types/node": ["@types/node@25.6.0", "", { "dependencies": { "undici-types": "~7.19.0" } }, "sha512-+qIYRKdNYJwY3vRCZMdJbPLJAtGjQBudzZzdzwQYkEPQd+PJGixUL5QfvCLDaULoLv+RhT3LDkwEfKaAkgSmNQ=="],
 
     "@workbench/alg-num": ["@workbench/alg-num@workspace:packages/alg-num"],
+
+    "@workbench/bigfloat": ["@workbench/bigfloat@workspace:packages/bigfloat"],
 
     "@workbench/cas-core": ["@workbench/cas-core@workspace:packages/cas-core"],
 
