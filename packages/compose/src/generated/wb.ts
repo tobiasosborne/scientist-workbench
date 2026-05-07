@@ -22,6 +22,7 @@
 import type { FlagsArgOf, InputOf, OutputOf } from "@workbench/contract";
 import type { Workbench } from "../types.js";
 
+import { def as algNumArithDef } from "../../../../tools/alg-num-arith/tool.js";
 import { def as casDiffDef } from "../../../../tools/cas-diff/tool.js";
 import { def as casSimplifyDef } from "../../../../tools/cas-simplify/tool.js";
 import { def as casVerifyDef } from "../../../../tools/cas-verify/tool.js";
@@ -57,6 +58,7 @@ import { def as sturmTensorDef } from "../../../../tools/sturm-tensor/tool.js";
 import { def as sturmThenDef } from "../../../../tools/sturm-then/tool.js";
 
 export interface TypedWorkbench extends Workbench {
+  algNumArith(input: InputOf<typeof algNumArithDef>, flags?: FlagsArgOf<typeof algNumArithDef>): Promise<OutputOf<typeof algNumArithDef>>;
   casDiff(input: InputOf<typeof casDiffDef>, flags?: FlagsArgOf<typeof casDiffDef>): Promise<OutputOf<typeof casDiffDef>>;
   casSimplify(input: InputOf<typeof casSimplifyDef>, flags?: FlagsArgOf<typeof casSimplifyDef>): Promise<OutputOf<typeof casSimplifyDef>>;
   casVerify(input: InputOf<typeof casVerifyDef>, flags?: FlagsArgOf<typeof casVerifyDef>): Promise<OutputOf<typeof casVerifyDef>>;
@@ -103,6 +105,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     lookup: workbench.lookup.bind(workbench),
     runMemoized: workbench.runMemoized.bind(workbench),
     // Generated tool methods.
+    algNumArith(input, flags) {
+      return workbench.run("alg-num-arith", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof algNumArithDef>>;
+    },
     casDiff(input, flags) {
       return workbench.run("cas-diff", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof casDiffDef>>;
     },
@@ -210,6 +215,7 @@ export function typed(workbench: Workbench): TypedWorkbench {
  * for tests and any consumer that wants the def objects directly.
  */
 export const defs = {
+  algNumArith: algNumArithDef,
   casDiff: casDiffDef,
   casSimplify: casSimplifyDef,
   casVerify: casVerifyDef,

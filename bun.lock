@@ -134,6 +134,15 @@
         "@workbench/sturm-ir": "workspace:*",
       },
     },
+    "tools/alg-num-arith": {
+      "name": "@workbench/tool-alg-num-arith",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/alg-num": "workspace:*",
+        "@workbench/contract": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+      },
+    },
     "tools/cas-diff": {
       "name": "@workbench/tool-cas-diff",
       "version": "0.1.0",
@@ -479,6 +488,8 @@
     "@workbench/sturm-ir": ["@workbench/sturm-ir@workspace:packages/sturm-ir"],
 
     "@workbench/sturm-lib": ["@workbench/sturm-lib@workspace:packages/sturm-lib"],
+
+    "@workbench/tool-alg-num-arith": ["@workbench/tool-alg-num-arith@workspace:tools/alg-num-arith"],
 
     "@workbench/tool-cas-diff": ["@workbench/tool-cas-diff@workspace:tools/cas-diff"],
 

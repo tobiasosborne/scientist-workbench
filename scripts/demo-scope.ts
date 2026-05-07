@@ -848,6 +848,77 @@ if (lehmerRoots.kind === "record") {
 }
 
 // -----------------------------------------------------------------------------
+// 17.5. alg-num-arith — field arithmetic over named algebraic numbers
+// -----------------------------------------------------------------------------
+//
+// The wire envelope around `@workbench/alg-num`: takes one or two
+// `Root[poly, k]` values and applies a chosen op (add / sub / mul /
+// div / neg / inv / eq). The demo runs the ADR-0018 headline example
+// `√2 + √3 ⟹ Root[x⁴ − 10x² + 1, k=3]` end-to-end through the
+// composition layer.
+
+console.log("\n" + "=".repeat(60));
+console.log("  17.5. alg-num-arith — field arithmetic over Root[poly, k]");
+console.log("=".repeat(60));
+console.log(
+  "ADR-0018 headline: √2 + √3 = Root[x⁴ − 10x² + 1, k=3]\n" +
+  "(Sylvester-Bareiss resultant + canonicalise-by-interval; alg-num substrate).",
+);
+const sqrt2Root: Value = {
+  kind: "expression",
+  head: "Root",
+  args: [
+    {
+      kind: "expression",
+      head: "Polynomial",
+      args: [
+        { kind: "integer", value: "-2" },
+        { kind: "integer", value: "0" },
+        { kind: "integer", value: "1" },
+      ],
+    },
+    { kind: "integer", value: "1" },
+  ],
+};
+const sqrt3Root: Value = {
+  kind: "expression",
+  head: "Root",
+  args: [
+    {
+      kind: "expression",
+      head: "Polynomial",
+      args: [
+        { kind: "integer", value: "-3" },
+        { kind: "integer", value: "0" },
+        { kind: "integer", value: "1" },
+      ],
+    },
+    { kind: "integer", value: "1" },
+  ],
+};
+const algSum = await wb.algNumArith(
+  { kind: "record", fields: { a: sqrt2Root, b: sqrt3Root } },
+  { op: "add" },
+);
+if (algSum.kind === "expression" && algSum.head === "Root") {
+  const polyArg = algSum.args[0];
+  const kArg = algSum.args[1];
+  if (polyArg?.kind === "expression" && polyArg.head === "Polynomial" && kArg?.kind === "integer") {
+    const coefs = polyArg.args
+      .map((c) => (c.kind === "integer" ? c.value : "?"))
+      .join(", ");
+    console.log(`  √2 + √3 = Root[Polynomial[${coefs}], k=${kArg.value}]`);
+  }
+}
+const eqResult = await wb.algNumArith(
+  { kind: "record", fields: { a: sqrt2Root, b: sqrt2Root } },
+  { op: "eq" },
+);
+if (eqResult.kind === "boolean") {
+  console.log(`  eq(+√2, +√2) = ${eqResult.value}`);
+}
+
+// -----------------------------------------------------------------------------
 // 18. solve — transcendental lane with branched output (ADR-0017)
 // -----------------------------------------------------------------------------
 //
