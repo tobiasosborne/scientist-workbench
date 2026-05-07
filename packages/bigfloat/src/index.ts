@@ -74,6 +74,31 @@ export {
 export { bernoulliRational } from "./bernoulli.js";
 
 export {
+  type BigComplex,
+  cfromReal,
+  cfromInts,
+  cfromStrings,
+  cre,
+  cim,
+  cconj,
+  cisZero,
+  cadd,
+  csub,
+  cmul,
+  cdiv,
+  cneg,
+  cabs,
+  carg,
+  csqrt,
+  cexp,
+  clog,
+  cpow,
+  clgamma,
+  cgamma,
+  cdigamma,
+} from "./complex.js";
+
+export {
   gamma,
   lgamma,
   digamma,
