@@ -14,9 +14,14 @@
 //   • `univariate-poly`     — single equation, single variable,
 //                             polynomial of any positive degree;
 //                             dispatches to the radicals/poly-roots
-//                             pipeline for deg ≤ 4 and refuses with
-//                             `solve/high-degree-irreducible` for
-//                             deg ≥ 5 irreducibles.
+//                             pipeline for deg ≤ 4 and to the
+//                             `Root[poly, k]` substrate (ADR-0018,
+//                             via `@workbench/alg-num`) for
+//                             irreducible deg ≥ 5 factors with all
+//                             real roots; refuses with
+//                             `solve/complex-roots-not-yet-named`
+//                             when an irreducible deg-≥5 factor has
+//                             complex roots (alg-num v0.1 limit).
 //   • `unsupported`         — multivariate-polynomial (Krull dim 0
 //                             via Buchberger is bead pending),
 //                             transcendental, parametric, or

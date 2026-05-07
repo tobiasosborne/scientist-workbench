@@ -45,8 +45,12 @@ to happy-path expectations under the same `id` (one re-run of
 
 Per ADR-0017 + `tools/solve`'s emitted classes:
 
-- `solve/high-degree-irreducible` — single eqn, single var, irreducible
-  factor of degree ≥ 5 (the bench's own roots subsystem stops at deg 4).
+- `solve/complex-roots-not-yet-named` — single eqn, single var,
+  irreducible factor of degree ≥ 5 has one or more *complex* roots
+  that alg-num v0.1 cannot yet name. (All-real deg-≥5 factors are
+  emitted as `Root[poly, k]` solutions on the happy path per
+  ADR-0018; this refusal fires only for the mixed-real-complex case
+  until complex algebraic naming ships.)
 - `solve/multivariate-non-zero-dim` — multivariate input not in the
   zero-dim lane (until groebner ships, *all* multivariate refuses here).
 - `solve/parametric-non-trivial` — symbol present in eqs that isn't in

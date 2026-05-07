@@ -59,7 +59,7 @@ import sympy as sp
 # Refusal class roster
 # ---------------------------------------------------------------------
 
-CLS_HIGH_DEG_IRRED            = "solve/high-degree-irreducible"
+CLS_COMPLEX_NOT_YET            = "solve/complex-roots-not-yet-named"
 CLS_MULTIVARIATE_NON_ZERO_DIM = "solve/multivariate-non-zero-dim"
 CLS_PARAMETRIC_NON_TRIVIAL    = "solve/parametric-non-trivial"
 CLS_FOREIGN_VOCABULARY        = "solve/foreign-vocabulary"
@@ -350,9 +350,18 @@ def _solve_univariate_poly(eq: sp.Expr, var: str) -> Dict[str, Any]:
     for fac, mult in factors:
         d = fac.total_degree()
         if d >= 5:
+            # Workbench v0.2 (yoc): all-real ⇒ Root[poly, k] solutions
+            # (one per real root × multiplicity); mixed-real-complex ⇒
+            # refuse with `complex-roots-not-yet-named` (alg-num v0.1
+            # names real algebraic numbers only). Reference oracle for
+            # the all-real Root[]-emit path requires a Root[] canonical
+            # formatter; mirroring the refusal half here covers the
+            # bench's existing G-tier mixed-real-complex cases.
+            real_count = len(sp.Poly(fac, x, domain="QQ").real_roots(multiple=True))
             return _refuse(
-                CLS_HIGH_DEG_IRRED,
-                f"factor of degree {d} (≥ 5) is irreducible over ℚ; no closed-form roots",
+                CLS_COMPLEX_NOT_YET,
+                f"factor of degree {d} has {d - real_count} complex root(s); "
+                f"alg-num v0.1 names real algebraic numbers only",
             )
         # Get the closed-form roots of fac using sympy's Poly.all_roots.
         roots = sp.Poly(fac, x, domain="QQ").all_roots(multiple=True)

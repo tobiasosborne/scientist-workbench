@@ -175,7 +175,7 @@
       "id": "v1-refused-quintic-eisenstein",
       "tier": "v1-bank.refused",
       "lane": "refusal",
-      "sympy": "refused:solve/high-degree-irreducible",
+      "sympy": "refused:solve/complex-roots-not-yet-named",
       "wolfram": "ok",
       "wolfram_reason": null,
       "consensus": "wolfram-solved-workbench-refuses-permanent"
@@ -454,7 +454,7 @@
       "id": "rand-univ-014",
       "tier": "rand.univariate-poly",
       "lane": "refusal",
-      "sympy": "refused:solve/high-degree-irreducible",
+      "sympy": "refused:solve/complex-roots-not-yet-named",
       "wolfram": "ok",
       "wolfram_reason": null,
       "consensus": "wolfram-solved-workbench-refuses-permanent"
@@ -499,7 +499,7 @@
       "id": "rand-univ-019",
       "tier": "rand.univariate-poly",
       "lane": "refusal",
-      "sympy": "refused:solve/high-degree-irreducible",
+      "sympy": "refused:solve/complex-roots-not-yet-named",
       "wolfram": "ok",
       "wolfram_reason": null,
       "consensus": "wolfram-solved-workbench-refuses-permanent"
@@ -544,7 +544,7 @@
       "id": "rand-univ-024",
       "tier": "rand.univariate-poly",
       "lane": "refusal",
-      "sympy": "refused:solve/high-degree-irreducible",
+      "sympy": "refused:solve/complex-roots-not-yet-named",
       "wolfram": "ok",
       "wolfram_reason": null,
       "consensus": "wolfram-solved-workbench-refuses-permanent"

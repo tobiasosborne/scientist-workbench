@@ -141,10 +141,14 @@ Comparison via bipartite-matching: each candidate root must pair
 with exactly one SymPy root such that
 `simplify(cand_value - sympy_value) == 0`.
 
-For deg ≥ 5 irreducible factors: SymPy emits `RootOf` symbolic
-roots; the workbench refuses with `solve/high-degree-irreducible`.
-The verifier handles this via the refusal lane (the dispatcher
-should have routed there); this check is not invoked.
+For deg ≥ 5 irreducible factors: post-yoc the workbench emits
+`Root[poly, k]` solutions when all roots are real and refuses with
+`solve/complex-roots-not-yet-named` when any are complex
+(alg-num v0.1 limit). The bench's existing G-tier deg-≥5 cases are
+mixed-real-complex and route through the refusal lane; the all-real
+Root[]-emit path is exercised by `tools/solve`'s per-tool goldens
+(the bench's reference oracle would need a Root[] canonical
+formatter to mirror the all-real path; tracked separately).
 
 ## Lane: transcendental (3 checks)
 

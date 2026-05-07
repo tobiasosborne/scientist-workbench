@@ -106,7 +106,7 @@ a `tagged` value whose tag is `solve/<class>` and whose payload is a
 
 | class | when emitted | payload fields |
 |---|---|---|
-| `solve/high-degree-irreducible` | univariate ≥ 5 irreducible, before `Root[]` ships (P3-9) | `degree, polynomial` |
+| `solve/complex-roots-not-yet-named` | univariate ≥ 5 irreducible factor has one or more *complex* roots that alg-num v0.1 cannot yet name (real roots of an irreducible deg-≥5 factor are emitted as `Root[poly, k]` solutions on the happy path per ADR-0018; this refusal fires only for the mixed-real-complex case) | `degree, polynomial, complex_count` |
 | `solve/transcendental-multibranch` | invert-and-substitute pattern dispatch fails (mixed-trig sums beyond half-angle) | `vocabulary, suggestion` |
 | `solve/inequality` | input is an inequality, not an equation | `relation` |
 | `solve/multivariate-non-zero-dim` | input ideal has positive Krull dimension | `groebner_basis, dimension_estimate` |
@@ -203,24 +203,34 @@ list).
 Input: `Solve[{x + y == 1, x + y == 2}, {x, y}]` ⇒ `solutions: []`,
 `completeness: 'complete'`.
 
-### Refusal — irreducible quintic before Phase 3
+### Refusal — irreducible quintic with complex roots (post-yoc)
 
-Input: `Solve[x^5 - x - 1 == 0, x]` while `Root[]` is not yet
-implemented (during Phases 1–2):
+Input: `Solve[x^5 - x - 1 == 0, x]` — irreducible (Lehmer-class),
+1 real + 4 complex roots. The real root is *namable* via
+`Root[poly, k]` (ADR-0018; yoc shipped this for `tools/poly-roots`
+and `tools/solve`); the complex roots are not yet representable in
+alg-num v0.1, so the whole input refuses to avoid producing a
+half-named answer:
 
 ```jsonc
 {
   "kind": "tagged",
-  "tag":  "solve/high-degree-irreducible",
+  "tag":  "solve/complex-roots-not-yet-named",
   "payload": {
     "kind": "record",
     "fields": {
-      "degree":     {"kind": "integer", "value": "5"},
-      "polynomial": <the polynomial as an expression>
+      "degree":        {"kind": "integer", "value": "5"},
+      "complex_count": {"kind": "integer", "value": "4"},
+      "polynomial":    <the polynomial as an expression>
     }
   }
 }
 ```
+
+When the irreducible deg-≥5 factor has *all real* roots (e.g.,
+Lehmer's `x^5 + x^4 - 4x^3 - 3x^2 + 3x + 1`), the happy-path record
+is emitted with one `Root[poly, k]` solution per real root in
+canonical sort order — see ADR-0018.
 
 After P3-9 ships (`Root[]`-by-index for irreducible deg ≥ 5), the
 same input becomes a happy-path response with five `Root[poly, k]`

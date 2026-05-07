@@ -117,7 +117,7 @@
       "id": "v1-refused-quintic-eisenstein",
       "expected": {
         "lane": "refusal",
-        "tag": "solve/high-degree-irreducible"
+        "tag": "solve/complex-roots-not-yet-named"
       }
     },
     {
@@ -305,7 +305,7 @@
       "id": "rand-univ-014",
       "expected": {
         "lane": "refusal",
-        "tag": "solve/high-degree-irreducible"
+        "tag": "solve/complex-roots-not-yet-named"
       }
     },
     {
@@ -336,7 +336,7 @@
       "id": "rand-univ-019",
       "expected": {
         "lane": "refusal",
-        "tag": "solve/high-degree-irreducible"
+        "tag": "solve/complex-roots-not-yet-named"
       }
     },
     {
@@ -367,7 +367,7 @@
       "id": "rand-univ-024",
       "expected": {
         "lane": "refusal",
-        "tag": "solve/high-degree-irreducible"
+        "tag": "solve/complex-roots-not-yet-named"
       }
     },
     {

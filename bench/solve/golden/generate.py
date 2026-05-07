@@ -310,7 +310,7 @@ def random_univariate_poly(rng: random.Random, count: int) -> List[Dict[str, Any
                 factors.append((fac, mult))
                 d_left -= fac.total_degree() * mult
             # Optional: include a degree-5+ irreducible factor for some cases
-            # to test the high-degree-irreducible refusal path.
+            # to test the complex-roots-not-yet-named refusal path.
             if target_deg >= 5 and i % 5 == 4:  # ~1 in 5 of degree≥5 cases
                 # Construct an irreducible quintic via Eisenstein at p=2.
                 quintic = sp.Poly(x**5 + 2 * rng.randint(1, 3) * x + 2, x)
@@ -503,7 +503,7 @@ def admit(case: Dict[str, Any]) -> Tuple[Optional[Dict[str, Any]], Dict[str, Any
                 # capability-pending unless the refusal is permanent.
                 permanent_classes = {
                     "solve/foreign-vocabulary",  # rational fns, mixed-trig sums
-                    "solve/high-degree-irreducible",
+                    "solve/complex-roots-not-yet-named",
                     "solve/parametric-non-trivial",
                     "solve/constant-equation",
                     "solve/empty-input",

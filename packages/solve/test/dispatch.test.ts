@@ -142,8 +142,10 @@ describe("dispatchClassified — univariate-poly lane", () => {
     }
   });
 
-  test("deg-5 irreducible quintic ⟹ refusal", () => {
-    // x⁵ + 2x + 2 (irreducible over ℚ by Eisenstein at p = 2).
+  test("deg-5 irreducible quintic with complex roots ⟹ refusal", () => {
+    // x⁵ + 2x + 2 — Eisenstein at p = 2 (irreducible). Derivative
+    // 5x⁴ + 2 > 0 everywhere ⇒ monotonic ⇒ exactly one real root,
+    // four complex; alg-num v0.1 names real roots only ⇒ refuses.
     const x5 = polyMul(x, polyMul(x, polyMul(x, polyMul(x, x, RAT_RING), RAT_RING), RAT_RING), RAT_RING);
     const eq = polyAdd(
       polyAdd(x5, polyMul(c(2), x, RAT_RING), RAT_RING),
@@ -154,7 +156,50 @@ describe("dispatchClassified — univariate-poly lane", () => {
     const result = dispatchClassified(verdict, ["x"]);
     expect(result.kind).toBe("refusal");
     if (result.kind === "refusal") {
-      expect(result.reasonClass).toBe("high-degree-irreducible");
+      expect(result.reasonClass).toBe("complex-roots-not-yet-named");
+    }
+  });
+
+  test("deg-5 irreducible totally-real quintic ⟹ 5 Root[] solutions", () => {
+    // Lehmer's L(x) = x⁵ + x⁴ − 4x³ − 3x² + 3x + 1 — minimal polynomial
+    // of 2 cos(2π/11), totally real (5 real roots), irreducible.
+    // Post-yoc dispatch emits one Root[poly, k] per real root for
+    // k = 0..4, all sharing the canonical minpoly.
+    const x2 = polyMul(x, x, RAT_RING);
+    const x3 = polyMul(x2, x, RAT_RING);
+    const x4 = polyMul(x3, x, RAT_RING);
+    const x5 = polyMul(x4, x, RAT_RING);
+    const eq = polyAdd(
+      polyAdd(
+        polyAdd(
+          polyAdd(
+            polyAdd(x5, x4, RAT_RING),
+            polyMul(c(-4), x3, RAT_RING),
+            RAT_RING,
+          ),
+          polyMul(c(-3), x2, RAT_RING),
+          RAT_RING,
+        ),
+        polyMul(c(3), x, RAT_RING),
+        RAT_RING,
+      ),
+      c(1),
+      RAT_RING,
+    );
+    const verdict = classifyInput([eq], ["x"]);
+    const result = dispatchClassified(verdict, ["x"]);
+    expect(result.kind).toBe("success");
+    if (result.kind === "success") {
+      expect(result.solutions.length).toBe(5);
+      for (let i = 0; i < 5; i++) {
+        const sol = result.solutions[i]!;
+        expect(sol.bindings.length).toBe(1);
+        const v = sol.bindings[0]!.value;
+        expect(v.kind).toBe("expression");
+        if (v.kind === "expression") {
+          expect(v.head).toBe("Root");
+        }
+      }
     }
   });
 });

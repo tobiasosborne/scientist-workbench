@@ -41,6 +41,13 @@ import {
 } from "@workbench/cas-core";
 import { factorRatQ } from "@workbench/poly-factor";
 import {
+  ROOT_VAR,
+  canonicalIntegerForm,
+  polyToHighToLowRat,
+  rootToValue,
+} from "@workbench/alg-num";
+import { isolateRealRoots } from "@workbench/real-roots";
+import {
   expr,
   int,
   rat as protocolRat,
@@ -235,13 +242,35 @@ function rootsOfFactor(
       const [r1, r2, r3, r4] = quarticRoots(a!, b!, c!, d!, e!);
       return [r1, r2, r3, r4];
     }
-    default:
-      return {
-        refusal: {
-          tag: "high-degree-irreducible",
-          detail: `irreducible factor of degree ${deg}; radical solution requires Root[] (poly-roots v0.2)`,
-        },
-      };
+    default: {
+      // deg ≥ 5: name each real root by `Root[poly, k]` (ADR-0018).
+      // Mirror of `tools/poly-roots/tool.ts`'s deg-≥5 path —
+      // canonicalise the irreducible factor to ℤ[x], enumerate real
+      // roots via VAS-LMQ, emit one `Root[]` per real root in
+      // ascending order. If the factor has any complex roots,
+      // refuse with `complex-roots-not-yet-named` — alg-num v0.1
+      // names real algebraic numbers only.
+      const minpoly = canonicalIntegerForm(p, v);
+      const intervals = isolateRealRoots(polyToHighToLowRat(minpoly, ROOT_VAR));
+      if (intervals.length < deg) {
+        return {
+          refusal: {
+            tag: "complex-roots-not-yet-named",
+            detail:
+              `irreducible factor of degree ${deg} has ${deg - intervals.length} complex root(s); `
+              + `alg-num v0.1 names real algebraic numbers only — complex algebraic naming `
+              + `requires planar complex-root isolation (future shard).`,
+          },
+        };
+      }
+      return intervals.map((iv, k) =>
+        rootToValue({
+          minpoly,
+          k,
+          interval: { lo: iv.lo, hi: iv.hi },
+        }),
+      );
+    }
   }
 }
 

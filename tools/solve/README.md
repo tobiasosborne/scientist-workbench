@@ -49,8 +49,12 @@ unknowns from `vars`. Heads outside this vocabulary (sin, exp, sqrt,
 
 * **Boundary** — `tagged "solve/<class>"` with payload `record { detail: string }`.
   v0.1 class roster:
-  - `solve/high-degree-irreducible` — irreducible univariate factor of
-    degree ≥ 5 (Galois 1832; Root[] is bead `yoc`).
+  - `solve/complex-roots-not-yet-named` — irreducible univariate factor
+    of degree ≥ 5 has one or more complex roots that alg-num v0.1
+    cannot yet name. (Real roots of an irreducible deg-≥5 factor are
+    emitted as `Root[poly, k]` solutions on the happy path per
+    ADR-0018; this refusal fires only for the mixed-real-complex
+    case until complex algebraic naming ships.)
   - `solve/multivariate-non-zero-dim` — nonlinear multivariate
     polynomial system (Gröbner-basis dispatch is bead pending).
   - `solve/parametric-non-trivial` — equation mentions a symbol
@@ -87,11 +91,19 @@ list of symbols.
      - deg 3 → `cubicRoots` (Cardano; faithful complex form per
        bead 1yu).
      - deg 4 → `quarticRoots` (Ferrari + biquadratic fast path).
-     - deg ≥ 5 → refusal `solve/high-degree-irreducible`.
+     - deg ≥ 5 (all real roots) → one `Root[poly, k]` solution per
+       real root in canonical sort order (ADR-0018; substrate
+       `@workbench/alg-num` via `canonicalIntegerForm`,
+       `polyToHighToLowRat`, `rootToValue`; real-root enumeration via
+       `@workbench/real-roots::isolateRealRoots`).
+     - deg ≥ 5 (one or more complex roots) → refusal
+       `solve/complex-roots-not-yet-named`.
 
    Multiplicities preserved per factor: a triple root appears 3
    times in the `solutions` list (each as a separate one-binding
-   `Solution`).
+   `Solution`). For deg-≥5 Root[] solutions, a multiplicity-`m`
+   factor produces `m` repeated copies of each root (mirroring the
+   deg-≤4 multiplicity-as-repetition convention).
 
 ## Invariants
 

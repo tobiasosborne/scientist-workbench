@@ -101,9 +101,11 @@
       "name": "@workbench/solve",
       "version": "0.1.0",
       "dependencies": {
+        "@workbench/alg-num": "workspace:*",
         "@workbench/cas-core": "workspace:*",
         "@workbench/poly-factor": "workspace:*",
         "@workbench/protocol": "workspace:*",
+        "@workbench/real-roots": "workspace:*",
       },
     },
     "packages/sturm": {

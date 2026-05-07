@@ -59,7 +59,11 @@ degree:
 - deg 2 → `quadraticRoots` (Cardano-Vieta-type closed form).
 - deg 3 → `cubicRoots` (Cardano).
 - deg 4 → `quarticRoots` (Ferrari).
-- deg ≥ 5 irreducible → refusal `solve/high-degree-irreducible`.
+- deg ≥ 5 irreducible (all real roots) → one `Root[poly, k]`
+  solution per real root × multiplicity, in canonical sort order
+  (ADR-0018; substrate `@workbench/alg-num`).
+- deg ≥ 5 irreducible (one or more complex roots) → refusal
+  `solve/complex-roots-not-yet-named`.
 
 Multiplicity is preserved as repetition: `(x − 1)²` produces two
 `Solution` entries each with binding `x = 1` (per ADR-0017's flat

@@ -122,10 +122,20 @@ export const goldens: GoldenSpec[] = [
     input: inp([poly1([[1n, 2n], [-2n, 1n], [1n, 0n]])], ["x"]),
   },
 
+  // ── Univariate deg ≥ 5 (Root[]-emit + complex refusal) ────────────────────
+  {
+    description: "deg-5 irreducible totally-real Lehmer L(x) ⟹ 5 Root[] solutions",
+    // x⁵ + x⁴ − 4x³ − 3x² + 3x + 1 (minimal poly of 2cos(2π/11), all-real, irreducible)
+    input: inp(
+      [poly1([[1n, 5n], [1n, 4n], [-4n, 3n], [-3n, 2n], [3n, 1n], [1n, 0n]])],
+      ["x"],
+    ),
+  },
+
   // ── Refusals ──────────────────────────────────────────────────────────────
   {
-    description: "deg-5 irreducible quintic ⟹ tagged solve/high-degree-irreducible",
-    // x⁵ + 2x + 2 (Eisenstein at p=2)
+    description: "deg-5 irreducible quintic with complex roots ⟹ tagged solve/complex-roots-not-yet-named",
+    // x⁵ + 2x + 2 (Eisenstein at p=2; 1 real, 4 complex)
     input: inp([poly1([[1n, 5n], [2n, 1n], [2n, 0n]])], ["x"]),
   },
   {

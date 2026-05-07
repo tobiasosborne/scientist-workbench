@@ -49,8 +49,11 @@ The radicals suffix (`packages/poly-roots`, worklog 053):
 - **Ferrari / Lagrange resolvent** — quartic via reduction to
   resolvent cubic. Same scope.
 - **Abel-Ruffini** — degree ≥ 5 irreducible has no general radical
-  solution; this is *why* the workbench refuses with
-  `solve/high-degree-irreducible` past degree 4.
+  solution; this is *why* the workbench routes deg-≥5 through
+  `Root[poly, k]` (ADR-0018) rather than radicals. Real roots of an
+  irreducible deg-≥5 factor become `Root[]` solutions; mixed-real-
+  complex factors refuse with `solve/complex-roots-not-yet-named`
+  (alg-num v0.1 names real algebraic numbers only).
 
 Bench: `bench/poly-factor-q` (squarefree + factor). The radicals path
 is goldened in `tools/poly-roots/goldens.spec.ts`; a dedicated
