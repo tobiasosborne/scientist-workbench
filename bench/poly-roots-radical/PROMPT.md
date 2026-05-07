@@ -40,7 +40,12 @@ over ℚ of degree ≤ 4:
      irreducibilis (Δ_c < 0, three real roots) per ADR-1yu — no
      trigonometric switch
    - deg 4 → Ferrari 1540 + biquadratic fast path
-   - deg ≥ 5 → `tagged "poly-roots/degree-too-high"` (Galois 1832)
+   - deg ≥ 5 (all real roots) → `Root[poly, k]` per real root (ADR-0018);
+     workbench tool emits `deg` `Root[]` values in canonical sort
+     order with `method = "factor-then-radicals-or-root"`.
+   - deg ≥ 5 (one or more complex roots) →
+     `tagged "poly-roots/complex-roots-not-yet-named"` —
+     alg-num v0.1 names real algebraic numbers only.
 
 ### Why factor first
 
@@ -87,7 +92,9 @@ are accounted for via the multiplicity field.
 
 Refusal classes (per `tools/poly-roots/tool.ts`):
 
-- `poly-roots/degree-too-high` — irreducible factor of degree ≥ 5.
+- `poly-roots/complex-roots-not-yet-named` — irreducible factor of
+  degree ≥ 5 has one or more *complex* roots; alg-num v0.1 names
+  real algebraic numbers only.
 - `poly-roots/non-polynomial`  — `f` is not a polynomial in `var` over ℚ.
 - `poly-roots/multivariate`    — `f` mentions a non-`var` symbol.
 
@@ -137,7 +144,7 @@ radical-root output modulo representation equivalence.
 | **D. quartic (Ferrari)** | 8 | biquadratic real & no-real, depressed Ferrari, cyclotomic `x⁴−1`, quadruple root, two double roots, perfect-square-quadratic, Ferrari resolvent stress |
 | **E. reducible** | 6 | linear×quadratic, two irreducible quads, quad×casus-cubic, three linears, mixed-multiplicity, difference-of-squares quartic |
 | **F. numeric stress** | 8 | large coefs, tiny rational coefs, near-zero discriminant, large-cubic, biquadratic spread, content-12, mixed denoms |
-| **G. refusals** | 6 | deg-5 Eisenstein, deg-6 irreducible, Φ_7 cyclotomic, sin(x), `1/x + x`, multivariate `x·y` |
+| **G. refusals** | 6 | deg-5 Eisenstein (1 real, 4 complex), deg-6 irreducible (0 real), Φ_7 cyclotomic (0 real), sin(x), `1/x + x`, multivariate `x·y`. *(All deg-≥5 G-cases have complex roots; alg-num v0.1 refuses these. An all-real deg-≥5 polynomial would emit `Root[]` values per ADR-0018 / bead `yoc`.)* |
 
 **50 cases × ≤4 happy-path checks + ≤2 refusal checks ≈ 200 invariant
 assertions.**
@@ -155,11 +162,15 @@ The oracles in priority order:
    irreducibilis cubic roots (Sage's `qqbar` ring resolves these
    without the complex-radical workaround).
 
-For tier-G refusals, the workbench's bounded-scope refusal at v0.1
-(deg ≥ 5) is admitted even when Wolfram solves with `Root[]` —
-that's the honest "we stop at deg 4 in radicals; Root[] is bead `yoc`"
-boundary. The oracle log records this as
-`wolfram-solved-workbench-bounded-scope`.
+For tier-G refusals, the workbench's bounded-scope refusal at v0.2
+(deg ≥ 5 with complex roots) is admitted even when Wolfram solves
+with `Root[]` — that's the honest "real algebraic numbers only in
+alg-num v0.1; complex Root[] is a future shard" boundary. The oracle
+log records this as `wolfram-solved-workbench-bounded-scope`.
+
+After bead `yoc` shipped, an all-real deg-≥5 input emits `Root[]`
+values directly; this bench's G-tier cases are intentionally
+mixed-real-complex to exercise the remaining refusal.
 
 ## Verifying your solution
 

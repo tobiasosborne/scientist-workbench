@@ -319,12 +319,14 @@
     },
     "tools/poly-roots": {
       "name": "@workbench/tool-poly-roots",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "dependencies": {
+        "@workbench/alg-num": "workspace:*",
         "@workbench/cas-core": "workspace:*",
         "@workbench/contract": "workspace:*",
         "@workbench/poly-factor": "workspace:*",
         "@workbench/protocol": "workspace:*",
+        "@workbench/real-roots": "workspace:*",
       },
     },
     "tools/real-root-isolate": {

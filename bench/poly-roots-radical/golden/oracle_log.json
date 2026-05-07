@@ -319,21 +319,21 @@
     {
       "id": "G-deg5-eisenstein",
       "tier": "G",
-      "sympy": "refused:poly-roots/degree-too-high",
+      "sympy": "refused:poly-roots/complex-roots-not-yet-named",
       "wolfram": "ok",
       "consensus": "wolfram-solved-workbench-bounded-scope"
     },
     {
       "id": "G-deg6-irreducible",
       "tier": "G",
-      "sympy": "refused:poly-roots/degree-too-high",
+      "sympy": "refused:poly-roots/complex-roots-not-yet-named",
       "wolfram": "ok",
       "consensus": "wolfram-solved-workbench-bounded-scope"
     },
     {
       "id": "G-deg7-cyclotomic",
       "tier": "G",
-      "sympy": "refused:poly-roots/degree-too-high",
+      "sympy": "refused:poly-roots/complex-roots-not-yet-named",
       "wolfram": "ok",
       "consensus": "wolfram-solved-workbench-bounded-scope"
     },

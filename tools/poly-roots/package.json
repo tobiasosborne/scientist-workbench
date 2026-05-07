@@ -1,12 +1,14 @@
 {
   "name": "@workbench/tool-poly-roots",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "private": true,
   "dependencies": {
     "@workbench/protocol": "workspace:*",
     "@workbench/contract": "workspace:*",
     "@workbench/poly-factor": "workspace:*",
-    "@workbench/cas-core": "workspace:*"
+    "@workbench/cas-core": "workspace:*",
+    "@workbench/alg-num": "workspace:*",
+    "@workbench/real-roots": "workspace:*"
   }
 }

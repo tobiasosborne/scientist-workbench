@@ -121,7 +121,18 @@ The MVP ships ten kinds. They are exhaustive over the discriminator; a tool that
 
 Deferred (will be added accretively, no breaking change because of §2.3):
 
-- `algebraic` — root of a polynomial over Q with isolating interval; equality decidable.
+- ~~`algebraic`~~ — superseded. **Algebraic numbers are encoded as
+  `expression { head: 'Root', args: [Polynomial, k] }` per ADR-0018.**
+  Choosing an `expression` head over a new top-level kind preserves
+  the "ten kinds, exhaustive" guarantee and lets pattern-matchers
+  that don't know `Root` pass it through verbatim under the foreign-
+  pass-through invariant (§2.3). Substrate `@workbench/alg-num`
+  ships canonical construction (`makeRoot`, `makeRootByIndex`),
+  refinement (`refineRoot`), encoding (`rootToValue` /
+  `valueToRoot`), and field arithmetic (`algNumAdd`, `algNumMul`,
+  `algNumInv`, etc.) via Sylvester resultants. Real-only in v0.1;
+  complex algebraic naming is a future shard. Consumer wired in
+  `tools/poly-roots` (deg-≥5 path; bead `yoc`).
 - `indexed` — expression with bound and free indices; dummy indices alpha-equivalent.
 - `operator-string` — non-commutative product of generators, with optional algebra tag (Clifford, Pauli, Heisenberg, custom).
 - `polynomial` — multivariate polynomial in named indeterminates over a specified coefficient ring.

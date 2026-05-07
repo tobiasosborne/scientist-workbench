@@ -270,21 +270,21 @@
       "id": "G-deg5-eisenstein",
       "expected": {
         "kind": "tagged",
-        "tag": "poly-roots/degree-too-high"
+        "tag": "poly-roots/complex-roots-not-yet-named"
       }
     },
     {
       "id": "G-deg6-irreducible",
       "expected": {
         "kind": "tagged",
-        "tag": "poly-roots/degree-too-high"
+        "tag": "poly-roots/complex-roots-not-yet-named"
       }
     },
     {
       "id": "G-deg7-cyclotomic",
       "expected": {
         "kind": "tagged",
-        "tag": "poly-roots/degree-too-high"
+        "tag": "poly-roots/complex-roots-not-yet-named"
       }
     },
     {

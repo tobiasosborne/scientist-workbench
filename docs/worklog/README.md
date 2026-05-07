@@ -73,6 +73,7 @@ write the frictions and the dead ends as well as the wins.
 | 060 | [alg-num: `Root[poly, k]` type + canonicalisation (xyt)](060-alg-num-root-type.md) | 2026-05-07 | scientist-workbench-xyt |
 | 061 | [alg-num: `refineRoot` (xkz) + `makeRootByIndex` (6cd)](061-alg-num-refine-and-byindex.md) | 2026-05-07 | scientist-workbench-{xkz, 6cd} |
 | 062 | [alg-num: resultant arithmetic on Roots (rti)](062-alg-num-arithmetic.md) | 2026-05-07 | scientist-workbench-rti |
+| 063 | [`tools/poly-roots` deg-≥5 lift: `Root[]` for irreducible quintics+ (yoc)](063-yoc-poly-roots-deg5.md) | 2026-05-07 | scientist-workbench-yoc |
 
 ## How to add a new shard
 

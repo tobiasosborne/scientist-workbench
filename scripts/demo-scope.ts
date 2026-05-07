@@ -750,22 +750,30 @@ if (polySolveResult.kind === "record") {
 }
 
 // -----------------------------------------------------------------------------
-// 17. poly-roots — symbolic radical roots over ℚ (deg ≤ 4)
+// 17. poly-roots — symbolic roots over ℚ (radicals deg ≤ 4 + Root[] deg ≥ 5)
 // -----------------------------------------------------------------------------
 //
-// Composes poly-factor with closed-form formulas: linear (rational),
-// quadratic (discriminant), cubic (Cardano 1545), quartic (Ferrari 1540).
-// Each root is an *exact symbolic* expression in `+ − * / ^ neg sqrt` —
-// `(-1 + √5)/2`, not `0.6180...` — so it composes downstream with
-// cas-diff / integrate-1d. The demo solves x² − x − 1 = 0 (golden ratio
-// minimal poly) to showcase the radical surface.
+// Composes poly-factor with closed-form formulas for irreducible factors of
+// degree ≤ 4: linear (rational), quadratic (discriminant), cubic (Cardano
+// 1545), quartic (Ferrari 1540). Each root is an *exact symbolic*
+// expression in `+ − * / ^ neg sqrt` — `(-1 + √5)/2`, not `0.6180...` — so
+// it composes downstream with cas-diff / integrate-1d. The demo solves
+// x² − x − 1 = 0 (golden ratio minimal poly) to showcase the radical
+// surface.
+//
+// For irreducible factors of degree ≥ 5 (Galois 1832: no general radical
+// formula), each *real* root is named by `Root[poly, k]` per ADR-0018 —
+// the value-protocol primitive for an arbitrary algebraic number. The
+// second probe runs Lehmer's L(x) = x⁵ + x⁴ − 4x³ − 3x² + 3x + 1 (the
+// minimal polynomial of 2cos(2π/11) — totally real, irreducible) and
+// shows the five Root[] values it returns.
 
 console.log("\n" + "=".repeat(60));
-console.log("  17. poly-roots — radical roots (deg ≤ 4)");
+console.log("  17. poly-roots — radicals (deg ≤ 4) + Root[] (deg ≥ 5)");
 console.log("=".repeat(60));
 console.log(
-  "Cardano + Ferrari closed forms over poly-factor's irreducible decomposition.\n" +
-  "Exact symbolic roots — composable, not stringified.",
+  "Cardano + Ferrari closed forms for deg ≤ 4; Root[poly, k] (ADR-0018)\n" +
+  "for irreducible deg ≥ 5. Exact symbolic roots — composable.",
 );
 const phiPoly = await parseExpr("x^2 - x - 1");
 const phiRoots = await wb.polyRoots({
@@ -804,6 +812,36 @@ if (phiRoots.kind === "record") {
       const mult = entry.fields["multiplicity"];
       if (root && mult?.kind === "integer") {
         console.log(`  root:  ${renderRoot(root)}   (multiplicity ${mult.value})`);
+      }
+    }
+  }
+}
+
+// Lehmer probe — irreducible totally-real quintic ⟹ 5 Root[] values.
+const lehmerPoly = await parseExpr("x^5 + x^4 - 4*x^3 - 3*x^2 + 3*x + 1");
+const lehmerRoots = await wb.polyRoots({
+  kind: "record",
+  fields: { f: lehmerPoly as never, var: { kind: "symbol", name: "x" } },
+});
+if (lehmerRoots.kind === "record") {
+  const roots = lehmerRoots.fields["roots"];
+  const method = lehmerRoots.fields["method"];
+  if (method?.kind === "string") {
+    console.log(`\n  Lehmer L(x) = x⁵ + x⁴ − 4x³ − 3x² + 3x + 1   (method: ${method.value})`);
+  }
+  if (roots?.kind === "list") {
+    for (const entry of roots.items) {
+      if (entry?.kind !== "record") continue;
+      const root = entry.fields["root"];
+      if (root?.kind === "expression" && root.head === "Root") {
+        const polyArg = root.args[0];
+        const kArg = root.args[1];
+        if (polyArg?.kind === "expression" && polyArg.head === "Polynomial" && kArg?.kind === "integer") {
+          const coefs = polyArg.args
+            .map((c) => (c.kind === "integer" ? c.value : "?"))
+            .join(", ");
+          console.log(`  Root[Polynomial[${coefs}], k=${kArg.value}]`);
+        }
       }
     }
   }

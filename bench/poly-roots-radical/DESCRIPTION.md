@@ -19,8 +19,12 @@ closed-form formulas. Given `f ∈ ℚ[x]`:
      ADR-1yu — see "Casus irreducibilis" below.
    - `deg(pᵢ) = 4` → **Ferrari 1540**. Biquadratic fast path when
      `b = d = 0`.
-   - `deg(pᵢ) ≥ 5` → **refusal** `tagged "poly-roots/degree-too-high"`
-     (Galois-Abel-Ruffini: no general radical formula).
+   - `deg(pᵢ) ≥ 5` (all real roots) → **`Root[poly, k]` per real root**
+     (ADR-0018; bead `yoc`). One `Root[]` value per real root,
+     ascending by real value; method = `factor-then-radicals-or-root`.
+   - `deg(pᵢ) ≥ 5` (mixed-real-complex) → **refusal**
+     `tagged "poly-roots/complex-roots-not-yet-named"` —
+     alg-num v0.1 names real algebraic numbers only.
 3. Each root inherits the factor's multiplicity `eᵢ` from step 1.
 
 ### Casus irreducibilis (ADR-1yu)
@@ -118,7 +122,7 @@ ships **8** (each demonstrates RED on the labelled check):
 5. `lied_about_scope` — for deg-5 input, fabricate an `ok` envelope
    instead of refusing ⇒ shape.
 6. `wrong_refusal_tag` — refuse with `non-polynomial` instead of
-   `degree-too-high` ⇒ refusal_class_matches.
+   `complex-roots-not-yet-named` ⇒ refusal_class_matches.
 7. `casus_irreducibilis_wrong` — swap one root of `x³ − 3x + 1`
    for `1` (NOT a root) ⇒ each_root_satisfies (exercises the
    numerical fallback layer).
@@ -154,10 +158,15 @@ GREEN baseline 5/5 + RED mutations 8/8 = verifier sensitive.
   exercise BigInt-rational arithmetic and the `valueToRatFn` content
   extraction. Near-zero discriminant cases verify that
   `tools/poly-factor` doesn't hit a "division-by-zero" precision bug.
-- **G. refusals.** Three deg ≥ 5 cases (Eisenstein quintic, irreducible
-  sextic, Φ_7 cyclotomic) verify the bounded-scope tag fires
-  consistently. Two non-polynomial cases (`sin(x)`, `1/x + x`) and
-  one multivariate (`x · y`) verify the per-class tag dispatch.
+- **G. refusals.** Three deg ≥ 5 cases (Eisenstein quintic with
+  1 real + 4 complex roots, irreducible sextic with 0 real roots,
+  Φ_7 cyclotomic with 0 real roots) verify the
+  `complex-roots-not-yet-named` tag fires consistently. After bead
+  `yoc` (alg-num v0.1) shipped, an all-real deg-≥5 polynomial emits
+  `Root[poly, k]` values directly; this bench's G-tier cases are
+  intentionally mixed-real-complex to exercise the remaining
+  refusal. Two non-polynomial cases (`sin(x)`, `1/x + x`) and one
+  multivariate (`x · y`) verify the per-class tag dispatch.
 
 ## Sources cited
 
@@ -167,7 +176,12 @@ GREEN baseline 5/5 + RED mutations 8/8 = verifier sensitive.
   modern algebra textbook.
 - **Ferrari 1540** — quartic via resolvent cubic. Same.
 - **Galois 1832** — Abel-Ruffini theorem (no general radical formula
-  for deg ≥ 5). Why we refuse at the deg-5 boundary.
+  for deg ≥ 5). Why deg ≥ 5 routes through `Root[poly, k]` (ADR-0018)
+  rather than radicals.
+- **ADR-0018** — `Root[poly, k]`: the value-protocol primitive
+  naming algebraic numbers by `(minpoly, k)` for deg-≥5 (substrate
+  shipped via beads `xyt`, `xkz`, `6cd`, `rti`; consumer wired via
+  `yoc`).
 - **`docs/worklog/053`** — the implementation shard of `tools/poly-roots`.
 - **`bench/poly-factor-q`** — substrate bench (factor list invariants
   this bench composes).
@@ -178,9 +192,12 @@ GREEN baseline 5/5 + RED mutations 8/8 = verifier sensitive.
   irreducibilis without complex radicals, but introduces `cos`, `acos`,
   `arctan` heads outside the closed vocabulary. Per ADR-1yu we accept
   the symbolic-but-numerically-NaN faithful complex form.
-- **`Root[poly, k]`** — Mathematica's algebraic-number representation.
-  Lifting the deg ≥ 5 cap requires the alg-num substrate (bead
-  `xyt → xkz → 6cd → rti → 5i2 → yoc`). Out of scope for this bench.
+- **`Root[poly, k]`** for *complex* algebraic numbers — Mathematica's
+  full algebraic-number representation. Real `Root[]` shipped via
+  bead `yoc` (alg-num v0.1, this bench's deg-≥5 path). Complex
+  `Root[]` requires planar complex-root isolation
+  (Pinkert / Pan-Sevriuk) and is a future shard. Until then, the
+  G-tier mixed-real-complex inputs refuse honestly.
 - **Numerical eigenvalue methods** (companion matrix → `linalg-solve`)
   — that's a different problem (approximate roots over ℝ).
 - **Sturm sequences for real-root counting** — bench `q8q`
