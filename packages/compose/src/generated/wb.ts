@@ -38,6 +38,7 @@ import { def as linalgQrDef } from "../../../../tools/linalg-qr/tool.js";
 import { def as linalgSolveDef } from "../../../../tools/linalg-solve/tool.js";
 import { def as linalgSvdDef } from "../../../../tools/linalg-svd/tool.js";
 import { def as linsolveQDef } from "../../../../tools/linsolve-q/tool.js";
+import { def as meijerGSlaterOnlyDef } from "../../../../tools/meijer-g-slater-only/tool.js";
 import { def as modInvDef } from "../../../../tools/mod-inv/tool.js";
 import { def as modPowDef } from "../../../../tools/mod-pow/tool.js";
 import { def as nttDef } from "../../../../tools/ntt/tool.js";
@@ -75,6 +76,7 @@ export interface TypedWorkbench extends Workbench {
   linalgSolve(input: InputOf<typeof linalgSolveDef>, flags?: FlagsArgOf<typeof linalgSolveDef>): Promise<OutputOf<typeof linalgSolveDef>>;
   linalgSvd(input: InputOf<typeof linalgSvdDef>, flags?: FlagsArgOf<typeof linalgSvdDef>): Promise<OutputOf<typeof linalgSvdDef>>;
   linsolveQ(input: InputOf<typeof linsolveQDef>, flags?: FlagsArgOf<typeof linsolveQDef>): Promise<OutputOf<typeof linsolveQDef>>;
+  meijerGSlaterOnly(input: InputOf<typeof meijerGSlaterOnlyDef>, flags?: FlagsArgOf<typeof meijerGSlaterOnlyDef>): Promise<OutputOf<typeof meijerGSlaterOnlyDef>>;
   modInv(input: InputOf<typeof modInvDef>, flags?: FlagsArgOf<typeof modInvDef>): Promise<OutputOf<typeof modInvDef>>;
   modPow(input: InputOf<typeof modPowDef>, flags?: FlagsArgOf<typeof modPowDef>): Promise<OutputOf<typeof modPowDef>>;
   ntt(input: InputOf<typeof nttDef>, flags?: FlagsArgOf<typeof nttDef>): Promise<OutputOf<typeof nttDef>>;
@@ -154,6 +156,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     },
     linsolveQ(input, flags) {
       return workbench.run("linsolve-q", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof linsolveQDef>>;
+    },
+    meijerGSlaterOnly(input, flags) {
+      return workbench.run("meijer-g-slater-only", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof meijerGSlaterOnlyDef>>;
     },
     modInv(input, flags) {
       return workbench.run("mod-inv", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof modInvDef>>;
@@ -236,6 +241,7 @@ export const defs = {
   linalgSolve: linalgSolveDef,
   linalgSvd: linalgSvdDef,
   linsolveQ: linsolveQDef,
+  meijerGSlaterOnly: meijerGSlaterOnlyDef,
   modInv: modInvDef,
   modPow: modPowDef,
   ntt: nttDef,

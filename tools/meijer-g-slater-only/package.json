@@ -1,5 +1,5 @@
 {
-  "name": "@workbench/tool-hypergeometric-pfq",
+  "name": "@workbench/tool-meijer-g-slater-only",
   "version": "0.1.0",
   "type": "module",
   "private": true,
@@ -7,6 +7,6 @@
     "@workbench/protocol": "workspace:*",
     "@workbench/contract": "workspace:*",
     "@workbench/bigfloat": "workspace:*",
-    "@workbench/hypergeometric": "workspace:*"
+    "@workbench/meijer-core": "workspace:*"
   }
 }

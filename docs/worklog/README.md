@@ -80,6 +80,7 @@ write the frictions and the dead ends as well as the wins.
 | 067 | [algNumInv `reverseCoefficients` term-order fix (5zh)](067-palindromic-minpoly-inv-fix.md) | 2026-05-07 | scientist-workbench-5zh |
 | 068 | [ADR-0020: arbitrary-precision tier (bigfloat substrate; tstournament problem-13 forcing)](068-arbitrary-precision-tier.md) | 2026-05-07 | scientist-workbench-hv0 (epic), -hv0.1 (substrate; in-progress) |
 | 069 | [`packages/bigfloat` + `tools/hypergeometric-pfq` shipped (hv0.1, hv0.3 closed)](069-bigfloat-and-pfq-shipped.md) | 2026-05-08 | scientist-workbench-hv0.1 (closed), -hv0.3 (closed); next: -hv0.5 |
+| 070 | [`packages/meijer-core` Slater path + thin wire tool shipped (hv0.5 closed; bigfloat::exp regression filed)](070-meijer-core-slater.md) | 2026-05-08 | scientist-workbench-hv0.5 (closed), -4ne (P1 bug filed) |
 
 ## How to add a new shard
 

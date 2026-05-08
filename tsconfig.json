@@ -31,7 +31,10 @@
       "@workbench/quadrature": ["packages/quadrature/src/index.ts"],
       "@workbench/lbfgs-projected": ["packages/lbfgs-projected/src/index.ts"],
       "@workbench/ode-core": ["packages/ode-core/src/index.ts"],
-      "@workbench/compose": ["packages/compose/src/index.ts"]
+      "@workbench/compose": ["packages/compose/src/index.ts"],
+      "@workbench/bigfloat": ["packages/bigfloat/src/index.ts"],
+      "@workbench/hypergeometric": ["packages/hypergeometric/src/index.ts"],
+      "@workbench/meijer-core": ["packages/meijer-core/src/index.ts"]
     }
   },
   "include": [
