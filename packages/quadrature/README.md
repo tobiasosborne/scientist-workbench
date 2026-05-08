@@ -1,16 +1,24 @@
 # @workbench/quadrature
 
-Adaptive 1D Gauss-Kronrod quadrature, three drivers covering two
-precision tiers and two codomains. The substrate behind
+Adaptive 1D quadrature, four drivers covering two precision tiers,
+two algorithm classes, and two codomains. The substrate behind
 `tools/integrate-1d` (float64, real codomain) and the in-process surface
 for arb-prec consumers (`packages/meijer-core`'s Slater inner-pFq usage
 and Mellin-Barnes contour layer).
 
-| Driver                       | Precision | Codomain     | ADR | Consumer                                      |
-|------------------------------|-----------|--------------|-----|-----------------------------------------------|
-| `gaussKronrodAdaptive`       | float64   | real         | 0014| `tools/integrate-1d`                          |
-| `gaussKronrodAdaptiveBF`     | arb-prec  | `BigFloat`   | 0021| arb-prec real-codomain consumers              |
-| `gaussKronrodAdaptiveBC`     | arb-prec  | `BigComplex` | 0022| `packages/meijer-core`'s contour layer        |
+| Driver                       | Precision | Algorithm   | Codomain     | ADR | Consumer                                      |
+|------------------------------|-----------|-------------|--------------|-----|-----------------------------------------------|
+| `gaussKronrodAdaptive`       | float64   | G7K15+bisect| real         | 0014| `tools/integrate-1d`                          |
+| `gaussKronrodAdaptiveBF`     | arb-prec  | G7K15+bisect| `BigFloat`   | 0021| arb-prec real-codomain consumers              |
+| `gaussKronrodAdaptiveBC`     | arb-prec  | G7K15+bisect| `BigComplex` | 0022| `packages/meijer-core`'s contour layer        |
+| `tanhSinhAdaptiveBF`         | arb-prec  | DE-rule     | `BigFloat`   | 0024| smooth-analytic 50–1000 dps integrands        |
+
+Use G7K15 for general (oscillatory, mildly singular, mixed-class)
+integrands; use tanh-sinh for **smooth-analytic** integrands at
+**50+ dps** where G7K15's algebraic decay rate (~`1/N^k` with k=13)
+saturates before the user tolerance is met. The canonical case is
+`∫_0^1 1/(1+x²) dx` at 100 dps — G7K15 needs astronomical iterations,
+tanh-sinh needs ~7 levels and 600 evaluations.
 
 Pure TypeScript on Bun. No FFI; no subprocess; no platform-conditional
 behaviour in the arb-prec tier (ADR-0020 — bit-identical across all JS
@@ -44,6 +52,13 @@ import {
   type BigComplexQuadResult,
   type BigComplexQuadOptions,
   BigComplexQuadratureError,
+
+  // Tanh-sinh (double-exponential) at arb-prec (ADR-0024). For
+  // smooth-analytic integrands at 50+ dps where G7K15's algebraic
+  // error decay saturates. Same return type as gaussKronrodAdaptiveBF;
+  // discriminated by `method = "tanh-sinh-bigfloat"`.
+  tanhSinhAdaptiveBF,
+  type TanhSinhBFOptions,
 
   // Closed-vocabulary integrand evaluator (float64 only).
   evalNumericExpr,
@@ -123,7 +138,51 @@ integrands (`im ≡ 0`) it returns byte-identical `value.re` and
 ports verbatim component-wise; error estimate is the natural scalar
 `cabs(K - G) · halfLength`. ADR-0022.
 
-## Algorithm (all three drivers, same shape)
+### Arb-prec tanh-sinh — `tanhSinhAdaptiveBF(f, a, b, prec, opts?)`
+
+```ts
+import { fromInt, add, mul, div } from "@workbench/bigfloat";
+
+const r = tanhSinhAdaptiveBF(
+  // INTEGRAND CONTRACT (worklog 076): every constant must use the
+  // supplied `p`, not `fromInt(1n)` (default 53 bits). Substrate `div`
+  // doesn't account for low-precision dividends and silently quantises
+  // the result.
+  (x, p) => {
+    const onePlusXsq = add(fromInt(1n, p), mul(x, x, p), p);
+    return div(fromInt(1n, p), onePlusXsq, p);
+  },
+  fromInt(0n),
+  fromInt(1n),
+  100,                                          // 100 decimal digits
+);
+//  r.value             ≈ π/4 as BigFloat at 100 dps
+//  r.errorEstimate     ≈ 10^-101 as BigFloat
+//  r.precision         = 100
+//  r.workingPrecision  = 413 (bits)
+//  r.iterations        = 7 (level count, not bisections)
+//  r.method            = "tanh-sinh-bigfloat"
+//  r.converged         = true
+```
+
+The variable transformation `x = tanh((π/2)·sinh t)` makes the
+transformed integrand `f(g(t))·g'(t)` decay doubly-exponentially at
+`t → ±∞`; by Euler-Maclaurin (Bailey 2005 §4) the trapezoidal rule on
+this transformed integrand converges *faster than any power of h*.
+Practical rate: doubling the level count roughly doubles the number
+of correct digits — so prec=400 dps reaches the floor at level 8-9
+(Bailey Table 1).
+
+**Use this driver when**: the integrand is real-valued, smooth (all
+derivatives bounded on `[a, b]`), analytic in a strip of the complex
+plane around `[a, b]`, and you want 50+ dps. The canonical case is
+`∫_0^1 1/(1+x²) dx = π/4` at 100 dps. Use `gaussKronrodAdaptiveBF`
+instead for: oscillatory integrands (G7K15+bisection adapts naturally
+to oscillation), endpoint-singular integrands (v0.1 of tanh-sinh
+defers the secondary-epsilon trick that handles those), or any
+integrand where 30 dps suffices (G7K15 is faster).
+
+## Algorithm (all four drivers, same shape)
 
 - **Local rule — `gaussKronrod15`/`localG7K15BF`**: a 7-point
   Gauss-Legendre rule nested inside a 15-point Kronrod extension over
@@ -237,12 +296,12 @@ compose BigFloat-typed integrands directly rather than walking a
   `tools/meijer-g` dispatcher).
 - **Out (v0.1, all deliberate):** infinite intervals (Gauss-Hermite /
   Gauss-Laguerre would be sister tools), vector-valued integrands,
-  higher-dimensional cubature, symbolic anti-derivatives, *high-
-  precision* (≥ ~50 dps) on smooth analytic integrands with bounded
-  Taylor radius (K15+adaptive saturates faster than the user tolerance
-  can be met — for those cases tanh-sinh is the appropriate algorithm,
-  filed as a follow-up). The BigComplex driver shares the same scope
-  caveats as the BF driver.
+  higher-dimensional cubature, symbolic anti-derivatives. Endpoint-
+  singular integrands at high prec (`√t/√(1-t²)`, `log²t`) are
+  out for tanh-sinh v0.1 (Bailey §3's secondary-epsilon trick, filed
+  as a follow-up); G7K15+bisection handles weak endpoint singularities
+  via natural endpoint refinement at moderate prec. The BigComplex
+  driver shares the same scope caveats as the BF driver.
 - **Hard caps:** arb-prec tier refuses `prec > 150` decimal digits
   (the table cap, with safety margin); refuses `a >= b`; refuses
   `maxEvals < 15`; refuses non-integer `prec`.
@@ -253,7 +312,7 @@ compose BigFloat-typed integrands directly rather than walking a
 bun test packages/quadrature
 ```
 
-141 tests in three files:
+167 tests in four files:
 
 - `quadrature.test.ts` — 30 tests for the float64 driver: algebraic
   exactness on `x^k` for `k = 0..15`, hand-checked smooth integrals,
@@ -282,3 +341,17 @@ bun test packages/quadrature
   components and BigFloat error), tight-budget oscillatory honesty,
   boundary refusals (matching BF driver semantics), default-tolerance
   scaling, result shape, integrand-linearity probe.
+
+- `tanh-sinh-bf.test.ts` — 26 tests for the arb-prec tanh-sinh
+  driver: closed-form anchors at 30/50/100 dps for `t·log(1+t)` and
+  `1/(1+x²)` (the worklog-072 motivating case, resolved in worklog
+  076); cross-validation against `gaussKronrodAdaptiveBF` on entire
+  functions (sin, exp at 50 dps); cross-validation against
+  Wolfram + mpmath truths at 50 + 100 dps for `e^{-x²}`,
+  `1/(1+x⁴)` (sister of the bug-case), `1/(2+cos x)`;
+  bit-determinism on `1/(1+x²)` at 50 dps; convergence-flag honesty
+  under tight `maxLevels`; boundary refusals; default-tolerance
+  scaling; result-shape validation. Mutation-proven against four
+  invariants (sinh↔cosh swap, halveBF /4, convergence-test inversion,
+  integrand-precision regression) — see worklog 076 §"Mutation-prove
+  protocol".
