@@ -90,3 +90,23 @@ export {
   type MeijerGContourRefusal,
   meijergContour,
 } from "./contour.js";
+
+// -----------------------------------------------------------------------------
+// Layer 4 — symbolic dispatch (Adamchik–Marichev + Roach)
+// -----------------------------------------------------------------------------
+//
+// Pattern-table dispatcher of curated reduction rules. Returns AST
+// in the special-function vocabulary (ADR-0023) when a rule fires;
+// returns `no-known-reduction` otherwise. ADR-0025 pins the design.
+
+export {
+  type Bindings,
+  type DispatchResult,
+  type MeijerGSymbolicParams,
+  type PatternSpec,
+  type ReductionRule,
+  type RelationSpec,
+  type SlotSpec,
+} from "./dispatch-types.js";
+
+export { ALL_RULES, meijergSymbolic } from "./dispatch.js";

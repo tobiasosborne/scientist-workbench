@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "scientist-workbench",
@@ -76,7 +75,10 @@
       "version": "0.1.0",
       "dependencies": {
         "@workbench/bigfloat": "workspace:*",
+        "@workbench/cas-core": "workspace:*",
         "@workbench/hypergeometric": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+        "@workbench/quadrature": "workspace:*",
       },
     },
     "packages/mod-core": {
@@ -109,6 +111,7 @@
       "name": "@workbench/quadrature",
       "version": "0.1.0",
       "dependencies": {
+        "@workbench/bigfloat": "workspace:*",
         "@workbench/protocol": "workspace:*",
       },
     },
@@ -311,6 +314,16 @@
       "version": "0.1.0",
       "dependencies": {
         "@workbench/bigfloat": "workspace:*",
+        "@workbench/contract": "workspace:*",
+        "@workbench/meijer-core": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+      },
+    },
+    "tools/meijer-g-symbolic-only": {
+      "name": "@workbench/tool-meijer-g-symbolic-only",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/cas-core": "workspace:*",
         "@workbench/contract": "workspace:*",
         "@workbench/meijer-core": "workspace:*",
         "@workbench/protocol": "workspace:*",
@@ -571,6 +584,8 @@
     "@workbench/tool-linsolve-q": ["@workbench/tool-linsolve-q@workspace:tools/linsolve-q"],
 
     "@workbench/tool-meijer-g-slater-only": ["@workbench/tool-meijer-g-slater-only@workspace:tools/meijer-g-slater-only"],
+
+    "@workbench/tool-meijer-g-symbolic-only": ["@workbench/tool-meijer-g-symbolic-only@workspace:tools/meijer-g-symbolic-only"],
 
     "@workbench/tool-mod-inv": ["@workbench/tool-mod-inv@workspace:tools/mod-inv"],
 

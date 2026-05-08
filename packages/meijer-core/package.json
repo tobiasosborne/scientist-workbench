@@ -8,7 +8,9 @@
   },
   "dependencies": {
     "@workbench/bigfloat": "workspace:*",
+    "@workbench/cas-core": "workspace:*",
     "@workbench/hypergeometric": "workspace:*",
+    "@workbench/protocol": "workspace:*",
     "@workbench/quadrature": "workspace:*"
   }
 }

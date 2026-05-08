@@ -120,6 +120,25 @@ export {
   DIFF_ADMITTED_CONSTANTS,
   CasDiffOutOfScopeError,
   differentiate,
+  // Smart constructors absorb local algebraic identities (0+x → x,
+  // 1·x → x, x⁰ → 1, neg(neg(x)) → x, …). Promoted to public surface
+  // in 2026-05-08 (worklog 077) for reuse by `@workbench/meijer-core`'s
+  // dispatch layer (ADR-0025) — every dispatched-rule's `rewrite`
+  // function builds expressions with the same canonicalisation
+  // discipline cas-diff uses internally. Originally introduced as
+  // package-internal in worklog 074 §"Frictions"; the second concrete
+  // need (the symbolic dispatcher) tipped the trade-off toward a
+  // public, shared, one-implementation surface.
+  isOne,
+  isZero,
+  mkDiv,
+  mkMinus,
+  mkNeg,
+  mkPlus,
+  mkPower,
+  mkTimes,
+  ONE,
+  ZERO,
 } from "./diff.js";
 
 export {

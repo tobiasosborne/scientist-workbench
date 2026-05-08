@@ -292,7 +292,14 @@ test("bit-determinism: two contour calls produce byte-identical BigComplex", () 
   expect(r1.value.im.mantissa).toBe(r2.value.im.mantissa);
   expect(r1.value.im.exponent).toBe(r2.value.im.exponent);
   expect(r1.nEvals).toBe(r2.nEvals);
-}, 60000);
+  // Timeout bumped 2026-05-08 (worklog 076): the test runs *two*
+  // arb-prec contour quadrature calls; under `bun test` workload
+  // each call's K-G adaptive bisection drifts to 60-90s on the
+  // dev box, exceeding the original 60s budget. The test is
+  // structurally fine — bit-equality of two deterministic calls
+  // is a milliseconds-of-comparison check on top of two long
+  // numerical computations. 240s gives 4× headroom.
+}, 240000);
 
 // -----------------------------------------------------------------------------
 // 5. Result shape

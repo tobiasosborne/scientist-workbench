@@ -1,0 +1,109 @@
+TITLE: dispatch-rules/pbm-vol3-8-4: PBM §8.4 reduction rules (~600 rules)
+TYPE: feature
+PRIORITY: 2
+PARENT: scientist-workbench-hv0
+DEPENDS-ON: scientist-workbench-hv0.6
+DESCRIPTION:
+Curate the ~600 Meijer G reduction rules from Prudnikov–Brychkov–
+Marichev *Integrals and Series Vol. 3* §8.4 (the canonical
+identity-table compendium) into `packages/meijer-core/src/
+dispatch-rules/pbm-vol3-8-4.ts`. Each rule cites its specific PBM
+equation number; every rule cross-checked against `mpmath.meijerg`
+at 30 dps before inclusion (per the verification discipline
+established in `hv0.6`). Sharded by `(m, n, p, q)` shape group;
+within each shape group, ordered most-specific-first so the
+dispatcher's first-match-wins picks specific identities over generic
+forms. Audit grep at commit time enforces no transliteration from
+SymPy / FriCAS / Maxima / REDUCE source.
+---
+TITLE: dispatch-rules/mathai-3: Mathai 1993 ch.3 cross-check rules
+TYPE: feature
+PRIORITY: 3
+PARENT: scientist-workbench-hv0
+DEPENDS-ON: scientist-workbench-hv0.6
+DESCRIPTION:
+Curate the Meijer G reduction rules from Mathai 1993 ch.3 (modern
+handbook; cited by DLMF §16.18, §16.19) into
+`packages/meijer-core/src/dispatch-rules/mathai-3.ts`. Many of these
+duplicate Bateman / PBM entries; the value is *cross-validation*
+— a Mathai citation alongside a Bateman citation for the same rule
+strengthens the audit trail. Each rule cited by Mathai equation
+number; mpmath cross-check at 30 dps.
+---
+TITLE: dispatch-rules/wolfram-functions: 1363 Wolfram Functions Site rules, sharded by family
+TYPE: feature
+PRIORITY: 2
+PARENT: scientist-workbench-hv0
+DEPENDS-ON: scientist-workbench-hv0.6
+DESCRIPTION:
+Curate the 1363 Meijer G reduction rules from
+https://functions.wolfram.com/HypergeometricFunctions/MeijerG/ into
+shard files under `packages/meijer-core/src/dispatch-rules/`,
+organised by the special-function family the rule reduces *to*:
+`wolfram-functions-bessel.ts`, `wolfram-functions-whittaker.ts`,
+`wolfram-functions-legendre.ts`, `wolfram-functions-orthogonal.ts`,
+`wolfram-functions-polylog.ts`, `wolfram-functions-pfq.ts`,
+`wolfram-functions-elementary.ts`. Each rule cited by URL +
+formula-id (the Wolfram Functions Site assigns each formula a stable
+ID like `01.05.20.0001.01`). Per-shard mpmath cross-check at 30
+dps. The 1363 figure is from `tstournament/.../REFERENCES.md`. v0.1
+of each shard ships ~50–200 rules (the most-frequently-cited subset);
+the long tail is a separate sub-bead per shard.
+---
+TITLE: meijer-core dispatch: argument-transformation infrastructure
+TYPE: feature
+PRIORITY: 3
+PARENT: scientist-workbench-hv0
+DEPENDS-ON: scientist-workbench-hv0.6
+DESCRIPTION:
+Bateman §5.6 (12)–(15) and several DLMF §16.18 reductions involve
+an *argument transformation* on the input `z` — typical example:
+the trigonometric reductions like `G^{1,0}_{0,2}(_; 0, 1/2 | z²/4)`
+where the input z is `z²/4`, and the closed form is `cos(z)`. v0.1
+of the dispatcher does not handle these (ADR-0025 §10 lists this as
+out-of-scope). Add an optional `argTransform: { kind: "scale-square",
+factor: Value }` field to `ReductionRule` and a corresponding
+inverse-transformation step in `dispatch.ts`. Test by re-enabling
+the deferred trigonometric reductions in `bateman-5-6.ts` (which v0.1
+left as comment-anchors).
+---
+TITLE: meijer-core dispatch: richer pattern grammar (linear relations, recursive G)
+TYPE: feature
+PRIORITY: 3
+PARENT: scientist-workbench-hv0
+DEPENDS-ON: scientist-workbench-hv0.6
+DESCRIPTION:
+v0.1 ships `SlotSpec ∈ {lit-int, lit-rat, free, free-shift}` and
+`RelationSpec ∈ {integer-difference}`. As the rule corpus grows past
+~200 rules, several PBM and Wolfram entries need richer pattern
+shapes:
+* `linear-relation`: cross-slot guard `c1·a + c2·b = c3` for
+  arbitrary integer coefficients.
+* `pattern-list`: matching a sub-tuple's *length* dynamically (some
+  PBM entries are families parametrised by the count of integer
+  spacings, e.g. `Γ(1+a) Γ(1+a−1) … Γ(1+a−k)` for arbitrary k).
+* `recursive-G`: rule's RHS is a smaller Meijer G; v0.1 emits the
+  bare reduced head, but downstream `tools/meijer-g` (top-level
+  dispatcher, hv0.10) needs to recurse into it. Add a stop-condition
+  to prevent infinite recursion + a depth limit.
+Add tests for each new grammar feature using a curated rule from
+PBM that needs it.
+---
+TITLE: meijer-core dispatch: per-head arbprec evaluator (Gamma, BesselJ, BesselK, ...)
+TYPE: feature
+PRIORITY: 2
+PARENT: scientist-workbench-hv0
+DEPENDS-ON: scientist-workbench-hv0.6
+DESCRIPTION:
+The dispatcher emits AST in the special-function vocabulary
+(ADR-0023). To consume those ASTs *numerically* at arbitrary
+precision (for problem-13 Tier A / B verifier cross-validation, and
+for the eventual `tools/meijer-g` numerical fall-through), we need
+per-head arbprec evaluators: `Gamma(z, prec) → BigComplex`,
+`BesselJ(ν, z, prec) → BigComplex`, etc. The substrate is mostly
+there: `@workbench/bigfloat::cgamma` already exists; `BesselJ` etc.
+need new code (e.g. via the AST's reduction back to `pFq` from
+`@workbench/hypergeometric` plus a Γ-prefactor). Lands in a new
+`packages/special-eval` package or as additive extensions of the
+existing per-head packages. Cross-validated against
+`mpmath.gamma / mpmath.besselj / etc.` byte-for-byte.

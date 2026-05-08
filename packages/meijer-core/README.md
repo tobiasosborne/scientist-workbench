@@ -1,13 +1,15 @@
 # `@workbench/meijer-core`
 
-Algorithmic substrate for arbitrary-precision numerical evaluation of
-the Meijer G-function `G^{m,n}_{p,q}`. Layer 3 of the seven-layer
-stack laid out in
-`tstournament/ts-bench-infra/problems/13-meijer-g/PLAN.md`.
+Algorithmic substrate for the Meijer G-function `G^{m,n}_{p,q}`.
+Layers 3, 4, and 5 of the seven-layer stack laid out in
+`tstournament/ts-bench-infra/problems/13-meijer-g/PLAN.md`:
+- Layer 3 (Slater residue summation, arbprec numerical),
+- Layer 4 (Adamchik–Marichev + Roach symbolic dispatch),
+- Layer 5 (Mellin–Barnes contour quadrature, arbprec numerical).
 
 ## What this package exposes
 
-Two evaluation paths, each with structured-refusal envelope:
+Three evaluation paths, each with structured-refusal envelope:
 
 ```ts
 import { meijergSlater, meijergContour } from "@workbench/meijer-core";
@@ -47,19 +49,52 @@ Public API:
 |-----------------------|--------------------------------------------------------------------------|
 | `meijergSlater`       | Slater entry point. Series selection + perturbation + cancellation control.|
 | `meijergContour`      | Mellin-Barnes contour entry point. Auto-selects c and T; structured refusal on non-convergent contours / overlapping pole clusters.|
+| `meijergSymbolic`     | Symbolic-dispatch entry point. Pattern-table driven; emits closed-form AST in the special-function vocabulary or `no-known-reduction`. ADR-0025.|
+| `ALL_RULES`           | The aggregated reduction-rule table from all `dispatch-rules/*.ts` files. Read-only; introspect at the package boundary for diagnostic / catalogue purposes. |
 | `evaluateSeries1`/`2` | Per-residue-line kernels. Useful for diagnostic / per-line introspection.|
 | `selectSeries`        | The (p, q, m, n, |z|) selection rule alone.                              |
 | `detectCoalescence`   | Integer-spaced-pair detection across the parameter sub-tuples.           |
 | `perturbParameters`   | The deterministic odd-coefficient perturbation.                          |
-| Type exports          | `MeijerGParameters`, `MeijerGSlaterOptions`, `MeijerGContourOptions`, all result discriminants. |
+| Type exports          | `MeijerGParameters`, `MeijerGSlaterOptions`, `MeijerGContourOptions`, `MeijerGSymbolicParams`, `DispatchResult`, `ReductionRule`, `PatternSpec`, all result discriminants. |
+
+## Dispatch layer (Layer 4)
+
+`meijergSymbolic(params, z) → DispatchResult` walks a curated table
+of reduction rules organised one-file-per-source under
+`src/dispatch-rules/`. v0.1 ships ≥30 rules from Bateman §5.6 pp.
+215–222 plus DLMF §16.17–§16.18; the bulk of the rule corpus
+(~1300 rules from PBM Vol 3 §8.4 + Mathai 1993 + Wolfram Functions
+Site) lands in follow-up beads under `hv0.6.*`.
+
+```ts
+import { meijergSymbolic } from "@workbench/meijer-core";
+import { int, sym } from "@workbench/protocol";
+
+// G^{1,0}_{0,1}(_; 0 | z) = e^{-z}  (Bateman §5.6 (8))
+const r = meijergSymbolic(
+  { an: [], ap: [], bm: [int(0n)], bq: [] },
+  sym("z"),
+);
+if (r.kind === "matched") {
+  console.log(r.expr, r.ruleId, r.ruleSource);
+  // → AST for `exp(-z)`, "bateman-5-6-8", "Bateman §5.6 (8)"
+}
+```
+
+Inputs are canonicalised by sorting each sub-tuple (`an`, `ap`, `bm`,
+`bq`) by canonical-bytes order before matching, so permutations
+within a sub-tuple match the same rule (the Mellin–Barnes integrand's
+Γ-products are symmetric within each sub-tuple). See ADR-0025 for
+the design and `docs/worklog/076-meijerg-symbolic-dispatch.md` for
+the shipping shard.
+
+The `no-known-reduction` envelope (per ADR-0003 boundary-failure
+contract) lets callers route to the numerical paths
+(`meijergSlater` / `meijergContour`) without ambiguity.
 
 ## What this package does *not* do
 
 - **Braaksma asymptotic / hyperasymptotic** (Layer 6 — `hv0.9`).
-- **Symbolic dispatch** (Layer 4 — `hv0.6`). When the parameters
-  match an Adamchik–Marichev or Roach reduction, the closed-form is
-  the right answer; that lives upstream of this package in a future
-  pattern-table dispatcher.
 - **Top-level orchestration** (Layer 7 — `hv0.10`). `tools/meijer-g`
   will run symbolic → Slater → contour → asymptotic → refuse.
 - **Steepest-descent contour deformation.** The contour layer uses a
