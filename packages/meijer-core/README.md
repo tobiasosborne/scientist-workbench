@@ -90,11 +90,14 @@ Public API:
   closed-form MeijerG identities (DLMF 16.18, Bateman 5.6) computed
   directly through the bigfloat substrate.
 
-Achievable accuracy is currently capped at ~38–50 dps depending on
-the input, by an upstream bug in `@workbench/bigfloat`'s `exp()`
-function (filed as `scientist-workbench-4ne`). The Slater algorithm
-itself is correct; once that substrate regression closes, assertion
-widths can grow.
+Achievable accuracy is governed by the Slater algorithm's own ulp
+budget — Γ-product evaluation, prefactor `z^b` computation, inner
+pFq series summation, residue-line accumulation. Empirically the
+clean integer-input cases deliver ~75+ dps relative accuracy at
+50 dps target; harder cases (rational parameters, `|z|` near a
+convergence boundary) deliver ~45-50 dps. The bigfloat substrate is
+not the bottleneck — see worklog 071 for the diagnosis of an earlier
+"substrate regression" that turned out to be a false alarm.
 
 ## References
 
