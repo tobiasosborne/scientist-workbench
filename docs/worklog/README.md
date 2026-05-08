@@ -88,6 +88,7 @@ write the frictions and the dead ends as well as the wins.
 | 075 | [Tanh-sinh quadrature WIP — driver shipped, smooth-analytic floor unresolved](075-tanh-sinh-wip.md) | 2026-05-08 | scientist-workbench-6f8 (claimed, **not closed**); ADR-0024 (partial) |
 | 076 | [`meijer-core` Adamchik–Marichev symbolic dispatch shipped (`hv0.6`)](076-meijerg-symbolic-dispatch.md) | 2026-05-08 | scientist-workbench-hv0.6 (closed); ADR-0025 |
 | 077 | [Tanh-sinh quadrature precision floor resolved — substrate-div integrand-contract bug](077-tanh-sinh-fixed.md) | 2026-05-08 | scientist-workbench-6f8 (resolved); ADR-0024 (shipped) |
+| 078 | [`meijer-core` Braaksma asymptotic (Layer 6) shipped (`hv0.9`)](078-meijerg-asymptotic.md) | 2026-05-08 | scientist-workbench-hv0.9 (closed); ADR-0026 |
 
 ## How to add a new shard
 

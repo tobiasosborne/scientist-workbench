@@ -51,7 +51,7 @@
 //
 // Smart-constructor reuse: `mkPlus / mkMinus / mkNeg / mkTimes /
 // mkDiv / mkPower` from `@workbench/cas-core` (worklog 074
-// §"Frictions" → worklog 077 §"What changed": promoted to public
+// §"Frictions" → worklog 076 §"What changed": promoted to public
 // surface for downstream reuse).
 
 import { expr, int, rat, sym, type Value } from "@workbench/protocol";
