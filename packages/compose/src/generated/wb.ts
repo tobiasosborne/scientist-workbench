@@ -38,6 +38,7 @@ import { def as linalgQrDef } from "../../../../tools/linalg-qr/tool.js";
 import { def as linalgSolveDef } from "../../../../tools/linalg-solve/tool.js";
 import { def as linalgSvdDef } from "../../../../tools/linalg-svd/tool.js";
 import { def as linsolveQDef } from "../../../../tools/linsolve-q/tool.js";
+import { def as meijerGAsymptoticOnlyDef } from "../../../../tools/meijer-g-asymptotic-only/tool.js";
 import { def as meijerGSlaterOnlyDef } from "../../../../tools/meijer-g-slater-only/tool.js";
 import { def as meijerGSymbolicOnlyDef } from "../../../../tools/meijer-g-symbolic-only/tool.js";
 import { def as modInvDef } from "../../../../tools/mod-inv/tool.js";
@@ -77,6 +78,7 @@ export interface TypedWorkbench extends Workbench {
   linalgSolve(input: InputOf<typeof linalgSolveDef>, flags?: FlagsArgOf<typeof linalgSolveDef>): Promise<OutputOf<typeof linalgSolveDef>>;
   linalgSvd(input: InputOf<typeof linalgSvdDef>, flags?: FlagsArgOf<typeof linalgSvdDef>): Promise<OutputOf<typeof linalgSvdDef>>;
   linsolveQ(input: InputOf<typeof linsolveQDef>, flags?: FlagsArgOf<typeof linsolveQDef>): Promise<OutputOf<typeof linsolveQDef>>;
+  meijerGAsymptoticOnly(input: InputOf<typeof meijerGAsymptoticOnlyDef>, flags?: FlagsArgOf<typeof meijerGAsymptoticOnlyDef>): Promise<OutputOf<typeof meijerGAsymptoticOnlyDef>>;
   meijerGSlaterOnly(input: InputOf<typeof meijerGSlaterOnlyDef>, flags?: FlagsArgOf<typeof meijerGSlaterOnlyDef>): Promise<OutputOf<typeof meijerGSlaterOnlyDef>>;
   meijerGSymbolicOnly(input: InputOf<typeof meijerGSymbolicOnlyDef>, flags?: FlagsArgOf<typeof meijerGSymbolicOnlyDef>): Promise<OutputOf<typeof meijerGSymbolicOnlyDef>>;
   modInv(input: InputOf<typeof modInvDef>, flags?: FlagsArgOf<typeof modInvDef>): Promise<OutputOf<typeof modInvDef>>;
@@ -158,6 +160,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     },
     linsolveQ(input, flags) {
       return workbench.run("linsolve-q", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof linsolveQDef>>;
+    },
+    meijerGAsymptoticOnly(input, flags) {
+      return workbench.run("meijer-g-asymptotic-only", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof meijerGAsymptoticOnlyDef>>;
     },
     meijerGSlaterOnly(input, flags) {
       return workbench.run("meijer-g-slater-only", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof meijerGSlaterOnlyDef>>;
@@ -246,6 +251,7 @@ export const defs = {
   linalgSolve: linalgSolveDef,
   linalgSvd: linalgSvdDef,
   linsolveQ: linsolveQDef,
+  meijerGAsymptoticOnly: meijerGAsymptoticOnlyDef,
   meijerGSlaterOnly: meijerGSlaterOnlyDef,
   meijerGSymbolicOnly: meijerGSymbolicOnlyDef,
   modInv: modInvDef,

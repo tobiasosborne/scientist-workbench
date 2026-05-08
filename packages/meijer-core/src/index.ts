@@ -92,6 +92,27 @@ export {
 } from "./contour.js";
 
 // -----------------------------------------------------------------------------
+// Layer 6 — Braaksma asymptotic (v0.1: principal-sector algebraic only)
+// -----------------------------------------------------------------------------
+//
+// Far-field asymptotic at |z| → ∞ in the principal sector
+// `|arg z| < π/2 - π/64`. Truncates the n-pole Slater Series 2 at
+// its optimal index (Olver §3.7 superasymptotic). Refuses on Stokes
+// lines, in secondary sectors, for `|z| < 1`, and in
+// non-asymptotic-regime inputs. ADR-0026 pins the design.
+
+export {
+  type MeijerGAsymptoticOptions,
+  type MeijerGAsymptoticResult,
+  type MeijerGAsymptoticSuccess,
+  type MeijerGAsymptoticRefusal,
+  asymptoticTerms,
+  classifySector,
+  findOptimalTruncation,
+  meijergAsymptotic,
+} from "./asymptotic.js";
+
+// -----------------------------------------------------------------------------
 // Layer 4 — symbolic dispatch (Adamchik–Marichev + Roach)
 // -----------------------------------------------------------------------------
 //
