@@ -123,6 +123,14 @@ export {
 } from "./diff.js";
 
 export {
+  SPECIAL_FUNCTION_HEADS,
+  SPECIAL_FUNCTION_DIFFERENTIABLE_HEADS,
+  type SpecialFunctionArity,
+  specialFunctionArity,
+  differentiateSpecialFunction,
+} from "./special-functions.js";
+
+export {
   type AlgebraicElement,
   type AlgebraicRingSpec,
   algebraicRing,

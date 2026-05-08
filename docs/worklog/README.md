@@ -84,6 +84,7 @@ write the frictions and the dead ends as well as the wins.
 | 071 | [`bigfloat::exp` "P1 regression" was a false alarm; principled hardening applied](071-bigfloat-exp-false-alarm-and-hardening.md) | 2026-05-08 | scientist-workbench-4ne (closed as false alarm) |
 | 072 | [`packages/quadrature` arb-prec generalisation shipped (`gaussKronrodAdaptiveBF`)](072-quadrature-arbprec.md) | 2026-05-08 | scientist-workbench-hv0.7 (closed); ADR-0021 |
 | 073 | [`packages/meijer-core` Mellin-Barnes contour layer + BigComplex G7K15 driver shipped (`hv0.8`)](073-meijer-contour.md) | 2026-05-08 | scientist-workbench-hv0.8 (closed); ADR-0022 |
+| 074 | [`cas-core` special-function AST vocabulary extension shipped (`hv0.2`)](074-cas-core-special-functions.md) | 2026-05-08 | scientist-workbench-hv0.2 (closed); ADR-0023 |
 
 ## How to add a new shard
 

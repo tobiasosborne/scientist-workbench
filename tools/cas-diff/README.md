@@ -2,11 +2,17 @@
 
 Compute `∂f/∂var` for an expression `f` over the closed numerical
 vocabulary `{+ − * / ^ neg exp sin cos tan log sqrt abs asin acos atan
-sinh cosh tanh asinh acosh atanh log2 log10}` plus constants `pi`, `e`. The output is itself an expression in the same
-vocabulary, so it composes directly with `integrate-1d` (Leibniz-rule
-parametric integrals) and with `optimize-lbfgs-projected` (which takes
-`grad` as a list of expressions). Sister to `cas-simplify` —
-differentiation, not simplification.
+sinh cosh tanh asinh acosh atanh log2 log10}` plus constants `pi`, `e`,
+*and* the special-function vocabulary admitted by ADR-0023 (`Gamma`,
+`Digamma`, `Polygamma`, `Erf`, `Erfc`, `ExpIntegralEi`,
+`ExpIntegralE`, `FresnelC`, `FresnelS`, `BesselJ`, `BesselY`,
+`BesselI`, `BesselK`, `HermiteH`, `Polylog` — each with its DLMF-cited
+closed-form rule). The elementary output composes directly with
+`integrate-1d` (Leibniz-rule parametric integrals) and with
+`optimize-lbfgs-projected` (which takes `grad` as a list of
+expressions); the special-function output composes with downstream
+symbolic dispatch. Sister to `cas-simplify` — differentiation, not
+simplification.
 
 The motivating scenario, from
 [`scripts/demo-min-integral.ts`](../../scripts/demo-min-integral.ts):
@@ -110,6 +116,28 @@ Rule table:
 | `atanh(a)` | `da / (1 − a²)` (defined for `|a| < 1`) |
 | `log2(a)` | `da / (a · log(2))` (change-of-base; `log` here is natural) |
 | `log10(a)` | `da / (a · log(10))` |
+| `Gamma(z)` | `Digamma(z) · Gamma(z) · dz` (DLMF §5.4.2) |
+| `Digamma(z)` | `Polygamma(1, z) · dz` (DLMF §5.7.1) |
+| `Polygamma(n, z)` | `Polygamma(n+1, z) · dz` (DLMF §5.15.3; var = z; refuses on var = n) |
+| `Erf(z)` | `(2/√π) · exp(−z²) · dz` (DLMF §7.7.1) |
+| `Erfc(z)` | `−(2/√π) · exp(−z²) · dz` |
+| `ExpIntegralEi(z)` | `(exp(z)/z) · dz` (DLMF §6.2.6) |
+| `ExpIntegralE(n, z)` | `−ExpIntegralE(n−1, z) · dz` (DLMF §8.19.13; var = z) |
+| `FresnelC(z)` | `cos(π·z²/2) · dz` (DLMF §7.2.7) |
+| `FresnelS(z)` | `sin(π·z²/2) · dz` |
+| `BesselJ(ν, z)` | `((BesselJ(ν−1, z) − BesselJ(ν+1, z))/2) · dz` (DLMF §10.6.1; var = z) |
+| `BesselY(ν, z)` | `((BesselY(ν−1, z) − BesselY(ν+1, z))/2) · dz` |
+| `BesselI(ν, z)` | `((BesselI(ν−1, z) + BesselI(ν+1, z))/2) · dz` (DLMF §10.29.1) |
+| `BesselK(ν, z)` | `−((BesselK(ν−1, z) + BesselK(ν+1, z))/2) · dz` |
+| `HermiteH(n, z)` | `2n · HermiteH(n−1, z) · dz` (DLMF §18.9.27; var = z) |
+| `Polylog(s, z)` | `(Polylog(s−1, z)/z) · dz` (DLMF §25.12.4; var = z) |
+
+Special-function vocabulary (PascalCase) is recognised in the AST per
+ADR-0023. Heads admitted but not yet differentiable in v0.1
+(`HypergeometricPFQ`, `MeijerG`, `WhittakerM`, `WhittakerW`,
+`ParabolicCylinderD`, `LegendreP`, `LegendreQ`, `LaguerreL`,
+`ChebyshevT`, `ChebyshevU`, `GegenbauerC`, `LerchPhi`) refuse via the
+same boundary tag — honest scope, additive future expansion.
 
 Smart constructors absorb the chain rule's pure book-keeping:
 `0 + x → x`, `1·x → x`, `x·0 → 0`, `x⁰ → 1`, `x¹ → x`,
@@ -145,12 +173,14 @@ table and smart-constructor design at the level cas-diff implements.
   `cas-diff` per variable, then `list([df_dx, df_dy, …])` to feed
   into `optimize-lbfgs-projected`.
 - Implicit differentiation. The `var` is named explicitly.
-- Vocabulary beyond `+ − * / ^ neg exp sin cos tan log sqrt abs asin
-  acos atan sinh cosh tanh asinh acosh atanh log2 log10` plus constants
-  `pi`, `e` — extension is additive when motivated. (Same vocabulary as
-  `integrate-1d` and `optimize-lbfgs-projected` — matched deliberately
-  so the three tools compose without vocabulary
-  mismatches.)
+- Vocabulary beyond the elementary set + the ADR-0023 special-function
+  vocabulary — extension is additive when motivated. The elementary
+  set matches `integrate-1d` and `optimize-lbfgs-projected`'s closed
+  vocabulary deliberately so float64 numerical pipelines compose
+  without vocabulary mismatches; the special-function set is wider
+  (the upstream symbolic dispatcher consumes it; the downstream
+  float64 evaluators don't) and is gated honestly by tag at any
+  consumer that doesn't accept it.
 - Symbolic simplification of the result. The output uses smart
   constructors only; pipe through `cas-simplify` for full reduction.
 

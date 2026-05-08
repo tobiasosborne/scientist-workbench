@@ -1,0 +1,1 @@
+{"fields":{"input":{"fields":{"f":{"args":[{"kind":"symbol","name":"x"}],"head":"Gamma","kind":"expression"},"var":{"kind":"symbol","name":"x"}},"kind":"record"},"output":{"args":[{"args":[{"kind":"symbol","name":"x"}],"head":"Digamma","kind":"expression"},{"args":[{"kind":"symbol","name":"x"}],"head":"Gamma","kind":"expression"}],"head":"*","kind":"expression"}},"kind":"record"}

@@ -202,11 +202,36 @@ export const def = defineTool({
       ),
     },
     {
-      description: "unknown head (gamma) → tagged out-of-scope",
+      description: "unknown head (lowercase 'gamma' is not in the vocabulary) → tagged out-of-scope",
       input: record({ f: expr("gamma", [sym("x")]), var: sym("x") }),
       output: tagged(
         DIFF_TAG,
         record({ f: expr("gamma", [sym("x")]), var: sym("x") }),
+      ),
+    },
+    {
+      description: "d(Γ(x))/dx = ψ(x)·Γ(x)  (DLMF §5.4.2; ADR-0023 special-function vocabulary)",
+      input: record({ f: expr("Gamma", [sym("x")]), var: sym("x") }),
+      output: expr("*", [expr("Digamma", [sym("x")]), expr("Gamma", [sym("x")])]),
+    },
+    {
+      description: "d(MeijerG(...))/dx → tagged (head admitted in the AST; diff rule deferred per ADR-0023)",
+      // MeijerG is in `SPECIAL_FUNCTION_HEADS` but not yet in
+      // `SPECIAL_FUNCTION_DIFFERENTIABLE_HEADS` — the dispatcher
+      // returns null and cas-diff falls through to the boundary tag.
+      // The arg shape is simplified for the example; the arity check
+      // for MeijerG (list-of-list, list-of-list, scalar) is the
+      // semantic dispatcher's concern, not the differentiator's.
+      input: record({
+        f: expr("MeijerG", [sym("a"), sym("b"), sym("x")]),
+        var: sym("x"),
+      }),
+      output: tagged(
+        DIFF_TAG,
+        record({
+          f: expr("MeijerG", [sym("a"), sym("b"), sym("x")]),
+          var: sym("x"),
+        }),
       ),
     },
   ],
@@ -309,7 +334,9 @@ export const def = defineTool({
     if (hash(differentiate(probe, x)) !== hash(differentiate(probe, x))) {
       throw new Error("cas-diff hash not stable");
     }
-    // Out-of-scope handling: tagged at top level.
+    // Out-of-scope handling: tagged at top level. Lowercase `gamma`
+    // is NOT in the special-function vocabulary (the canonical head
+    // is `Gamma`); it routes through the foreign-head refusal.
     const ofs = diffOrTag(
       expr("gamma", [x]),
       x,
@@ -318,7 +345,30 @@ export const def = defineTool({
     if (ofs.kind !== "tagged" || ofs.tag !== DIFF_TAG) {
       throw new Error("cas-diff: unknown head should produce tagged out-of-scope");
     }
-    console.log(`cas-diff --test: ${corpus.length} corpus probes × multiple points all agree with FD (rel ≤ ${FD_TOL.toExponential(0)})`);
+
+    // Special-function dispatcher wired (ADR-0023): differentiable
+    // heads emit closed-form rules; AST-admitted-but-deferred heads
+    // refuse honestly. Both shapes verified end-to-end through the
+    // tool's `fn`, not just the package surface.
+    const gammaResult = differentiate(expr("Gamma", [x]), x);
+    const gammaExpected = canonicalize(
+      expr("*", [expr("Digamma", [x]), expr("Gamma", [x])]),
+    );
+    if (canonicalize(gammaResult) !== gammaExpected) {
+      throw new Error(
+        `cas-diff: Gamma rule (DLMF §5.4.2) did not produce ψ(x)·Γ(x); got ${canonicalize(gammaResult)}`,
+      );
+    }
+    const meijerOfs = diffOrTag(
+      expr("MeijerG", [sym("a"), sym("b"), x]),
+      x,
+      record({ f: expr("MeijerG", [sym("a"), sym("b"), x]), var: x }),
+    );
+    if (meijerOfs.kind !== "tagged" || meijerOfs.tag !== DIFF_TAG) {
+      throw new Error("cas-diff: deferred special-function head should tag out-of-scope");
+    }
+
+    console.log(`cas-diff --test: ${corpus.length} corpus probes × multiple points all agree with FD (rel ≤ ${FD_TOL.toExponential(0)}); special-function dispatcher (ADR-0023) wired`);
   },
 });
 

@@ -91,6 +91,7 @@ import {
   type SymbolValue,
   type Value,
 } from "@workbench/protocol";
+import { differentiateSpecialFunction } from "./special-functions.js";
 
 /** Tag used by `tools/cas-diff/` for the top-level out-of-scope refusal. */
 export const DIFF_TAG = "cas-diff/out-of-scope";
@@ -202,6 +203,12 @@ export function differentiate(e: Value, wrt: SymbolValue): Value {
 
 function diffExpression(e: ExpressionValue, wrt: SymbolValue): Value {
   if (!DIFF_ADMITTED_HEADS_SET.has(e.head)) {
+    // Fall through to the special-function dispatcher (ADR-0023). It
+    // returns null for heads it does not yet handle (deferred rules);
+    // those land back at the unconditional refusal below — preserving
+    // the existing boundary-tag contract for callers.
+    const sfResult = differentiateSpecialFunction(e.head, e.args, wrt, differentiate);
+    if (sfResult !== null) return sfResult;
     throw new CasDiffOutOfScopeError("head", e.head);
   }
   const args = e.args;
@@ -514,37 +521,45 @@ function dependsOn(v: Value, wrt: SymbolValue): boolean {
 // motivation is reader-facing: `d(x²)/dx` should print as `2·x`, not
 // `2·x^(2-1)·1`, even before cas-simplify runs.
 
-const ZERO: Value = int(0n);
-const ONE: Value = int(1n);
+// These are exported with `export` (rather than left private) so that
+// `special-functions.ts` — the v0.2 sibling of this file that adds the
+// special-function diff rules — can reuse the exact same smart-
+// constructor pipeline. They are not re-exported from `index.ts`; they
+// are package-internal helpers that only live next to diff-rule code.
+// Drift between two duplicated implementations of `mkTimes` is the
+// maintenance hazard the export avoids.
 
-function isZero(v: Value): boolean {
+export const ZERO: Value = int(0n);
+export const ONE: Value = int(1n);
+
+export function isZero(v: Value): boolean {
   if (v.kind === "integer") return v.value === "0";
   if (v.kind === "rational") return v.num === "0";
   if (v.kind === "float64") return float64ToNumber(v) === 0;
   return false;
 }
 
-function isOne(v: Value): boolean {
+export function isOne(v: Value): boolean {
   if (v.kind === "integer") return v.value === "1";
   if (v.kind === "rational") return v.num === "1" && v.den === "1";
   if (v.kind === "float64") return float64ToNumber(v) === 1;
   return false;
 }
 
-function mkPlus(args: readonly Value[]): Value {
+export function mkPlus(args: readonly Value[]): Value {
   const filtered = args.filter((a) => !isZero(a));
   if (filtered.length === 0) return ZERO;
   if (filtered.length === 1) return filtered[0]!;
   return expr("+", filtered);
 }
 
-function mkMinus(a: Value, b: Value): Value {
+export function mkMinus(a: Value, b: Value): Value {
   if (isZero(b)) return a;
   if (isZero(a)) return mkNeg(b);
   return expr("-", [a, b]);
 }
 
-function mkNeg(a: Value): Value {
+export function mkNeg(a: Value): Value {
   if (isZero(a)) return ZERO;
   if (a.kind === "expression" && a.head === "neg" && a.args.length === 1) {
     return a.args[0]!;
@@ -552,7 +567,7 @@ function mkNeg(a: Value): Value {
   return expr("neg", [a]);
 }
 
-function mkTimes(...args: Value[]): Value {
+export function mkTimes(...args: Value[]): Value {
   const flat: Value[] = [];
   for (const a of args) {
     if (isZero(a)) return ZERO;
@@ -564,13 +579,13 @@ function mkTimes(...args: Value[]): Value {
   return expr("*", flat);
 }
 
-function mkDiv(a: Value, b: Value): Value {
+export function mkDiv(a: Value, b: Value): Value {
   if (isZero(a)) return ZERO;
   if (isOne(b)) return a;
   return expr("/", [a, b]);
 }
 
-function mkPower(base: Value, exponent: Value): Value {
+export function mkPower(base: Value, exponent: Value): Value {
   if (isZero(exponent)) return ONE;
   if (isOne(exponent)) return base;
   return expr("^", [base, exponent]);
