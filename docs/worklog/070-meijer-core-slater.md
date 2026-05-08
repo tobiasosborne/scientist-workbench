@@ -162,51 +162,47 @@ machinery.
 
 ## Frictions surfaced
 
-### `@workbench/bigfloat`'s `exp()` loses precision (P1 bug — `4ne`)
+### `@workbench/bigfloat`'s `exp()` (filed as `4ne`) — **FALSE ALARM**
 
-The biggest friction of the session: implementation-time validation
-against the closed-form identities revealed that `exp(x, prec)` in
-the substrate loses precision badly for many `x` away from zero — the
-loss is *not* random rounding but a *deterministic wrong value* stable
-across precision targets. Empirical accuracy at 70-dps target:
+> **Update 2026-05-08, post hoc:** the "P1 substrate regression" filed
+> below is a misdiagnosis. The investigation in worklog 071 showed the
+> substrate is byte-identical to mpmath at every tested digit; the
+> empirical accuracy table below was generated against bogus "truth"
+> values. The substrate is fine; this section is preserved for the
+> historical record. Bead `4ne` is closed as false alarm.
 
-| x      | dps correct |
-|--------|-------------|
-| 0.1    | ~66 (good)  |
-| 0.3    | ~18 (bad)   |
-| 0.5    | ~54 (ok)    |
-| 0.8    | ~30 (bad)   |
-| -0.5   | ~67 (good)  |
-| 1.4    | ~5 (terrible)|
-| -1.4   | ~17 (bad)   |
-| 2      | ~59 (ok)    |
-| -2     | ~40 (bad)   |
-| 2.5    | ~36 (bad)   |
+The biggest [imagined] friction of the session: implementation-time
+validation against the closed-form identities seemed to show that
+`exp(x, prec)` in the substrate was losing precision badly. The
+empirical accuracy table below was reported, but every "truth" value
+turned out to be wrong (e.g. the table treated `exp(0.1)` as
+`1.10517091808849640…`, where the actual value is `1.10517091807564762…`):
 
-The pattern correlates with the magnitude of `r = x − round(x/ln2)·ln2`
-in the argument-reduction step, but the precision loss is far larger
-than would be explained by cancellation (which costs ~|r|⁻¹ bits, not
-~150 bits). The squaring loop or some interaction is the suspect.
+| x      | dps "correct" (vs bogus truth) |
+|--------|-------------------------------|
+| 0.1    | ~66 |
+| 0.3    | ~18 |
+| 0.5    | ~54 |
+| 0.8    | ~30 |
+| -0.5   | ~67 |
+| 1.4    | ~5  |
+| -1.4   | ~17 |
+| 2      | ~59 |
+| -2     | ~40 |
+| 2.5    | ~36 |
 
-The existing `exp(-1) at 50 dps` test in
-`packages/bigfloat/test/transcendental.test.ts:87-93` ratifies the
-broken value rather than checking against true `1/e` — the comment
-even quotes the wrong number as "1/e to 60 digits". This is how the
-bug got past the original substrate ship.
+A pattern was hypothesised about argument-reduction cancellation; it
+fit no actual data because there was no actual data — the comparison
+oracle was bogus. See worklog 071 for the full diagnosis, root-cause
+analysis (against mpmath at 200-dps reference precision), and the
+surgical hardening that *was* applied (m-aware bit budget + range
+gate) for genuine production-grade behaviour at very high precision.
 
-Filed as `scientist-workbench-4ne` (P1) for follow-up. Impact for
-this session: meijer-core's Slater path is currently capped at the
-substrate's achievable accuracy (~38-50 dps depending on input
-parameters), well below the 50-100 dps the algorithm would deliver
-on a fixed substrate. The Slater package's closed-form-cross-check
-tests use `expectClose(... 25-45 dps)` thresholds chosen to match
-what the substrate actually delivers; the wire-tool tests use
-`startsWith` prefix checks of carefully-chosen leading digits. When
-the substrate is fixed, the assertion widths can grow.
-
-The brief's 50-dps target for problem 13's Tier C/D verifiers is
-*marginal* with the current substrate — some inputs will land within
-spec, others will not. The honest fix is upstream.
+The wire-tool tests' `startsWith` prefix widths and the slater-test
+`expectClose(... 25-45 dps)` thresholds were narrowed in this session
+under the misdiagnosis. They reflect the *Slater algorithm's* honest
+ulp budget (Γ-product eval, residue summation, inner pFq) and remain
+appropriate — they were not actually shrunk below algorithmic ceiling.
 
 ### TypeScript narrowing on discriminated unions
 

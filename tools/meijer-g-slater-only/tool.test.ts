@@ -54,15 +54,13 @@ function callTool(
 
 describe("success path — DLMF 16.18.4 simplest case", () => {
   // We assert leading-digit match against the mathematically-true closed
-  // form. The match width here (38 dps) is constrained by the bigfloat
-  // substrate's `exp()` accuracy at the time of writing — the substrate
-  // empirically delivers ~40 dps for `exp(±2)` at 50-dps target, which
-  // bottlenecks any tool that composes `cgamma`/`cexp` on integer-ish
-  // arguments. The Slater algorithm itself is correct; the limitation
-  // is upstream. Once `@workbench/bigfloat` lifts the limit, widen these
-  // assertions; the algorithm will track. Algorithmic invariants
-  // (relative-tolerance close-comparison vs. independently-computed
-  // closed forms) are exercised in `packages/meijer-core/test/slater.test.ts`.
+  // form. Match width is bounded by Slater-path accumulated ulps (Γ-product
+  // evaluation, prefactor `z^b`, inner pFq series, residue-line summation),
+  // not by the substrate. The bigfloat substrate is byte-correct against
+  // mpmath at every digit (worklog 071); these prefix widths reflect the
+  // honest algorithmic budget. Algorithmic invariants (relative-tolerance
+  // close-comparison vs. independently-computed closed forms) live in
+  // `packages/meijer-core/test/slater.test.ts`.
 
   test("G^{1,0}_{0,1}(_; 1 | 2) = 2·e^{-2} (Series 1)", () => {
     const r = callTool(

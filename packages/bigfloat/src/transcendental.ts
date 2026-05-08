@@ -148,50 +148,107 @@ export function pi(prec: number): BigFloat {
 // =============================================================================
 
 /**
- * `exp(x)`. Argument reduction `x = k·ln(2) + r` with `|r| ≤ ln(2)/2`,
- * then a sub-reduction `r' = r / 2^m` followed by Taylor on `r'` and
- * repeated squaring back to `exp(r)`.
+ * `exp(x)` to `prec` bits of precision. Round-half-to-even; correct to
+ * within ~1 ulp at the requested precision for any input in the gated
+ * range `|kEstimate| ≤ 2^30` (i.e. roughly `|x| ≤ 7.4 × 10^8`).
  *
- * The choice `m = ceil(sqrt(prec))` is the standard heuristic — it
- * balances Taylor-series convergence against squaring cost.
+ * Algorithm (Brent–Smith argument reduction + Taylor + repeated squaring):
+ *
+ *   1. Outer reduction: `k = round(x / ln 2)`,  `r = x − k · ln 2`,
+ *      so `|r| ≤ ln(2)/2`. Then `exp(x) = 2^k · exp(r)` and the `2^k`
+ *      attaches at the end as an exact `exponent` adjustment.
+ *   2. Inner reduction: `r' = r / 2^m` with `m = ceil(sqrt(prec))`. Exact:
+ *      only the BigFloat `exponent` changes.
+ *   3. Taylor: `exp(r') = 1 + r' + r'^2/2! + …`. Stop when terms drop
+ *      below `2^-(prec + m + 16)`.
+ *   4. Square `m` times to recover `exp(r)`.
+ *   5. Attach `2^k`.
+ *
+ * Bit budget — the load-bearing piece. Three error sources stack:
+ *
+ *   (a) Outer-reduction cancellation in `r = x − k·ln 2`: loses
+ *       `log2(|k|+1)` bits, plus the same again from amplifying `ln 2`'s
+ *       rounding error by `|k|`. We guard with `bitLength(|k|) + 16`.
+ *   (b) Taylor truncation at `2^-(prec + m + 16)` — the `m` here is what
+ *       the squaring loop will amplify back up by `2^m`. The `+ 16` is
+ *       residual safety after that amplification.
+ *   (c) Squaring loop: each step rounds to `work` bits (1 ulp) and
+ *       amplifies pre-existing absolute error by `≈ 2`. After `m` steps,
+ *       per-step ulps stack to `m · 2^-(work)` total. We need that below
+ *       `2^-prec`, so `work ≥ prec + m + log2(m)` — taking `m + 32`
+ *       leaves comfortable headroom.
+ *
+ * The constant `+ 32` margin used by an earlier revision is empirically
+ * sufficient up to ~1000 dps thanks to the 30-bit safety baked into
+ * `decimalToBinaryPrecision`, but the `m`-scaling form is the principled
+ * answer and remains correct as `prec` grows arbitrarily.
+ *
+ * `kEstimate` via float64 is a flow-control choice, not a canonical value:
+ * the subtraction `x − k·ln 2` is at full BigFloat precision regardless,
+ * and the algorithm tolerates `|r|` slightly above `ln(2)/2` (just costs
+ * one or two extra Taylor terms). So float64 imprecision in `kEstimate`
+ * does not affect output bytes — bit-determinism (ADR-0020) is preserved.
  */
 export function exp(x: BigFloat, prec: number): BigFloat {
   if (isZero(x)) {
-    // exp(0) = 1
-    const one: BigFloat = { mantissa: 1n << BigInt(prec - 1), exponent: -(prec - 1), precision: prec };
-    return one;
+    // exp(0) = 1, canonical form (top bit set, exponent placed for value 1).
+    return { mantissa: 1n << BigInt(prec - 1), exponent: -(prec - 1), precision: prec };
   }
-  const work = prec + 32;
-  const ln2_w = ln2(work);
-  // k = round(x / ln2). Use float64 estimate first, then refine.
   const xFloat = toFloat64(x).value;
   if (!Number.isFinite(xFloat)) {
     throw new RangeError(
       `BigFloat.exp: argument too extreme to convert to float64 (${x.mantissa}·2^${x.exponent})`,
     );
   }
-  const kEstimate = Math.round(xFloat / Math.LN2);
-  if (!Number.isSafeInteger(kEstimate)) {
+  const kEstimateRaw = Math.round(xFloat / Math.LN2);
+  // Range gate: refuse inputs whose `k` exceeds ±2^30. This is well clear
+  // of the i32 limit on the `exponent` field (we attach `+kEstimate` to
+  // an exponent that already holds working-precision bits) and well
+  // beyond any sane numerical-tier use case — `exp(2^30 · ln 2) ≈ 2^(2^30)`,
+  // far outside any precision we'd realistically request.
+  const MAX_K = 1 << 30;
+  if (!Number.isFinite(kEstimateRaw) || Math.abs(kEstimateRaw) > MAX_K) {
     throw new RangeError(
-      `BigFloat.exp: argument out of range (kEstimate=${kEstimate})`,
+      `BigFloat.exp: argument out of range (kEstimate=${kEstimateRaw} exceeds ±2^30)`,
     );
   }
-  // r = x - k·ln(2).
-  const kBig = fromInt(BigInt(kEstimate), work);
-  const r = sub(x, mul(kBig, ln2_w, work), work);
-  // Sub-reduction: r' = r / 2^m, with m chosen so that |r'| ≤ 2^-sqrtPrec roughly.
-  const m = Math.max(0, Math.ceil(Math.sqrt(prec)));
-  // r' = r * 2^-m, exact.
+  const kEstimate = kEstimateRaw | 0;
+
+  const m = Math.max(1, Math.ceil(Math.sqrt(prec)));
+  // Outer guard covers cancellation in `x − k·ln 2` and ln-2-rounding
+  // amplified by `|k|`. Inner guard covers Taylor accumulation +
+  // squaring-loop ulp stacking. We take the max.
+  const outerGuard = 16 + bitLength(BigInt(Math.abs(kEstimate)));
+  const innerGuard = m + 32;
+  const work = prec + Math.max(outerGuard, innerGuard);
+
+  // r = x − k·ln(2) at working precision. When k=0, the subtraction is a
+  // no-op widen of x to work bits.
+  let r: BigFloat;
+  if (kEstimate === 0) {
+    r = normalise(x.mantissa, x.exponent, work);
+  } else {
+    const ln2_w = ln2(work);
+    const kBig = fromInt(BigInt(kEstimate), work);
+    r = sub(x, mul(kBig, ln2_w, work), work);
+  }
+
+  // r' = r / 2^m, exact: just lower the exponent. The mantissa is
+  // unchanged so the BigFloat invariant (top bit set, `precision` bits)
+  // still holds.
   const rPrime: BigFloat = {
     mantissa: r.mantissa,
     exponent: r.exponent - m,
     precision: r.precision,
   };
-  // Taylor series for exp(r').
+
+  // Taylor series for exp(r'). Stop threshold tightened to -(prec + m + 16)
+  // so that, after the squaring loop's `2^m` amplification, residual error
+  // lands at `2^-(prec + 16)` — well below the user's ulp.
   let sum: BigFloat = fromInt(1n, work);
   let term: BigFloat = fromInt(1n, work);
   let n = 1;
-  const stopThreshold = -(prec + 16);
+  const stopThreshold = -(prec + m + 16);
   while (true) {
     // term_n = term_{n-1} * r' / n.
     term = div(mul(term, rPrime, work), fromInt(n, work), work);
@@ -205,18 +262,21 @@ export function exp(x: BigFloat, prec: number): BigFloat {
     n += 1;
     if (n > work + 1000) break;
   }
+
   // Square `m` times to recover exp(r).
   let expR = sum;
   for (let i = 0; i < m; i++) {
     expR = mul(expR, expR, work);
   }
-  // Multiply by 2^k: shift exponent.
-  const result: BigFloat = {
-    mantissa: expR.mantissa,
-    exponent: expR.exponent + kEstimate,
-    precision: expR.precision,
-  };
-  return normalise(result.mantissa, result.exponent, prec);
+
+  // Attach 2^k via exact exponent adjustment, then renormalise to `prec`.
+  const shiftedExp = expR.exponent + kEstimate;
+  if (shiftedExp > MAX_K || shiftedExp < -MAX_K) {
+    throw new RangeError(
+      `BigFloat.exp: result exponent ${shiftedExp} exceeds ±2^30 (overflow / underflow)`,
+    );
+  }
+  return normalise(expR.mantissa, shiftedExp, prec);
 }
 
 /**

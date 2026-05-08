@@ -104,6 +104,87 @@ describe("exp", () => {
     expect(toString(r, 50)).toBe("1.6487212707001281468486507878141635716537761007101");
   });
 
+  // Regression coverage for inputs the bead `scientist-workbench-4ne`
+  // *claimed* were broken (they aren't — the bead's "truth" values were
+  // bogus; the substrate is byte-correct against mpmath at every digit).
+  // These goldens were generated via:
+  //   python3 -c "from mpmath import mp, mpf, exp; mp.dps=80;
+  //               print(mp.nstr(exp(mpf('<x>')), 80, strip_zeros=False))"
+  // and are byte-identical to wolframscript -code 'N[Exp[<x>], 80]' on the
+  // first 75+ digits.
+  test("exp(0.1) at 70 dps — mpmath byte-identical", () => {
+    const PREC = 263; // ≈ 70 dps
+    const r = exp(fromString("0.1", PREC), PREC);
+    expect(toString(r, 70)).toBe(
+      "1.105170918075647624811707826490246668224547194737518718792863289440968",
+    );
+  });
+
+  test("exp(0.3) at 70 dps — mpmath byte-identical", () => {
+    const PREC = 263;
+    const r = exp(fromString("0.3", PREC), PREC);
+    expect(toString(r, 70)).toBe(
+      "1.349858807576003103983744313328007330378299697359365803049917989939613",
+    );
+  });
+
+  test("exp(0.8) at 70 dps — mpmath byte-identical", () => {
+    const PREC = 263;
+    const r = exp(fromString("0.8", PREC), PREC);
+    expect(toString(r, 70)).toBe(
+      "2.225540928492467604579537531395076757053634135048484596118583955556623",
+    );
+  });
+
+  test("exp(1.4) at 70 dps — mpmath byte-identical", () => {
+    const PREC = 263;
+    const r = exp(fromString("1.4", PREC), PREC);
+    expect(toString(r, 70)).toBe(
+      "4.055199966844674587224108895228620252167561141684041071652232894506938",
+    );
+  });
+
+  test("exp(-1.4) at 70 dps — mpmath byte-identical", () => {
+    const PREC = 263;
+    const r = exp(fromString("-1.4", PREC), PREC);
+    expect(toString(r, 70)).toBe(
+      "0.2465969639416064769398612398337676330642837742414514892465683564776597",
+    );
+  });
+
+  test("exp(2.5) at 70 dps — mpmath byte-identical", () => {
+    const PREC = 263;
+    const r = exp(fromString("2.5", PREC), PREC);
+    expect(toString(r, 70)).toBe(
+      "12.18249396070347343807017595116796618318276779006316131156039834183819",
+    );
+  });
+
+  test("exp(7) at 100 dps — high-precision, large k", () => {
+    const PREC = 363; // ≈ 100 dps
+    const r = exp(fromInt(7n, PREC), PREC);
+    // mpmath: exp(7) = 1096.6331584284585992637202382881214324422191348336131437827392407761217693312331290224785687872498...
+    expect(toString(r, 100)).toBe(
+      "1096.633158428458599263720238288121432442219134833613143782739240776121769331233129022478568787249844",
+    );
+  });
+
+  test("exp(-1000) underflows or stays representable", () => {
+    // Boundary: exp(-1000) ≈ 5e-435, representable as a BigFloat at any
+    // precision since BigFloat exponent is i32. Should not throw.
+    const PREC = 100;
+    const r = exp(fromInt(-1000n, PREC), PREC);
+    // Expect mantissa non-zero (non-underflow) and exponent very negative.
+    expect(r.mantissa).not.toBe(0n);
+    expect(r.exponent).toBeLessThan(-1000);
+  });
+
+  test("exp throws on out-of-range argument", () => {
+    // |k| > 2^30 should throw; build x = 2^31 (safely beyond the gate).
+    const huge = fromString("2000000000", 100); // ≈ 2 × 10^9, k ≈ 2.88 × 10^9 > 2^30
+    expect(() => exp(huge, 100)).toThrow(RangeError);
+  });
+
   test("exp(x) matches float64 for small x", () => {
     for (const x of [0.5, -0.3, 1.7, -1.2, 2.5, -2.5]) {
       const r = toFloat64(exp(fromFloat64(x), 53)).value;
