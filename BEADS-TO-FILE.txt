@@ -1,0 +1,126 @@
+Follow-up beads from `scientist-workbench-hv0.4` (`bench/hypergeometric-pfq`).
+
+Each entry: title (≤70 chars), priority, body sketch.
+
+────────────────────────────────────────────────────────────────────────
+
+1. compose: merge ADR-0020 --precision flag for arbprec tools
+
+   Priority: P1
+   Type: defect
+
+   Background. `@workbench/compose`'s `runWorkbench` validates partial
+   flags against `def.flags ?? {}`, ignoring the standard arbprec
+   `precision` flag merged in by `runTool` (see
+   `packages/contract/src/runner.ts::mergedFlags`). Result: the typed
+   barrel `wb.hypergeometricPfq(input, { precision: 50n })` is rejected
+   as "unknown flag 'precision' for this tool". The bench
+   (`bench/hypergeometric-pfq/run-candidate.ts`) currently bypasses
+   compose by invoking `executeToolDef` directly; this is admissible
+   per ADR-0012 (single-implementation discipline) but defeats the
+   call-site ergonomics compose was created for.
+
+   Fix. In `packages/compose/src/run.ts::runWorkbench`, the
+   `flagSchema` it uses for validation must be the merged schema, not
+   the bare `def.flags`. Since `mergedFlags` is currently private to
+   `runner.ts`, either export it or build an equivalent merge that
+   honours `def.arbprec === true` ⇒ inject the standard `precision`
+   slot (and `def.numerical === true` ⇒ standard flags from STANDARD_FLAGS).
+
+   Acceptance. After the fix, the typed barrel call
+   `wb.hypergeometricPfq(input, { precision: 50n })` succeeds; the
+   bench's run-candidate.ts can revert to the typed-barrel surface
+   and the directly-invoked-executeToolDef workaround is dropped.
+   `bun run check` stays green; tools/hypergeometric-pfq/tool.test.ts
+   continues passing.
+
+────────────────────────────────────────────────────────────────────────
+
+2. hypergeometric-pfq: analytic continuation for |z| ≥ 0.99
+
+   Priority: P2
+   Type: feature
+
+   Background. `2F1(1, 1; 2; -1) = log 2` is the famous Abel-summation
+   identity at the boundary of the unit disc; the v0.1 tool refuses
+   with `non-convergent` (Tier E case `tE-2F1-z-neg1-boundary` in
+   `bench/hypergeometric-pfq/`). The reference algorithms
+   (Bühring 1987 / Becken-Schmelcher 2000; cited in
+   `bench/hypergeometric-pfq/REFERENCES.md`) use connection formulas
+   that map `z near 1` to `1−z near 0`, bringing the case back into
+   the well-conditioned direct-series regime.
+
+   Acceptance. The v0.2 tool admits `|z| > 0.99` with `p == q + 1`
+   when an analytic-continuation path exists (24 Kummer
+   transformations of 2F1; analogous transformations for higher pFq).
+   The bench's Tier E shrinks (cases that move to Tier C); a new
+   "Tier C2" is added for `|z| ∈ [0.99, ∞)` reduced via continuation.
+
+────────────────────────────────────────────────────────────────────────
+
+3. hypergeometric-pfq bench: extend Tier F asymptotic regime
+
+   Priority: P3
+   Type: feature
+
+   Background. When the parallel agent's `bead hv0.9` (Braaksma
+   asymptotic for Meijer-G) lands the workbench will have an
+   asymptotic-regime substrate. At that point `pFq` with `p > q + 1`
+   becomes evaluable via Borel-summation; the bench's Tier E case
+   `tE-3F1-asymptotic` (currently a structural refusal) becomes a
+   happy-path case.
+
+   Acceptance. A new Tier F is added to `bench/hypergeometric-pfq/`
+   with ~5 cases at `p > q + 1` (3F1, 4F2 with mid-range parameters
+   and small-to-moderate |z|), pinned via the workbench's asymptotic
+   path cross-checked against mpmath.hyper (which itself uses
+   Borel-Padé for these — at lower precision than mpmath's direct-
+   series fast paths, but still admissible as a witness).
+
+────────────────────────────────────────────────────────────────────────
+
+4. hypergeometric-pfq bench: third-witness adjudication via Sage
+
+   Priority: P3
+   Type: infra
+
+   Background. ADR-0019 §3 specifies a triple-witness oracle protocol
+   (Wolfram + SymPy + Sage). The current bench
+   (`bench/hypergeometric-pfq/reference/generate-mpmath-truth.py`)
+   uses mpmath as primary and Wolfram as cross-check; SymPy reduces
+   to mpmath under the hood, so it's not an independent third
+   witness. SageMath (with `qqbar` for algebraic-number cross-check
+   and `hypergeometric` symbolic) is the genuinely-third oracle and
+   is not currently part of the workbench's local install.
+
+   Acceptance. When SageMath lands on the dev box,
+   `generate-mpmath-truth.py` grows a `--with-sage` flag that adds a
+   Sage cross-check pass; cases where mpmath/Wolfram agree but Sage
+   disagrees are quarantined to `golden/oracle-disagreements.log`
+   per ADR-0019 §3.
+
+────────────────────────────────────────────────────────────────────────
+
+5. hypergeometric-pfq: graceful-degradation cases for the bench
+
+   Priority: P3
+   Type: feature
+
+   Background. Per the hv0.4 bead spec ("punishing tests"), the bench
+   should include cases where the tool's `--precision` flag is
+   honoured but `achieved_precision` reports lower than requested
+   (graceful degradation per ADR-0007). The current corpus has none
+   — every tool invocation in the corpus achieves the requested
+   precision exactly. To genuinely exercise the agent-honest output
+   discipline we need cases where the cancellation budget is
+   exhausted *and* the bench's tolerance is loose enough that the
+   degraded value still passes.
+
+   Acceptance. Add 3-5 cases in a new Tier G "graceful degradation"
+   where the tool's `cancellationLoss` exceeds the safety margin
+   on the first attempt, the retry achieves a precision below the
+   request, and the bench's `tolerance_rel` admits the result.
+   `self_reported_precision` check verifies `achieved_precision <
+   precision` is documented honestly.
+
+────────────────────────────────────────────────────────────────────────
