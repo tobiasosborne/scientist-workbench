@@ -82,3 +82,11 @@ export {
   hasIntegerSpacedPair,
   perturbParameters,
 } from "./coalescence.js";
+
+export {
+  type MeijerGContourOptions,
+  type MeijerGContourResult,
+  type MeijerGContourSuccess,
+  type MeijerGContourRefusal,
+  meijergContour,
+} from "./contour.js";

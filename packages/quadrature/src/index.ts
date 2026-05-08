@@ -18,12 +18,24 @@
 //     generalisation, including the cancellation-stable error
 //     estimator that the high-precision regime requires).
 //
-// Both share the priority-queue-bisection structure, the agent-honest
-// result shape (value + errorEstimate + nEvals + converged + warnings),
-// and the same algebraic-exactness contract — K15 is exact for
-// polynomials of degree ≤ 23 in either tier. They differ only in
-// codomain, the cancellation-stability of the local rule, and the
-// determinism contract.
+//   gaussKronrodAdaptiveBC(f, a, b, prec, opts?)
+//     Adaptive G7K15 on `(t: BigFloat, prec: number) => BigComplex`.
+//     Real integration variable, BigComplex codomain. The natural
+//     surface for Mellin-Barnes contour quadrature (consumer:
+//     `packages/meijer-core`'s contour layer). ADR-0022 — a faithful
+//     lift of the BF driver to BigComplex codomain. Centred-delta K-G
+//     identity ports verbatim component-wise; error estimate is the
+//     real `cabs(K-G) · |halfLength|`; on real-only integrands the
+//     output bytes are identical to `gaussKronrodAdaptiveBF` (asserted
+//     by the test suite).
+//
+// All three share the priority-queue-bisection structure, the agent-
+// honest result shape (value + errorEstimate + nEvals + converged +
+// warnings), and the same algebraic-exactness contract — K15 is exact
+// for polynomials of degree ≤ 23 in any tier. They differ only in
+// codomain (real vs complex), precision tier (float64 vs arb-prec),
+// the cancellation-stability of the local rule, and the determinism
+// contract.
 //
 // Plus the integrand bridge (float64 only):
 //
@@ -46,6 +58,12 @@ export {
   BigFloatQuadratureError,
   gaussKronrodAdaptiveBF,
 } from "./gauss-kronrod-bf.js";
+export {
+  type BigComplexQuadResult,
+  type BigComplexQuadOptions,
+  BigComplexQuadratureError,
+  gaussKronrodAdaptiveBC,
+} from "./gauss-kronrod-bc.js";
 export {
   MAX_DECIMAL_PRECISION,
   type G7K15Table,

@@ -7,26 +7,37 @@ stack laid out in
 
 ## What this package exposes
 
+Two evaluation paths, each with structured-refusal envelope:
+
 ```ts
-import { meijergSlater } from "@workbench/meijer-core";
+import { meijergSlater, meijergContour } from "@workbench/meijer-core";
 import { cfromInts } from "@workbench/bigfloat";
 
 // G^{1,0}_{0,1}(_; 1 | 2)  =  2 · e^{-2}
-const r = meijergSlater(
-  {
-    an: [],
-    ap: [],
-    bm: [cfromInts(1n, 0n, 256)],
-    bq: [],
-  },
-  cfromInts(2n, 0n, 256),
-  50,                                    // target precision (decimal digits)
-);
+const params = {
+  an: [],
+  ap: [],
+  bm: [cfromInts(1n, 0n, 256)],
+  bq: [],
+};
+const z = cfromInts(2n, 0n, 256);
 
-if (r.status === "success") {
-  console.log(r.value);                  // BigComplex
-  console.log(r.method);                 // "slater-series-1"
-  console.log(r.cancellationDigitsLost);
+// Slater path — fast for parameters in the (p, q, m, n, |z|) regime
+// where one of the two residue series converges.
+const r1 = meijergSlater(params, z, 50);
+
+// Contour path — direct numerical evaluation via Mellin-Barnes vertical
+// contour quadrature. The fallback for the |z| ≈ 1 quarantine band
+// where neither Slater series converges; also a cross-check for the
+// regime where both paths apply.
+const r2 = meijergContour(params, z, 15);
+
+if (r1.status === "success") {
+  console.log(r1.value, r1.method);     // "slater-series-1"
+}
+if (r2.status === "success") {
+  console.log(r2.value, r2.method);     // "mellin-barnes"
+  console.log(r2.contourRe, r2.truncate); // diagnostic: c, T
 }
 ```
 
@@ -34,18 +45,16 @@ Public API:
 
 | Export                | Purpose                                                                  |
 |-----------------------|--------------------------------------------------------------------------|
-| `meijergSlater`       | Entry point. Series selection + perturbation + cancellation control.     |
+| `meijergSlater`       | Slater entry point. Series selection + perturbation + cancellation control.|
+| `meijergContour`      | Mellin-Barnes contour entry point. Auto-selects c and T; structured refusal on non-convergent contours / overlapping pole clusters.|
 | `evaluateSeries1`/`2` | Per-residue-line kernels. Useful for diagnostic / per-line introspection.|
 | `selectSeries`        | The (p, q, m, n, |z|) selection rule alone.                              |
 | `detectCoalescence`   | Integer-spaced-pair detection across the parameter sub-tuples.           |
 | `perturbParameters`   | The deterministic odd-coefficient perturbation.                          |
-| Type exports          | `MeijerGParameters`, `MeijerGSlaterOptions`, result discriminants.       |
+| Type exports          | `MeijerGParameters`, `MeijerGSlaterOptions`, `MeijerGContourOptions`, all result discriminants. |
 
 ## What this package does *not* do
 
-- **Mellin-Barnes contour quadrature** (Layer 5 — `hv0.8`). Quarantine
-  refusals from `meijergSlater` are intended to route to that layer
-  once it lands.
 - **Braaksma asymptotic / hyperasymptotic** (Layer 6 — `hv0.9`).
 - **Symbolic dispatch** (Layer 4 — `hv0.6`). When the parameters
   match an Adamchik–Marichev or Roach reduction, the closed-form is
@@ -53,6 +62,16 @@ Public API:
   pattern-table dispatcher.
 - **Top-level orchestration** (Layer 7 — `hv0.10`). `tools/meijer-g`
   will run symbolic → Slater → contour → asymptotic → refuse.
+- **Steepest-descent contour deformation.** The contour layer uses a
+  vertical line (parallel to the imaginary axis), the simplest contour
+  that admits the v0.1 algorithm. Saddle-point deformation
+  (Paris-Kaminski 2001 ch.2) is deferred to a future bead when the
+  asymptotic layer lands and the dispatcher can route between paths
+  intelligently.
+- **Adaptive contour offset for asymmetric `arg(z)`.** The contour is
+  symmetric around `t = 0`; for `arg(z) ≠ 0` the integrand peak shifts
+  and symmetric truncation is conservative (correct, not optimal).
+  Future v0.2.
 
 ## Design points
 
@@ -89,15 +108,23 @@ Public API:
 * `slater.test.ts` — 19 tests cross-checking the Slater path against
   closed-form MeijerG identities (DLMF 16.18, Bateman 5.6) computed
   directly through the bigfloat substrate.
+* `contour.test.ts` — 10 tests for the Mellin-Barnes contour layer:
+  closed-form identities (`G^{1,0}_{0,1}` reductions to `e^{-z}`),
+  contour-vs-Slater cross-check (the load-bearing mutation-prove,
+  since Slater is independently tested against closed forms),
+  structured refusals (non-convergent contour, no-valid-contour,
+  invalid precision), bit-determinism, result shape.
 
-Achievable accuracy is governed by the Slater algorithm's own ulp
-budget — Γ-product evaluation, prefactor `z^b` computation, inner
-pFq series summation, residue-line accumulation. Empirically the
-clean integer-input cases deliver ~75+ dps relative accuracy at
-50 dps target; harder cases (rational parameters, `|z|` near a
-convergence boundary) deliver ~45-50 dps. The bigfloat substrate is
-not the bottleneck — see worklog 071 for the diagnosis of an earlier
-"substrate regression" that turned out to be a false alarm.
+Achievable accuracy is governed by the algorithm's own ulp budget.
+For Slater: empirically the clean integer-input cases deliver ~75+
+dps at 50 dps target; harder cases (rational parameters, `|z|` near a
+convergence boundary) deliver ~45-50 dps. For contour: ~prec − 5 dps
+at modest precision targets (TARGET_DPS ≤ 20), with a soft ceiling
+near ~22 dps imposed by the bigfloat substrate's `cgamma` Stirling
+cancellation budget — a future bead can lift the ceiling. The
+bigfloat substrate is not the bottleneck (see worklog 071 for the
+diagnosis of an earlier "substrate regression" that turned out to be
+a false alarm).
 
 ## References
 

@@ -34,7 +34,11 @@
       "@workbench/compose": ["packages/compose/src/index.ts"],
       "@workbench/bigfloat": ["packages/bigfloat/src/index.ts"],
       "@workbench/hypergeometric": ["packages/hypergeometric/src/index.ts"],
-      "@workbench/meijer-core": ["packages/meijer-core/src/index.ts"]
+      "@workbench/meijer-core": ["packages/meijer-core/src/index.ts"],
+      "@workbench/alg-num": ["packages/alg-num/src/index.ts"],
+      "@workbench/real-roots": ["packages/real-roots/src/index.ts"],
+      "@workbench/solve": ["packages/solve/src/index.ts"],
+      "@workbench/poly-factor": ["packages/poly-factor/src/index.ts"]
     }
   },
   "include": [

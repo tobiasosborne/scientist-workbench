@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@workbench/bigfloat": "workspace:*",
-    "@workbench/hypergeometric": "workspace:*"
+    "@workbench/hypergeometric": "workspace:*",
+    "@workbench/quadrature": "workspace:*"
   }
 }

@@ -1,9 +1,16 @@
 # @workbench/quadrature
 
-Adaptive 1D Gauss-Kronrod quadrature, two precision tiers. The substrate
-behind `tools/integrate-1d` (float64) and the in-process surface for
-arb-prec consumers (`packages/meijer-core`'s Mellin-Barnes contour layer
-and downstream).
+Adaptive 1D Gauss-Kronrod quadrature, three drivers covering two
+precision tiers and two codomains. The substrate behind
+`tools/integrate-1d` (float64, real codomain) and the in-process surface
+for arb-prec consumers (`packages/meijer-core`'s Slater inner-pFq usage
+and Mellin-Barnes contour layer).
+
+| Driver                       | Precision | Codomain     | ADR | Consumer                                      |
+|------------------------------|-----------|--------------|-----|-----------------------------------------------|
+| `gaussKronrodAdaptive`       | float64   | real         | 0014| `tools/integrate-1d`                          |
+| `gaussKronrodAdaptiveBF`     | arb-prec  | `BigFloat`   | 0021| arb-prec real-codomain consumers              |
+| `gaussKronrodAdaptiveBC`     | arb-prec  | `BigComplex` | 0022| `packages/meijer-core`'s contour layer        |
 
 Pure TypeScript on Bun. No FFI; no subprocess; no platform-conditional
 behaviour in the arb-prec tier (ADR-0020 — bit-identical across all JS
@@ -29,6 +36,14 @@ import {
   MAX_DECIMAL_PRECISION,           // = 150 (driver's hard cap)
   getG7K15Table,                   // BigFloat nodes/weights at given workingBits
   type G7K15Table,
+
+  // Arb-prec, BigComplex codomain (ADR-0022) — Mellin-Barnes contour
+  // quadrature surface. Faithful lift of the BF driver to BigComplex;
+  // on real-only integrands returns byte-identical bytes to the BF driver.
+  gaussKronrodAdaptiveBC,
+  type BigComplexQuadResult,
+  type BigComplexQuadOptions,
+  BigComplexQuadratureError,
 
   // Closed-vocabulary integrand evaluator (float64 only).
   evalNumericExpr,
@@ -79,7 +94,36 @@ The second argument is the *working* bit precision the driver wants the
 integrand to honour — load-bearing for integrands that themselves do
 arb-prec computation (e.g., Mellin-Barnes pFq).
 
-## Algorithm (both tiers, same shape)
+### Arb-prec, BigComplex codomain — `gaussKronrodAdaptiveBC(f, a, b, prec, opts?)`
+
+```ts
+import { fromInt, cos, sin } from "@workbench/bigfloat";
+
+const r = gaussKronrodAdaptiveBC(
+  (t, p) => ({ re: cos(t, p), im: sin(t, p) }),  // ∫ e^{it} dt
+  fromInt(0n),
+  fromInt(1n),
+  50,                                              // 50 decimal digits
+);
+//  r.value             { re, im } as BigComplex at 50 dps
+//                      = { sin(1), 1 - cos(1) } in this case
+//  r.errorEstimate     real BigFloat: cabs(K - G) · halfLength
+//  r.precision         = 50
+//  r.workingPrecision  = 196 (bits)
+//  r.method            = "gauss-kronrod-g7k15-bigcomplex"
+//  r.converged         = true
+```
+
+The integration variable `t` is real (`BigFloat`); the codomain is
+`BigComplex`. The natural surface for Mellin-Barnes contour quadrature:
+parameterise the vertical line `s = c + it` by `t ∈ ℝ` and integrate.
+The driver is a faithful lift of the BF driver — on real-only
+integrands (`im ≡ 0`) it returns byte-identical `value.re` and
+`errorEstimate` bytes to the BF driver. Centred-delta K-G identity
+ports verbatim component-wise; error estimate is the natural scalar
+`cabs(K - G) · halfLength`. ADR-0022.
+
+## Algorithm (all three drivers, same shape)
 
 - **Local rule — `gaussKronrod15`/`localG7K15BF`**: a 7-point
   Gauss-Legendre rule nested inside a 15-point Kronrod extension over
@@ -192,13 +236,13 @@ compose BigFloat-typed integrands directly rather than walking a
   integrands (Mellin-Barnes contours, Slater pFq composition,
   `tools/meijer-g` dispatcher).
 - **Out (v0.1, all deliberate):** infinite intervals (Gauss-Hermite /
-  Gauss-Laguerre would be sister tools), vector-valued or complex
-  integrands (`BigComplex` codomain extension deferred to `hv0.8` per
-  ADR-0021), higher-dimensional cubature, symbolic anti-derivatives,
-  *high-precision* (≥ ~50 dps) on smooth analytic integrands with
-  bounded Taylor radius (K15+adaptive saturates faster than the user
-  tolerance can be met — for those cases tanh-sinh is the appropriate
-  algorithm, filed as a follow-up).
+  Gauss-Laguerre would be sister tools), vector-valued integrands,
+  higher-dimensional cubature, symbolic anti-derivatives, *high-
+  precision* (≥ ~50 dps) on smooth analytic integrands with bounded
+  Taylor radius (K15+adaptive saturates faster than the user tolerance
+  can be met — for those cases tanh-sinh is the appropriate algorithm,
+  filed as a follow-up). The BigComplex driver shares the same scope
+  caveats as the BF driver.
 - **Hard caps:** arb-prec tier refuses `prec > 150` decimal digits
   (the table cap, with safety margin); refuses `a >= b`; refuses
   `maxEvals < 15`; refuses non-integer `prec`.
@@ -209,14 +253,14 @@ compose BigFloat-typed integrands directly rather than walking a
 bun test packages/quadrature
 ```
 
-106 tests in two files:
+141 tests in three files:
 
 - `quadrature.test.ts` — 30 tests for the float64 driver: algebraic
   exactness on `x^k` for `k = 0..15`, hand-checked smooth integrals,
   oscillatory budget honesty, narrow-Gaussian-peak adaptivity,
   evaluator round-trips, non-finite boundary path. Mutation-proven.
 
-- `quadrature-bf.test.ts` — 72 tests for the arb-prec driver:
+- `quadrature-bf.test.ts` — 76 tests for the arb-prec driver:
   algebraic exactness on `x^k` for `k = 0..23` at 50 and 100 dps,
   cross-precision agreement against mpmath truths for sin and exp at
   30/50/80 dps, smooth-analytic value precision at 20 dps,
@@ -227,3 +271,14 @@ bun test packages/quadrature
   passthrough), default-tolerance scaling, table cache idempotency,
   rule-symmetry probes (Σ paired Kronrod weights = 2; Σ paired Gauss
   weights = 2 at 30/80/150 dps).
+
+- `quadrature-bc.test.ts` — 35 tests for the arb-prec BigComplex
+  driver: faithful-extension byte-equality with the BF driver on
+  real-only integrands (the load-bearing mutation-prove that BC is BF
+  lifted, not an independent reimplementation), algebraic exactness
+  on `(c0 + i·c1)·t^k`, `∫_0^{2π} e^{i·t} dt = 0` (canonical complex
+  cancellation probe), `∫_0^1 (cos+i·sin) dt = sin(1) + i·(1−cos(1))`
+  against mpmath at 30/50/80 dps, bit-determinism (BigComplex
+  components and BigFloat error), tight-budget oscillatory honesty,
+  boundary refusals (matching BF driver semantics), default-tolerance
+  scaling, result shape, integrand-linearity probe.
