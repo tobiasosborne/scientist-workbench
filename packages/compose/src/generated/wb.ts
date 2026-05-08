@@ -28,6 +28,7 @@ import { def as casSimplifyDef } from "../../../../tools/cas-simplify/tool.js";
 import { def as casVerifyDef } from "../../../../tools/cas-verify/tool.js";
 import { def as entropySourceDef } from "../../../../tools/entropy-source/tool.js";
 import { def as exprParseDef } from "../../../../tools/expr-parse/tool.js";
+import { def as hypergeometricPfqDef } from "../../../../tools/hypergeometric-pfq/tool.js";
 import { def as integrate1dDef } from "../../../../tools/integrate-1d/tool.js";
 import { def as integrateOdeIvpDef } from "../../../../tools/integrate-ode-ivp/tool.js";
 import { def as integrateOdeStiffDef } from "../../../../tools/integrate-ode-stiff/tool.js";
@@ -64,6 +65,7 @@ export interface TypedWorkbench extends Workbench {
   casVerify(input: InputOf<typeof casVerifyDef>, flags?: FlagsArgOf<typeof casVerifyDef>): Promise<OutputOf<typeof casVerifyDef>>;
   entropySource(input: InputOf<typeof entropySourceDef>, flags?: FlagsArgOf<typeof entropySourceDef>): Promise<OutputOf<typeof entropySourceDef>>;
   exprParse(input: InputOf<typeof exprParseDef>, flags?: FlagsArgOf<typeof exprParseDef>): Promise<OutputOf<typeof exprParseDef>>;
+  hypergeometricPfq(input: InputOf<typeof hypergeometricPfqDef>, flags?: FlagsArgOf<typeof hypergeometricPfqDef>): Promise<OutputOf<typeof hypergeometricPfqDef>>;
   integrate1d(input: InputOf<typeof integrate1dDef>, flags?: FlagsArgOf<typeof integrate1dDef>): Promise<OutputOf<typeof integrate1dDef>>;
   integrateOdeIvp(input: InputOf<typeof integrateOdeIvpDef>, flags?: FlagsArgOf<typeof integrateOdeIvpDef>): Promise<OutputOf<typeof integrateOdeIvpDef>>;
   integrateOdeStiff(input: InputOf<typeof integrateOdeStiffDef>, flags?: FlagsArgOf<typeof integrateOdeStiffDef>): Promise<OutputOf<typeof integrateOdeStiffDef>>;
@@ -122,6 +124,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     },
     exprParse(input, flags) {
       return workbench.run("expr-parse", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof exprParseDef>>;
+    },
+    hypergeometricPfq(input, flags) {
+      return workbench.run("hypergeometric-pfq", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof hypergeometricPfqDef>>;
     },
     integrate1d(input, flags) {
       return workbench.run("integrate-1d", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof integrate1dDef>>;
@@ -221,6 +226,7 @@ export const defs = {
   casVerify: casVerifyDef,
   entropySource: entropySourceDef,
   exprParse: exprParseDef,
+  hypergeometricPfq: hypergeometricPfqDef,
   integrate1d: integrate1dDef,
   integrateOdeIvp: integrateOdeIvpDef,
   integrateOdeStiff: integrateOdeStiffDef,
