@@ -148,7 +148,7 @@ export type BigFloatQuadResult = {
   readonly converged: boolean;
   /** Number of bisection iterations performed. */
   readonly iterations: number;
-  readonly method: "gauss-kronrod-g7k15-bigfloat";
+  readonly method: "gauss-kronrod-g7k15-bigfloat" | "tanh-sinh-bigfloat";
   /** Human-readable diagnostics. Always present (possibly empty). */
   readonly warnings: readonly string[];
 };

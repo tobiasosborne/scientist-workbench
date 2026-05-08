@@ -65,6 +65,10 @@ export {
   gaussKronrodAdaptiveBC,
 } from "./gauss-kronrod-bc.js";
 export {
+  type TanhSinhBFOptions,
+  tanhSinhAdaptiveBF,
+} from "./tanh-sinh-bf.js";
+export {
   MAX_DECIMAL_PRECISION,
   type G7K15Table,
   getG7K15Table,
