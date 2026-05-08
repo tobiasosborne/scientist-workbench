@@ -1,5 +1,14 @@
 # Worklog 075 — Tanh-sinh (double-exponential) quadrature WIP — driver shipped, smooth-analytic precision floor unresolved
 
+> **2026-05-08 update**: This shard is **superseded** by worklog 077,
+> which resolves the precision floor and ships v0.1 of the driver.
+> The hypothesis enumeration A-E in §"Hypotheses for the next agent"
+> below was a useful but incorrect framing — the actual root cause was
+> a substrate-`div` quirk combined with a test-file integrand contract
+> violation, not anything in the algorithm or recurrence. See worklog
+> 077 §"Frictions surfaced" for the dead-end accounting. This shard
+> is preserved as the historical record of the partial state.
+
 **Date:** 2026-05-08.
 **Beads:** `scientist-workbench-6f8` (claimed at session start; **NOT
 closed** — left open and in-progress for next agent's pickup). New
@@ -32,7 +41,7 @@ agent picking it up should:
    probably starting from a single-level-from-scratch sanity check
    that bypasses the recurrence.
 3. When fixed, un-skip the 4 tests, close 6f8, write a follow-up shard
-   (076-or-later) describing the resolution.
+   (077-or-later) describing the resolution.
 
 ## Context
 

@@ -75,6 +75,7 @@ import {
   type BigFloat,
   add,
   cmp,
+  cos,
   decimalToBinaryPrecision,
   div,
   exp,
@@ -96,11 +97,33 @@ function absDiff(a: BigFloat, b: BigFloat, prec: number): BigFloat {
 function bf(s: string, prec: number): BigFloat { return fromString(s, prec); }
 
 // 110-dps mpmath oracles. Recipe at top of `quadrature-bf.test.ts`.
+//
+// Cross-validation oracles for the worklog-077 hardening test bank.
+// Truth values generated via mpmath @ dps=130, then nstr'd back to 110
+// digits; spot-checked against Wolfram `wolframscript -code 'N[..., 60]'`.
+// See worklog 077 §"Cross-validation truths" for the regeneration recipe.
 const PI_110 =
   "3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066";
 const PI_OVER_4_110 =
   "0.78539816339744830961566084581987572104929234984377645524373614807695410157155224965700870633552926699553702162832974066";
 const ONE_QUARTER = "0.25";
+// ∫_0^1 e^{-x²} dx = (√π / 2) · erf(1).  An entire-function integrand
+// (no singularities anywhere in ℂ); the absolute test of tanh-sinh's
+// behaviour on the easy class.  mpmath dps=130 → 110-digit nstr.
+const EXP_NEG_X2_INT_110 =
+  "0.74682413281242702539946743613185300535449968681260632902765449895860532756177283149784842982290191973061895402";
+// ∫_0^1 1/(1+x⁴) dx = (π + 2 log(1+√2)) / (4√2).  Sister integrand to
+// 1/(1+x²) — quartic poles at the four primitive 8th roots of -1
+// (distance √2/2 from the real axis), strip-width still ≥ √2/2.
+// Cross-check: Wolfram `N[Integrate[1/(1+x^4),{x,0,1}],60]` matches.
+const INT_INV_1_PLUS_X4_110 =
+  "0.86697298733991103757399516388287071365217536734524490433503183891763935141094132905575040346340896870521810263";
+// ∫_0^π 1/(2+cos x) dx = π/√3.  Smooth periodic integrand on a
+// compact interval; tanh-sinh handles it cleanly because the
+// transformed integrand decays doubly-exponentially at both
+// endpoints.  Cross-check: Wolfram matches to 60 dps.
+const INT_INV_2_PLUS_COS_110 =
+  "1.8137993642342178505940782576421557322840662480927405755698849353881231811263538836841249882120601688562224145";
 
 // -----------------------------------------------------------------------------
 // 1. Closed-form anchor identities (Bailey §6 classes 1–4, smooth)
@@ -116,8 +139,15 @@ describe("closed-form anchors (smooth integrands, Bailey §6 class 1–4)", () =
       const work = decimalToBinaryPrecision(prec, 30);
       const a = fromInt(0n);
       const b = fromInt(1n);
+      // Integrand contract (worklog 077 fix): every constant the
+      // integrand uses MUST be constructed at the supplied `p` (the
+      // driver's working precision). `fromInt(1n, p)` not `fromInt(1n)`
+      // — the latter has default precision 53, and any subsequent
+      // `div(fromInt(1n), …, p)` quantises silently to ~16 dps
+      // because the substrate's `div` allocates only `prec + 32` bits
+      // of working space relative to the *numerator's* bit length.
       const f = (t: BigFloat, p: number): BigFloat => {
-        const onePlusT = add(fromInt(1n), t, p);
+        const onePlusT = add(fromInt(1n, p), t, p);
         return mul(t, log(onePlusT, p), p);
       };
       const r = tanhSinhAdaptiveBF(f, a, b, prec);
@@ -138,13 +168,21 @@ describe("closed-form anchors (smooth integrands, Bailey §6 class 1–4)", () =
   // load-bearing reason this driver exists. K15+adaptive saturates at
   // ~30 dps within practical budget; tanh-sinh reaches 50 and 100 dps.
   for (const prec of [30, 50, 100]) {
-    test.skip(`[WIP per bead 6f8 / worklog 075] ∫_0^1 1/(1+x²) dx = π/4 at ${prec} dps  (the K15-stalls case from worklog 072)`, () => {
+    test(`∫_0^1 1/(1+x²) dx = π/4 at ${prec} dps  (the K15-stalls case from worklog 072)`, () => {
       const work = decimalToBinaryPrecision(prec, 30);
       const a = fromInt(0n);
       const b = fromInt(1n);
+      // Integrand contract (worklog 077): `fromInt(1n, p)`, not
+      // `fromInt(1n)`. The latter creates a 53-bit BigFloat; subsequent
+      // `div(default-1n, hi-prec-denom, p)` silently produces a quotient
+      // good only to ~16 dps regardless of `p`, because the substrate's
+      // `div` working-bits formula is `prec + 32` from the *numerator's*
+      // perspective. Worklog 075 attributed the resulting precision floor
+      // to "the recurrence" or "doubly-exponential decay" — the actual
+      // root cause was the integrand silently evaluating at low precision.
       const f = (x: BigFloat, p: number): BigFloat => {
-        const onePlusXsq = add(fromInt(1n), mul(x, x, p), p);
-        return div(fromInt(1n), onePlusXsq, p);
+        const onePlusXsq = add(fromInt(1n, p), mul(x, x, p), p);
+        return div(fromInt(1n, p), onePlusXsq, p);
       };
       const r = tanhSinhAdaptiveBF(f, a, b, prec);
       const expected = bf(PI_OVER_4_110, work);
@@ -199,17 +237,101 @@ describe("cross-validation against gaussKronrodAdaptiveBF (entire functions)", (
 });
 
 // -----------------------------------------------------------------------------
+// 2b. External cross-validation against Wolfram + mpmath at high prec
+// -----------------------------------------------------------------------------
+//
+// Worklog 077 mandates: at 50 dps, validate against Wolfram on three
+// integrand classes beyond the existing two; at 100 dps, validate
+// against mpmath on the same. Truth strings are checked-in constants
+// at the top of this file (110-dps oracles, generated via mpmath
+// dps=130 then nstr-110 + spot-check against Wolfram dps=60).
+//
+// Cross-validation here is real (the algorithms / implementations
+// are entirely independent); tanh-sinh's BigFloat arithmetic and
+// mpmath's GMP arithmetic both target the same mathematical answer
+// from independent code paths. Agreement to ~prec dps is therefore
+// strong evidence of correctness on both sides.
+
+describe("external cross-validation against Wolfram / mpmath truths", () => {
+  // ∫_0^1 e^{-x²} dx — entire-function integrand (no singularities
+  // in ℂ). Tanh-sinh should converge cleanly; tests the algorithm's
+  // behaviour on its sweet-spot class.
+  for (const prec of [50, 100]) {
+    test(`∫_0^1 e^{-x²} dx (entire function) at ${prec} dps`, () => {
+      const work = decimalToBinaryPrecision(prec, 30);
+      const f = (x: BigFloat, p: number) => {
+        const xx = mul(x, x, p);
+        const negXX: BigFloat = { ...xx, mantissa: -xx.mantissa };
+        return exp(negXX, p);
+      };
+      const r = tanhSinhAdaptiveBF(f, fromInt(0n), fromInt(1n), prec);
+      const expected = bf(EXP_NEG_X2_INT_110, work);
+      const tol = mul(fromInt(10n), powInt(fromInt(10n), -(prec - 2), work), work);
+      expect(r.converged).toBe(true);
+      expect(cmp(absDiff(r.value, expected, work), tol) <= 0).toBe(true);
+    });
+  }
+
+  // ∫_0^1 1/(1+x⁴) dx — sister of the worklog-072 case 1/(1+x²).
+  // Quartic denominator → poles at the four primitive 8th roots of -1
+  // = {e^{iπ/4}, e^{i3π/4}, e^{i5π/4}, e^{i7π/4}}. The two with
+  // positive imaginary parts (closest to the real axis [0,1]) sit at
+  // distance sin(π/4) = √2/2 ≈ 0.707 from the real line. Tanh-sinh's
+  // doubly-exponential rate carries through.
+  for (const prec of [50, 100]) {
+    test(`∫_0^1 1/(1+x⁴) dx (sister of 1/(1+x²)) at ${prec} dps`, () => {
+      const work = decimalToBinaryPrecision(prec, 30);
+      const f = (x: BigFloat, p: number) => {
+        const x2 = mul(x, x, p);
+        const x4 = mul(x2, x2, p);
+        const onePlusX4 = add(fromInt(1n, p), x4, p);
+        return div(fromInt(1n, p), onePlusX4, p);
+      };
+      const r = tanhSinhAdaptiveBF(f, fromInt(0n), fromInt(1n), prec);
+      const expected = bf(INT_INV_1_PLUS_X4_110, work);
+      const tol = mul(fromInt(10n), powInt(fromInt(10n), -(prec - 2), work), work);
+      expect(r.converged).toBe(true);
+      expect(cmp(absDiff(r.value, expected, work), tol) <= 0).toBe(true);
+    });
+  }
+
+  // ∫_0^π 1/(2+cos x) dx — smooth periodic on a compact interval.
+  // The integrand has its minimum at x=π (value 1/(2-1) = 1) and
+  // maximum at x=0 (value 1/(2+1) = 1/3); both endpoints are
+  // bounded and analytic, so tanh-sinh converges as on the
+  // entire-function class. Tested at 50 dps only (the 100-dps
+  // variant adds wall-time without contributing to the brief's
+  // "entire-function and bounded-radius integrand" 100-dps coverage,
+  // which `e^{-x²}` and `1/(1+x⁴)` already supply).
+  for (const prec of [50]) {
+    test(`∫_0^π 1/(2+cos x) dx (smooth periodic) at ${prec} dps`, () => {
+      const work = decimalToBinaryPrecision(prec, 30);
+      const upper = pi(work);
+      const f = (x: BigFloat, p: number) => {
+        const twoPlusCos = add(fromInt(2n, p), cos(x, p), p);
+        return div(fromInt(1n, p), twoPlusCos, p);
+      };
+      const r = tanhSinhAdaptiveBF(f, fromInt(0n), upper, prec);
+      const expected = bf(INT_INV_2_PLUS_COS_110, work);
+      const tol = mul(fromInt(10n), powInt(fromInt(10n), -(prec - 2), work), work);
+      expect(r.converged).toBe(true);
+      expect(cmp(absDiff(r.value, expected, work), tol) <= 0).toBe(true);
+    });
+  }
+});
+
+// -----------------------------------------------------------------------------
 // 3. Bit-determinism (ADR-0020 contract)
 // -----------------------------------------------------------------------------
 
 describe("bit-determinism (arbprec contract)", () => {
-  test.skip("[WIP per bead 6f8 / worklog 075] two runs on ∫_0^1 1/(1+x²) at 50 dps produce byte-identical BigFloats", () => {
+  test("two runs on ∫_0^1 1/(1+x²) at 50 dps produce byte-identical BigFloats", () => {
     const prec = 50;
     const a = fromInt(0n);
     const b = fromInt(1n);
     const f = (x: BigFloat, p: number) => {
-      const onePlusXsq = add(fromInt(1n), mul(x, x, p), p);
-      return div(fromInt(1n), onePlusXsq, p);
+      const onePlusXsq = add(fromInt(1n, p), mul(x, x, p), p);
+      return div(fromInt(1n, p), onePlusXsq, p);
     };
     const r1 = tanhSinhAdaptiveBF(f, a, b, prec);
     const r2 = tanhSinhAdaptiveBF(f, a, b, prec);

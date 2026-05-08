@@ -1,11 +1,13 @@
 # ADR-0024 — Tanh-sinh (double-exponential) quadrature, arb-prec library extension
 
-**Status:** Accepted (design); v0.1 implementation **PARTIAL** — driver
-shipped with a known precision-floor issue on smooth-analytic
-bounded-Taylor-radius integrands (the `1/(1+x²)` class — exactly the
-case worklog 072 motivated this driver to address). 4 tests skipped per
-worklog 075. See `scientist-workbench-6f8` (still open) and worklog 075
-for the diagnosis snapshot and the next-agent handoff. — 2026-05-08
+**Status:** Accepted; v0.1 implementation SHIPPED — driver, tests,
+ADR, worklog 077 all in lockstep. The precision-floor issue worklog 075
+attributed to "the recurrence" or "doubly-exponential decay limits"
+turned out to be an integrand-contract violation in the test file
+(default-precision `fromInt(1n)` constants); the algorithm is correct
+as written. 4 originally-skipped tests un-skipped and passing at
+30/50/100 dps. See worklog 077 for the diagnosis snapshot and the
+substrate-bug follow-up. — 2026-05-08
 **Beads:** scientist-workbench-6f8 (this ADR + the
 `packages/quadrature/src/tanh-sinh-bf.ts` driver it specifies); parent
 ADR-0014 (the numerical-tier seed) and ADR-0020 (arb-prec tier).
@@ -128,14 +130,21 @@ when `w_j < ε`, the target tolerance. The doubly-exponential decay
 of `g'(t)` makes this cutoff happen at moderate `|j|` (typically
 20–30 for prec = 50–100 dps; ~50–80 for prec = 200+).
 
-**Convergence test** (v0.1 — simpler than Bailey §5): declare
-convergence when `|S_k − S_{k-1}| ≤ atol + rtol · |S_k|`. The
-quadratic-convergence-on-correct-digits behaviour means this
-typically fires at level 4–6 for smooth integrands at 50 dps.
-Bailey §5's `d = max(d₁²/d₂, 2d₁, d₃, d₄)` heuristic is more
-aggressive (it predicts the *next* level's error from the *quadratic-
-convergence* assumption); v0.1 uses the simpler form, follow-up
-bead lifts the heuristic.
+**Convergence test** (v0.1, post-worklog 077): declare convergence
+when `|S_k − S_{k-1}| ≤ ε_1`, with `ε_1 = 10^{-(prec + 8)}` (an
+8-dps margin below the user target so the truncation tail at
+`ε_1 · max|w_j f(x_j)|` always sits comfortably below the user's
+prec-decimal-digits envelope). This is **Bailey §5's "rigorous"
+test** ("if one is willing to continue computation until the
+quadrature results from two successive levels agree to within the
+full primary precision"), preferred to his `d = max(d₁²/d₂, 2d₁,
+d₃, d₄)` heuristic — the d-formula's `2 d_1` quadratic-extrapolation
+term over-promises on integrands like `t·log(1+t)` whose convergence
+rate slows as the truncation floor approaches (the extrapolation
+assumes asymptotic quadratic descent that is not actually achieved
+yet at the level the formula fires). The d-formula is computed in
+the post-loop `errorEstimate` field for the caller's information.
+Worklog 077 §"Frictions surfaced" documents this dead-end.
 
 ## What this ships in v0.1
 
@@ -174,12 +183,27 @@ platform.
 
 **Termination thresholds:**
 
-* Pair-generation `ε`: `10^{-prec}` (same magnitude as the convergence
-  tolerance). Truncation tail's contribution is bounded by `ε ·
-  (number of dropped terms)` ≤ `ε · O(1)` since the doubly-exponential
-  decay sums geometrically.
-* Per-level `m`-iteration cap: `prec · 50` (defensive — the actual
-  cutoff fires much earlier).
+* Pair-generation `ε_1`: `10^{-(prec + 8)}` — the 8-dps margin below
+  the user target ensures the truncation tail at `ε_1 · max|w_j
+  f(x_j)|` (Bailey §5 d_3) sits below the user's prec-target even
+  for integrands with `max|wf| ~ 10⁵`. Worklog 077 dead-end: with
+  `ε_1 = 10^{-prec}` the truncation tail sits AT the prec target
+  (not below), so the convergence test would either fire late or
+  fire on the truncation floor with the actual error 1-2 dps shy.
+* Per-level `m`-iteration: **no artificial cap** (worklog 077 fix).
+  The natural cutoff `weight < ε_1` fires at moderate `|j|` for
+  smooth integrands by the doubly-exponential decay; an artificial
+  cap silently truncates the level's contribution at high levels
+  and propagates the error through the recurrence
+  (`S_k = S_{k-1}/2 + h_k · oddSum_k`). This was the v0.1 bug.
+* `maxLevels`: default 15 (Bailey Table 1: level 7-9 reaches 10⁻⁴⁰⁰
+  on smooth problems; 15 carries 6+ levels of headroom for harder
+  integrand classes at any prec ≤ 1000).
+* `maxEvals`: default `40 · 2^maxLevels` ≈ 1.3M at default
+  `maxLevels=15`. The natural per-level cutoff fires before this
+  budget bites for any smooth-analytic integrand; the budget is a
+  runaway-protection safety net, not a primary termination
+  mechanism.
 
 ## What we will not decide here
 
