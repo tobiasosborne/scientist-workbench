@@ -82,6 +82,7 @@ write the frictions and the dead ends as well as the wins.
 | 069 | [`packages/bigfloat` + `tools/hypergeometric-pfq` shipped (hv0.1, hv0.3 closed)](069-bigfloat-and-pfq-shipped.md) | 2026-05-08 | scientist-workbench-hv0.1 (closed), -hv0.3 (closed); next: -hv0.5 |
 | 070 | [`packages/meijer-core` Slater path + thin wire tool shipped (hv0.5 closed; bigfloat::exp regression filed)](070-meijer-core-slater.md) | 2026-05-08 | scientist-workbench-hv0.5 (closed), -4ne (P1 bug filed) |
 | 071 | [`bigfloat::exp` "P1 regression" was a false alarm; principled hardening applied](071-bigfloat-exp-false-alarm-and-hardening.md) | 2026-05-08 | scientist-workbench-4ne (closed as false alarm) |
+| 072 | [`packages/quadrature` arb-prec generalisation shipped (`gaussKronrodAdaptiveBF`)](072-quadrature-arbprec.md) | 2026-05-08 | scientist-workbench-hv0.7 (closed); ADR-0021 |
 
 ## How to add a new shard
 
