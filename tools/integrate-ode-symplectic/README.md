@@ -269,7 +269,14 @@ wire-encoding wrapper.
 
 ## Validation
 
-`bench/integrate-ode-symplectic/` — 17-case golden battery, 8 invariant
+Golden battery migrated to corpus per ADR-0028 (bead `scientist-workbench-yj80`):
+`scientist-workbench-corpus/benchmarks/integrate-ode-symplectic/` — 17 cases,
+95 invariants, graded via `bash scripts/bench-grade.sh integrate-ode-symplectic`.
+
+Local bench removed (freed ~1.7 MB).  The corpus verifier (`verify.ts`) ports all
+7 Python invariants from `verify.py` with byte-identical tolerances.
+
+`bench/integrate-ode-symplectic/` (former) — 17-case golden battery, 8 invariant
 checks per case (~136 assertions):
 
 1. `no_tool_error` — clean exit.
