@@ -241,21 +241,30 @@ guarantee (`numerical: true`, ADR-0015).
 
 ## Validation
 
-`bench/linalg-svd/` — 55-case golden battery, 440 invariant assertions
-(8 checks per case):
+Bench corpus lives in `../scientist-workbench-corpus/benchmarks/linalg-svd/`
+(ADR-0028, bead `scientist-workbench-dx0l`).  56-case golden battery,
+448 invariant assertions (8 checks per case).  Run from the workbench root:
 
-1. `no_tool_error` — clean exit.
-2. `shape` — output record has all expected fields.
-3. `U_orthonormal` — `‖UᵀU − I_k‖_F ≤ tol_orth` (Higham 2002 §20.3).
-4. `Vt_orthonormal` — `‖Vt·Vtᵀ − I_k‖_F ≤ tol_orth`.
-5. `S_non_negative_descending` — all `S[i] ≥ 0` and
-   `S[i] ≥ S[i+1]` within tolerance `100·ε·S[0]`.
-6. `reconstruction` — `‖U·diag(S)·Vᵀ − A‖_F / max(‖A‖_F, 1) ≤ tol_recon`
+```sh
+bash scripts/bench-grade.sh linalg-svd
+# expect: cases: 56/56   invariants: 448/448
+```
+
+The 8 checks per case are:
+
+1. `shape` — U, S, Vt dimensions match (m, n, mode); all required
+   fields present with correct types.
+2. `finite_entries` — no NaN, no ±Inf in factors or scalar diagnostics.
+3. `S_nonneg_descending` — all `S[i] ≥ −tol_struct`, `S[i] + tol_struct ≥ S[i+1]`
+   where `tol_struct = 100·ε·max(S[0], 1)`.
+4. `U_orthonormal` — `‖UᵀU − I_q‖_F ≤ 100·ε·m·√q` (Higham 2002 §20.3).
+5. `Vt_orthonormal` — `‖Vt·Vtᵀ − I_q‖_F ≤ 100·ε·m·√q`.
+6. `factorisation_residual` — `‖U·diag(S)·Vᵀ − A‖_F / ‖A‖_F ≤ 100·ε·max(m,n)·√min(m,n)`
    (Higham 2002 §20.3 with 100× safety).
-7. `self_reported_honesty` — all three reported errors agree with
-   recomputation to `1e-6` relative.
-8. `warnings_present_for_large_n` — `max(m, n) > 500` cases have
-   non-empty `warnings` field (ADR-0016).
+7. `self_reported_residual` — reported `reconstruction_error` agrees with
+   verifier recomputation to `1e-6` relative.
+8. `self_reported_orthogonality` — both `orthogonality_error_U` and
+   `orthogonality_error_Vt` agree with verifier recomputation to `1e-6` relative.
 
 Tier breakdown mirrors `linalg-qr`; additionally, Jacobi vs
 Golub-Reinsch dispatch is verified: the `method` field must be
