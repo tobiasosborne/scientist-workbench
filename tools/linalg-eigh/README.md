@@ -239,7 +239,9 @@ determinism guarantee (`numerical: true`, ADR-0015).
 
 ## Validation
 
-`bench/linalg-eigh/` — 46-case golden battery, 316 invariant assertions
+Bench corpus lives in [`scientist-workbench-corpus/benchmarks/linalg-eigh/`](../../../scientist-workbench-corpus/benchmarks/linalg-eigh/) (ADR-0028 migration).
+
+46-case golden battery, 316 invariant assertions
 (~7 checks per case):
 
 1. `no_tool_error` — clean exit.
