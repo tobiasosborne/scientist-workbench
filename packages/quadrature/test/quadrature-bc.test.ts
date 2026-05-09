@@ -155,6 +155,9 @@ describe("BC driver byte-equals BF driver on real-only integrands", () => {
     });
 
     test(`sin(x) on [0, π] at ${prec} dps`, () => {
+      // Timeout bumped from default 5s to 30s: at 80 dps under workspace
+      // test contention this 4-5s test occasionally crosses the boundary.
+      // Passes in isolation in <1s; the contention path is the flake.
       const work = decimalToBinaryPrecision(prec, 30);
       const a = fromInt(0n);
       const b = pi(work);
@@ -169,7 +172,7 @@ describe("BC driver byte-equals BF driver on real-only integrands", () => {
       expect(rBC.errorEstimate.exponent).toBe(rBF.errorEstimate.exponent);
       expect(rBC.iterations).toBe(rBF.iterations);
       expect(rBC.converged).toBe(rBF.converged);
-    });
+    }, 30_000);
 
     test(`constant 1 on [0, 1] at ${prec} dps`, () => {
       const fBF = (_x: BigFloat, _p: number) => fromInt(1n);
