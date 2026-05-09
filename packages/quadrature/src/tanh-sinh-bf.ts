@@ -299,44 +299,52 @@ export type TanhSinhBFOptions = {
  * (the same type as `gaussKronrodAdaptiveBF`'s return; discriminated
  * by `method`).
  *
- * Integrand contract (load-bearing — worklog 077 documents the bug
- * caused by violating it):
+ * Integrand convention (recommended; no longer load-bearing post-djp):
  *
- * The integrand `f(x, prec)` MUST construct every BigFloat constant
- * at the supplied `prec`, not at the substrate default 53 bits. In
- * particular:
+ * The integrand `f(x, prec)` should idiomatically construct BigFloat
+ * constants at the supplied working precision. The "WRONG" form below
+ * was load-bearing through worklog 077; the substrate fix in worklog
+ * 085 (bead `scientist-workbench-djp`) lifted the silent precision
+ * floor from `div`, so both forms now produce byte-identical output.
  *
  * ```
- * // CORRECT
+ * // IDIOMATIC — every constant matches the working precision; this
+ * // is what an external reviewer expects to see.
  * const f = (x: BigFloat, p: number) => {
  *   const onePlusXsq = add(fromInt(1n, p), mul(x, x, p), p);
  *   return div(fromInt(1n, p), onePlusXsq, p);
  * };
- * // WRONG — silent precision floor at ~16 dps regardless of `p`
- * const fBad = (x: BigFloat, p: number) => {
+ * // ALSO CORRECT (post-djp) — `fromInt(1n)` carries the substrate's
+ * // 53-bit default precision attribute, but `div` now compensates
+ * // for the bit-length differential between numerator and divisor.
+ * const fAlsoOk = (x: BigFloat, p: number) => {
  *   const onePlusXsq = add(fromInt(1n), mul(x, x, p), p);
  *   return div(fromInt(1n), onePlusXsq, p);
  * };
  * ```
  *
- * Why: the substrate's `div(a, b, prec)` uses `workingBits = prec + 32`
- * scaled to the *numerator's* mantissa length (`packages/bigfloat/src/
- * arithmetic.ts:92`). When the numerator is `fromInt(1n)` with the
- * default 53-bit precision attribute and the denominator carries
- * 200+ bits, the quotient ends up with only ~85 effective bits — the
- * trailing 128 bits of the result mantissa are zero-padded by
- * `normalise`. Subsequent operations propagate the silent precision
- * loss; the trapezoidal sum cannot be more accurate than its
- * least-precise summand. This is a substrate quirk that bites
- * tanh-sinh harder than it bites G7K15 (which doesn't divide inside
- * the integrand path) — see worklog 077 for the full diagnosis. A
- * future fix in `packages/bigfloat/src/arithmetic.ts` is the proper
- * resolution; the integrand-contract is the workaround in scope here.
+ * Historical note (RESOLVED — see worklog 084):
+ *
+ * Before the `scientist-workbench-djp` fix, the substrate's
+ * `div(a, b, prec)` used `workingBits = prec + 32` scaled to the
+ * *numerator's* mantissa length. When the numerator was `fromInt(1n)`
+ * with the default 53-bit precision attribute and the denominator
+ * carried 200+ bits, the quotient ended up with only ~85 effective
+ * bits — the trailing bits of the result mantissa were zero-padded
+ * by `normalise`. Subsequent operations propagated the silent precision
+ * loss; the trapezoidal sum could not be more accurate than its
+ * least-precise summand. This bit tanh-sinh harder than G7K15 (which
+ * doesn't divide inside the integrand path) — worklog 077 §"The actual
+ * diagnosis path" carries the full forensic record. The substrate fix
+ * in `packages/bigfloat/src/arithmetic.ts` (`div` now adds a
+ * `denBits − numBits` compensation term to its `workingBits`) closed
+ * the floor, and this docstring's "WRONG" warning was downgraded from
+ * a load-bearing contract to a stylistic recommendation.
  *
  * @param f    Integrand `(x, prec) → BigFloat`. The driver passes the
  *             working bit precision so the integrand can match it.
- *             Must use `fromInt(N, prec)` (not `fromInt(N)`) for any
- *             constants used inside `div`. See contract above.
+ *             Idiomatic style is `fromInt(N, prec)`; the substrate
+ *             handles `fromInt(N)` correctly post-djp.
  * @param a    Left bound. `a < b` required; throws otherwise.
  * @param b    Right bound.
  * @param prec User-requested decimal precision. Range

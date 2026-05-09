@@ -22,6 +22,8 @@ import {
   toString,
   eq,
   cmp,
+  bitLength,
+  pi,
   type BigFloat,
 } from "../src/index.js";
 
@@ -147,6 +149,131 @@ describe("div", () => {
     const b = fromString("4", 53);
     const r = div(a, b, 53);
     expect(toFloat64(r).value).toBe(-3);
+  });
+
+  // -------------------------------------------------------------------
+  // Precision-floor regression tests — bead `scientist-workbench-djp`.
+  //
+  // The bug, as diagnosed in worklog 077: `div(a, b, prec)` used to size
+  // its working bits as `prec + 32`, ignoring the bit-length of `a` and
+  // `b`. When `bitLength(a.mantissa) < bitLength(b.mantissa)` the integer
+  // quotient `(a.mantissa << workingBits) / b.mantissa` came out with
+  // only `bitLength(a) + workingBits − bitLength(b)` bits of result —
+  // and `normalise` zero-padded that to the requested `prec`, producing
+  // an output that *looks* fully precise (the `precision` field is
+  // `prec`; the mantissa has exactly `prec` bits set high) but whose
+  // trailing bits are silent zeros. Worklog 085 lifts this floor by
+  // adding a `denBits − numBits` compensation term to `workingBits`.
+  //
+  // The tests below capture the precision floor as a functional invariant
+  // ("at prec=200 the quotient `1/3` agrees with the symbolic value to
+  // ≥60 decimal digits"), not as a structural assertion on `workingBits`
+  // — the algebraic lift is what callers care about. The structural
+  // sanity check is shape-of-output (`precision` matches the requested
+  // `prec`); the algebraic check is comparison against an external
+  // oracle string at high precision.
+  // -------------------------------------------------------------------
+
+  test("djp regression: short-mantissa numerator does not floor the quotient", () => {
+    // Worked example from worklog 077 §"The actual diagnosis path".
+    // Pre-djp: `div(fromInt(1n), fromInt(3n, 213), 213)` returned a
+    // value that decimal-printed as
+    //   "0.33333333333333333333333332902510097…"
+    // — a silent floor at ~26 dps. Post-djp the value matches `1/3`
+    // to (well past) 60 dps.
+    const num = fromInt(1n);            // default 53-bit precision attribute
+    const den = fromInt(3n, 213);
+    const q = div(num, den, 213);
+    // 1/3 to 60 sig figs (60 threes after the decimal point).
+    const oracle60 = "0." + "3".repeat(60);
+    expect(toString(q, 60)).toBe(oracle60);
+  });
+
+  test("djp regression: 1/7 at prec=200 matches mpmath to 60 dps", () => {
+    // mpmath at dps=80 gives:
+    //   1/7 = 0.14285714285714285714285714285714285714285714285714285714285714285714…
+    const num = fromInt(1n);
+    const den = fromInt(7n, 664);   // ~200 dps
+    const q = div(num, den, 664);
+    // 60-dps prefix of mpmath's 1/7:
+    const oracle60 = "0.142857142857142857142857142857142857142857142857142857142857";
+    expect(toString(q, 60)).toBe(oracle60);
+  });
+
+  test("djp regression: hi-prec denominator, default-prec numerator (symmetric to above)", () => {
+    // The bug's mirror: long-mantissa numerator, short-mantissa
+    // denominator. This case never floored (the quotient was naturally
+    // long enough), and must remain unchanged after the fix.
+    const num = fromInt(1n, 664);
+    const den = fromInt(7n);            // default 53-bit precision attribute
+    const q = div(num, den, 664);
+    const oracle60 = "0.142857142857142857142857142857142857142857142857142857142857";
+    expect(toString(q, 60)).toBe(oracle60);
+  });
+
+  test("djp regression: byte-identity between low-prec and hi-prec dividends post-fix", () => {
+    // The contract djp lifts: `div(fromInt(1n), den, p)` and
+    // `div(fromInt(1n, p), den, p)` must produce byte-identical
+    // canonical output. Pre-djp they diverged in the low bits of the
+    // mantissa; post-djp they are bit-equal.
+    const den = fromInt(13n, 400);
+    const qLow = div(fromInt(1n), den, 400);
+    const qHi = div(fromInt(1n, 400), den, 400);
+    expect(qLow.mantissa).toBe(qHi.mantissa);
+    expect(qLow.exponent).toBe(qHi.exponent);
+    expect(qLow.precision).toBe(qHi.precision);
+  });
+
+  test("djp regression: 1/π at 60 dps via div(fromInt(1n), pi(prec), prec)", () => {
+    // Cross-validation against an independent oracle. mpmath:
+    //   mp.dps = 80
+    //   mp.mpf(1) / mp.pi
+    // → 0.31830988618379067153776752674502872406891929148091289749533468811779359526845307
+    // The substrate's `pi(prec)` produces a 200-bit (~60 dps) BigFloat;
+    // dividing `fromInt(1n)` by it at prec=200 should agree with mpmath
+    // to ≥ 60 dps after djp.
+    const p = 664; // ~200 dps; gives plenty of headroom for a 60-dps assertion
+    const piVal = pi(p);
+    const r = div(fromInt(1n), piVal, p);
+    // 60-sig-fig display rounds the final visible digit from 4 → 5
+    // because the next digit is 6. mpmath at 80 dps:
+    //   …912897495334688117793595…
+    // so the 60th sig fig as displayed by `toString(r, 60)` (round-
+    // half-to-even on the 61st sig fig) is the 4-rounded-up-to-5.
+    const oracle60 = "0.318309886183790671537767526745028724068919291480912897495335";
+    expect(toString(r, 60)).toBe(oracle60);
+  });
+
+  test("djp regression: shape invariant — quotient.precision matches prec", () => {
+    // Pre-fix the result still satisfied this — the BigFloat invariant
+    // mandates it — but the *honest content* of the mantissa was less
+    // than `prec` bits. The post-fix invariant is the same; this test
+    // is a guard against a future "fix" that accidentally weakens the
+    // shape contract while addressing the floor.
+    for (const prec of [53, 100, 200, 500, 1000]) {
+      const q = div(fromInt(1n), fromInt(7n, prec), prec);
+      expect(q.precision).toBe(prec);
+      // BigFloat invariant: bitLength(mantissa) === precision for
+      // non-zero values.
+      expect(bitLength(q.mantissa)).toBe(prec);
+    }
+  });
+
+  test("djp determinism: same inputs produce byte-identical output across 1000 calls", () => {
+    // ADR-0020 contract: `arbprec` is bit-identical cross-platform
+    // forever. Same input bytes → same output bytes. The fix uses
+    // `bitLength` on `bigint`, which is bit-deterministic by JS spec;
+    // this test guards against a regression that introduces any
+    // platform-conditional or call-counter-dependent path.
+    const num = fromInt(1n);
+    const den = fromInt(7n, 400);
+    const ref = div(num, den, 400);
+    for (let i = 0; i < 1000; i++) {
+      const q = div(num, den, 400);
+      expect(q.mantissa).toBe(ref.mantissa);
+      expect(q.exponent).toBe(ref.exponent);
+      expect(q.precision).toBe(ref.precision);
+    }
   });
 });
 

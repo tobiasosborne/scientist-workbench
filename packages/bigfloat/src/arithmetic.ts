@@ -72,11 +72,51 @@ export function mul(a: BigFloat, b: BigFloat, prec: number): BigFloat {
 /**
  * Quotient at the requested precision. Throws on division by zero.
  *
- * Algorithm: shift the dividend up by `prec + safety` bits, integer-divide
- * by the divisor mantissa, OR a sticky bit from the remainder, normalise.
- * The sticky bit is what ensures correct round-half-to-even on lossy
- * divisions: it makes the discarded part strictly greater than half if and
- * only if the *true* discarded part is greater than half.
+ * Algorithm: shift the dividend up by enough working bits so that the
+ * integer quotient `(a.man << workingBits) / b.man` carries at least
+ * `prec + safety` bits, integer-divide, OR a sticky bit from the remainder,
+ * normalise. The sticky bit is what ensures correct round-half-to-even on
+ * lossy divisions: it makes the discarded part strictly greater than half
+ * if and only if the *true* discarded part is greater than half.
+ *
+ * Sizing the shift — the worklog-077 / `djp` fix
+ * ----------------------------------------------
+ *
+ * The integer quotient `q = (aAbs << w) / bAbs` has bit length roughly
+ * `bitLength(aAbs) + w - bitLength(bAbs)`. To deliver a quotient mantissa
+ * with at least `prec + safety` honest bits, the shift `w` must satisfy
+ *
+ *     w ≥ prec + safety + bitLength(bAbs) − bitLength(aAbs).
+ *
+ * The original implementation used `w = prec + 32` unconditionally — which
+ * is correct iff `bitLength(aAbs) ≥ bitLength(bAbs)`. When the dividend's
+ * mantissa is shorter than the divisor's (the canonical case: `fromInt(1n)`
+ * with the substrate's 53-bit default precision attribute, divided by a
+ * 200-bit divisor at `prec = 200`), the integer quotient comes out short,
+ * and `normalise` zero-pads it on the right to satisfy the `bitLength ==
+ * precision` invariant. The result *looks* fully precise — the
+ * `precision` field is `prec`, the mantissa has exactly `prec` bits — but
+ * its trailing bits are zeros, not honest digits of the quotient. Worklog
+ * 077 diagnosed this as the "silent precision floor" that bit tanh-sinh
+ * harder than Gauss-Kronrod (tanh-sinh divides inside the integrand
+ * evaluation; G7K15 does not).
+ *
+ * The fix is to make `w` track the bit-length differential when the
+ * divisor is the longer mantissa, while never *reducing* the shift below
+ * the original `prec + 32` floor (so the existing 229-test suite remains
+ * byte-identical for every call where the dividend was already ≥ as long
+ * as the divisor — which covers every existing call site that respects
+ * the integrand contract documented in `tanh-sinh-bf.ts`). Concretely:
+ *
+ *     w = prec + safety + max(0, bitLength(bAbs) − bitLength(aAbs)).
+ *
+ * Equivalently: `w = max(prec + safety, prec + safety + denBits − numBits)`.
+ *
+ * Determinism contract (ADR-0020) is preserved: `bitLength` on a `bigint`
+ * is bit-deterministic across runtimes by language specification, so the
+ * fix introduces no platform-conditional behaviour. Same input bytes →
+ * same `w` → same `q`/`r` → same canonical output bytes, on any runtime
+ * and any platform, forever.
  */
 export function div(a: BigFloat, b: BigFloat, prec: number): BigFloat {
   if (b.mantissa === 0n) {
@@ -85,18 +125,23 @@ export function div(a: BigFloat, b: BigFloat, prec: number): BigFloat {
   if (a.mantissa === 0n) {
     return { mantissa: 0n, exponent: 0, precision: prec };
   }
-  // Working bits: enough to cover the target precision plus a margin for
-  // both the quotient-bit length variability and round-to-even ambiguity.
-  // 32 is comfortably above what's strictly needed (a few bits would do)
-  // but cheap.
-  const workingBits = prec + 32;
-  // We want q ≈ (a.man * 2^workingBits) / b.man, with sticky-bit handling.
-  // Sign of result = sign of (a.man * b.man).
+  // Sign of result = sign of (a.man * b.man); split sign from magnitude.
   const aSign = a.mantissa < 0n ? -1n : 1n;
   const bSign = b.mantissa < 0n ? -1n : 1n;
   const signResult = aSign * bSign;
   const aAbs = aSign === -1n ? -a.mantissa : a.mantissa;
   const bAbs = bSign === -1n ? -b.mantissa : b.mantissa;
+  // Working bits: enough to cover the target precision plus a 32-bit
+  // safety margin for round-to-even ambiguity, *plus* a compensating term
+  // when the divisor's mantissa is the longer of the two. See the
+  // function's prose for the derivation. The compensating term is zero
+  // for the `numBits ≥ denBits` case, preserving every previous call's
+  // working-bit count and therefore its byte-identical output.
+  const numBits = bitLength(aAbs);
+  const denBits = bitLength(bAbs);
+  const lengthCompensation = denBits > numBits ? denBits - numBits : 0;
+  const workingBits = prec + 32 + lengthCompensation;
+  // We want q ≈ (a.man * 2^workingBits) / b.man, with sticky-bit handling.
   const num = aAbs << BigInt(workingBits);
   const q = num / bAbs;
   const r = num - q * bAbs;

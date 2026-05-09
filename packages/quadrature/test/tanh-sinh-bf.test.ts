@@ -191,6 +191,44 @@ describe("closed-form anchors (smooth integrands, Bailey §6 class 1–4)", () =
       expect(r.converged).toBe(true);
     });
   }
+
+  // ---------------------------------------------------------------
+  // djp regression — the integrand contract is no longer load-bearing.
+  //
+  // Pre-djp (worklog 077 → 084): every integrand had to construct
+  // BigFloat constants at the working precision (`fromInt(N, p)`),
+  // because the substrate's `div(a, b, prec)` zero-padded the quotient
+  // when `bitLength(a.mantissa) < bitLength(b.mantissa)`. The
+  // integrand-contract docstring on `tanhSinhAdaptiveBF` documented
+  // the workaround.
+  //
+  // Post-djp (worklog 084, fix in `packages/bigfloat/src/arithmetic.ts`):
+  // the substrate compensates for the bit-length differential, and the
+  // integrand can use `fromInt(1n)` (default 53-bit precision attribute)
+  // in the numerator without flooring the quotient. This test is a
+  // regression guard: if djp is ever reverted or weakened, this test
+  // catches the silent precision floor on the canonical
+  // `1/(1+x²)` workload at 100 dps.
+  // ---------------------------------------------------------------
+  test("∫_0^1 1/(1+x²) dx = π/4 at 100 dps with default-precision integrand constants (djp regression)", () => {
+    const prec = 100;
+    const work = decimalToBinaryPrecision(prec, 30);
+    const a = fromInt(0n);
+    const b = fromInt(1n);
+    // The "wrong" form per worklog 077's integrand-contract docstring:
+    // `fromInt(1n)` (53-bit default), not `fromInt(1n, p)`. Pre-djp
+    // this looped at maxLevels with `converged: false` (mutation M4 in
+    // worklog 077). Post-djp it converges normally.
+    const f = (x: BigFloat, p: number): BigFloat => {
+      const onePlusXsq = add(fromInt(1n), mul(x, x, p), p);
+      return div(fromInt(1n), onePlusXsq, p);
+    };
+    const r = tanhSinhAdaptiveBF(f, a, b, prec);
+    const expected = bf(PI_OVER_4_110, work);
+    const tol = mul(fromInt(10n), powInt(fromInt(10n), -(prec - 2), work), work);
+    expect(cmp(absDiff(r.value, expected, work), tol) <= 0).toBe(true);
+    expect(r.converged).toBe(true);
+  });
 });
 
 // -----------------------------------------------------------------------------
