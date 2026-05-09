@@ -96,6 +96,52 @@ export function hasIntegerSpacedPair(
 }
 
 /**
+ * Size of the largest equivalence class under "differs by an integer"
+ * within `params`.  Used by the Slater orchestrator to detect 3+ pole
+ * integer-spaced coalescence (bead `scientist-workbench-fwsz`), where
+ * the perturbation path's cancellation grows super-quadratically with
+ * cluster size and the v0.1 odd-coefficient perturbation alone cannot
+ * absorb it within a finite working-bits budget.  The closed-form
+ * `digamma`/`polygamma` higher-order residue (Slater 1966 §5) is the
+ * mathematical fix; until that ships, the orchestrator emits a
+ * structured `coalescence-needs-higher-order-residue` refusal as soon
+ * as a cluster of size ≥ 3 is detected.
+ *
+ * The "differs by an integer" relation is an equivalence relation
+ * (reflexive, symmetric, transitive — provided the integer-difference
+ * test is exact, which it is to within the `tolBits` threshold), so
+ * union-find isn't needed; a single linear pass per parameter suffices
+ * for the small parameter counts we ever face (typically `≤ 6`).
+ */
+export function largestIntegerSpacedClusterSize(
+  params: readonly BigComplex[],
+  tolBits: number,
+): number {
+  if (params.length < 2) return params.length;
+  // Group parameters into equivalence classes.  Each class is identified
+  // by its *first* member (acting as a canonical representative); a new
+  // parameter joins the existing class iff it differs by an integer
+  // from any prior member.  Linear scan suffices.
+  const classes: BigComplex[][] = [];
+  for (const p of params) {
+    let placed = false;
+    for (const cls of classes) {
+      if (differsByInteger(p, cls[0]!, tolBits)) {
+        cls.push(p);
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) classes.push([p]);
+  }
+  let max = 0;
+  for (const cls of classes) {
+    if (cls.length > max) max = cls.length;
+  }
+  return max;
+}
+
+/**
  * Test `(a − b) ∈ ℤ` to within `2^{-tolBits}` precision in both real
  * and imaginary parts.
  */
@@ -152,15 +198,29 @@ function magBitsBelow(x: BigFloat, magBitsThreshold: number): boolean {
  * applied to all four sub-tuples breaks both at once.
  *
  * Series 2 mirrors with `an` and `an ∪ ap`.
+ *
+ * The returned `clusterSize` is the size of the largest integer-spacing
+ * equivalence class on the residue-line parameters (`bm` for series 1,
+ * `an` for series 2).  The orchestrator uses `clusterSize ≥ 3` as the
+ * trigger for the `coalescence-needs-higher-order-residue` structured
+ * refusal — bead `scientist-workbench-fwsz`.
  */
 export function detectCoalescence(
   params: MeijerGParameters,
   series: 1 | 2,
   tolBits: number,
-): { coalescent: boolean; reason: string } {
+): { coalescent: boolean; reason: string; clusterSize: number } {
   if (series === 1) {
+    const clusterSize = largestIntegerSpacedClusterSize(params.bm, tolBits);
     if (hasIntegerSpacedPair(params.bm, tolBits)) {
-      return { coalescent: true, reason: "two `bm` parameters differ by an integer" };
+      return {
+        coalescent: true,
+        reason:
+          clusterSize >= 3
+            ? `≥${clusterSize} \`bm\` parameters lie in the same integer-spacing equivalence class`
+            : "two `bm` parameters differ by an integer",
+        clusterSize,
+      };
     }
     // Inner pFq's bottom list has `1 + b_h - b_j` for j ≠ h over both
     // bm and bq. Flag if any bm-element is integer-spaced from a bq.
@@ -170,6 +230,7 @@ export function detectCoalescence(
           return {
             coalescent: true,
             reason: "a `bm` parameter is integer-spaced from a `bq` parameter",
+            clusterSize: 1,
           };
         }
       }
@@ -185,15 +246,24 @@ export function detectCoalescence(
             reason:
               "an `a` parameter is integer-spaced from a `bm` parameter " +
               "(inner-pFq parameter-pole risk)",
+            clusterSize: 1,
           };
         }
       }
     }
-    return { coalescent: false, reason: "" };
+    return { coalescent: false, reason: "", clusterSize: 1 };
   }
   // Series 2 mirror.
+  const clusterSize = largestIntegerSpacedClusterSize(params.an, tolBits);
   if (hasIntegerSpacedPair(params.an, tolBits)) {
-    return { coalescent: true, reason: "two `an` parameters differ by an integer" };
+    return {
+      coalescent: true,
+      reason:
+        clusterSize >= 3
+          ? `≥${clusterSize} \`an\` parameters lie in the same integer-spacing equivalence class`
+          : "two `an` parameters differ by an integer",
+      clusterSize,
+    };
   }
   for (const ah of params.an) {
     for (const aj of params.ap) {
@@ -201,6 +271,7 @@ export function detectCoalescence(
         return {
           coalescent: true,
           reason: "an `an` parameter is integer-spaced from an `ap` parameter",
+          clusterSize: 1,
         };
       }
     }
@@ -213,11 +284,12 @@ export function detectCoalescence(
           reason:
             "a `b` parameter is integer-spaced from an `an` parameter " +
             "(inner-pFq parameter-pole risk)",
+          clusterSize: 1,
         };
       }
     }
   }
-  return { coalescent: false, reason: "" };
+  return { coalescent: false, reason: "", clusterSize: 1 };
 }
 
 // -----------------------------------------------------------------------------

@@ -394,6 +394,41 @@ describe("bit-determinism", () => {
   });
 });
 
+// -----------------------------------------------------------------------------
+// 8. ≥3-pole integer-spaced coalescence — bead `scientist-workbench-fwsz`
+// -----------------------------------------------------------------------------
+//
+// The dispatcher folds Slater's `coalescence-needs-higher-order-residue`
+// refusal directly into an integrated `out-of-region` envelope rather
+// than chasing a hang on contour or asymptotic, both of which inherit
+// the same Γ-pole-cluster cost-unbound issue.
+
+describe("dispatcher integration: 3-pole coalescence (bead fwsz)", () => {
+  test("bm = [0, 1, 2] ⇒ integrated out-of-region refusal in <5s", () => {
+    const p = pair([], [], [0, 1, 2], []);
+    const z = numStr("0.5");
+    const start = Date.now();
+    const result = meijergDispatch(p.sym, p.num, sym("z"), z, 50, {
+      requestMode: "numerical-required",
+    });
+    const elapsed = Date.now() - start;
+    expect(elapsed).toBeLessThan(5000);
+    expect(result.kind).toBe("refused");
+    if (result.kind !== "refused") return;
+    expect(result.class).toBe("out-of-region");
+    // The Slater layer's refusal status surfaces verbatim in the
+    // ruled-out-methods list — that's the load-bearing diagnostic the
+    // caller acts on.
+    const slaterRefusal = result.ruledOutMethods.find((m) =>
+      m.method === "slater-series-1",
+    );
+    expect(slaterRefusal).toBeDefined();
+    expect(slaterRefusal?.status).toBe(
+      "coalescence-needs-higher-order-residue",
+    );
+  });
+});
+
 // `list` is imported for forward use in v0.2 (when more
 // list-shaped diagnostics are introduced).
 void list;

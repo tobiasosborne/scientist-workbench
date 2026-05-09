@@ -2368,6 +2368,139 @@
       "expected_method": "numerical"
     },
     {
+      "id": "tE-G3003-coalesce-012",
+      "tier": "E",
+      "category": "coalescence",
+      "input": {
+        "an": [],
+        "ap": [],
+        "bm": [
+          {
+            "re": "0",
+            "im": "0"
+          },
+          {
+            "re": "1",
+            "im": "0"
+          },
+          {
+            "re": "2",
+            "im": "0"
+          }
+        ],
+        "bq": [],
+        "z": {
+          "re": "1/2",
+          "im": "0"
+        },
+        "precision": 50,
+        "request_mode": "numerical-required"
+      },
+      "rule": "G^{3,0}_{0,3}(_; 0, 1, 2 | 1/2) \u2014 3-pole integer-spaced coalescence; the v0.1 odd-coefficient perturbation cannot absorb the cluster's super-quadratic cancellation, and the closed-form Slater 1966 \u00a75 higher-order residue (digamma/polygamma) is required.  Expected: out-of-region structured refusal in <5s.",
+      "request_mode": "numerical-required",
+      "expected_method": "tagged"
+    },
+    {
+      "id": "tE-an-coalesce-1",
+      "tier": "E",
+      "category": "coalescence",
+      "input": {
+        "an": [
+          {
+            "re": "1",
+            "im": "0"
+          },
+          {
+            "re": "2",
+            "im": "0"
+          },
+          {
+            "re": "3",
+            "im": "0"
+          }
+        ],
+        "ap": [],
+        "bm": [],
+        "bq": [],
+        "z": {
+          "re": "3",
+          "im": "0"
+        },
+        "precision": 50,
+        "request_mode": "numerical-required"
+      },
+      "rule": "G^{0,3}_{3,0}(1, 2, 3; _ | 3) \u2014 3-pole integer-spaced an-coalescence; series-2 mirror of the 3-pole bm case.  Expected: out-of-region structured refusal in <5s.",
+      "request_mode": "numerical-required",
+      "expected_method": "tagged"
+    },
+    {
+      "id": "tE-mixed-1",
+      "tier": "E",
+      "category": "coalescence",
+      "input": {
+        "an": [
+          {
+            "re": "0",
+            "im": "0"
+          },
+          {
+            "re": "1",
+            "im": "0"
+          }
+        ],
+        "ap": [],
+        "bm": [
+          {
+            "re": "1",
+            "im": "0"
+          },
+          {
+            "re": "2",
+            "im": "0"
+          }
+        ],
+        "bq": [],
+        "z": {
+          "re": "1/2",
+          "im": "0"
+        },
+        "precision": 50,
+        "request_mode": "numerical-required"
+      },
+      "rule": "G^{2,2}_{2,2}({0,1};_;{1,2};_ | 1/2) \u2014 simultaneous an and bm 2-pole coalescence; the empirical estimator catches the L'H\u00f4pital + cancellation noise; reported precision honest <50 dps.",
+      "request_mode": "numerical-required",
+      "expected_method": "numerical"
+    },
+    {
+      "id": "tE-near-coalesce-1",
+      "tier": "E",
+      "category": "coalescence",
+      "input": {
+        "an": [],
+        "ap": [],
+        "bm": [
+          {
+            "re": "0",
+            "im": "0"
+          },
+          {
+            "re": "1001/1000",
+            "im": "0"
+          }
+        ],
+        "bq": [],
+        "z": {
+          "re": "1/2",
+          "im": "0"
+        },
+        "precision": 50,
+        "request_mode": "numerical-required"
+      },
+      "rule": "G^{2,0}_{0,2}(_; 0, 1001/1000 | 1/2) \u2014 sharp near-coalescence (offset 1/1000 from integer).  No perturbation needed; full 50 dps achievable.",
+      "request_mode": "numerical-required",
+      "expected_method": "numerical"
+    },
+    {
       "id": "tF-bessel-K0-near-neg-real",
       "tier": "F",
       "category": "branch-cut",

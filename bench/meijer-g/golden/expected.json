@@ -2085,6 +2085,84 @@
       "truth_method": "consensus-wolfram-mpmath@110dps"
     },
     {
+      "id": "tE-G3003-coalesce-012",
+      "tier": "E",
+      "tolerance_rel": "0",
+      "consensus": {
+        "consensus": "structural-refusal",
+        "mpmath_skipped": true,
+        "wolfram_skipped": true
+      },
+      "expected": {
+        "kind": "tagged",
+        "tag": "meijer-g/out-of-region",
+        "payload_predicate": {}
+      },
+      "truth_method": "dispatcher-3-pole-coalescence-refusal-expected"
+    },
+    {
+      "id": "tE-an-coalesce-1",
+      "tier": "E",
+      "tolerance_rel": "0",
+      "consensus": {
+        "consensus": "structural-refusal",
+        "mpmath_skipped": true,
+        "wolfram_skipped": true
+      },
+      "expected": {
+        "kind": "tagged",
+        "tag": "meijer-g/out-of-region",
+        "payload_predicate": {}
+      },
+      "truth_method": "dispatcher-3-pole-coalescence-refusal-expected"
+    },
+    {
+      "id": "tE-mixed-1",
+      "tier": "E",
+      "tolerance_rel": "1e-12",
+      "consensus": {
+        "consensus": "mpmath-only",
+        "mpmath_value": [
+          "0.2274112777602187623310715141672937276979994625589789835172799620264255121212211375765466920143252498",
+          "0.0"
+        ],
+        "wolfram_skipped": true,
+        "rel_disagreement": null
+      },
+      "expected": {
+        "kind": "value",
+        "truth": {
+          "re": "0.22741127776021876233107151416729372769799946255897898351727996",
+          "im": "0.0"
+        },
+        "truth_method": "mpmath-only@110dps"
+      },
+      "truth_method": "mpmath-only@110dps"
+    },
+    {
+      "id": "tE-near-coalesce-1",
+      "tier": "E",
+      "tolerance_rel": "1e-30",
+      "consensus": {
+        "consensus": "mpmath-only",
+        "mpmath_value": [
+          "0.444427789597064590642421689798367095580650468095420369402315032552574179433016049382691316214914221",
+          "0.0"
+        ],
+        "wolfram_skipped": true,
+        "rel_disagreement": null
+      },
+      "expected": {
+        "kind": "value",
+        "truth": {
+          "re": "0.44442778959706459064242168979836709558065046809542036940231503",
+          "im": "0.0"
+        },
+        "truth_method": "mpmath-only@110dps"
+      },
+      "truth_method": "mpmath-only@110dps"
+    },
+    {
       "id": "tF-bessel-K0-near-neg-real",
       "tier": "F",
       "tolerance_rel": "1e-32",

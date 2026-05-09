@@ -807,16 +807,29 @@ TIERD: list[Case] = [
 
 TIERE: list[Case] = [
     # bm = (0, 1) — integer-spaced poles
-    # NOTE on coalescence tolerances: the dispatcher's Slater path
-    # uses Johansson `hmag` perturbation when integer-spaced poles are
-    # detected.  v0.1 reports `achieved_precision: <requested>` even
-    # when the perturbation has eaten dps below the request — a
-    # documented over-reporting bug filed as a follow-up.  The bench
-    # tolerances below reflect the *actually achieved* precision
-    # (~14-16 dps) rather than the *reported* precision; tightening
-    # them back to `1e-(precision-12)` is gated on the over-reporting
-    # bug fixing.  This is honest scope, Rule 8: the bench documents
-    # the dispatcher's *real* coverage, not its claimed coverage.
+    # NOTE on coalescence tolerances and `achieved_precision`: at v0.2
+    # (worklog 084 — beads `scientist-workbench-7usr` and `…-fwsz`) the
+    # dispatcher gained an *empirical precision estimator*: when
+    # Johansson `hmag` perturbation fires, the orchestrator runs a
+    # second residue-summation pass at a minimally-different
+    # perturbation magnitude and reports
+    # `achievedPrecision = floor(−log10(|Δ|/|S|)) − 1`.  The reported
+    # `achieved_precision` is now honest about the L'Hôpital limit +
+    # cancellation noise (typically 12–16 dps for 2-pole integer-spaced
+    # cases at 50 dps requested).  The tier-E bench tolerances below
+    # are kept loose (1e-13 to 1e-14) because the *value* is correct to
+    # ~14 dps; the verifier's `self_reported_precision` check enforces
+    # `achieved_precision ≤ requested_precision` separately.
+    #
+    # Three-pole integer-spaced coalescence (`tE-G3003-coalesce-012`,
+    # `tE-an-coalesce-1`) is reinstated as a *structured refusal* —
+    # the higher-order Slater 1966 §5 closed-form residue is required
+    # and is filed as a follow-up bead.
+    #
+    # Mixed (an + bm both 2-pole-coalescent) and sharp near-coalescence
+    # (`1001/1000`) are reinstated as numerical successes — the
+    # cancellation cap and the empirical estimator together let them
+    # complete in <5 s.
     Case(id="tE-G2002-coalesce-01", tier="E", category="coalescence",
          an=(), ap=(), bm=(_r("0"), _r("1")), bq=(),
          z=_r("1/2"), precision=50, tolerance_rel="1e-14",
@@ -829,28 +842,12 @@ TIERE: list[Case] = [
          request_mode="numerical-required", expected_method="numerical",
          rule="G^{2,0}_{0,2}(_; 0, 2 | 1/2)"),
 
-    # NOTE: 3-pole integer-spaced coalescence (e.g. G^{3,0}_{0,3}(_; 0,1,2 | z))
-    # currently hangs the dispatcher's Slater path — bench-discovered friction;
-    # filed as a follow-up.  Removed from v0.1 corpus.
-
-    # an coalescence — 2-slot only; 3+ slot triggers same hang as bm-side
-    # G^{1,2}_{2,1}({1,2}; ;{0}; ; | 1/3) — also hangs / mpmath fails
-    # NOTE: an-coalescence with integer-spaced parameters and a real bm
-    # also exhibits the dispatcher hang; filed as a follow-up bead.
-    # Removed from v0.1 corpus.
-
     # Half-integer-spaced (related to Bessel-K with integer order).
-    # Same Johansson over-reporting issue as integer-spaced.
     Case(id="tE-besselK-ord1", tier="E", category="coalescence",
          an=(), ap=(), bm=(_r("1/2"), _r("3/2")), bq=(),
          z=_r("3/2"), precision=50, tolerance_rel="1e-13",
          request_mode="numerical-required", expected_method="numerical",
          rule="G^{2,0}_{0,2}(_; 1/2, 3/2 | 3/2)"),
-
-    # NOTE: tE-an-coalesce-1 and tE-mixed-1 removed: mpmath fails to
-    # converge AND the dispatcher hangs.  Filed as a follow-up bead
-    # (3-pole integer-spaced coalescence dispatcher hang).  v0.1 corpus
-    # exercises 2-slot coalescence only.
 
     # Half-integer ν=2 (integer-spaced still): G^{2,0}_{0,2}(_; 1, 2 | z)
     Case(id="tE-besselK-ord2", tier="E", category="coalescence",
@@ -859,15 +856,45 @@ TIERE: list[Case] = [
          request_mode="numerical-required", expected_method="numerical",
          rule="G^{2,0}_{0,2}(_; 1, 2 | 3)"),
 
-    # Near-coalescence (small offset)
-    # NOTE: tE-near-coalesce-1 with `1001/1000` hangs at 1/2 — same root
-    # cause as tE-G3003 (slow Johansson perturbation retry).
-    # Replace with 11/10 (less coalescent):
+    # Mild near-coalescence (small offset).
     Case(id="tE-near-coalesce-2", tier="E", category="coalescence",
          an=(), ap=(), bm=(_r("0"), _r("11/10")), bq=(),
          z=_r("1/2"), precision=50, tolerance_rel="1e-30",
          request_mode="numerical-required", expected_method="numerical",
          rule="G^{2,0}_{0,2}(_; 0, 11/10 | 1/2) — mild near-coalescence"),
+
+    # 3-pole integer-spaced coalescence — structured refusal expected
+    # (bead `scientist-workbench-fwsz`).  The Johansson perturbation
+    # cannot absorb the cluster's super-quadratic cancellation; the
+    # higher-order Slater 1966 §5 closed-form residue is required.
+    Case(id="tE-G3003-coalesce-012", tier="E", category="coalescence",
+         an=(), ap=(), bm=(_r("0"), _r("1"), _r("2")), bq=(),
+         z=_r("1/2"), precision=50, tolerance_rel="0",
+         request_mode="numerical-required", expected_method="tagged",
+         expected_tag="meijer-g/out-of-region",
+         rule="G^{3,0}_{0,3}(_; 0, 1, 2 | 1/2) — 3-pole integer-spaced coalescence; out-of-region refusal in <5 s"),
+
+    # Series-2 mirror: 3-pole integer-spaced an-coalescence.
+    Case(id="tE-an-coalesce-1", tier="E", category="coalescence",
+         an=(_r("1"), _r("2"), _r("3")), ap=(), bm=(), bq=(),
+         z=_r("3"), precision=50, tolerance_rel="0",
+         request_mode="numerical-required", expected_method="tagged",
+         expected_tag="meijer-g/out-of-region",
+         rule="G^{0,3}_{3,0}(1, 2, 3; _ | 3) — 3-pole integer-spaced an-coalescence; out-of-region refusal in <5 s"),
+
+    # Mixed: an and bm each 2-pole-coalescent (NOT in the same equiv class).
+    Case(id="tE-mixed-1", tier="E", category="coalescence",
+         an=(_r("0"), _r("1")), ap=(), bm=(_r("1"), _r("2")), bq=(),
+         z=_r("1/2"), precision=50, tolerance_rel="1e-12",
+         request_mode="numerical-required", expected_method="numerical",
+         rule="G^{2,2}_{2,2}({0,1};_;{1,2};_ | 1/2) — simultaneous an + bm 2-pole coalescence"),
+
+    # Sharp near-coalescence (offset 1/1000 from integer).
+    Case(id="tE-near-coalesce-1", tier="E", category="coalescence",
+         an=(), ap=(), bm=(_r("0"), _r("1001/1000")), bq=(),
+         z=_r("1/2"), precision=50, tolerance_rel="1e-30",
+         request_mode="numerical-required", expected_method="numerical",
+         rule="G^{2,0}_{0,2}(_; 0, 1001/1000 | 1/2) — sharp near-coalescence"),
 ]
 
 

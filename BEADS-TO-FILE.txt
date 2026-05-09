@@ -1,0 +1,138 @@
+Follow-up beads to file (out of session 13, worklog 084):
+
+================================================================
+BEAD 1 (P2): Closed-form Slater 1966 §5 higher-order residue
+================================================================
+
+Title: meijer-core: closed-form Slater higher-order residue
+       (digamma/polygamma) for ≥3-pole integer-spaced clusters
+
+Priority: P2 (no production blocker; structured refusal is honest)
+
+Background:
+The v0.1 Slater orchestrator handles 2-pole integer-spaced
+coalescence via Johansson's odd-coefficient `hmag` perturbation
+(Johansson 2009 blog post; equivalently the L'Hôpital limit
+realised numerically).  For clusters of size ≥ 3, the cancellation
+cost grows super-quadratically and the perturbation cannot absorb
+it within a finite working-precision budget — even at
+`maxWorkingBits = 12 · target_bits + 256` the 3-pole 50-dps case
+runs out of bits.
+
+Worklog 084 / bead `scientist-workbench-fwsz` shipped a structured
+refusal (`coalescence-needs-higher-order-residue`) and the
+dispatcher folds it into an integrated `out-of-region` envelope.
+This bead tracks the *proper* fix.
+
+Fix:
+Implement the closed-form higher-order residue from Slater 1966
+§5 (Bateman §5.6 covers the same material).  For a multiplicity-k
+pole at `s = -b_h - n` (where `b_h - b_j ∈ ℤ` for `k - 1` other
+indices `j`), the residue is a finite sum over polygamma `ψ^{(0)}`,
+`ψ^{(1)}`, …, `ψ^{(k-2)}` of the integer offsets, plus the
+single-pole formula at `j = h`.
+
+The substrate already has `cdigamma` (worklog 070); `cpolygamma`
+of higher order needs adding to `packages/bigfloat/` (or computed
+via the recurrence `ψ^{(n+1)}(z) = -1/z^{n+1} + ψ^{(n+1)}(z+1)`
+folded into `clgammaShifted`'s shift loop).
+
+Acceptance:
+- ≥3-pole integer-spaced coalescence cases that today refuse with
+  `coalescence-needs-higher-order-residue` instead succeed at the
+  user's requested precision.
+- Bench's `tE-G3003-coalesce-012`, `tE-an-coalesce-1` move from
+  expected refusal to expected numerical success.
+- `meijergSlater` keeps the structured refusal class for cases
+  the closed-form path *still* doesn't cover (e.g. complex
+  parameters with non-zero imaginary integer spacing — different
+  fix needed).
+
+References:
+- L. J. Slater 1966, *Generalized Hypergeometric Functions*,
+  CUP, §5.5.
+- Bateman Manuscript Project, *Higher Transcendental Functions*,
+  vol. 1, §5.6.
+- F. Johansson 2009 blog post (already linked in slater.ts).
+
+================================================================
+BEAD 2 (P2): cgamma precision-loss at small-argument poles
+================================================================
+
+Title: bigfloat: cgamma loses ~50 dps near integer-pole reflection
+       arguments at the default working precision
+
+Priority: P2 (worked around in meijer-core via empirical estimator;
+              would unblock several tighter tolerance regimes)
+
+Background:
+Bench-discovered while diagnosing `scientist-workbench-7usr`
+(worklog 084):
+
+   For arg = -1 - ε with ε = 2^{-229} ≈ 2.3e-69, computed at
+   wb=458 bits:
+
+     wb=458:  Γ(arg) = 4.31e68 + ...5772156649015330989693450...
+     wb=600:  Γ(arg) = 4.31e68 + ...5772156649015328606065120...
+     wb=800:  Γ(arg) = 4.31e68 + ...5772156649015328606065120...
+
+   The wb=458 result diverges from the high-precision answer at
+   fractional digit 12 of the trailing `5772156649...` mantissa;
+   that's only ~89 sig figs of accuracy, vs the ~138 sig figs the
+   458-bit working precision should deliver.
+
+The issue is in `clgammaReflect` — when sin(πz) is computed via
+`cexp(iπz) - cexp(-iπz)` for z near a pole, the subtraction has
+catastrophic cancellation at small ε that the +96-bit Stirling
+margin doesn't absorb.
+
+Fix:
+Either:
+  (a) Add a special-case branch in `clgammaReflect` that detects
+      small-ε integer-pole arguments and computes Γ via the
+      explicit pole expansion `Γ(-n + ε) = (-1)^n/(n! · ε) · (1 +
+      ψ(n+1)·ε + O(ε²))` directly, avoiding the sin(πz)
+      cancellation.
+  (b) Inflate the working-precision margin in `clgammaReflect`
+      proportional to `log2(1/ε)` when ε is detectably small.
+
+Option (a) is cleaner; option (b) is one-line and might be enough
+for the bench cases that surfaced this.
+
+Acceptance:
+- `cgamma(arg, wb=458)` for `arg = -1 - 2^{-229}` matches
+  `cgamma(arg, wb=800)` to wb=458's nominal precision (~138 dps
+  relative).
+- Empirical estimator in `meijergSlater` reports higher precision
+  for the affected 2-pole cases (currently 12-14 dps; with this
+  fix likely 30+ dps depending on which mechanism actually
+  bottlenecked).
+
+================================================================
+BEAD 3 (P3): Tier-E ladder tighten to 1e-(precision-12)
+================================================================
+
+Title: bench/meijer-g: tighten tier-E `tolerance_rel` to
+       VERIFIER-PROTOCOL.md ladder once cgamma fix lands
+
+Priority: P3 (cosmetic; the value-accuracy invariant passes today
+              at the looser tolerance).
+
+Background:
+The bead spec for `7usr` mentioned that tier-E `tolerance_rel`
+should "tighten back to 1e-(precision-12) per VERIFIER-PROTOCOL.md
+tier-E ladder".  Today the values are correct to ~14 dps (the
+empirical estimator's reported precision); tightening to 1e-38
+(at precision=50) would fail the value-accuracy check on the
+2-pole half-integer-spaced cases.
+
+The tightening is gated on the cgamma fix above — once cgamma
+delivers honest 138-dps precision at wb=458, the perturbation
+estimator should report higher and the actual error should drop
+into the 1e-38 regime.
+
+Acceptance:
+- After bead 2 lands, regenerate bench v0.2 with the tighter
+  tolerances; verify all tier-E cases pass.
+
+================================================================
