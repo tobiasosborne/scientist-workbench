@@ -59,7 +59,8 @@ echo '<record-IR-JSON>' | bun tools/sturm-controlled/tool.ts
 
 ## Invariants
 
-- **deterministic** — same input bytes ⇒ same output bytes.
+- **deterministic** — same input bytes ⇒ same output bytes (symbolic
+  tier, ADR-0015 — bit-identical cross-platform forever).
 - **control-stamping** — every `ry`/`rz` in the output body
   (recursively through cases arms) has `control_wire` appended to its
   controls list; no rotation in the output is missing it.

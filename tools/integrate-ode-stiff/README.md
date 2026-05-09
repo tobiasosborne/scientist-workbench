@@ -288,6 +288,31 @@ file is only the wire-encoding wrapper.
   equations." Numerical Analysis: An Introduction, J. Walsh ed., 178–
   182. The canonical stiff test problem.
 
+## Validation
+
+`bench/integrate-ode-stiff/` — 19-case golden battery, 9 invariant checks
+per case (~171 assertions):
+
+1. `no_tool_error` — clean exit.
+2. `shape` — output record has all required fields.
+3. `converged_true` — `converged === true` on success cases.
+4. `trajectory_shape` — `(n_eval × n_components)`.
+5. `monotone_t_values` — ascending or descending per integration direction.
+6. `stiffness_handled` — `n_jacobian_evals ≥ 1` on every success case
+   (the discriminator that Radau is actually implicit, not secretly
+   small-stepping explicitly).
+7. `lu_pair_floor` — `n_lu_decompositions ≥ 2 · n_jacobian_evals`.
+8. `trajectory_accuracy` — `|trajectory − oracle| ≤ 100 · rtol + 100 · atol`
+   over the whole horizon. **No horizon scaling** — Radau is stiffly
+   bounded (HW Vol II §IV.10).
+9. `error_estimate_finite` — `error_estimate` is finite.
+
+**Oracle:** SciPy `solve_ivp(method='Radau', rtol=1e-13, atol=1e-15)` —
+orthogonal implementation at extended precision. Comparison threshold
+`100 × rtol × |oracle| + 100 × atol`.
+
+**Mutation-proven** per CLAUDE.md Rule 6.
+
 ## Run
 
 ```sh

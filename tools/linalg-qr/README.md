@@ -122,8 +122,10 @@ planner introspect the shape without an opaque exit-1.
 **Malformed input — `ToolError` (exit 1):**
 
 - `A` is not rectangular (rows of unequal length)
-- `m · n > 200 · 200` (suggestion points to bead `wmm`)
 - `mode` is not `"reduced"` or `"complete"`
+- true allocation OOM (`RangeError` on `Float64Array` allocation) —
+  caught and re-thrown as `ToolError` carrying attempted-bytes detail
+  (ADR-0016; the only refusal class for oversize inputs)
 
 ## How
 
@@ -148,9 +150,9 @@ SIAM 2002, Thm 19.4 (backward stability of Householder QR); Golub &
 Van Loan, *Matrix Computations*, 4th ed., JHU 2013, §§5.1–5.2.
 
 Out of scope (v0.1, all explicitly deferred): pivoting QR (column-
-pivoted, rank-revealing, bead 71f); SVD / eigendecomposition (bead
-71f); `m·n > 200·200` (bead `wmm`); FFI to LAPACK DGEQRF (bead `e7y`);
-cross-platform determinism guarantee (`numerical: true`, ADR-0015).
+pivoted, rank-revealing, bead 71f); SVD / eigendecomposition (bead 71f);
+FFI to LAPACK DGEQRF (bead `e7y`); cross-platform determinism guarantee
+(`numerical: true`, ADR-0015).
 
 ## Invariants
 
@@ -173,9 +175,44 @@ cross-platform determinism guarantee (`numerical: true`, ADR-0015).
 - **degenerate-shape-tagged**: `m = 0` or `n = 0` produces
   `tagged "linalg-qr/degenerate-shape"` with `(m, n)` — never an
   unhelpful exit-1.
-- **size-cap-rejected**: `m·n > 40000` raises `ToolError` pointing
-  at bead `wmm` (the v0.2 follow-up).
+- **scale-warnings-emitted**: `min(m, n) > 500` populates the `warnings`
+  field with measurement-driven advisories (ADR-0016); the algorithm
+  still runs.
+- **oom-becomes-toolerror**: a true allocation OOM is caught and
+  re-thrown as `ToolError` carrying attempted-byte count.
 - **non-rectangular-rejected**: ragged `A` raises `ToolError`.
+
+## Validation
+
+`bench/linalg-qr/` — 56-case golden battery, 392 invariant assertions
+(7 checks per case):
+
+1. `no_tool_error` — clean exit.
+2. `shape` — output record has all expected fields.
+3. `Q_orthonormal` — `‖QᵀQ − I_k‖_F ≤ tol_orth` (Higham 2002 §19.4).
+4. `R_upper_triangular` — sub-diagonal entries of R identically zero.
+5. `reconstruction` — `‖Q·R − A‖_F / max(‖A‖_F, 1) ≤ tol_recon`
+   (Higham 2002 §19.4 with 100× safety).
+6. `self_reported_honesty` — reported errors agree with recomputation
+   to `1e-6` relative.
+7. `warnings_present_for_large_n` — `n > 500` cases have non-empty
+   `warnings` field (ADR-0016 scale advisory).
+
+Tier breakdown: A (square well-conditioned) · B (rectangular) · C
+(Hilbert ill-conditioned) · D (rank-deficient near-zero R diagonal) ·
+E (mode=complete) · F (small edge cases: n=1, m=1) · G (large NIST
+harwell-boeing structural matrices) · H (stress: n=500) · I (stress:
+n=1000).
+
+**5 NIST harwell-boeing structural matrices** (bcsstk01/02/03/04/05,
+`bench/_corpus/harwell-boeing/`) covering κ ∈ {4.3e3 … 6.8e6},
+n ∈ {48 … 153}: real structural-engineering patterns that synthetic
+matrices don't have.
+
+**Stress cases:** n=500 (~2.6s) and n=1000 (~25s) in the post-ADR-0016
+uncapped regime; both are green with measurement-driven warnings.
+
+**Mutation-proven** per CLAUDE.md Rule 6.
 
 ## Run
 

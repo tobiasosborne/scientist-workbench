@@ -125,6 +125,46 @@ echo '{"kind":"record","fields":{"eqs":{"kind":"list","items":[{"kind":"expressi
   | bun tools/solve/tool.ts
 ```
 
+## Transcendental lane (v0.1, shipped)
+
+A fourth dispatch lane handles single-variable equations of the form
+`head(x) = c` where `head ∈ {exp, log, sin, cos, tan, sinh, cosh, tanh, abs}`
+and `c` is a numeric constant. Pattern-matched by `tryTranscendentalInvert`
+in `packages/solve/src/transcendental.ts`. Multi-branched inverses (sin,
+cos, tan) emit branch-parameter symbols `t_0`, `t_1`, … and the output's
+`completeness` is `"finite-rep-of-infinite"`. Compound patterns
+`head(g(x)) = c` with non-trivial `g` are out of scope; those refuse with
+`tagged "solve/foreign-vocabulary"` and route to the future bead `37r`
+(inversion by substitution heuristic). The `Out of scope (v0.1)` note
+below corrects the earlier draft that treated this lane as deferred.
+
+## Validation
+
+`bench/solve/` — 100-case golden battery (ADR-0019 §1+§2 bench discipline):
+
+- **20 hand-curated cases:** cross-validated against Mathematica v1 by
+  hand, spanning the full class roster (linear underdetermined, linear
+  inconsistent, deg-2/3/4 radicals, casus irreducibilis cubic, deg-≥5
+  `Root[]`, transcendental single-branch / multi-branch, and each
+  refusal tag).
+- **80 stratified random cases:** generated and validated against triple
+  witnesses (Wolfram, SymPy). Strata cover the same class distribution
+  but at randomised coefficients.
+
+**ADR-0019 §1+§2 4-lane dispatch verifier**: confirms that the tool's
+dispatch classification matches the expected lane (linear / poly / trans /
+refusal) for every case, then checks the output shape.
+
+**8 mutation perturbations** per the mutation-prove discipline (CLAUDE.md
+Rule 6): flipped solution sign, wrong completeness field, transposed
+variable binding, missing branch parameter, root-index off by 1, wrong
+refusal tag, spurious extra root, wrong content scalar. All 8 cause RED
+in the verifier.
+
+**Triple-witness:** Wolfram `Solve[]`, SymPy `solve()`, and the
+hand-curated Mathematica-v1 reference all agree on the canonical
+solution set for every committed case.
+
 ## Standard flags
 
 `--schema --examples --invariants --version --help --provenance-of <hash> --test`
@@ -133,13 +173,15 @@ echo '{"kind":"record","fields":{"eqs":{"kind":"list","items":[{"kind":"expressi
 
 - Multivariate non-zero-dim systems (Gröbner pending).
 - Inequalities (`solve/inequality` reserved).
-- Transcendental invert-and-substitute (`solve/transcendental-multibranch`
-  reserved; bead `ii0` ships the substrate).
+- Compound transcendental patterns `head(g(x)) = c` with non-trivial `g`
+  (bead `37r`; the simple `head(x) = c` case is shipped — see above).
 - Algebraic-extension coefficient rings.
 
 ## References
 
 - ADR-0017 — solution-set value-protocol shape.
+- ADR-0018 — `Root[poly, k]` for deg-≥5 real roots.
+- ADR-0019 — bench discipline.
 - Cox-Little-O'Shea, *Ideals, Varieties, and Algorithms* — Buchberger
   background for the multivariate path.
 - Galois 1832 — quintic irreducibility precludes general radicals.

@@ -239,6 +239,38 @@ guarantee (`numerical: true`, ADR-0015).
   re-thrown as `ToolError` carrying attempted-byte count.
 - **non-rectangular-rejected**: ragged `A` raises `ToolError`.
 
+## Validation
+
+`bench/linalg-svd/` — 55-case golden battery, 440 invariant assertions
+(8 checks per case):
+
+1. `no_tool_error` — clean exit.
+2. `shape` — output record has all expected fields.
+3. `U_orthonormal` — `‖UᵀU − I_k‖_F ≤ tol_orth` (Higham 2002 §20.3).
+4. `Vt_orthonormal` — `‖Vt·Vtᵀ − I_k‖_F ≤ tol_orth`.
+5. `S_non_negative_descending` — all `S[i] ≥ 0` and
+   `S[i] ≥ S[i+1]` within tolerance `100·ε·S[0]`.
+6. `reconstruction` — `‖U·diag(S)·Vᵀ − A‖_F / max(‖A‖_F, 1) ≤ tol_recon`
+   (Higham 2002 §20.3 with 100× safety).
+7. `self_reported_honesty` — all three reported errors agree with
+   recomputation to `1e-6` relative.
+8. `warnings_present_for_large_n` — `max(m, n) > 500` cases have
+   non-empty `warnings` field (ADR-0016).
+
+Tier breakdown mirrors `linalg-qr`; additionally, Jacobi vs
+Golub-Reinsch dispatch is verified: the `method` field must be
+`"one-sided-jacobi"` for `n ≤ 500` and `"golub-reinsch"` for `n > 500`
+(or the explicit force via `--method`).
+
+**5 NIST harwell-boeing structural matrices** (`bench/_corpus/harwell-
+boeing/`): same bcsstk01–05 corpus as `linalg-qr`; all 5 symmetric
+positive-definite (consistent with `eigh` stress cases).
+
+**Stress cases:** n=500 (~17.6s Jacobi; dispatches to Golub-Reinsch
+in the uncapped regime) added post-ADR-0016.
+
+**Mutation-proven** per CLAUDE.md Rule 6.
+
 ## Run
 
 ```sh

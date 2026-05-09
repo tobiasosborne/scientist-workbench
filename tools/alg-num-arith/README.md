@@ -113,7 +113,7 @@ echo '{"kind":"record","fields":{"a":{"kind":"expression","head":"Root","args":[
 
 - ADR-0018 — `Root[poly, k]` value-protocol primitive (canonical
   form, lazy isolating-interval semantics, equality semantics).
-- Worklog 062 — alg-num resultant arithmetic substrate.
+- `docs/worklog/062-alg-num-arithmetic.md` — alg-num resultant arithmetic substrate.
 - Cohen, *A Course in Computational Algebraic Number Theory*
   (GTM 138), §3.6 (resultants).
 - Bareiss 1968, *Sylvester's identity and multistep integer-
@@ -122,5 +122,5 @@ echo '{"kind":"record","fields":{"a":{"kind":"expression","head":"Root","args":[
   reference for lazy `(minpoly, interval)` algebraic-number
   arithmetic; the upstream design pattern for this tool's
   substrate.
-- Bench `bench/alg-num-arith/` (bead `iay`) — triple-witness
-  cross-validation against SymPy `qqbar`.
+- Bench `bench/alg-num-arith/` (bead `scientist-workbench-iay`) —
+  triple-witness cross-validation against SymPy `qqbar`.

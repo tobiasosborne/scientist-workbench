@@ -54,8 +54,8 @@ For an end-to-end demo, run `bash scripts/demo-scope.sh`.
 
 - **Idempotent.** `simplify(simplify(c)) = simplify(c)`. Property
   tested in `--test`.
-- **Deterministic.** Same input bytes ⇒ same output bytes. Property
-  tested.
+- **Deterministic.** Same input bytes ⇒ same output bytes. Symbolic
+  tier (ADR-0015) — bit-identical cross-platform forever.
 - **Wire and classical-ref preservation.** No wire is renamed; no
   `observe` is invented or dropped. The tool's rewrites operate
   entirely on `ry`/`rz`/`cases` shapes.

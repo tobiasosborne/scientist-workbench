@@ -266,6 +266,30 @@ echo '{"kind":"record","fields":{"f":...,"vars":...,"t_var":...,"y0":...,"t_span
   | bun tools/integrate-ode-ivp/tool.ts
 ```
 
+## Validation
+
+`bench/integrate-ode-ivp/` — 29-case golden battery, 8 invariant checks
+per case (~232 assertions):
+
+1. `no_tool_error` — clean exit.
+2. `shape` — output record has all required fields.
+3. `converged_true` — `converged === true` on success cases.
+4. `trajectory_shape` — `(n_eval × n_components)` dimensions match.
+5. `monotone_t_values` — `t_values` ascending or descending per
+   integration direction.
+6. `fsal_floor` — `n_evals ≥ 6 · n_steps_accepted` (FSAL accounting).
+7. `trajectory_accuracy` — `|trajectory − oracle| ≤ 100 · rtol · |oracle|`
+   (HNW §II.10 with 100× safety factor).
+8. `error_estimate_finite` — `error_estimate` is finite and ≤ 1 in
+   controller units (accepted steps must have `< 1` normalised error).
+
+**Oracle:** SciPy `solve_ivp(method='DOP853', rtol=1e-13, atol=1e-15)` at
+extended precision — orthogonal implementation, same DOPRI5 family,
+different floating-point arithmetic order. Comparison threshold `100 ×
+rtol × |oracle|`.
+
+**Mutation-proven** per CLAUDE.md Rule 6.
+
 ## Standard flags
 
 `--schema --examples --invariants --version --help --provenance-of <hash> --test --platform-fingerprint`

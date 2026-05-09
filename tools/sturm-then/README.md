@@ -59,7 +59,8 @@ echo '<record-IR-JSON>' | bun tools/sturm-then/tool.ts
 
 ## Invariants
 
-- **deterministic** — same input bytes ⇒ same output bytes.
+- **deterministic** — same input bytes ⇒ same output bytes (symbolic
+  tier, ADR-0015 — bit-identical cross-platform forever).
 - **signature-match required** — length / kind / dim mismatch produces
   the boundary tag.
 - **first prefix preserved** — the composite's body begins with

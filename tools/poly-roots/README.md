@@ -128,6 +128,34 @@ echo '{"kind":"record","fields":{"f":{"kind":"expression","head":"+","args":[{"k
   | bun tools/poly-roots/tool.ts
 ```
 
+## Validation
+
+`bench/poly-roots-radical/` — 50-case golden battery (ADR-0019 §1
+bench discipline), seven tiers:
+
+| Tier | Cases | Description |
+|---|---|---|
+| A — linear | ~5 | deg 1; exact rational root |
+| B — quadratic | ~8 | deg 2; `(−b ± √D) / 2a` |
+| C — cubic incl. casus irreducibilis | ~10 | Cardano; three-real case emits cube-roots-of-complex faithfully |
+| D — quartic Ferrari | ~8 | Ferrari + biquadratic fast path |
+| E — reducible | ~8 | product of lower-degree factors; multiplicities |
+| F — numeric stress | ~6 | deg-≥5 all-real (Root[] path); Lehmer and similar totally-real polynomials |
+| G — refusals | ~5 | multivariate, non-polynomial, complex-roots-not-yet-named |
+
+**ADR-0019 §1 4-check verifier:** shape, root-count-matches-degree,
+reconstruction (`f(root) ≈ 0` for all radical roots), and tag-envelope
+for refusal cases.
+
+**8 mutation perturbations**: sign flip on root value, wrong
+multiplicity, transposed radical sub-expression, missing root, extra
+root, wrong refusal tag, off-by-one Root-index `k`, wrong factor count
+from `poly-factor`. All 8 cause RED.
+
+**Triple-witness:** `bench/_corpus/oracle/` houses Wolfram + SymPy
+cross-validation scripts; every case in the corpus agrees at the
+comparison threshold.
+
 ## Standard flags
 
 `--schema --examples --invariants --version --help --provenance-of <hash> --test`

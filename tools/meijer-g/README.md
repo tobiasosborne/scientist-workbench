@@ -189,6 +189,33 @@ echo '<canonical input json>' | bun tools/meijer-g/tool.ts
 - `--schwarz-check` — run the Schwarz-reflection self-test on
   numerical success.
 
+## Validation
+
+`bench/meijer-g/` — 91-case golden battery, ~434 invariant assertions,
+nine tiers (A linear-boundary → I method-agreement). Oracles: mpmath at
+110 dps + Wolfram at 110 dps (dual-oracle per ADR-0019 §3); Tier-0
+symbolic anchors re-evaluated at 200 dps. Mutation-proven: sign /
+prefactor / truncation / sector / recurrence perturbations cause RED in
+the verifier for every tier.
+
+35 wire tests (`tool.test.ts` + the Schwarz-reflection self-test on
+every numerical success case in the batch).
+
+Additional details:
+
+- **`canUseContour` pre-filter**: refuses `m = 0` or `n = 0` at `|z| ≥ 1`
+  (contour quadrature requires at least one pole sequence on each
+  side). Tested explicitly in Tier-G.
+- **`request_mode` three-way gate semantics**: `"auto"` (cost-ascending
+  default), `"symbolic-required"` (returns
+  `meijer-g/symbolic-required-no-match` if no rule fires), and
+  `"numerical-required"` (skips the symbolic layer). The verifier
+  checks all three gate behaviours for applicable inputs.
+- **`diagnostics.onBranchCut`**: boolean field set `true` when `z` is
+  on the branch cut (Im(z) = 0 ∧ Re(z) < 0). Downstream consumers
+  match on this flag to decide whether to perturb or accept the
+  above-cut convention (DLMF §16.17.1).
+
 ## Related
 
 - ADR-0027 — design pin.

@@ -145,6 +145,25 @@ Output (pretty-printed):
   Local PDF `docs/ground-truth/factor/cox-little-oshea-…`.
 - Geddes-Czapor-Labahn, *Algorithms for Computer Algebra* §6.2, §8.4.
 
-Bench: `bench/poly-factor-q/` — 56-case golden battery covering tiers
-A (shape edges) through H (refusals), with mutation-prove on the
-verifier.
+## Validation
+
+`bench/poly-factor-q/` — 56-case golden battery covering tiers A (shape
+edges) through H (refusals):
+
+| Tier | Description |
+|---|---|
+| A | Shape edges: deg-0 (constant), deg-1 (already irreducible) |
+| B | Irreducible deg 2 over ℚ |
+| C | Reducible: products of linear / quadratic factors |
+| D | Multiplicity > 1 (square factors) |
+| E | Rational content ≠ 1 (scalar extraction) |
+| F | Large degree (deg 16, BZ subset-sum stress) |
+| G | Multivariate / transcendental input (boundary tags) |
+| H | Refusals: zero polynomial, malformed input |
+
+**Mutation-proven**: the verifier's `reconstruction` check is proven
+to catch mutations (wrong factor, wrong multiplicity, wrong content,
+missing factor, extra factor) with a RED gate.
+
+The bench references are in `bench/poly-factor-q/` (inputs.json,
+expected.json, verify.py, test_mutations.py).
