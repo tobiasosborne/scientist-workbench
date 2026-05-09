@@ -59,7 +59,7 @@ Per [VERIFIER-PROTOCOL.md §"Tier-by-tier tolerance table"](../../../tstournamen
 | **B** Special-fn numerical | ~8 | Bessel-K / erfc / Γ-product reductions.  Most route through the *numerical* lane in v0.1 because the symbolic-table doesn't yet include the multi-slot Bessel / Whittaker patterns (those are `hv0.6.*` follow-ups). |
 | **C** Generic Slater       | ~16 | Middle of parameter space, `\|z\|` away from coalescence and the unit circle. The dispatcher's bread-and-butter numerical lane. |
 | **D** Anti-Stokes          | ~8  | `\|z\| ∈ [0.95, 1.05]` (just outside the quarantine band where applicable) and moderate-`\|z\|` where multiple lanes apply. Probes lane selection at the boundary. |
-| **E** Coalescence          | ~7  | Integer-spaced poles in `bm` or `aN`. Probes Johansson's `hmag` perturbation retry. |
+| **E** Coalescence          | ~9  | Integer-spaced poles in `bm` or `aN`. Probes Johansson's `hmag` perturbation retry, the empirical precision estimator (worklog 084 / bead `7usr`), and the structured refusal for ≥3-pole clusters (worklog 084 / bead `fwsz`). |
 | **F** Branch-cut           | ~7  | `z` near or on the negative real axis; Schwarz reflection probes. |
 | **G** Refusal              | ~3  | Quarantine band; `p > q+1 ∧ \|z\| < 1`; degenerate-shape; symbolic-required-no-match. Asserts the right `tagged "meijer-g/<class>"` envelope. |
 | **H** Speed-gate           | cross-cutting | Tier H is *not* a separate set of cases; it's a re-use of Tier C/D/E/F cases with an additional `elapsed_ms ≤ 1500` assertion at 50 dps.  Listed in `tier-h.json` by id. |

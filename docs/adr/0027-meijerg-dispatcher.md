@@ -175,7 +175,14 @@ output:
 
 Refusal classes:
 - `out-of-region` — every method refused; payload lists which
-  layers said no and why.
+  layers said no and why.  This is also the integrated envelope
+  for ≥3-pole integer-spaced coalescence (worklog 084 / bead
+  `scientist-workbench-fwsz`): the Slater layer's
+  `coalescence-needs-higher-order-residue` refusal short-circuits
+  the remaining numerical lanes (contour and asymptotic both
+  inherit the same Γ-pole-cluster cost-unbound issue), and the
+  ruled-out-methods list surfaces the Slater status verbatim so a
+  caller can act on it.
 - `branch-cut-ambiguous` — input lies on the negative real axis
   with `Im(z) = 0` and the dispatcher cannot honestly decide which
   branch the caller wanted (we deliberately do *not* hide this
@@ -183,6 +190,26 @@ Refusal classes:
 - `non-finite-input` — z contains NaN or Inf.
 - `degenerate-shape` — m + n = 0 (no Γ-pole line for any layer to
   close).
+
+Slater-layer refusal sub-classes (surfaced via the `ruled_out_methods`
+list when Slater refuses):
+- `quarantine-band` — `|z|≈1 ∧ p=q ∧ m+n=p`; neither residue series
+  converges at the contour boundary.
+- `non-convergent-pfq` — inner pFq refused after retries (Borel
+  region or unrecoverable parameter-pole).
+- `coalescence-budget-exhausted` — the working-precision cap
+  (`maxWorkingBits`, default `12 · target_bits + 256`) was reached
+  while still chasing cancellation bumps.  The orchestrator refuses
+  rather than continue doubling — bounded cost beats unbounded
+  hang.  (Bead `scientist-workbench-fwsz`.)
+- `coalescence-needs-higher-order-residue` — ≥3 parameters in `bm`
+  (or `an`) lie in the same integer-spacing equivalence class.  The
+  Johansson odd-coefficient perturbation handles 2-pole pairs
+  cleanly but ≥3-pole clusters require the closed-form Slater 1966
+  §5 higher-order residue (`digamma`/`polygamma` formulae) which
+  v0.1 does not implement; the dispatcher emits the structured
+  refusal upfront rather than chase a hang.  (Bead
+  `scientist-workbench-fwsz`.)
 
 The two-record discriminated-union shape (`kind: "symbolic"` vs
 `kind: "numerical"`) is loaded with intent: a TS expert
@@ -206,6 +233,34 @@ construction; `arbprec: true` is bit-deterministic given precision).
 
 The wire schema permits both shapes via the union; the in-process
 caller pattern-matches on `kind`.
+
+#### Empirical precision estimator on the perturbation path
+
+Worklog 084 / bead `scientist-workbench-7usr` adds a second-order
+honesty layer for the Slater perturbation path.  When integer-spaced
+coalescence triggers Johansson's `hmag` perturbation, the simple-pole
+Slater formula is being treated as the `(ε_i − ε_j) → 0` L'Hôpital
+limit — and the closed-form bound on its residual (and on the
+floating-point cancellation noise that survives at finite working
+precision) is fragile.  Empirically, the dispatcher's earlier
+default of `pertBits = workingBits / 2` left the result with only
+~14 dps of relative agreement vs mpmath at 110 dps for some 2-pole
+half-integer-spaced cases, while the orchestrator reported
+`achieved_precision = 50`.
+
+The fix: when perturbation fires, run a *second* residue-summation
+pass at a minimally smaller perturbation magnitude (`pertBits + 1`
+— ε halved exactly once) and compute
+`achievedPrecision = floor(−log10(|Δ|/|S|)) − 1`, capped at the
+user-requested precision.  The reported `achieved_precision` is now
+honest about the L'Hôpital + cancellation noise floor; the wire
+verifier's `_check_self_reported_precision` enforces
+`achieved_precision ≤ requested_precision` separately.
+
+Cost: one extra residue-summation pass when perturbation fires (no
+cost on the non-coalescent fast path).  The estimator can be
+disabled via `MeijerGSlaterOptions.estimatePrecision = false` for
+regression-mode comparison against pre-fix goldens.
 
 ### 6. Schwarz reflection self-test
 

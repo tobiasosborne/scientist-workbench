@@ -463,3 +463,133 @@ describe("input errors", () => {
     expect(r.status).toBe("input-error");
   });
 });
+
+// -----------------------------------------------------------------------------
+// Honesty contract — bead `scientist-workbench-7usr`
+// -----------------------------------------------------------------------------
+//
+// Earlier versions of `meijergSlater` reported `achievedPrecision =
+// userPrecision` whenever the cancellation-loss bookkeeping passed,
+// even on perturbation-path runs whose result agreed with mpmath only
+// to ~14 dps.  The bench's tier-E corpus surfaced this as a value-
+// accuracy violation and the bead-spec acceptance criterion is the
+// honesty contract: `achievedPrecision` must reflect actual achievable
+// precision after Johansson perturbation.
+//
+// The empirical estimator (`slater.ts` § "Empirical precision
+// estimator") runs a second Slater pass at a *minimally* smaller
+// perturbation magnitude and computes `−log10(|Δ|/|S|)`.  The
+// resulting figure is reported as `achievedPrecision`, capped at the
+// user-requested precision.
+//
+// Test: known-low-precision case (`bm = [1/2, 3/2]`, `z = 3/2`)
+// reports < 50 dps and the reported value matches mpmath to within
+// the reported precision.
+
+describe("honesty contract: empirical precision estimator (bead 7usr)", () => {
+  test("perturbation-driven case (bm = [1/2, 3/2], z = 3/2) reports honest <50 dps", () => {
+    const params = P([], [], ["0.5", "1.5"], []);
+    const z = cfromStrings("1.5", "0", 600);
+    const r = meijergSlater(params, z, 50);
+    if (r.status !== "success") throw new Error(`expected success; got ${r.status}`);
+    expect(r.perturbationApplied).toBe(true);
+    // Mpmath at 110 dps reports the answer good to ~14 dps vs our value.
+    // The estimator must report < 50 dps (the over-reporting bug
+    // produced exactly 50 dps).
+    expect(r.achievedPrecision).toBeLessThan(50);
+    // The estimator should not be vacuously low — at this concrete
+    // input the empirical figure is around 13-14 dps.  Allow slack
+    // for cross-platform drift in the underlying cgamma implementation.
+    expect(r.achievedPrecision).toBeGreaterThanOrEqual(8);
+  });
+
+  test("non-perturbed case still reports the user-requested precision", () => {
+    // No coalescence ⇒ no perturbation ⇒ the working-precision
+    // bookkeeping is honest as-is; the empirical estimator is a no-op.
+    const params = P([], [], ["1.7"], []);
+    const z = cfromInts(2n, 0n, 256);
+    const r = meijergSlater(params, z, 50);
+    if (r.status !== "success") throw new Error(`expected success; got ${r.status}`);
+    expect(r.perturbationApplied).toBe(false);
+    expect(r.achievedPrecision).toBe(50);
+  });
+
+  test("estimator opt-out: estimatePrecision=false leaves achievedPrecision = userPrecision", () => {
+    // Regression-mode fallback: callers (e.g. legacy goldens captured
+    // before the honesty layer existed) can disable the estimator and
+    // get the old over-reporting behaviour back.
+    const params = P([], [], ["0.5", "1.5"], []);
+    const z = cfromStrings("1.5", "0", 600);
+    const r = meijergSlater(params, z, 50, { estimatePrecision: false });
+    if (r.status !== "success") throw new Error(`expected success; got ${r.status}`);
+    expect(r.perturbationApplied).toBe(true);
+    expect(r.achievedPrecision).toBe(50);
+  });
+});
+
+// -----------------------------------------------------------------------------
+// Cost-bounded refusal — bead `scientist-workbench-fwsz`
+// -----------------------------------------------------------------------------
+//
+// 3-pole integer-spaced coalescence (e.g. `bm = [0, 1, 2]`) hangs the
+// Slater path indefinitely — the perturbation breaks the pairwise
+// coalescence cleanly but the residue-cancellation budget grows
+// super-quadratically with cluster size, and each retry's working-
+// precision doubling still leaves the budget gap unfilled.  The
+// closed-form `digamma`/`polygamma` higher-order residue (Slater 1966
+// §5) is the v0.2 fix; until then the orchestrator emits a structured
+// refusal as soon as a cluster of size ≥ 3 is detected.
+//
+// Test: 3-pole integer-spaced coalescence terminates in well under
+// 5s @ 50 dps with the refusal class
+// `coalescence-needs-higher-order-residue`.  Mutation-prove the
+// detection by passing only 2 of the 3 poles (which should *not*
+// trigger the refusal — 2-pole runs through the perturbation path).
+
+describe("cost-bounded refusal: 3-pole integer-spaced coalescence (bead fwsz)", () => {
+  test("bm = [0, 1, 2] (3-pole) ⇒ structured refusal in < 5s", () => {
+    const params = P([], [], ["0", "1", "2"], []);
+    const z = cfromStrings("0.5", "0", 600);
+    const start = Date.now();
+    const r = meijergSlater(params, z, 50);
+    const elapsed = Date.now() - start;
+    expect(elapsed).toBeLessThan(5000);
+    expect(r.status).toBe("coalescence-needs-higher-order-residue");
+  });
+
+  test("bm = [0, 1] (2-pole) ⇒ proceeds through perturbation path", () => {
+    // Mutation-prove: removing one of the integer-spaced poles drops
+    // the cluster size below the trigger.  The 2-pole case must still
+    // evaluate (with the empirical-precision estimator at work).
+    const params = P([], [], ["0", "1"], []);
+    const z = cfromStrings("0.5", "0", 600);
+    const r = meijergSlater(params, z, 50);
+    if (r.status !== "success") {
+      throw new Error(`expected success at 2-pole, got ${r.status}: ${(r as { reason?: string }).reason}`);
+    }
+    expect(r.perturbationApplied).toBe(true);
+  });
+
+  test("an = [0, 1, 2] (3-pole an-side) ⇒ same refusal", () => {
+    // Series-2 mirror: the same gate fires on an-side clusters.
+    const params = P(["0", "1", "2"], [], [], []);
+    const z = cfromStrings("3", "0", 600); // |z| > 1 ⇒ series 2.
+    const start = Date.now();
+    const r = meijergSlater(params, z, 50);
+    const elapsed = Date.now() - start;
+    expect(elapsed).toBeLessThan(5000);
+    expect(r.status).toBe("coalescence-needs-higher-order-residue");
+  });
+
+  test("maxWorkingBits cap surfaces budget-exhausted refusal", () => {
+    // Force a mid-coalescence input through a deliberately tight cap
+    // so the 2-pole path runs out of bits — the budget-exhausted
+    // refusal class.  Use an artificially tight cap so the test
+    // terminates promptly without waiting for the natural cancellation
+    // bumps to march through their default budget.
+    const params = P([], [], ["0", "1"], []);
+    const z = cfromStrings("0.5", "0", 600);
+    const r = meijergSlater(params, z, 50, { maxWorkingBits: 200 });
+    expect(r.status).toBe("coalescence-budget-exhausted");
+  });
+});

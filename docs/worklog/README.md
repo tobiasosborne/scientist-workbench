@@ -94,6 +94,7 @@ write the frictions and the dead ends as well as the wins.
 | 081 | [`bench/meijer-g/` golden master battery shipped (`hv0.11`)](081-meijerg-bench.md) | 2026-05-09 | scientist-workbench-hv0.11 (closed) |
 | 082 | [tstournament problem-13 staging shipped (`hv0.12`)](082-meijerg-tstournament-staging.md) | 2026-05-09 | scientist-workbench-hv0.12 (closed); campaign closed |
 | 083 | [arbprec `--precision` flag wired through runner + compose (lc1 / rn2)](083-arbprec-precision-flag-wiring.md) | 2026-05-09 | scientist-workbench-{lc1, rn2} (closed); single source of truth in `mergedFlags` |
+| 084 | [Meijer G dispatcher coalescence fixes (`hv0.11.1`)](084-meijerg-coalescence-fixes.md) | 2026-05-09 | scientist-workbench-{7usr, fwsz} (closed); empirical precision estimator + ≥3-pole structured refusal |
 
 ## How to add a new shard
 

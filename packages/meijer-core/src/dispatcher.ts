@@ -626,6 +626,26 @@ export function meijergDispatch(
         status: sl.status,
         reason: sl.reason,
       });
+      // Higher-order-residue refusal short-circuits the remaining
+      // numerical lanes (bead `scientist-workbench-fwsz`).  The
+      // ≥3-pole integer-spaced coalescence is a property of the
+      // *input parameters* — not of the Slater path specifically.
+      // Contour-quadrature and Braaksma asymptotic both hit the same
+      // Γ-pole-cluster structure on these inputs and become
+      // cost-unbounded, so the dispatcher folds Slater's structured
+      // refusal directly into the integrated envelope rather than
+      // chase a hang on lanes that can't help either.
+      if (sl.status === "coalescence-needs-higher-order-residue") {
+        return {
+          kind: "refused",
+          class: "out-of-region",
+          reason:
+            `≥3-pole integer-spaced coalescence detected; every numerical lane ` +
+            `requires the higher-order Slater 1966 §5 closed-form residue ` +
+            `(digamma/polygamma) which v0.1 does not implement`,
+          ruledOutMethods: ruledOut,
+        };
+      }
     } else {
       ruledOut.push({
         method: "slater-series-1",

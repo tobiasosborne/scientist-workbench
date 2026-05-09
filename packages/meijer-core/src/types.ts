@@ -78,6 +78,20 @@ export interface MeijerGSlaterOptions {
   readonly maxRetries?: number;
 
   /**
+   * Hard ceiling on working precision in bits. When a retry would
+   * exceed this budget, the orchestrator refuses with
+   * `coalescence-budget-exhausted` rather than continue doubling.
+   * The budget exists to bound dispatcher cost on inputs whose Slater
+   * cancellation grows faster than the perturbation-driven retry can
+   * absorb (notably the 3+ pole integer-spaced coalescence; bead
+   * `scientist-workbench-fwsz`). Default: `12 · target_bits + 256` —
+   * comfortable for the common 1-bump cases (target_bits + 64 →
+   * 2·target_bits + 128 → 4·target_bits + 256), refuses on the
+   * pathological 3-pole / 4-pole cases inside ~3 s @ 50 dps.
+   */
+  readonly maxWorkingBits?: number;
+
+  /**
    * Force the perturbation path on or off. Default: `"auto"`, meaning
    * apply Johansson `hmag` perturbation iff coalescence is detected
    * among the residue-line parameters. `"always"` is useful for
@@ -86,6 +100,29 @@ export interface MeijerGSlaterOptions {
    * parameter-pole refusal.
    */
   readonly perturbation?: "auto" | "always" | "never";
+
+  /**
+   * Empirical precision-loss estimation for the perturbation path
+   * (bead `scientist-workbench-7usr`, ADR-0027 §4 honesty contract,
+   * ADR-0003 record-with-flag).
+   *
+   * When perturbation is applied (i.e. integer-spaced coalescence
+   * detected), the closed-form Slater simple-pole formula is being
+   * approximated as the `(ε_i − ε_j) → 0` L'Hôpital limit.  The
+   * approximation has finite-difference-vs-derivative error of order
+   * `ε² × |kernel'|` plus floating-point cancellation noise of order
+   * `2^{−wb} × max_h |term_h|`.  Both depend nonlinearly on the
+   * Γ-near-pole structure of the residue prefactors and on the inner
+   * pFq's parameter-pole-near-zero terms; closed-form bounds are
+   * fragile.  The honest path is empirical: re-evaluate with a
+   * *different* perturbation magnitude (`pertBits + estimateOffset`)
+   * and inspect `|Δ_value / value|` directly.
+   *
+   * Default `true`.  Disable only for the regression goldens that
+   * were captured before this honesty layer existed (the older
+   * over-reporting goldens).
+   */
+  readonly estimatePrecision?: boolean;
 }
 
 /** Successful evaluation. */
@@ -115,6 +152,8 @@ export interface MeijerGSlaterRefusal {
     | "quarantine-band"
     | "no-convergent-series"
     | "non-convergent-pfq"
+    | "coalescence-budget-exhausted"
+    | "coalescence-needs-higher-order-residue"
     | "input-error";
   readonly reason: string;
   /** When the inner pFq itself refused, surface its reason verbatim. */
