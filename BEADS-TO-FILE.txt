@@ -1,0 +1,94 @@
+# Follow-up beads from `hv0.12` (worktree-aacadd220ad0acb1b)
+
+The `bd` CLI is not available inside the worktree. File these on
+main after the worktree merges. All P-levels are suggested; the user
+may re-prioritise.
+
+---
+
+## P1 (gating a clean model trial)
+
+These two are pre-existing beads but are restated here because they
+*both* must land before a model trial against the in-tree reference
+candidate produces a clean tier-by-tier verdict. The bench v0.1
+absorbs them by relaxing tolerances on affected cases (and by
+excluding 3-pole cases entirely from the corpus); a model that
+derives the algorithm correctly will see flake on Tier E without
+the fix.
+
+* **`7usr` — dispatcher precision over-reporting.** When Slater's
+  Johansson `hmag` perturbation runs (integer-spaced poles in `bm`
+  or `aN`), the dispatcher reports `achieved_precision: 50` while
+  the actual relative error vs mpmath is ~1e-14 to ~1e-16. The
+  perturbation's precision-loss estimate needs to flow into
+  `achievedPrecision` via the cancellation-bump retry's bookkeeping.
+
+* **`fwsz` — 3+-pole integer-spaced coalescence hangs Slater.**
+  Inputs like `G^{3,0}_{0,3}(_; 0,1,2 | z)` cause the Slater path's
+  perturbation+retry loop to never converge. mpmath also fails on
+  related shapes — see ORACLE-STRATEGY.md §"Quarantine protocol" —
+  but the workbench should refuse cleanly via a tagged envelope
+  rather than hang. Reinstating the affected cases in the bench
+  corpus is gated on this fix.
+
+---
+
+## P2 (post-trial hardening)
+
+* **AST-evaluation hardening in
+  `tstournament/.../golden/verify.py`.** v0.1 ships single-point AST
+  evaluation at the case's `z`; `VERIFIER-PROTOCOL.md` §"symbolic
+  check" calls for K=20 random-z sampling at `|z|` log-uniform in
+  `[10^{-3}, 10^3]` and `arg z` uniform in `(−π, π)`. Catches the
+  contrived "right at z, wrong elsewhere" failure mode that escapes
+  v0.1.
+
+* **Tier-H 200-LCG-case sweep.** v0.1 ships a 35-case cross-cutting
+  subset of C/D/E/F as `tier-h.json`; the `VERIFIER-PROTOCOL.md`
+  spec calls for 200 LCG-generated cases at `request_precision = 50`.
+  The dispatcher's "symbolic-dispatch myopia trap" (LCG-generated
+  parameter values that look generic but actually collapse to closed-
+  form Bessel/Whittaker shapes) is exposed by the 200-case sweep but
+  not by the 35-case subset.
+
+* **`test-13-pure-ts/` trial sandbox.** Stage a model-trial sandbox
+  at `tstournament/test-13-pure-ts/` with the standard problem-13
+  brief (`PROMPT.md` + `VERIFIER-PROTOCOL.md` + `REFERENCES.md`).
+  Run an Opus 4.7 (1M) baseline. The audit grep at trial close looks
+  for `hypercomb`, `hyper`, `_hyp_borel`, `nint_distance`, `hmag`,
+  `eliminate` and `inhomogeneous_series` / `_my_unpolarify` —
+  per `PROMPT.md` §"No-direct-porting".
+
+* **Spec-vs-impl wire-format reconciliation.**
+  `VERIFIER-PROTOCOL.md` exemplars show
+  `request_precision`/`{kind: "rational"|"complex"}` for inputs;
+  the staged `golden/inputs.json` uses the workbench's
+  `precision`/`{re, im}` shape (because the in-tree reference
+  candidate speaks that). Either update `VERIFIER-PROTOCOL.md` to
+  document the shipped shape, or rewrite the reference candidate to
+  translate. Low priority — `golden/README.md` documents the
+  shipped wire format unambiguously, so no agent is currently
+  blocked.
+
+* **Out-of-region wire-shape unification.** Same kind of
+  reconciliation: the workbench tool emits
+  `{kind: "tagged", tag: "meijer-g/<class>"}`, the
+  VERIFIER-PROTOCOL exemplar emits
+  `{kind: "out-of-region", reason, ruled_out_methods}`. The
+  verifier accepts both, but a trial agent reading the spec emits
+  the spec shape and may produce a stylistic-but-different blob
+  from the in-tree tool. Decide which is canonical and document
+  the choice.
+
+---
+
+## P3 (optional / nice-to-have)
+
+* **Fail-fast on an absent `bun` in `reference-candidate.sh`.** The
+  shell wrapper currently emits a clear error on `bun` missing, but
+  the trial-runner's `run_tests.sh` swallows the candidate's stderr
+  on `2>/dev/null`. Surface the error path more visibly — perhaps
+  by writing a structured `{kind: "tool_error", ...}` blob to
+  stdout when bun is missing, so the verifier reports it as
+  `no_tool_error` failure rather than a bare "candidate command
+  exited non-zero".

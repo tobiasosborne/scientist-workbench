@@ -91,6 +91,8 @@ write the frictions and the dead ends as well as the wins.
 | 078 | [`meijer-core` Braaksma asymptotic (Layer 6) shipped (`hv0.9`)](078-meijerg-asymptotic.md) | 2026-05-08 | scientist-workbench-hv0.9 (closed); ADR-0026 |
 | 079 | [`bench/hypergeometric-pfq` tier-graded battery shipped (`hv0.4`)](079-bench-hypergeometric-pfq.md) | 2026-05-09 | scientist-workbench-hv0.4 (closed) |
 | 080 | [`tools/meijer-g` top-level dispatcher (Layer 7) shipped (`hv0.10`)](080-meijerg-dispatcher.md) | 2026-05-09 | scientist-workbench-hv0.10 (closed); ADR-0027 |
+| 081 | [`bench/meijer-g/` golden master battery shipped (`hv0.11`)](081-meijerg-bench.md) | 2026-05-09 | scientist-workbench-hv0.11 (closed) |
+| 082 | [tstournament problem-13 staging shipped (`hv0.12`)](082-meijerg-tstournament-staging.md) | 2026-05-09 | scientist-workbench-hv0.12 (closed); campaign closed |
 
 ## How to add a new shard
 
