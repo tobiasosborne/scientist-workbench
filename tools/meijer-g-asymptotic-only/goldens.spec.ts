@@ -47,13 +47,15 @@ function gParams(
 }
 
 export const goldens: GoldenSpec[] = [
-  // NOTE: arbprec `--precision=N` flag has a known runner-side wiring
-  // gap (the standard flag is parsed but not threaded into the tool
-  // fn's `flags` object — same pattern as `hypergeometric-pfq` /
-  // `meijer-g-slater-only`). Until that's fixed at the runner layer,
-  // every CLI invocation runs at the default precision = 50 dps;
-  // goldens accordingly omit the per-case `flags` field so the
-  // generated output reflects the actual runtime behaviour.
+  // All cases below run at the default precision = 50 dps. Goldens omit
+  // the per-case `flags` field because the asymptotic lane's tier
+  // behaviour (entire-function, optimal-truncation, divergent inner pFq,
+  // sector boundary) is exercised meaningfully at default precision;
+  // precision-dial sweeps live in `tool.test.ts`. After the lc1 / rn2
+  // fixes (worklog 083) the runner threads `--precision=N` correctly
+  // through to `flags.precision` — adding `flags: { precision: "..." }`
+  // here would now produce different bytes (correctly so), but the
+  // existing default-50 corpus stays byte-identical.
 
   // Principal-sector success: G^{0,1}_{1,0}(1; |100) = e^{-1/100}.
   // Inner pFq is 0F0 (entire); converges everywhere. Asymptotic

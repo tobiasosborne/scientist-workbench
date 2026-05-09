@@ -19,13 +19,15 @@
 //                           generated goldens record each lane's value
 //                           independently. tool.test.ts asserts agreement.
 //
-// NOTE on `--precision=N` and the `lc1` runner gap:
-// The runner's standard `--precision=N` flag is parsed but not threaded
-// into arbprec tools' `flags` (worklog 078 for the asymptotic-only
-// tool documents the same issue; bead `lc1` is the fix). Until `lc1`
-// lands, every CLI invocation runs at default `precision = 50`. Goldens
-// accordingly omit per-case `flags` fields so the generated output
-// reflects actual runtime behaviour.
+// All cases below run at the runner's default `--precision=50`. Goldens
+// omit per-case `flags` fields because the meijer-g family's tier
+// behaviour (symbolic anchors, Slater-path-success, contour fallback,
+// refusal) is exercised meaningfully at the default precision; cases
+// that exercise the precision dial itself live in `tool.test.ts`. After
+// the lc1 / rn2 fixes (worklog 083) the runner threads `--precision=N`
+// into `flags.precision` correctly — adding `flags: { precision: "..." }`
+// to a case here will now produce a different golden at higher precision
+// (correctly so), but the existing default-50 corpus stays byte-identical.
 
 import {
   bigcomplexToValue,

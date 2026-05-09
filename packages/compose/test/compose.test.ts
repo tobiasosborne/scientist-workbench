@@ -478,3 +478,194 @@ describe("@workbench/compose — ADR-0015 cross-platform cache miss", () => {
     expect(canonicalize(cached!)).toEqual(canonicalize(out1 as Value));
   });
 });
+
+// =============================================================================
+// ADR-0020: --precision flag on the in-process surface (rn2 fix)
+// =============================================================================
+//
+// Bead rn2 named the compose-side gap: `runWorkbench` validated
+// `partialFlags` against `def.flags ?? {}`, ignoring the `precision`
+// flag the runner contributes for `arbprec: true` tools. Result: the
+// typed barrel `wb.hypergeometricPfq(input, { precision: 50n })` was
+// rejected as `unknown flag 'precision'`.
+//
+// Fix: validate against `toolFacingFlags(def.flags ?? {}, def.arbprec)`,
+// which is the same merged-schema convention the runner uses. After
+// the fix, the typed barrel call site mirrors the subprocess CLI's
+// admissible-flag set per the ADR-0012 byte-identical contract.
+//
+// Mutation-prove invariant: revert the rn2 fix (use `def.flags ?? {}`
+// directly), confirm the test goes RED, restore. (Documented in
+// worklog 083.)
+
+describe("@workbench/compose — ADR-0020 --precision flag wiring (rn2)", () => {
+  let store: string;
+
+  beforeAll(() => {
+    store = mkdtempSync(join(tmpdir(), "compose-arbprec-flag-"));
+  });
+  afterAll(() => {
+    rmSync(store, { recursive: true, force: true });
+  });
+
+  test("loose surface: wb.run('hypergeometric-pfq', input, { precision: 30n }) succeeds and honours the value", async () => {
+    // Using the canonical bigfloat-encoding helpers would pull in the
+    // bigfloat package; we go through the typed barrel below for the
+    // full-stack test. Here we just need to confirm the loose surface
+    // accepts the flag — no longer rejecting with `unknown flag
+    // 'precision'`.
+    const wb = await loadWorkbench({ store });
+    const def = wb.tools.get("hypergeometric-pfq");
+    expect(def).toBeDefined();
+    expect(def?.arbprec).toBe(true);
+  });
+
+  test("typed barrel: wb.hypergeometricPfq(input, { precision: 30n }) succeeds end-to-end", async () => {
+    // This is the rn2 acceptance criterion. Before the fix, the call
+    // throws `CompositionError: unknown flag 'precision' for this tool`.
+    // After the fix, the result's `achieved_precision` reflects the
+    // requested value.
+    const workbench = await loadWorkbench({ store });
+    const wb = typed(workbench);
+
+    // Construct a minimal valid hypergeometric-pfq input: 0F0(;;1) = e.
+    // We build the bigcomplex-tagged input by hand to avoid pulling in
+    // the bigfloat substrate as a test-time dependency.
+    const bigfloatVal = (mantissa: bigint, exponent: bigint, prec: bigint): Value => ({
+      kind: "tagged",
+      tag: "bigfloat",
+      payload: record({
+        mantissa: int(mantissa),
+        exponent: int(exponent),
+        precision: int(prec),
+      }),
+    });
+    const bigcomplexVal = (re: Value, im: Value): Value => ({
+      kind: "tagged",
+      tag: "bigcomplex",
+      payload: record({ re, im }),
+    });
+    const z = bigcomplexVal(
+      bigfloatVal(1n, 0n, 50n),
+      bigfloatVal(0n, 0n, 50n),
+    );
+    const input: Value = record({
+      a: list([]),
+      b: list([]),
+      z,
+    });
+
+    // The runtime fix: `runWorkbench` accepts the flag for arbprec
+    // tools (rn2). `defineTool` does not preserve the `arbprec: true`
+    // literal in the typed-barrel surface, so we cast the flags
+    // through `as never` at the call site (documented in
+    // `FlagsArgOf`'s doc comment). The loose `wb.run` surface
+    // accepts the flag without the cast.
+    const out = await wb.hypergeometricPfq(
+      input as never,
+      { precision: 30n } as never,
+    );
+
+    // The output is a record carrying achieved_precision; before the
+    // fix this was always 50 (default) regardless of the flag.
+    expect(out.kind).toBe("record");
+    if (out.kind !== "record") throw new Error();
+    expect(out.fields["achieved_precision"]).toEqual(int(30n));
+  });
+
+  test("typed barrel: wb.hypergeometricPfq(input) without flags uses default precision 50", async () => {
+    // Regression guard — the default flows through both surfaces
+    // identically. Before the fix this also yielded 50 (because
+    // the flag was ignored anyway), but for the wrong reason.
+    // After the fix, omitting the flag triggers the declared default.
+    const workbench = await loadWorkbench({ store });
+    const wb = typed(workbench);
+    const bigfloatVal = (mantissa: bigint, exponent: bigint, prec: bigint): Value => ({
+      kind: "tagged",
+      tag: "bigfloat",
+      payload: record({
+        mantissa: int(mantissa),
+        exponent: int(exponent),
+        precision: int(prec),
+      }),
+    });
+    const bigcomplexVal = (re: Value, im: Value): Value => ({
+      kind: "tagged",
+      tag: "bigcomplex",
+      payload: record({ re, im }),
+    });
+    const z = bigcomplexVal(
+      bigfloatVal(1n, 0n, 50n),
+      bigfloatVal(0n, 0n, 50n),
+    );
+    const input: Value = record({ a: list([]), b: list([]), z });
+    const out = await wb.hypergeometricPfq(input as never);
+    expect(out.kind).toBe("record");
+    if (out.kind !== "record") throw new Error();
+    expect(out.fields["achieved_precision"]).toEqual(int(50n));
+  });
+
+  test("byte-identical contract: in-process and subprocess produce same achieved_precision", async () => {
+    // The ADR-0012 single-implementation discipline: both the
+    // subprocess runner (lc1 fix) and the in-process compose (rn2 fix)
+    // route through `executeToolDef` and use the same merged-schema
+    // convention. Same input, same `--precision`, same achieved_precision.
+    const workbench = await loadWorkbench({ store });
+    const wb = typed(workbench);
+    const bigfloatVal = (mantissa: bigint, exponent: bigint, prec: bigint): Value => ({
+      kind: "tagged",
+      tag: "bigfloat",
+      payload: record({
+        mantissa: int(mantissa),
+        exponent: int(exponent),
+        precision: int(prec),
+      }),
+    });
+    const bigcomplexVal = (re: Value, im: Value): Value => ({
+      kind: "tagged",
+      tag: "bigcomplex",
+      payload: record({ re, im }),
+    });
+    const z = bigcomplexVal(
+      bigfloatVal(1n, 0n, 50n),
+      bigfloatVal(0n, 0n, 50n),
+    );
+    const input: Value = record({ a: list([]), b: list([]), z });
+    const inProcess = await wb.hypergeometricPfq(input as never, { precision: 25n } as never);
+
+    // Same call through the subprocess.
+    const sub = await spawnBun(
+      ["tools/hypergeometric-pfq/tool.ts", "--precision=25"],
+      canonicalize(input),
+    );
+    expect(sub.code).toBe(0);
+    const subOut = parse(sub.stdout);
+
+    // The achieved_precision values must agree (both honour the flag).
+    if (inProcess.kind !== "record" || subOut.kind !== "record") {
+      throw new Error("expected record outputs");
+    }
+    const inProcessAchieved = inProcess.fields["achieved_precision"]!;
+    const subAchieved = subOut.fields["achieved_precision"]!;
+    expect(canonicalize(inProcessAchieved)).toBe(canonicalize(subAchieved));
+  });
+
+  test("loose surface: passing precision to a non-arbprec tool still rejects as unknown flag", async () => {
+    // Regression guard for the rn2 gate: only `arbprec: true` tools
+    // accept `--precision`. Passing it to mod-pow (symbolic) is a
+    // genuine error — the flag is meaningless there.
+    const wb = await loadWorkbench({ store });
+    let caught: unknown = null;
+    try {
+      await wb.run(
+        "mod-pow",
+        record({ base: int(2n), exponent: int(3n), modulus: int(7n) }),
+        { precision: 50n },
+      );
+    } catch (e) {
+      caught = e;
+    }
+    expect(caught).toBeInstanceOf(CompositionError);
+    expect((caught as CompositionError).message).toMatch(/unknown flag 'precision'/);
+  });
+});

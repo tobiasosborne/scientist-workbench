@@ -6,10 +6,14 @@ export {
   type OutputOf,
   type RunIO,
   type ToolDefinition,
+  ARBPREC_PRECISION_FLAG,
   ExitSignal,
   runTool,
   defineTool,
   decodeSchema,
+  mergedFlags,
+  toolFacingFlagNames,
+  toolFacingFlags,
 } from "./runner.js";
 export {
   type ExecuteResult,

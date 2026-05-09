@@ -189,14 +189,6 @@ echo '<canonical input json>' | bun tools/meijer-g/tool.ts
 - `--schwarz-check` — run the Schwarz-reflection self-test on
   numerical success.
 
-## Pre-existing `lc1` runner gap
-
-The runner's standard `--precision=N` flag is parsed but not
-threaded into arbprec tools' `flags` object visible to `fn`. CLI
-invocation always runs at default `precision = 50`; in-process
-callers via `@workbench/compose` thread the flag correctly. This
-dispatcher inherits the gap until `lc1` lands.
-
 ## Related
 
 - ADR-0027 — design pin.

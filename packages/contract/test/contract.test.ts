@@ -889,5 +889,167 @@ describe("ADR-0015 --platform-fingerprint standard flag", () => {
   });
 });
 
+// =============================================================================
+// ADR-0020: arbprec --precision standard-flag wiring (lc1 fix)
+// =============================================================================
+//
+// Bead lc1 named the runner-side gap: `--precision=N` was parsed correctly
+// for `arbprec: true` tools (it's added by `mergedFlags`) but never
+// injected into the typed `flags` object handed to `def.fn`. The loop
+// at the work-case site iterated only over `Object.keys(toolFlags)`,
+// which is the *tool's declared* flags — `precision` was added by the
+// runner and lived in `parsed.flags`, not `toolFlags`. Result: every
+// arbprec tool's CLI ran at the default precision regardless of
+// `--precision`.
+//
+// Fix: derive the typed-flags slot list via `toolFacingFlagNames(...,
+// def.arbprec === true)` so the runner-injected `precision` is lifted
+// alongside the tool's declared flags. The test below builds a synthetic
+// arbprec tool (no real bigfloat work) and asserts that
+// `--precision=80` reaches `def.fn` as `flags.precision === 80n`.
+//
+// Mutation-prove invariant: revert the runner fix to the broken loop,
+// confirm the test goes RED, restore. (Documented in worklog 083.)
+
+describe("ADR-0020 — --precision flag wired into toolFlagsTyped (lc1)", () => {
+  // A synthetic arbprec tool that surfaces `flags.precision` in its
+  // output so the test can assert what the runner injected. No real
+  // bigfloat substrate — we only care about the wiring.
+  const arbprecEchoDef = defineTool({
+    name: "test-arbprec-echo",
+    version: "0.0.1",
+    schema: {
+      input: S.kind("integer"),
+      output: S.record({
+        observed_precision: S.kind("integer"),
+      }),
+    },
+    arbprec: true,
+    examples: [],
+    invariants: [],
+    fn: (_input, flags) => {
+      // ADR-0020: arbprec tools see `flags.precision` injected by the
+      // runner. The cast is the one we want to make safe — once the
+      // typed-flags lc1 work lands the cast can shrink, but the runtime
+      // contract is what this test pins.
+      const precision = (flags as { precision?: bigint }).precision;
+      return record({
+        observed_precision: int(precision ?? 0n),
+      });
+    },
+  });
+
+  test("--precision=80 reaches def.fn as flags.precision === 80n", async () => {
+    let captured = "";
+    const storeDir2 = await mkdtemp(join(tmpdir(), "wb-arbprec-flag-"));
+    try {
+      await runTool(arbprecEchoDef, {
+        argv: ["--precision=80"],
+        stdin: async () => canonicalize(int(0n)),
+        stdout: (c) => { captured += c; },
+        stderr: () => {},
+        env: { CAS_STORE: storeDir2 },
+        exit: (code) => { throw new ExitSignal(code); },
+      });
+      const v = parse(captured);
+      expect(v.kind).toBe("record");
+      if (v.kind === "record") {
+        expect(v.fields["observed_precision"]).toEqual(int(80n));
+      }
+    } finally {
+      await rm(storeDir2, { recursive: true, force: true });
+    }
+  });
+
+  test("--precision absent ⇒ default 50n reaches def.fn", async () => {
+    // The flag has a declared default of 50n (ADR-0020). When the user
+    // omits the flag, that default flows through to `fn` exactly the
+    // same as a tool-declared default with `F.int(..., {default: 50n})`.
+    let captured = "";
+    const storeDir2 = await mkdtemp(join(tmpdir(), "wb-arbprec-flag-default-"));
+    try {
+      await runTool(arbprecEchoDef, {
+        argv: [],
+        stdin: async () => canonicalize(int(0n)),
+        stdout: (c) => { captured += c; },
+        stderr: () => {},
+        env: { CAS_STORE: storeDir2 },
+        exit: (code) => { throw new ExitSignal(code); },
+      });
+      const v = parse(captured);
+      if (v.kind === "record") {
+        expect(v.fields["observed_precision"]).toEqual(int(50n));
+      }
+    } finally {
+      await rm(storeDir2, { recursive: true, force: true });
+    }
+  });
+
+  test("--precision=200 records `precision: \"200\"` on the provenance record", async () => {
+    // The provenance record's `flags` field captures the explicit
+    // argv-string form of every tool-facing flag the user set. After
+    // the lc1 fix, --precision becomes a tool-facing flag for arbprec
+    // tools — so an explicit `--precision=200` shows up in the record.
+    let captured = "";
+    const storeDir2 = await mkdtemp(join(tmpdir(), "wb-arbprec-flag-prov-"));
+    try {
+      await runTool(arbprecEchoDef, {
+        argv: ["--precision=200"],
+        stdin: async () => canonicalize(int(0n)),
+        stdout: (c) => { captured += c; },
+        stderr: () => {},
+        env: { CAS_STORE: storeDir2 },
+        exit: (code) => { throw new ExitSignal(code); },
+      });
+      const v = parse(captured);
+      const outputHash = hash(v);
+      const rec = await readProvenance(storeDir2, outputHash);
+      expect(rec).not.toBeNull();
+      expect(rec?.flags).toEqual({ precision: "200" });
+    } finally {
+      await rm(storeDir2, { recursive: true, force: true });
+    }
+  });
+
+  test("non-arbprec tool: `precision` is *not* injected (regression guard)", async () => {
+    // The lc1 fix is gated on `def.arbprec === true`. A regular
+    // symbolic tool must not see a stray `precision` key in its flags
+    // object — this would silently widen the contract.
+    const symbolicDef = defineTool({
+      name: "test-symbolic-no-precision",
+      version: "0.0.1",
+      schema: {
+        input: S.kind("integer"),
+        output: S.record({ keys: S.kind("string") }),
+      },
+      examples: [],
+      invariants: [],
+      fn: (_input, flags) => {
+        const keys = Object.keys(flags as Record<string, unknown>);
+        return record({ keys: str(keys.sort().join(",")) });
+      },
+    });
+    let captured = "";
+    const storeDir2 = await mkdtemp(join(tmpdir(), "wb-no-precision-"));
+    try {
+      await runTool(symbolicDef, {
+        argv: [],
+        stdin: async () => canonicalize(int(0n)),
+        stdout: (c) => { captured += c; },
+        stderr: () => {},
+        env: { CAS_STORE: storeDir2 },
+        exit: (code) => { throw new ExitSignal(code); },
+      });
+      const v = parse(captured);
+      if (v.kind === "record") {
+        // No declared flags, no arbprec ⇒ flags object is empty.
+        expect(v.fields["keys"]).toEqual(str(""));
+      }
+    } finally {
+      await rm(storeDir2, { recursive: true, force: true });
+    }
+  });
+});
+
 // silence the unused-import lint when these helpers aren't otherwise reached
 void sym; void expr; void plist; void containsFloat64;
