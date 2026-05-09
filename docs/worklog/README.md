@@ -96,7 +96,7 @@ write the frictions and the dead ends as well as the wins.
 | 083 | [arbprec `--precision` flag wired through runner + compose (lc1 / rn2)](083-arbprec-precision-flag-wiring.md) | 2026-05-09 | scientist-workbench-{lc1, rn2} (closed); single source of truth in `mergedFlags` |
 | 084 | [`bigfloat::div` precision-floor fix (`djp`) — substrate lifts the integrand contract from worklog 077](084-bigfloat-div-precision-floor-fix.md) | 2026-05-09 | scientist-workbench-djp (closed) |
 | 085 | [Meijer G dispatcher coalescence fixes (`hv0.11.1`)](085-meijerg-coalescence-fixes.md) | 2026-05-09 | scientist-workbench-{7usr, fwsz} (closed); empirical precision estimator + ≥3-pole structured refusal |
-| 086 | `bench/` → corpus migration: linalg trio (eigh + qr + svd) shipped; ~179 MB freed (ADR-0028, spup Pillar 2) | 2026-05-09 | scientist-workbench-{uh2d, annr, dx0l} (all closed); eigh 46/46, qr 56/56, svd 56/56 cases; corpus@{fdb73a9, 09db888, bf0af29}; workbench@{579bae2, 6823aa5, f32975d} |
+| 086 | `bench/` → corpus migration: linalg trio (eigh + qr + svd) + ODE trio (ivp + stiff + symplectic) shipped; ~179 MB + ~4.3 MB freed (ADR-0028, spup Pillar 2) | 2026-05-09 | scientist-workbench-{uh2d, annr, dx0l, g6dn, ifng, yj80} (all closed); eigh 46/46, qr 56/56, svd 56/56, ivp 17/17, stiff 19/19, symplectic 17/17 cases; symplectic corpus@8dfaa55, workbench@41b3c69 |
 
 ## How to add a new shard
 
