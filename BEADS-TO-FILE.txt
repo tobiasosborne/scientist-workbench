@@ -1,0 +1,58 @@
+# Follow-up beads to file after this session
+
+(Filed by `/home/tobias/Projects/scientist-workbench/.claude/worktrees/agent-a90d4b713538c93e6` agent;
+beads is unavailable inside the worktree per session prompt. The user
+runs `bd create` against these specs in the main repo.)
+
+---
+
+## P3 — `FlagsArgOf<D>` typed-barrel lift for `arbprec: true` tools
+
+**Title:** `FlagsArgOf<D>` should lift `precision?: bigint` for `arbprec: true` tools
+
+**Labels:** `typed-flags`, `arbprec`, `compose`, `dx`
+
+**Background:**
+
+Worklog 083 (arbprec `--precision` flag wiring; lc1 / rn2 fixes)
+landed the runtime contract — `runWorkbench` validates partial flags
+against `toolFacingFlags(def.flags ?? {}, def.arbprec === true)` and
+the runner threads `--precision=N` into `flags.precision` correctly.
+Both surfaces honour the flag at runtime.
+
+The typed-barrel surface (`wb.hypergeometricPfq(input, { precision: 50n })`)
+still requires a `as never` cast on the flags argument because
+`FlagsArgOf<typeof def>` does not lift `precision?: bigint` for
+`arbprec: true` tools. Root cause: `defineTool<I, O, Fl>` does not
+preserve the `arbprec: true` literal in the returned
+`ToolDefinition`'s static type (the field is `arbprec?: boolean`), so
+the conditional `D extends { arbprec: true }` never matches at the
+typed-barrel call site.
+
+**Fix sketch:**
+
+Add a fourth generic `Ar extends boolean = false` to
+`ToolDefinition<I, O, Fl, Ar>` and `defineTool<I, O, Fl, Ar>`,
+threading the literal alongside `Fl` (the same `const` mechanism that
+preserves `Fl`'s shape). Then `FlagsArgOf<typeof def>` can branch on
+`Ar` to inject `precision?: bigint`. Every arbprec tool's
+`defineTool({...arbprec: true...})` already passes the literal; the
+generic just needs to capture it.
+
+**Acceptance:**
+
+- `wb.hypergeometricPfq(input, { precision: 50n })` typechecks
+  without any cast.
+- `wb.modPow(input, { precision: 50n })` fails to typecheck (mod-pow
+  is not arbprec; the lift must not bleed into non-arbprec tools).
+- `bench/hypergeometric-pfq/run-candidate.ts` drops the `as never`
+  cast on the flags argument.
+- All existing tests stay green; the existing `wb.modPow({...})`
+  and `wb.casSimplify({...})` typed-barrel call sites are unchanged.
+
+**Pointers:**
+
+- `packages/contract/src/runner.ts` — `ToolDefinition`, `defineTool`,
+  `FlagsArgOf`. The `FlagsArgOf` doc-comment names this gap.
+- Worklog 083 — context.
+- Beads `lc1`, `rn2` — the runtime-side fixes that this completes.

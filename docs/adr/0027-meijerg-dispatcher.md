@@ -287,17 +287,22 @@ explicit-flags)` ⇒ same output bytes, on every platform, forever.
 The precision flag is part of the input identity; different
 precisions cache to different output hashes.
 
-### 11. Pre-existing `lc1` runner-side gap
+### 11. `--precision=N` flag wiring (lc1 / rn2 — landed worklog 083)
 
-Bead `scientist-workbench-lc1` documents that the runner's
-`--precision=N` standard flag is parsed but not threaded into the
-arbprec tool's `flags` object visible to `fn`. CLI invocation runs
-at default `precision = 50`; in-process callers via
-`@workbench/compose` thread the flag correctly. `tools/meijer-g`
-inherits this gap until `lc1` lands. Tests run in-process where
-possible so the precision flag is honoured; the goldens omit
-`flags` for the same reason (matching `meijer-g-asymptotic-only`'s
-goldens convention from worklog 078).
+Earlier drafts of this ADR called out a runner-side gap (bead
+`scientist-workbench-lc1`) where the standard `--precision=N` flag was
+parsed but not threaded into the arbprec tool's `flags` object visible
+to `fn` — CLI invocation always ran at default `precision = 50`. The
+companion bead `rn2` named the parallel gap in `@workbench/compose`'s
+`runWorkbench`, which validated partial flags against `def.flags`
+directly and rejected `{ precision: 50n }` as an unknown flag.
+
+Both gaps are closed (worklog 083). The runner now exports
+`mergedFlags` and `toolFacingFlags` as the single source of truth for
+arbprec tools' admissible-flag set; both surfaces validate against the
+same shape, keeping the ADR-0012 byte-identical contract honest.
+`tools/meijer-g` inherits the fix transparently — no code change in
+the dispatcher itself.
 
 ## Consequences
 
@@ -338,9 +343,10 @@ goldens convention from worklog 078).
    v0.1; v0.2 may file targeted follow-up beads (saddle-point
    contour deformation, full Braaksma sectorial connection
    coefficients).
-3. **`lc1` runner gap.** Until `lc1` lands, CLI invocation always
-   runs at `precision = 50`. In-process callers are unaffected.
-   Documented; not a blocker.
+3. **~~`lc1` runner gap~~** — *Resolved (worklog 083).* The runner now
+   threads `--precision=N` correctly into the tool's `flags.precision`
+   slot for `arbprec: true` tools; CLI and in-process surfaces produce
+   byte-identical outputs at the same precision per ADR-0012.
 4. **No layer caching.** A layer that succeeded but the caller
    would prefer a *different* layer's answer (e.g. for diagnostic
    reasons) cannot retrieve it without re-running. The

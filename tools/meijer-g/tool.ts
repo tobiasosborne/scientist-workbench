@@ -112,15 +112,6 @@
 //                            success: compute G(z̄), assert it equals
 //                            conj(G(z)) within precision. Off by default.
 //
-// Pre-existing `lc1` runner gap
-// -----------------------------
-// The runner's standard `--precision=N` flag is parsed but not threaded
-// into arbprec tools' `flags` parameter. CLI invocation always runs at
-// `precision = 50`; in-process callers via `@workbench/compose` pass
-// flags directly and are unaffected. This dispatcher inherits the
-// gap until `lc1` lands. Tests run in-process where possible; goldens
-// omit per-case `flags` to match the actual CLI behaviour.
-
 import {
   bool,
   int,
@@ -412,9 +403,13 @@ export const def = defineTool({
     const symbolicParams = buildSymbolicParams({ an, ap, bm, bq });
     const zSymbolic = bigcomplexToSymbolicValue(z);
 
-    // Decode flags. The `precision` flag is injected by the runner
-    // for arbprec tools but not surfaced via FlagsOf<...> (lc1
-    // pre-existing gap); cast through `unknown`.
+    // Decode flags. The `precision` slot is injected by the runner
+    // for `arbprec: true` tools (ADR-0020) but not surfaced via
+    // `FlagsOf<Fl>` — `Fl` only carries the tool's *declared* flags.
+    // The runtime contract (lc1 / rn2 fixes; worklog 083) guarantees
+    // `flags.precision` is present and either the user-supplied value
+    // or the default 50n; the cast through `unknown` reflects the
+    // gap between the runtime shape and the structural type Fl.
     const f = flags as unknown as {
       precision?: bigint;
       "force-method"?: string;

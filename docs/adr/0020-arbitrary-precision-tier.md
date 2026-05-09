@@ -290,6 +290,16 @@ A tool may override the bound (`F.int({min: 1, max: 1000})`) but
 cannot rename or retype the flag — every `arbprec: true` tool exposes
 `--precision` with the same semantics.
 
+The merge that adds the `--precision` slot lives in `mergedFlags(...)`
+inside `packages/contract/src/runner.ts` and is exported from
+`@workbench/contract` as the single source of truth. The in-process
+surface (`@workbench/compose`'s `runWorkbench`) validates partial flags
+against `toolFacingFlags(def.flags ?? {}, def.arbprec === true)`, the
+same merge applied without the CLI-only standard flags
+(`help`/`version`/etc.). This is what closes the lc1 / rn2 wiring gap
+(worklog 083) — both surfaces share one admissible-flag set, keeping
+the ADR-0012 byte-identical contract honest at every call site.
+
 ### 5. Provenance: `precision` recorded as a flag, not a tier annotation
 
 The provenance record (ADR-0005) gains nothing new for the arb-prec

@@ -137,11 +137,39 @@ type EmptyFlags = Record<string, never>;
 export type InputOf<D> = D extends { schema: { input: Schema<infer I> } } ? I : never;
 export type OutputOf<D> = D extends { schema: { output: Schema<infer O> } } ? O : never;
 /**
+ * Caller-side flag shape: `Partial<FlagsOf<Fl>>` with the tier-
+ * additive standard flags the runner contributes folded in (today:
+ * `precision?: bigint` for `arbprec: true` tools, ADR-0020). Defaults
+ * flow through `resolveFlagsForCall`, so a caller is free to omit any
+ * flag that has a declared default. Bool flags absent default to
+ * `false`. A tool with no declared flags and no tier annotations
+ * resolves to `Partial<{}>` ≅ `{}`, i.e. the parameter is functionally
+ * absent.
+ *
+ * The `arbprec` lift is what makes
+ * `wb.hypergeometricPfq(input, { precision: 50n })` typecheck through
+ * the typed barrel — the typed surface mirrors the subprocess CLI's
+ * admissible-flag set per the ADR-0012 byte-identical contract.
+ */
+/**
  * Caller-side flag shape: `Partial<FlagsOf<Fl>>`. Defaults flow through
  * `resolveFlagsForCall`, so a caller is free to omit any flag that
  * has a declared default. Bool flags absent default to `false`. A
  * tool with no declared flags resolves to `Partial<{}>` ≅ `{}`, i.e.
  * the parameter is functionally absent.
+ *
+ * Note on the runner-injected `precision` slot for `arbprec: true` tools
+ * (ADR-0020): `defineTool` does not preserve the `arbprec: true`
+ * literal in the returned type (the field is `arbprec?: boolean` in
+ * `ToolDefinition`), so the typed-barrel surface cannot statically
+ * lift `precision?: bigint` into `FlagsArgOf<typeof def>` for
+ * arbprec tools. Callers passing `{ precision: 50n }` to the typed
+ * barrel for an arbprec tool with no declared flags work at runtime
+ * (the rn2 fix accepts the flag) but must cast at the type level —
+ * typically `flags as { precision: bigint }` or `as never` — until a
+ * future ADR carries the arbprec literal through `defineTool`'s
+ * generic surface. Meanwhile the loose `wb.run(name, input,
+ * { precision: 50n })` surface accepts the flag without ceremony.
  */
 export type FlagsArgOf<D> =
   D extends { flags?: infer Fl }
@@ -407,12 +435,26 @@ function checkExamplesAgainstSchema<I extends Value, O extends Value, Fl extends
 // Decimal digits, default 50, soft cap 100_000 (a tool may tighten the
 // cap by declaring its own `precision` slot — but the cannot rename or
 // retype it).
-const ARBPREC_PRECISION_FLAG = F.int(
+export const ARBPREC_PRECISION_FLAG = F.int(
   "decimal digits of precision for the output (ADR-0020)",
   { min: 1n, max: 100_000n, default: 50n },
 );
 
-function mergedFlags(
+/**
+ * Merge a tool's declared `flags` with the runner's standard-flag table,
+ * additively folding in any tier-conditional standard flags (today:
+ * `precision` for `arbprec: true` tools, ADR-0020). The result is the
+ * single source of truth for "which flags are admissible on this tool's
+ * CLI surface" and is exported so the in-process surface
+ * (`@workbench/compose`) validates against the same shape — keeping the
+ * byte-identical contract from ADR-0012 honest at both call sites.
+ *
+ * Tools may *override* the `precision` slot when `arbprec: true` (to
+ * tighten the cap) but cannot rename or retype it. Other standard-flag
+ * names are reserved — a tool that declares `version` / `help` / etc.
+ * fails fast at load time.
+ */
+export function mergedFlags(
   toolFlags: FlagSchema,
   arbprec: boolean,
 ): FlagSchema {
@@ -435,6 +477,56 @@ function mergedFlags(
       );
     }
     out[k] = spec;
+  }
+  return out;
+}
+
+/**
+ * The names of every flag the runner contributes to the merged schema
+ * for a tool with the given tier annotation. Used by both the runner
+ * (to derive `toolFlagsTyped` after argv parsing) and `@workbench/compose`
+ * (to derive the explicit-flag map from a partial flags object).
+ *
+ * For `arbprec: true` tools, `precision` is included — even though it
+ * is added by the runner rather than declared by the tool, the tool's
+ * `fn` reads it from `flags.precision` exactly as it would a declared
+ * flag, and the provenance record's `flags` field captures it.
+ */
+export function toolFacingFlagNames(
+  toolFlags: FlagSchema,
+  arbprec: boolean,
+): string[] {
+  const names = new Set<string>(Object.keys(toolFlags));
+  if (arbprec) names.add("precision");
+  return [...names];
+}
+
+/**
+ * The flag schema as the tool's `fn` sees it: declared flags plus any
+ * tier-additive standard flags the runner contributes (today:
+ * `precision` for `arbprec: true` tools, ADR-0020). Standard flags
+ * like `--help` / `--version` / `--schema` are *not* included — those
+ * are CLI-control flags the runner intercepts before the tool's `fn`
+ * runs and have no in-process equivalent.
+ *
+ * `@workbench/compose::runWorkbench` validates a caller's
+ * `partialFlags` against this schema (rather than `def.flags` directly)
+ * so that `wb.hypergeometricPfq(input, { precision: 50n })` succeeds —
+ * the typed barrel's call site sees the same merged surface that the
+ * subprocess CLI does. This is the load-bearing single-source-of-
+ * -truth that closes the lc1 / rn2 wiring gap.
+ */
+export function toolFacingFlags(
+  toolFlags: FlagSchema,
+  arbprec: boolean,
+): FlagSchema {
+  if (!arbprec) return toolFlags;
+  const out: FlagSchema = { ...toolFlags };
+  // A tool may have already declared a tightened precision slot; in
+  // that case the explicit declaration wins (matching `mergedFlags`'s
+  // override semantics).
+  if (!("precision" in out)) {
+    out["precision"] = ARBPREC_PRECISION_FLAG;
   }
   return out;
 }
@@ -490,12 +582,16 @@ export async function runTool<I extends Value, O extends Value, Fl extends FlagS
       );
     }
     const stdFlags = parsed.flags as unknown as StdFlags;
-    // Tool flags are derived by stripping the standard names from the
-    // typed object. The runtime cost is one shallow object copy per
-    // invocation; the type narrowing reflects what the tool author
-    // declared in `def.flags`.
+    // Tool flags are derived by lifting every tool-facing slot out of
+    // the parsed merged-flag object. For tier-additive flags
+    // contributed by the runner (today: `precision` for `arbprec: true`
+    // tools, ADR-0020), the runner injects them into the typed `flags`
+    // the tool's `fn` reads even though the tool itself does not
+    // declare them — the merged-schema convention is the single source
+    // of truth. The runtime cost is one shallow object copy per
+    // invocation.
     const toolFlagsTyped: Record<string, unknown> = {};
-    for (const k of Object.keys(toolFlags)) {
+    for (const k of toolFacingFlagNames(toolFlags, def.arbprec === true)) {
       toolFlagsTyped[k] = (parsed.flags as Record<string, unknown>)[k];
     }
 
@@ -580,7 +676,7 @@ export async function runTool<I extends Value, O extends Value, Fl extends FlagS
     }
     const input = parse(stdinText);
     const explicitToolFlags: Record<string, string> = {};
-    for (const k of Object.keys(toolFlags)) {
+    for (const k of toolFacingFlagNames(toolFlags, def.arbprec === true)) {
       if (parsed.explicit[k] !== undefined) explicitToolFlags[k] = parsed.explicit[k]!;
     }
     const result = await executeToolDef(

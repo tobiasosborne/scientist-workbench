@@ -27,6 +27,7 @@ import {
   executeToolDef,
   explicitStringsFromPartial,
   resolveFlagsForCall,
+  toolFacingFlags,
   type ToolDefinition,
 } from "@workbench/contract";
 import { ToolError, type Value } from "@workbench/protocol";
@@ -76,7 +77,17 @@ export async function runWorkbench<O extends Value = Value>(
   // Apply defaults + type-validate flags. Callers using the typed
   // barrel get this for free at compile time; the loose surface
   // catches bad types here at runtime.
-  const flagSchema = def.flags ?? {};
+  //
+  // The flag schema is the tool's declared flags *plus* any tier-
+  // additive standard flags the runner contributes (today: `precision`
+  // for `arbprec: true` tools, ADR-0020). Validating against
+  // `toolFacingFlags(...)` rather than `def.flags ?? {}` keeps the in-
+  // process surface admissibility-equivalent to the subprocess CLI:
+  // `wb.hypergeometricPfq(input, { precision: 50n })` succeeds, the
+  // bench's `executeToolDef` workaround is no longer needed, and the
+  // ADR-0012 byte-identical contract is restored at the call-site
+  // ergonomic layer.
+  const flagSchema = toolFacingFlags(def.flags ?? {}, def.arbprec === true);
   let resolvedFlags: Record<string, unknown>;
   try {
     resolvedFlags = resolveFlagsForCall(flagSchema, partialFlags);

@@ -43,8 +43,7 @@
 // blobs.
 
 import { readFileSync } from "node:fs";
-import { executeToolDef } from "@workbench/contract";
-import { def as hypergeometricPfqDef } from "../../tools/hypergeometric-pfq/tool.js";
+import { loadWorkbench, typed } from "@workbench/compose";
 import {
   bigcomplexToValue,
   cfromStrings,
@@ -242,25 +241,23 @@ async function main(): Promise<void> {
 
   let out: Value;
   try {
-    // We invoke the tool via `executeToolDef` directly rather than
-    // going through `loadWorkbench()` + `wb.run(...)`. Reason: ADR-0020's
-    // `--precision` flag is merged into the tool's flag schema *only*
-    // by the subprocess runner (`runTool` in `@workbench/contract`).
-    // The in-process surface (`@workbench/compose`'s `runWorkbench`)
-    // validates partial flags against `def.flags` directly — for an
-    // arbprec tool that declares no flags of its own, passing
-    // `{ precision: 50n }` is rejected as an unknown flag. This is a
-    // genuine gap in compose; filed as a follow-up bead. Until that
-    // lands, the bench bypasses the wrapper and calls `executeToolDef`,
-    // whose work-case helper (ADR-0012) is what both surfaces fan out
-    // to anyway. The contract — schema validation in/out, provenance
-    // write — is byte-identical.
-    const result = await executeToolDef(
-      hypergeometricPfqDef,
-      prepared.input,
-      { precision: BigInt(prepared.precision) } as never,
-    );
-    out = result.output;
+    // Invoke the tool through the typed barrel. Per ADR-0012's single-
+    // implementation discipline, both the typed-barrel route and the
+    // subprocess CLI route fan out to `executeToolDef`, so the contract
+    // — schema validation in/out, provenance write — is byte-identical.
+    //
+    // The `precision: bigint` flag is honoured at the typed-barrel
+    // surface after the rn2 fix: `runWorkbench` validates against the
+    // merged tool-facing schema (which includes the runner's
+    // tier-additive `precision` slot for `arbprec: true` tools) rather
+    // than `def.flags` directly. Earlier in the bench's life this
+    // dispatched directly through `executeToolDef` to bypass that gap;
+    // the workaround is now lifted.
+    const workbench = await loadWorkbench();
+    const wb = typed(workbench);
+    out = await wb.hypergeometricPfq(prepared.input as never, {
+      precision: BigInt(prepared.precision),
+    });
   } catch (err) {
     const e = err as Error & { name?: string };
     process.stdout.write(
