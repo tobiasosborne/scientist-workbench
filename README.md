@@ -294,6 +294,11 @@ bun run goldens:check # fail if any current tool output disagrees with a stored 
 
 Failing CI is failing contract.
 
+`bun run check` covers substrate tests and tool-side goldens only. Full bench
+grading (the corpus of 182 MB golden inputs across 14 tools) lives in the
+`scientist-workbench-corpus` sister repo; see ADR-0028 for the migration plan
+and `scripts/bench-grade.sh <tool>` for the convenience shim.
+
 ---
 
 ## File layout
