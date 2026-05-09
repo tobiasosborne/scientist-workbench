@@ -1,0 +1,217 @@
+Follow-up beads from `bench/meijer-g` (hv0.11) — to be filed by the
+orchestrator after merge.
+
+================================================================
+1. P1 — meijer-g dispatcher: Johansson perturbation precision over-reporting
+----------------------------------------------------------------
+Title: tools/meijer-g over-reports `achieved_precision` when Slater
+       Johansson `hmag` perturbation is invoked.
+
+Body:
+  Bench cases tE-G2002-coalesce-{01,02} and tE-besselK-ord{1,2} (and
+  any other Slater-with-perturbation case at integer-spaced poles)
+  emit `achieved_precision: 50` while the actual relative error vs.
+  mpmath at 110 dps is ~1e-14 to ~1e-16 — i.e. the value matches only
+  to single-precision after the perturbation runs.  The dispatcher's
+  contract (ADR-0027 §4 + ADR-0007) forbids over-reporting; the bench
+  v0.1 absorbs this by relaxing tolerances on the affected cases, but
+  the long-term fix is to plumb the perturbation's precision-loss
+  estimate into `achievedPrecision` so the field is honest.
+
+  Reproducer:
+    echo '{"an":[],"ap":[],"bm":[{"re":"1/2","im":"0"},{"re":"3/2","im":"0"}],"bq":[],"z":{"re":"3/2","im":"0"},"precision":50,"request_mode":"numerical-required"}' \
+      | bun tools/meijer-g/tool.ts | jq '.fields.achieved_precision, .fields.value'
+    # Reports achieved_precision=50; mpmath at 110 dps shows ~14 dps.
+
+Acceptance:
+  - The dispatcher's `achievedPrecision` reflects the actual achievable
+    precision after Johansson perturbation, not the requested precision.
+  - The bench's `tE-` tolerances tighten back to `1e-(precision-12)`
+    (per VERIFIER-PROTOCOL.md tier-E ladder).
+
+Depends on: hv0.10 (closed)
+Reference: bench/meijer-g/reference/generate-truth.py NOTE blocks
+
+================================================================
+2. P1 — meijer-g dispatcher: 3-pole integer-spaced coalescence hangs
+----------------------------------------------------------------
+Title: tools/meijer-g hangs on 3+ pole integer-spaced bm coalescence.
+
+Body:
+  G^{3,0}_{0,3}(_; 0, 1, 2 | z) and similar 3-slot integer-spaced
+  configurations cause the dispatcher's Slater path to either run
+  forever or blow up the precision-bump retry budget.  mpmath itself
+  also fails to converge (`hypercomb() failed to converge to ...`) on
+  some related shapes, suggesting Johansson's `hmag` perturbation
+  with multiple coalescent residues needs the higher-order polygamma
+  treatment that v0.1 deferred.
+
+  Bench v0.1 omits these cases from the corpus; reinstating them is
+  gated on this fix.
+
+Reproducer:
+  timeout 30 sh -c 'echo "..." | bun tools/meijer-g/tool.ts' → 143
+
+Acceptance:
+  - 3-pole integer-spaced coalescence terminates within 5s @ 50 dps.
+  - The bench's tE-G3003-coalesce-012, tE-an-coalesce-1, tE-mixed-1,
+    tE-near-coalesce-1 (currently removed) are reinstated.
+
+Depends on: hv0.10 (closed)
+Reference: bench/meijer-g/reference/generate-truth.py NOTE blocks
+
+================================================================
+3. P2 — meijer-g dispatcher: large-|z| Slater Series-2 precision ceiling
+----------------------------------------------------------------
+Title: tools/meijer-g Slater Series-2 loses ~10 dps at |z|≈16.
+
+Body:
+  Bench case tD-G2002-zlarge-2 (`G^{2,0}_{0,2}(_; 1/2, -1/2 | 16) =
+  2 K_1(8)`) returns rel=9e-10 vs mpmath at 110 dps when expecting
+  `1e-(precision-8)` ≈ 1e-42.  Slater Series-2 at |z|=16 accumulates
+  significant roundoff in the inner pFq.  The dispatcher should
+  either bump working precision earlier OR cross to Braaksma earlier;
+  the asymptotic crossover threshold may need tuning.
+
+Acceptance:
+  - tD-G2002-zlarge-2 tolerance tightens to `1e-40` per the spec.
+
+Depends on: hv0.10 (closed)
+Reference: bench/meijer-g/reference/generate-truth.py:tD-G2002-zlarge-2
+
+================================================================
+4. P2 — meijer-g dispatcher: rational-real BigComplex parameters refused on symbolic-required
+----------------------------------------------------------------
+Title: tools/meijer-g symbolic-required path doesn't admit rational-real
+       BigComplex parameters.
+
+Body:
+  `tools/meijer-g/tool.ts::bigcomplexToSymbolicValue` only converts
+  integer-real BigComplex to `int(n)`.  Rational-real values like
+  `1/2` stay as `bigcomplex(1/2)` and the symbolic dispatch table's
+  `lit-rat` slot match never fires (the `isRationalEqual` check at
+  `packages/meijer-core/src/dispatch.ts:302` requires `kind=rational`
+  or `kind=integer`, not `kind=tagged 'bigcomplex'`).
+
+  Effect: `request_mode = "symbolic-required"` cases with rational
+  parameters refuse with `meijer-g/symbolic-required-no-match` even
+  when a literal-rational rule would otherwise match.
+
+  Bench v0.1 documents this with Tier-A symbolic-required cases
+  using integer-only parameters; rational-symbolic tests can be
+  added once `bigcomplexToSymbolicValue` widens to rational-real.
+
+Acceptance:
+  - `bigcomplexToSymbolicValue` recognises rational-real BigComplex
+    (e.g. via `bigfloatToRationalIfExact`) and emits `rat(p,q)` Values.
+  - `tA-sym-arctan-z1` (or similar rational-param symbolic case)
+    passes with `kind=symbolic`.
+
+Depends on: hv0.10 (closed)
+Reference: tools/meijer-g/tool.ts:210-235 (bigcomplexToSymbolicValue)
+
+================================================================
+5. P3 — bench/meijer-g: AST-level multi-point symbolic equality
+----------------------------------------------------------------
+Title: bench/meijer-g verifier doesn't evaluate symbolic candidates.
+
+Body:
+  Per `tstournament/.../problem-13/VERIFIER-PROTOCOL.md §"symbolic
+  check"`, a symbolic candidate's `expr` should be evaluated at K=20
+  random complex points and matched against the expected RHS at high
+  precision.  The bench v0.1 verifier (golden/verify.py) only checks
+  that the rule field is non-empty (`symbolic_rule_present`); the
+  AST evaluator lives in the tool, not the verifier.
+
+  This is honest scope: a wrong-but-equivalent symbolic candidate
+  (e.g. `arctan(√z)` vs `2·arctan(√(z/4))`) would currently pass the
+  bench.
+
+Acceptance:
+  - Verifier evaluates `candidate.expr` and `expected_rhs` at K=20
+    random points via mpmath-equivalent AST evaluator.
+  - Tier 0 / A / B symbolic outputs are checked by value not by
+    rule-id presence.
+
+Depends on: hv0.11 (this bead's parent)
+Reference: bench/meijer-g/golden/verify.py:_check_method_admissible
+
+================================================================
+6. P3 — bench/meijer-g: 200-case Tier H LCG sweep
+----------------------------------------------------------------
+Title: bench/meijer-g Tier H is cross-cutting, not 200 separate cases.
+
+Body:
+  The bead-spec (hv0.11) calls for 200 LCG-driven Tier-H cases at
+  `request_precision=50`, time budget `≤ 1.5s/case`.  v0.1 ships the
+  cross-cutting Tier-H structure (re-uses Tier C/D/E/F cases with
+  the speed-gate flag set via `MEIJERG_BENCH_CHECK_SPEED=1`); the
+  full 200-case sweep is deferred.
+
+  This is the `bench/hypergeometric-pfq` precedent — Tier H not as a
+  separate set of cases but as a flag on existing cases.  Adding the
+  full sweep would broaden coverage but doesn't change the discrimination
+  quality of the existing tiers.
+
+Acceptance:
+  - 200 LCG-driven Tier-H cases land in `tier-h.json` (separate from
+    the main inputs.json + expected.json).
+  - Each case completes within 1.5s/case at 50 dps; failures land
+    in a follow-up bead.
+
+Depends on: hv0.11 (this bead's parent)
+Reference: bench/meijer-g/PROMPT.md §"Test set tiers"
+
+================================================================
+7. P2 — meijer-g dispatcher: speed-gate failures on 4 cases
+----------------------------------------------------------------
+Title: tools/meijer-g exceeds 1.5s/case at 50 dps on four bench cases.
+
+Body:
+  Running the bench with `MEIJERG_BENCH_CHECK_SPEED=1` (the cross-
+  cutting Tier H speed gate from VERIFIER-PROTOCOL.md) finds four
+  cases that exceed 1.5s/case at 50 dps:
+
+    * t0-G1222-arctan-z3       — 1753 ms (symbolic-required: rule
+                                 match should be ≪ 1ms; the cost
+                                 must be the cas-core canonicalisation
+                                 and Γ-expansion of the rewrite)
+    * tB-erfc-z3               — 1606 ms (numerical Slater path)
+    * tB-erfc-zhalf            — 1614 ms (numerical Slater path)
+    * tD-G2002-zlarge-2        — 6670 ms (Slater Series-2 at |z|=16,
+                                 inner pFq with many terms)
+
+  These are NOT tier-H regressions blocking the bench; the bench
+  ships green at the value-accuracy / shape / method-admissible
+  contract.  But the speed gate exposes implementation room.
+
+Acceptance:
+  - All four cases complete within 1500ms at 50 dps.
+  - The bench's tier-h.json subset passes
+    `MEIJERG_BENCH_CHECK_SPEED=1`.
+
+Depends on: hv0.10 (closed)
+Reference: bench/meijer-g/golden/tier-h.json
+
+================================================================
+8. P3 — bench/meijer-g: method-agreement audit at scale
+----------------------------------------------------------------
+Title: bench/meijer-g method-agreement audit only spot-checks.
+
+Body:
+  Per the bead-spec, on inputs where multiple lanes apply, forcing each
+  via `--force-method=<lane>` should produce values that agree to user
+  precision.  v0.1 includes 8 hand-curated agreement cases in the
+  tool's unit tests (`tools/meijer-g/tool.test.ts`); a bench-wide audit
+  driver that loops over every Tier C/D/E/F case is deferred.
+
+  When implemented, the audit would write disagreements to
+  `bench/meijer-g/method-agreement-audit.log` for follow-up.
+
+Acceptance:
+  - `bench/meijer-g/run-audit.ts` driver loops every applicable case
+    over `force_method ∈ {slater, contour, asymptotic}` and asserts
+    pairwise agreement.
+
+Depends on: hv0.11 (this bead's parent)
+Reference: bench/meijer-g/PROMPT.md §"Why this bench does not test"
