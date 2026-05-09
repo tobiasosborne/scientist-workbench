@@ -131,3 +131,31 @@ export {
 } from "./dispatch-types.js";
 
 export { ALL_RULES, meijergSymbolic } from "./dispatch.js";
+
+// -----------------------------------------------------------------------------
+// Layer 7 — top-level dispatcher (ADR-0027)
+// -----------------------------------------------------------------------------
+//
+// Composes Layers 3 (Slater), 4 (symbolic), 5 (contour), 6
+// (asymptotic) into a single integrated evaluator with cost-ascending
+// dispatch and honest refusal. The pre-filters are exported
+// individually for callers that want to introspect "which lanes
+// would apply?" without invoking the dispatcher (e.g. the wire
+// tool's request-mode handling, the method-agreement self-test).
+
+export {
+  type DispatchMethod,
+  type ForceMethod,
+  type MeijerGDispatchOptions,
+  type MeijerGDispatchResult,
+  type MeijerGNumericalSuccess,
+  type MeijerGRefusal,
+  type MeijerGSymbolicSuccess,
+  type RequestMode,
+  type RuledOutMethod,
+  canUseAsymptotic,
+  canUseContour,
+  canUseSlater,
+  canUseSymbolic,
+  meijergDispatch,
+} from "./dispatcher.js";

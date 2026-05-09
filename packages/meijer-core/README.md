@@ -1,12 +1,13 @@
 # `@workbench/meijer-core`
 
 Algorithmic substrate for the Meijer G-function `G^{m,n}_{p,q}`.
-Layers 3, 4, 5, and 6 of the seven-layer stack laid out in
+Layers 3, 4, 5, 6, **and 7** of the seven-layer stack laid out in
 `tstournament/ts-bench-infra/problems/13-meijer-g/PLAN.md`:
 - Layer 3 (Slater residue summation, arbprec numerical),
 - Layer 4 (Adamchik–Marichev + Roach symbolic dispatch),
 - Layer 5 (Mellin–Barnes contour quadrature, arbprec numerical),
-- Layer 6 (Braaksma far-field asymptotic, arbprec numerical, v0.1).
+- Layer 6 (Braaksma far-field asymptotic, arbprec numerical, v0.1),
+- Layer 7 (top-level dispatcher composing 3 + 4 + 5 + 6, ADR-0027).
 
 ## What this package exposes
 
@@ -52,6 +53,8 @@ Public API:
 | `meijergContour`      | Mellin-Barnes contour entry point. Auto-selects c and T; structured refusal on non-convergent contours / overlapping pole clusters.|
 | `meijergSymbolic`     | Symbolic-dispatch entry point. Pattern-table driven; emits closed-form AST in the special-function vocabulary or `no-known-reduction`. ADR-0025.|
 | `meijergAsymptotic`   | **Braaksma far-field asymptotic** (v0.1, ADR-0026). Principal-sector algebraic dominant asymptotic for `\|z\| → ∞`; truncates the n-pole Slater Series 2 at its optimal index per Olver §3.7. Structured refusal on Stokes lines, secondary sectors, and `\|z\| < 1`.|
+| `meijergDispatch`     | **Top-level dispatcher** (Layer 7, ADR-0027). Composes `meijergSymbolic` + `meijergSlater` + `meijergContour` + `meijergAsymptotic` with cost-ascending dispatch (symbolic → Slater → contour → asymptotic → refuse). Returns one of three honest output shapes (symbolic AST / numerical record / structured refusal). Branch convention pinned at `arg z ∈ (−π, π]`. Optional Schwarz-reflection self-test. |
+| `canUseSymbolic` / `canUseSlater` / `canUseContour` / `canUseAsymptotic` | Per-lane pre-filter predicates. Each returns `{ ok, reason }`; the dispatcher reads them before invoking the layer so refusals carry honest reasons. |
 | `classifySector`      | Three-way sector classification (`principal` / `stokes` / `secondary`) used by the asymptotic kernel.|
 | `asymptoticTerms`     | Generator yielding successive terms of the per-pole asymptotic series. Low-level diagnostic primitive.|
 | `findOptimalTruncation` | Reads the term magnitudes off `asymptoticTerms` and returns the optimal-truncation index, partial sum, and error estimate.|
@@ -151,6 +154,64 @@ classes:
 ADR-0026 pins the design; `docs/worklog/078-meijerg-asymptotic.md`
 ships the layer.
 
+## Dispatcher (Layer 7, ADR-0027)
+
+`meijergDispatch(symbolicParams, numericalParams, zValue, z, precision, opts)`
+composes the four lower layers into a single integrated evaluator
+with cost-ascending dispatch:
+
+```ts
+import { meijergDispatch } from "@workbench/meijer-core";
+import { cfromInts } from "@workbench/bigfloat";
+import { int, sym } from "@workbench/protocol";
+
+// G^{1,0}_{0,1}(_; 0 | 2) = e^{-2}.  Symbolic match wins.
+const symbolicParams = { an: [], ap: [], bm: [int(0n)], bq: [] };
+const numericalParams = {
+  an: [], ap: [], bm: [cfromInts(0n, 0n, 256)], bq: [],
+};
+const z = cfromInts(2n, 0n, 256);
+const r = meijergDispatch(
+  symbolicParams, numericalParams,
+  sym("z"),              // symbolic z-view (AST)
+  z,                     // numerical z (BigComplex)
+  50,                    // precision (decimal digits)
+);
+if (r.kind === "symbolic") {
+  console.log(r.expr, r.method);  // "symbolic-dispatch"
+}
+```
+
+Dispatch order (cost-ascending, ADR-0027 §1):
+
+1. **symbolic** — Adamchik–Marichev rule walk; < 1 ms when matches.
+2. **Slater** — residue summation; refuses in the `|z|≈1` quarantine band.
+3. **contour** — Mellin–Barnes vertical contour; refuses on
+   `2(m+n) ≤ p+q`, on overlapping pole clusters, and (predicate
+   strengthening) on one-sided clusters at `|z| ≥ 1`
+   (cost-unbound regime).
+4. **asymptotic** — Braaksma far-field; refuses outside the
+   principal sector and for `|z| < 1`.
+5. **refuse** — emits the integrated `out-of-region` envelope.
+
+Each lane's pre-filter (`canUseSymbolic`, `canUseSlater`,
+`canUseContour`, `canUseAsymptotic`) decides "applicable here?"
+before any numerical work runs. The dispatch loop is a flat
+switch over four lanes; no bespoke per-layer envelope handling.
+
+The output is a discriminated union (`MeijerGDispatchResult`):
+`MeijerGSymbolicSuccess | MeijerGNumericalSuccess | MeijerGRefusal`.
+The wire wrapper `tools/meijer-g` exposes this surface to the
+value protocol; ADR-0027 §4 pins the wire shapes.
+
+`opts.forceMethod` short-circuits the cascade to a single lane
+(useful for the method-agreement self-test). `opts.schwarzCheck`
+enables the Schwarz-reflection invariant check on numerical
+success.
+
+ADR-0027 pins the design; `docs/worklog/080-meijerg-dispatcher.md`
+ships the layer.
+
 ## What this package does *not* do
 
 - **Stokes-line connection coefficients** (`hv0.9.2`) and the
@@ -160,8 +221,8 @@ ships the layer.
 - **Secondary-sector handling** for `|arg z| > π/2 − π/64`
   (`hv0.9.5`).
 - **Symmetric `|z| → 0` asymptotic** for `n = 0` shapes (`hv0.9.4`).
-- **Top-level orchestration** (Layer 7 — `hv0.10`). `tools/meijer-g`
-  will run symbolic → Slater → contour → asymptotic → refuse.
+- ~~**Top-level orchestration** (Layer 7 — `hv0.10`).~~ **Shipped:**
+  see Dispatcher section above. ADR-0027 + worklog 080.
 - **Steepest-descent contour deformation.** The contour layer uses a
   vertical line (parallel to the imaginary axis), the simplest contour
   that admits the v0.1 algorithm. Saddle-point deformation

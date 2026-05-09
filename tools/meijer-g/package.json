@@ -1,0 +1,13 @@
+{
+  "name": "@workbench/tool-meijer-g",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@workbench/protocol": "workspace:*",
+    "@workbench/contract": "workspace:*",
+    "@workbench/meijer-core": "workspace:*",
+    "@workbench/bigfloat": "workspace:*",
+    "@workbench/cas-core": "workspace:*"
+  }
+}

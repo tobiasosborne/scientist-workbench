@@ -309,6 +309,17 @@
         "@workbench/protocol": "workspace:*",
       },
     },
+    "tools/meijer-g": {
+      "name": "@workbench/tool-meijer-g",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/bigfloat": "workspace:*",
+        "@workbench/cas-core": "workspace:*",
+        "@workbench/contract": "workspace:*",
+        "@workbench/meijer-core": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+      },
+    },
     "tools/meijer-g-asymptotic-only": {
       "name": "@workbench/tool-meijer-g-asymptotic-only",
       "version": "0.1.0",
@@ -592,6 +603,8 @@
     "@workbench/tool-linalg-svd": ["@workbench/tool-linalg-svd@workspace:tools/linalg-svd"],
 
     "@workbench/tool-linsolve-q": ["@workbench/tool-linsolve-q@workspace:tools/linsolve-q"],
+
+    "@workbench/tool-meijer-g": ["@workbench/tool-meijer-g@workspace:tools/meijer-g"],
 
     "@workbench/tool-meijer-g-asymptotic-only": ["@workbench/tool-meijer-g-asymptotic-only@workspace:tools/meijer-g-asymptotic-only"],
 

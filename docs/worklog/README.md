@@ -90,6 +90,7 @@ write the frictions and the dead ends as well as the wins.
 | 077 | [Tanh-sinh quadrature precision floor resolved — substrate-div integrand-contract bug](077-tanh-sinh-fixed.md) | 2026-05-08 | scientist-workbench-6f8 (resolved); ADR-0024 (shipped) |
 | 078 | [`meijer-core` Braaksma asymptotic (Layer 6) shipped (`hv0.9`)](078-meijerg-asymptotic.md) | 2026-05-08 | scientist-workbench-hv0.9 (closed); ADR-0026 |
 | 079 | [`bench/hypergeometric-pfq` tier-graded battery shipped (`hv0.4`)](079-bench-hypergeometric-pfq.md) | 2026-05-09 | scientist-workbench-hv0.4 (closed) |
+| 080 | [`tools/meijer-g` top-level dispatcher (Layer 7) shipped (`hv0.10`)](080-meijerg-dispatcher.md) | 2026-05-09 | scientist-workbench-hv0.10 (closed); ADR-0027 |
 
 ## How to add a new shard
 
