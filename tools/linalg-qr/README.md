@@ -71,7 +71,7 @@ rows of `R` are exactly zero when `m > n`).
 
 `reconstruction_error` and `orthogonality_error` are the candidate's
 *own self-report* on its own quality. The bench's verifier
-(`bench/linalg-qr/golden/verify.py`) recomputes both and rejects the
+(`scientist-workbench-corpus/benchmarks/linalg-qr/golden/verify.ts`) recomputes both and rejects the
 candidate if the reported value disagrees with the recomputation by
 more than `1e-6` relative — agent-honest is *enforced*, not just
 convention.
@@ -184,7 +184,9 @@ FFI to LAPACK DGEQRF (bead `e7y`); cross-platform determinism guarantee
 
 ## Validation
 
-`bench/linalg-qr/` — 56-case golden battery, 392 invariant assertions
+Bench corpus lives in [`scientist-workbench-corpus/benchmarks/linalg-qr/`](../../../scientist-workbench-corpus/benchmarks/linalg-qr/) (ADR-0028 migration).
+
+56-case golden battery, 392 invariant assertions
 (7 checks per case):
 
 1. `no_tool_error` — clean exit.
