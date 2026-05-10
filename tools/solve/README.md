@@ -1,17 +1,21 @@
 # solve
 
 Top-level Mathematica `Solve[]`-class dispatcher (v0.1: linear /
-univariate-poly lanes). Given a list of equations and a list of
-unknowns, returns the solution set as a value-protocol-shaped record
-per ADR-0017.
+univariate-poly / multivariate-zero-dim / single-head-transcendental
+lanes). Given a list of equations and a list of unknowns, returns the
+solution set as a value-protocol-shaped record per ADR-0017.
 
 This is the user-facing entry point of solve-suite-v1: a single tool
 covering the common univariate-polynomial case (radicals up to deg 4,
-honest refusal at deg ≥ 5) and the linear-system-over-ℚ case (exact
-Bareiss elimination, with sound under-determined and inconsistent
-verdicts). Multivariate-non-zero-dim, transcendental, and parametric
-inputs surface as boundary tags pending the relevant substrate
-(Gröbner, transcendental invert-and-substitute, parametric branching).
+`Root[poly, k]` for deg ≥ 5 real, honest refusal on complex algebraic
+roots), the linear-system-over-ℚ case (exact Bareiss elimination, with
+sound under-determined and inconsistent verdicts), and — as of
+ADR-0029 / bead `x8d` — the **multivariate zero-dimensional polynomial
+case** via Gröbner basis (Buchberger + FGLM + shape lemma in
+`@workbench/groebner`). Single-head transcendental patterns
+(`head(x) = c`) ship with branch-honest output. Positive-dimensional,
+shape-lemma-failure, parametric, and compound-transcendental inputs
+surface as boundary tags.
 
 ## Input
 
@@ -55,8 +59,16 @@ unknowns from `vars`. Heads outside this vocabulary (sin, exp, sqrt,
     emitted as `Root[poly, k]` solutions on the happy path per
     ADR-0018; this refusal fires only for the mixed-real-complex
     case until complex algebraic naming ships.)
-  - `solve/multivariate-non-zero-dim` — nonlinear multivariate
-    polynomial system (Gröbner-basis dispatch is bead pending).
+  - `solve/multivariate-non-zero-dim` — multivariate polynomial system
+    whose ideal has positive Krull dimension (the Gröbner stack
+    computes the DRL basis but no pure power of at least one variable
+    appears as a leading monomial; CLO Ch.5 §3 Theorem 6). Payload
+    includes `groebner_basis` for downstream introspection.
+  - `solve/shape-lemma-failure` — zero-dimensional ideal whose lex
+    Gröbner basis is not in shape position (per Becker-Mora-Marinari-
+    Traverso 1994 §2). Q2 of RESEARCH-NOTE-x8d settled on no
+    fixed-shift retry in v0.1; the refusal is the honest boundary.
+    A future bead may add a deterministic multi-shift fallback.
   - `solve/parametric-non-trivial` — equation mentions a symbol
     outside `vars`.
   - `solve/foreign-vocabulary` — head outside `+ − * / ^`, or
@@ -80,6 +92,9 @@ list of symbols.
    - **linear** if every equation has total degree ≤ 1 in the
      unknowns AND no cross-variable products (`x · y`);
    - **univariate-poly** for single equation in single variable;
+   - **multivariate-poly** for multivariate nonlinear systems (bead
+     `x8d` / ADR-0029); the Gröbner stack inside the dispatcher then
+     decides zero-dim vs. positive-dim;
    - **unsupported** otherwise.
 4. Dispatch via `@workbench/solve::dispatchClassified`:
    - linear → `bareissSolve` (exact ℚ via fraction-free Bareiss).
@@ -98,6 +113,25 @@ list of symbols.
        `@workbench/real-roots::isolateRealRoots`).
      - deg ≥ 5 (one or more complex roots) → refusal
        `solve/complex-roots-not-yet-named`.
+   - multivariate-poly → `solveGroebner` (in `@workbench/groebner`):
+     - Compute reduced DRL Gröbner basis via Buchberger + sloppy sugar
+       + Gebauer-Möller pruning + interreduction.
+     - Test zero-dimensionality (pure-power leading monomial test;
+       ordering-independent per CLO Ch.5 §3 Theorem 6 + Macaulay).
+       Failure ⟹ refuse with `solve/multivariate-non-zero-dim`,
+       payload includes the DRL basis.
+     - On zero-dim, FGLM-convert DRL → lex (Faugère-Gianni-Lazard-Mora
+       1993).
+     - Detect shape position (Becker-Mora-Marinari-Traverso 1994 §2);
+       failure ⟹ refuse with `solve/shape-lemma-failure`.
+     - Factor `g_n(x_n)` (the univariate-in-last-variable element of
+       the lex GB) via `factorRatQ`; dispatch each irreducible factor
+       through the same deg-≤4 / deg-≥5 / complex-refusal path as the
+       univariate-poly lane.
+     - Evaluate `h_i(x_n)` (the per-variable shape polynomials) at
+       each root via Horner; emit one `Solution { bindings, branches:
+       [] }` per root. `completeness` is `"complete"` (zero-dim ⟹
+       finite solution set).
 
    Multiplicities preserved per factor: a triple root appears 3
    times in the `solutions` list (each as a separate one-binding
@@ -178,7 +212,16 @@ solution set for every committed case.
 
 ## Out of scope (v0.1)
 
-- Multivariate non-zero-dim systems (Gröbner pending).
+- Multivariate **positive-dim** systems (refuse with
+  `solve/multivariate-non-zero-dim` carrying the DRL Gröbner basis;
+  Krull dimension itself is not computed).
+- Multivariate ideals where the lex Gröbner basis is not in shape
+  position (refuse with `solve/shape-lemma-failure`; Q2 of
+  RESEARCH-NOTE-x8d settled on no fixed-shift retry in v0.1).
+- Multivariate ideals whose `g_n` factors include irreducible deg ≥ 5
+  with complex roots (refuse with `solve/complex-roots-not-yet-named`,
+  shared with the univariate lane; alg-num v0.1 names real algebraic
+  numbers only).
 - Inequalities (`solve/inequality` reserved).
 - Compound transcendental patterns `head(g(x)) = c` with non-trivial `g`
   (bead `37r`; the simple `head(x) = c` case is shipped — see above).
@@ -189,6 +232,10 @@ solution set for every committed case.
 - ADR-0017 — solution-set value-protocol shape.
 - ADR-0018 — `Root[poly, k]` for deg-≥5 real roots.
 - ADR-0019 — bench discipline.
+- ADR-0029 — multivariate `solve` via Gröbner basis (the design ADR
+  for the multivariate-poly lane).
+- RESEARCH-NOTE-x8d.md (`docs/ground-truth/groebner/`) — Phase 1
+  primary-source audit underpinning ADR-0029.
 - Cox-Little-O'Shea, *Ideals, Varieties, and Algorithms* — Buchberger
-  background for the multivariate path.
+  Ch.2; Finiteness Theorem Ch.5 §3.
 - Galois 1832 — quintic irreducibility precludes general radicals.

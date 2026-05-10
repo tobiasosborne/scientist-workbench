@@ -1,5 +1,5 @@
 {
-  "name": "@workbench/solve",
+  "name": "@workbench/groebner",
   "version": "0.1.0",
   "type": "module",
   "main": "src/index.ts",
@@ -9,9 +9,8 @@
   "dependencies": {
     "@workbench/cas-core": "workspace:*",
     "@workbench/poly-factor": "workspace:*",
-    "@workbench/protocol": "workspace:*",
     "@workbench/alg-num": "workspace:*",
     "@workbench/real-roots": "workspace:*",
-    "@workbench/groebner": "workspace:*"
+    "@workbench/protocol": "workspace:*"
   }
 }

@@ -749,6 +749,55 @@ if (polySolveResult.kind === "record") {
   }
 }
 
+// Multivariate zero-dim probe — (x²+y²−5, x+y−3) over ℚ[x,y]. The
+// Gröbner stack (ADR-0029, bead x8d) handles this: compute reduced
+// DRL Gröbner basis via Buchberger + sloppy sugar + Gebauer-Möller
+// pruning; test zero-dimensionality (pure-power LM check, CLO
+// Ch.5 §3 Theorem 6); convert DRL → lex via FGLM; check shape
+// position; factor g_n(x_n) and emit one solution per root. The
+// system has two solutions: (x=1, y=2) and (x=2, y=1).
+const mvSolveResult = await wb.solve({
+  kind: "record",
+  fields: {
+    eqs: list([
+      // x² + y² − 5 = 0
+      expr("-", [
+        expr("+", [
+          expr("^", [sym("x"), int(2n)]),
+          expr("^", [sym("y"), int(2n)]),
+        ]),
+        int(5n),
+      ]),
+      // x + y − 3 = 0
+      expr("-", [expr("+", [sym("x"), sym("y")]), int(3n)]),
+    ]),
+    vars: list([sym("x"), sym("y")]),
+  },
+});
+if (mvSolveResult.kind === "record") {
+  const sols = mvSolveResult.fields["solutions"];
+  if (sols?.kind === "list") {
+    const summaries: string[] = [];
+    for (const sol of sols.items) {
+      if (sol.kind !== "record") continue;
+      const bindings = sol.fields["bindings"];
+      if (bindings?.kind !== "list") continue;
+      const pieces: string[] = [];
+      for (const b of bindings.items) {
+        if (b.kind !== "record") continue;
+        const v = b.fields["var"], val = b.fields["value"];
+        if (v?.kind !== "symbol") continue;
+        const valStr = val?.kind === "integer" ? val.value :
+                       val?.kind === "rational" ? `${val.num}/${val.den}` :
+                       "?";
+        pieces.push(`${v.name}=${valStr}`);
+      }
+      summaries.push(`{${pieces.join(", ")}}`);
+    }
+    console.log(`  multivariate { x²+y²=5, x+y=3 }: ${summaries.join(", ")}`);
+  }
+}
+
 // -----------------------------------------------------------------------------
 // 17. poly-roots — symbolic roots over ℚ (radicals deg ≤ 4 + Root[] deg ≥ 5)
 // -----------------------------------------------------------------------------

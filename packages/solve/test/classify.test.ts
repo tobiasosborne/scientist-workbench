@@ -91,25 +91,29 @@ describe("classifyInput", () => {
     }
   });
 
-  test("nonlinear multivariate → unsupported (multivariate-non-zero-dim)", () => {
-    // x² + y² - 1 = 0  (nonlinear, two-variable circle)
+  test("nonlinear multivariate → multivariate-poly (post-x8d)", () => {
+    // x² + y² - 1 = 0  (nonlinear, two-variable circle). After
+    // ADR-0029 the classifier routes this to the Gröbner lane
+    // (multivariate-poly), not to the unsupported catch-all.
     const eq = polyAdd(
       polyAdd(polyMul(x, x, RAT_RING), polyMul(y, y, RAT_RING), RAT_RING),
       c(-1),
       RAT_RING,
     );
     const result = classifyInput([eq], ["x", "y"]);
-    expect(result.kind).toBe("unsupported");
-    if (result.kind === "unsupported") {
-      expect(result.reasonClass).toBe("multivariate-non-zero-dim");
+    expect(result.kind).toBe("multivariate-poly");
+    if (result.kind === "multivariate-poly") {
+      expect(result.polys.length).toBe(1);
+      expect(result.vars).toEqual(["x", "y"]);
     }
   });
 
-  test("bilinear x · y = 1 → not linear (cross-term)", () => {
-    // x · y - 1 = 0  ; classifier should NOT flag this as linear
+  test("bilinear x · y = 1 → multivariate-poly (cross-term, not linear)", () => {
+    // x · y - 1 = 0 ; classifier should NOT flag as linear, and (post-
+    // x8d) routes to the Gröbner lane.
     const eq = polyAdd(polyMul(x, y, RAT_RING), c(-1), RAT_RING);
     const result = classifyInput([eq], ["x", "y"]);
-    expect(result.kind).toBe("unsupported");
+    expect(result.kind).toBe("multivariate-poly");
   });
 
   test("foreign symbol → unsupported (parametric-non-trivial)", () => {
