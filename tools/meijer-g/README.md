@@ -191,12 +191,16 @@ echo '<canonical input json>' | bun tools/meijer-g/tool.ts
 
 ## Validation
 
-`bench/meijer-g/` — 91-case golden battery, ~434 invariant assertions,
-nine tiers (A linear-boundary → I method-agreement). Oracles: mpmath at
+The golden battery has been migrated to the corpus (ADR-0028):
+`scientist-workbench-corpus/benchmarks/meijer-g/` — 95-case battery,
+450 invariant assertions, nine tiers (0 closed-form anchors through
+G refusal envelope + H cross-cutting speed gate). Oracles: mpmath at
 110 dps + Wolfram at 110 dps (dual-oracle per ADR-0019 §3); Tier-0
-symbolic anchors re-evaluated at 200 dps. Mutation-proven: sign /
-prefactor / truncation / sector / recurrence perturbations cause RED in
-the verifier for every tier.
+symbolic anchors re-evaluated at 200 dps. Mutation-proven via
+`golden/test_mutations.py`.
+
+To run: `PATH=/home/tobias/.amp/bin:$PATH bash scripts/bench-grade.sh meijer-g`
+from the workbench root.
 
 35 wire tests (`tool.test.ts` + the Schwarz-reflection self-test on
 every numerical success case in the batch).
