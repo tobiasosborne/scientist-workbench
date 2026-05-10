@@ -147,23 +147,24 @@ Output (pretty-printed):
 
 ## Validation
 
-`bench/poly-factor-q/` — 56-case golden battery covering tiers A (shape
-edges) through H (refusals):
+Corpus bench `benchmarks/poly-factor-q/` (ADR-0028) — 56-case golden
+battery, eight tiers:
 
-| Tier | Description |
-|---|---|
-| A | Shape edges: deg-0 (constant), deg-1 (already irreducible) |
-| B | Irreducible deg 2 over ℚ |
-| C | Reducible: products of linear / quadratic factors |
-| D | Multiplicity > 1 (square factors) |
-| E | Rational content ≠ 1 (scalar extraction) |
-| F | Large degree (deg 16, BZ subset-sum stress) |
-| G | Multivariate / transcendental input (boundary tags) |
-| H | Refusals: zero polynomial, malformed input |
+| Tier | Cases | Description |
+|---|---|---|
+| A — shape edges | 6 | deg-1 (irreducible, with content); deg-2 (irreducible, splits, perfect square) |
+| B — random low-degree | 12 | deg 2..10 small-coefficient primitive ℤ[x]; mixed reducible/irreducible |
+| C — cyclotomic Φ_n | 8 | Φ_3, Φ_5, Φ_7, Φ_8, Φ_12, Φ_15, Φ_24, Φ_30 — all irreducible over ℚ |
+| D — Swinnerton-Dyer | 6 | minimal poly of √p_1+…+√p_n; irreducible but 2^n modular factors |
+| E — multiplicities | 8 | (x−1)^k for k=2,3,5,7; mixed-multiplicity products |
+| F — large coefficients | 6 | deg-8,12,15 products of distinct linears; Mignotte-bound-touching cases |
+| G — content/scaling | 6 | integer, rational, negative, large content; combined cases |
+| H — refusals | 4 | sin(x), 1/x, sqrt(x), x*y → tagged "poly-factor-q/non-polynomial" |
 
-**Mutation-proven**: the verifier's `reconstruction` check is proven
-to catch mutations (wrong factor, wrong multiplicity, wrong content,
-missing factor, extra factor) with a RED gate.
+**5-check verifier (verify.ts):** shape, product_equals_input (exact
+BigInt rational reconstruction), each_factor_irreducible (rational-root
+proxy), factors_primitive (BigInt GCD), factors_positive_leading.
 
-The bench references are in `bench/poly-factor-q/` (inputs.json,
-expected.json, verify.py, test_mutations.py).
+**ported_from** `scientist-workbench/bench/poly-factor-q@89b4bcd`.
+
+**Corpus grader**: `cd scientist-workbench-corpus && bun src/cli.ts grade scientist-workbench poly-factor-q`
