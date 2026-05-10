@@ -136,8 +136,9 @@ value is part of the tool's input identity).
 
 ## Validation
 
-`bench/hypergeometric-pfq/` — 53-case golden battery, ~282 invariant
-assertions (worklog 079):
+Bench corpus: `../scientist-workbench-corpus/benchmarks/hypergeometric-pfq/`
+(migrated from `bench/hypergeometric-pfq/` per ADR-0028). 53-case golden
+battery, 302 invariant assertions (worklog 079):
 
 | Tier | Cases | Description |
 |---|---|---|
