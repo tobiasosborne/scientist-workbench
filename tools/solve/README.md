@@ -140,7 +140,14 @@ below corrects the earlier draft that treated this lane as deferred.
 
 ## Validation
 
-`bench/solve/` — 100-case golden battery (ADR-0019 §1+§2 bench discipline):
+Bench corpus migrated to `../scientist-workbench-corpus/benchmarks/solve/`
+(ADR-0028). Run grading via:
+
+```sh
+bash scripts/bench-grade.sh solve
+```
+
+100-case golden battery (ADR-0019 §1+§2 bench discipline):
 
 - **20 hand-curated cases:** cross-validated against Mathematica v1 by
   hand, spanning the full class roster (linear underdetermined, linear
