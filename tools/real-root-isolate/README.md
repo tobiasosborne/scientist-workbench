@@ -93,7 +93,14 @@ build the output record.
 
 ## Validation
 
-`bench/real-root-isolate/` — 37-case 7-tier battery. Verifier follows
+Golden battery migrated to corpus per ADR-0028 (bead `scientist-workbench-3pby`):
+`scientist-workbench-corpus/benchmarks/real-root-isolate/` — 37 cases,
+185 invariants, graded via `bash scripts/bench-grade.sh real-root-isolate`.
+
+Local bench removed (~72 KB freed).  The corpus verifier (`verify.ts`) ports all
+4 Python invariants from `verify.py` with exact Sturm-sequence semantics.
+
+`bench/real-root-isolate/` (former) — 37-case 7-tier battery. Verifier follows
 ADR-0019 §1 4-check discipline:
 
 1. `no_tool_error` — clean exit.
