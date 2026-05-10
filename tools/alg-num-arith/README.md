@@ -122,5 +122,28 @@ echo '{"kind":"record","fields":{"a":{"kind":"expression","head":"Root","args":[
   reference for lazy `(minpoly, interval)` algebraic-number
   arithmetic; the upstream design pattern for this tool's
   substrate.
-- Bench `bench/alg-num-arith/` (bead `scientist-workbench-iay`) —
-  triple-witness cross-validation against SymPy `qqbar`.
+## Validation
+
+Golden battery migrated to corpus per ADR-0028:
+`../scientist-workbench-corpus/benchmarks/alg-num-arith/` — 32 cases,
+114 invariants, graded via `bash scripts/bench-grade.sh alg-num-arith`.
+
+Local bench removed (~108 KB freed).  The corpus verifier (`verify.ts`)
+ports all 4 arithmetic invariants, 2 eq-lane checks, and 2 refusal-lane
+checks from `verify.py` using floating-point numerical approximations
+(Durand-Kerner companion-matrix evaluation) adequate for all 32 bench
+cases.
+
+## References
+
+- ADR-0018 — `Root[poly, k]` value-protocol primitive (canonical
+  form, lazy isolating-interval semantics, equality semantics).
+- `docs/worklog/062-alg-num-arithmetic.md` — alg-num resultant arithmetic substrate.
+- Cohen, *A Course in Computational Algebraic Number Theory*
+  (GTM 138), §3.6 (resultants).
+- Bareiss 1968, *Sylvester's identity and multistep integer-
+  preserving Gaussian elimination*, Math Comp 22.
+- SageMath `qqbar` (`sage/rings/qqbar.py`) — closest open-source
+  reference for lazy `(minpoly, interval)` algebraic-number
+  arithmetic; the upstream design pattern for this tool's
+  substrate.
