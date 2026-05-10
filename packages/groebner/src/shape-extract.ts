@@ -234,6 +234,52 @@ function rootsOfGn(g: Poly<Rat>, v: string): RootOfGn[] | { refusal: { tag: stri
   for (const fr of fact.factors) {
     const deg = polyDegInVar(fr.factor, v);
     if (deg <= 0) continue;
+
+    // The alg-num substrate (`canonicalIntegerForm`, `rootToValue`,
+    // `lowToHighIntCoeffs`) hard-codes `ROOT_VAR = "x"` as the carrier
+    // variable for `Poly<bigint>` minpolys.  When the lex-last shape
+    // variable `v` is anything other than `"x"` (e.g. `"y"` for the
+    // bench's 2-var random multivariate cases) the factor polynomial
+    // — produced in variable `v` by `factorRatQ` — has to be renamed
+    // into `ROOT_VAR` before alg-num touches it.  Without this rename
+    // every deg-≥2 factor falls through `polyCoeffsInVar(_, "x")` as
+    // an x-degree-0 constant, the constant fails `polyConstValue`'s
+    // singletonness, and `isolateRealRoots` throws "zero polynomial
+    // after denom-clear" on a `[Rat(0)]` coefficient list.
+    const factorInRootVar = renameSingleVar(fr.factor, v, ROOT_VAR);
+
+    // Real-root gate.  Every irreducible ℚ-factor with a complex root
+    // is rejected here, regardless of degree.  The deg-≥5 path already
+    // counted real roots via VAS isolation to drive `Root[poly, k]`
+    // emission; we lift that counting before the radical dispatch so
+    // the deg-2/3/4 path inherits the same `complex-roots-not-yet-named`
+    // refusal that v0.1 promises uniformly across the alg-num roster.
+    //
+    // Pre-fix, deg-2 factors of `g_n` whose discriminant was negative
+    // (e.g. `[x²+y²-3, xy-3]`'s lex-last poly) silently flowed `(b ±
+    // sqrt(disc))/(2a)` through `quadraticRoots`, leaking `sqrt(neg)`
+    // into solution bindings — a `Solve[]`-class lie under ADR-0017's
+    // honest-scope contract.  After the gate the refusal class matches
+    // both `tools/solve`'s univariate-poly lane (poly-roots) and the
+    // reference's complex-roots check (bead `scientist-workbench-ay4u`).
+    if (deg >= 2) {
+      const minpolyInt = canonicalIntegerForm(factorInRootVar, ROOT_VAR);
+      const realIntervals = isolateRealRoots(
+        polyToHighToLowRat(minpolyInt, ROOT_VAR),
+      );
+      if (realIntervals.length < deg) {
+        return {
+          refusal: {
+            tag: "complex-roots-not-yet-named",
+            detail:
+              `irreducible factor of degree ${deg} of g_n has `
+              + `${deg - realIntervals.length} complex root(s); alg-num v0.1 names `
+              + `real algebraic numbers only.`,
+          },
+        };
+      }
+    }
+
     const coefs = coefsAsRatDescending(fr.factor, v);
     let factorRoots: Value[] | { refusal: { tag: string; detail: string } };
     if (deg === 1) {
@@ -251,20 +297,10 @@ function rootsOfGn(g: Poly<Rat>, v: string): RootOfGn[] | { refusal: { tag: stri
       const [r1, r2, r3, r4] = quarticRoots(a!, b!, c!, d!, e!);
       factorRoots = [r1, r2, r3, r4];
     } else {
-      // deg ≥ 5: name each real root by Root[poly, k] (ADR-0018).
-      const minpoly = canonicalIntegerForm(fr.factor, v);
+      // deg ≥ 5: name each real root by Root[poly, k] (ADR-0018).  We've
+      // already verified above that all `deg` roots are real.
+      const minpoly = canonicalIntegerForm(factorInRootVar, ROOT_VAR);
       const intervals = isolateRealRoots(polyToHighToLowRat(minpoly, ROOT_VAR));
-      if (intervals.length < deg) {
-        return {
-          refusal: {
-            tag: "complex-roots-not-yet-named",
-            detail:
-              `irreducible factor of degree ${deg} of g_n has `
-              + `${deg - intervals.length} complex root(s); alg-num v0.1 names `
-              + `real algebraic numbers only.`,
-          },
-        };
-      }
       factorRoots = intervals.map((iv, k) =>
         rootToValue({
           minpoly,
@@ -284,6 +320,33 @@ function rootsOfGn(g: Poly<Rat>, v: string): RootOfGn[] | { refusal: { tag: stri
     }
   }
   return out;
+}
+
+/**
+ * Rebuild a single-variable polynomial under a different variable name.
+ *
+ * Used to thread shape-extract's lex-last variable `v` (which
+ * `factorRatQ` keeps verbatim in factors) into the alg-num substrate's
+ * `ROOT_VAR = "x"` carrier convention.  Every term in the input is
+ * required to mention only `fromVar`; a defensive throw fires if any
+ * other variable appears (would indicate an upstream bug — `factorRatQ`
+ * itself refuses multivariate input).
+ */
+function renameSingleVar<T>(p: Poly<T>, fromVar: string, toVar: string): Poly<T> {
+  if (fromVar === toVar) return p;
+  return {
+    terms: p.terms.map((t) => ({
+      exp: t.exp.map(([n, e]): [string, number] => {
+        if (n !== fromVar) {
+          throw new Error(
+            `renameSingleVar: term mentions '${n}' but only '${fromVar}' is admitted`,
+          );
+        }
+        return [toVar, e];
+      }),
+      coef: t.coef,
+    })),
+  };
 }
 
 /**

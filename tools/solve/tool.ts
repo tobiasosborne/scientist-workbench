@@ -434,7 +434,40 @@ export const def = defineTool({
       // Either is acceptable here as long as it's not crashing.
     }
 
-    console.log(`solve --test: 6 dispatch lanes covered (linear, univariate-poly, transcendental, refusal, multivariate-happy, multivariate-inconsistent); full coverage in goldens.`);
+    // Probe 7: transcendental linear-arg Sub-shape D — `log(c·x − b) = k`.
+    // Regression for bead `3g9x`: pre-fix, the linear-arg decomposer
+    // accepted `varName − b` (Sub-shape C) but not `c·varName − b`, so
+    // SymPy-style equation strings of the form `log(-3*x - 3) - 2`
+    // refused as `solve/foreign-vocabulary`.  Mirrors corpus case
+    // rand-trans-004.
+    const subShapeDInput = record({
+      eqs: list([
+        expr("-", [
+          expr("log", [
+            expr("-", [
+              expr("*", [int(2n), sym("x")]),
+              int(3n),
+            ]),
+          ]),
+          int(1n),
+        ]),
+      ]),
+      vars: list([sym("x")]),
+    });
+    const subShapeDOut = def.fn(subShapeDInput as never, {} as never) as Value;
+    if (subShapeDOut.kind !== "record") {
+      throw new Error("solve --test: expected record output for log(2x−3) = 1 (Sub-shape D)");
+    }
+    const subShapeDSols = subShapeDOut.fields["solutions"];
+    if (!subShapeDSols || subShapeDSols.kind !== "list" || subShapeDSols.items.length !== 1) {
+      throw new Error(
+        `solve --test: expected 1 solution for log(2x−3) = 1, got ${
+          subShapeDSols?.kind === "list" ? subShapeDSols.items.length : "?"
+        }`,
+      );
+    }
+
+    console.log(`solve --test: 7 dispatch lanes covered (linear, univariate-poly, transcendental simple, refusal, multivariate-happy, multivariate-inconsistent, transcendental linear-arg); full coverage in goldens.`);
     void RAT_RING;
     void polyConst;
   },
