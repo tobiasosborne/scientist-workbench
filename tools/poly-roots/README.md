@@ -130,31 +130,26 @@ echo '{"kind":"record","fields":{"f":{"kind":"expression","head":"+","args":[{"k
 
 ## Validation
 
-`bench/poly-roots-radical/` — 50-case golden battery (ADR-0019 §1
-bench discipline), seven tiers:
+Corpus bench `benchmarks/poly-roots-radical/` (ADR-0028) — 50-case
+golden battery, seven tiers:
 
 | Tier | Cases | Description |
 |---|---|---|
-| A — linear | ~5 | deg 1; exact rational root |
-| B — quadratic | ~8 | deg 2; `(−b ± √D) / 2a` |
-| C — cubic incl. casus irreducibilis | ~10 | Cardano; three-real case emits cube-roots-of-complex faithfully |
-| D — quartic Ferrari | ~8 | Ferrari + biquadratic fast path |
-| E — reducible | ~8 | product of lower-degree factors; multiplicities |
-| F — numeric stress | ~6 | deg-≥5 all-real (Root[] path); Lehmer and similar totally-real polynomials |
-| G — refusals | ~5 | multivariate, non-polynomial, complex-roots-not-yet-named |
+| A — linear | 6 | deg 1; exact rational root |
+| B — quadratic | 8 | deg 2; `(−b ± √D) / 2a` |
+| C — cubic incl. casus irreducibilis | 8 | Cardano; three-real case emits cube-roots-of-complex faithfully |
+| D — quartic Ferrari | 8 | Ferrari + biquadratic fast path |
+| E — reducible | 6 | product of lower-degree factors; multiplicities |
+| F — numeric stress | 8 | large/tiny/mixed-denominator coefficients; near-zero discriminant |
+| G — refusals | 6 | multivariate, non-polynomial, complex-roots-not-yet-named |
 
-**ADR-0019 §1 4-check verifier:** shape, root-count-matches-degree,
-reconstruction (`f(root) ≈ 0` for all radical roots), and tag-envelope
-for refusal cases.
+**4-check verifier (verify.ts):** shape, each_root_satisfies
+(`|f(root)| < 1e-9` via Durand-Kerner oracle), count_with_multiplicity
+(`Σ mult_i = deg f`), refusal_class_matches for tagged outputs.
 
-**8 mutation perturbations**: sign flip on root value, wrong
-multiplicity, transposed radical sub-expression, missing root, extra
-root, wrong refusal tag, off-by-one Root-index `k`, wrong factor count
-from `poly-factor`. All 8 cause RED.
+**ported_from** `scientist-workbench/bench/poly-roots-radical@4f41781`.
 
-**Triple-witness:** `bench/_corpus/oracle/` houses Wolfram + SymPy
-cross-validation scripts; every case in the corpus agrees at the
-comparison threshold.
+**Corpus grader**: `cd scientist-workbench-corpus && bun src/cli.ts grade scientist-workbench poly-roots-radical`
 
 ## Standard flags
 
