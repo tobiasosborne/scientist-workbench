@@ -9,7 +9,8 @@
 //
 // v0.1: square-free decomposition + two-factor Hensel lifting. Subsequent
 // beads add Berlekamp factorisation over 𝔽_p, multi-factor Hensel, and
-// van Hoeij recombination. The bench is `bench/poly-factor-q/`;
+// van Hoeij recombination. The bench lives in the sister corpus repo at
+// `../scientist-workbench-corpus/benchmarks/poly-factor-q/` (ADR-0028);
 // ADR-0019 governs verification discipline.
 
 export { squareFree, type SquareFreeFactor } from "./squarefree.js";

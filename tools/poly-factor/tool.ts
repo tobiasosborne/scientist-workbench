@@ -528,7 +528,7 @@ export const def = defineTool({
       }
     }
     console.log(
-      `poly-factor --test: ${probes.length} probes pass; full coverage in bench/poly-factor-q/.`,
+      `poly-factor --test: ${probes.length} probes pass; full coverage in ../scientist-workbench-corpus/benchmarks/poly-factor-q/.`,
     );
     void ratFnToValue;
     void factorRatQ;
