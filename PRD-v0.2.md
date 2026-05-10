@@ -44,8 +44,10 @@ The empirical premise is that current frontier models can produce faithful, gold
 
 ### 1.1 Design principles [SETTLED]
 
+**This is the first unapologetically agent-first scientific computing ecosystem.** The legacy stack's first-class consumer is a human at a notebook: humans wrote the language, humans wrote the docs, humans named the functions, humans decided when ambiguity was acceptable. The first-class consumer here is an agent reading schemas. Where friction arises between human convenience and agent reach, **agent reach wins, always**. Agents have no say in any other scientific ecosystem; here the agent's experience *is* the design. Every decision in the rest of this document deferred-defaults to "what would the agent reach for reflexively." Human ergonomics emerge as a downstream consequence of agent ergonomics, not as an independent constraint.
+
 1. **Unix philosophy.** One tool, one job. Tools are independently versioned, independently tested, independently invokable.
-2. **Agents are the customer; whatever they want is the spec.** Tools are designed for agents to discover, plan over, and compose. Human ergonomics follow from agent ergonomics, not the reverse.
+2. **Agents are the customer; whatever they want is the spec.** Tools are designed for agents to discover, plan over, and compose. Human ergonomics follow from agent ergonomics, not the reverse. **When the two conflict, the agent wins.** No exceptions — not for catalog browsability, not for naming aesthetics, not for human-pedagogical clarity over schema rigour.
 3. **Correctness is alpha and omega.** Performance matters only insofar as it does not block use. Correctness is verified by typed contracts, property-based tests, golden masters, and where tractable, proof objects.
 4. **Composability is effortless.** Tools speak a common typed value language. Composition is by-pipe or by-manifest, never by shared state.
 5. **The legacy stack should be obsolete after this exists.** Not by replication, but by being better at what working scientists actually do.
@@ -529,6 +531,40 @@ Phases are priority-ordered, not date-ordered. Phase 1 should not start until Ph
 6. Add `--test` flag to the runner; wire each tool's property suite under it (§4.3).
 7. `bun build --compile` step for single-binary distribution (§4.2 artefact #1).
 8. First real-derivation use by Tobias (§9.5 criterion 4).
+
+### 10.2 Future direction: shallow tool-name namespacing [OPEN, scheduled when catalog crosses ~80 tools]
+
+The current `tools/<name>/` flat layout works at MVP scale (~30 tools) and predictably breaks down between 100 and 200 tools. The clustering signal — "all qinfo tools live together", "all linalg tools live together", "all cas tools live together" — is invisible in a flat namespace; humans browsing the README catalog must mentally re-group, and agents see flat enumeration without the family hint. `registry-search` partially mitigates by filtering on `input_kind` / `output_kind` / `head` / `name_substring`, but the namespace itself is doing none of the work.
+
+The remediation is a **shallow two-level layout**:
+
+```
+tools/
+  qinfo/
+    partial-trace/    tool.ts  goldens/  README.md  ...
+    tensor-product/
+    trace-norm/
+    ...
+  cas/
+    simplify/
+    verify/
+    diff/
+  linalg/
+    eigh/
+    svd/
+    qr/
+    solve/
+  ...
+```
+
+- The registry walks one level deeper (`tools/*/*/tool.ts`).
+- Tool name on the wire becomes `qinfo.partial-trace` (or `qinfo/partial-trace` — separator choice deferred to an ADR).
+- `package.json` workspaces glob extends to `tools/*/*` (or both `tools/*` and `tools/*/*` during a transition).
+- Per-tool refusal envelopes keep the dotted name: `tagged "qinfo.partial-trace/qubit-out-of-range"`.
+
+This recovers the clustering signal without abandoning per-operation granularity (the load-bearing decision documented in §6.1: one tool, one job; flags that change the type of the output should be different tools). The migration surface is small — directory moves + one change in the registry walker + one schema-text update for the wire-format name — and it is non-breaking *if* the registry temporarily accepts both old and new paths during transition.
+
+Concretely, this is **how I (an agent) would actually browse the catalog if I had a say**: by family first, then by operation. The flat layout was right at MVP scale; the catalog has been growing by ~10 tools per substantive worklog cycle and will cross the legibility threshold within the next 30–50 tools' worth of work. Tracked as bead `scientist-workbench-3uxn` so the trigger condition (~80 tools) doesn't get forgotten.
 
 ---
 
