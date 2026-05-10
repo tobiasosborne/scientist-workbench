@@ -116,6 +116,24 @@ witness.
 - **Not a least-squares solver**. Inconsistent ⇒ refusal, not
   best-fit.
 
+## Validation
+
+The bench corpus (46 cases × 8 checks) lives in the sister repo:
+
+```
+../scientist-workbench-corpus/benchmarks/linsolve-q/
+```
+
+To grade this tool against the full battery:
+
+```sh
+cd ~/Projects/scientist-workbench-corpus
+bun src/cli.ts grade scientist-workbench linsolve-q
+```
+
+Adapter: `adapters/scientist-workbench/linsolve-q.toml` (symbolic tier,
+`platform_pinned = false`). Migration: ADR-0028.
+
 ## References
 
 - **Bareiss 1968** "Sylvester's Identity and Multistep Integer-
@@ -125,4 +143,4 @@ witness.
 - **ADR-0017** solution-set value-protocol shape.
 - **ADR-0019** solve bench discipline (this tool's bench complies).
 - **`packages/cas-core/src/linsolve.ts`** — pure substrate.
-- **`bench/linsolve-q/`** — 46-case 8-check golden master.
+- **`../scientist-workbench-corpus/benchmarks/linsolve-q/`** — 46-case 8-check golden master.
