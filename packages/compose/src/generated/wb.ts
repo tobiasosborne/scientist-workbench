@@ -54,6 +54,7 @@ import { def as polyRootsDef } from "../../../../tools/poly-roots/tool.js";
 import { def as realRootIsolateDef } from "../../../../tools/real-root-isolate/tool.js";
 import { def as registryListDef } from "../../../../tools/registry-list/tool.js";
 import { def as registrySearchDef } from "../../../../tools/registry-search/tool.js";
+import { def as sdpSolveDef } from "../../../../tools/sdp-solve/tool.js";
 import { def as solveDef } from "../../../../tools/solve/tool.js";
 import { def as sturmControlledDef } from "../../../../tools/sturm-controlled/tool.js";
 import { def as sturmEquivalentDef } from "../../../../tools/sturm-equivalent/tool.js";
@@ -97,6 +98,7 @@ export interface TypedWorkbench extends Workbench {
   realRootIsolate(input: InputOf<typeof realRootIsolateDef>, flags?: FlagsArgOf<typeof realRootIsolateDef>): Promise<OutputOf<typeof realRootIsolateDef>>;
   registryList(input: InputOf<typeof registryListDef>, flags?: FlagsArgOf<typeof registryListDef>): Promise<OutputOf<typeof registryListDef>>;
   registrySearch(input: InputOf<typeof registrySearchDef>, flags?: FlagsArgOf<typeof registrySearchDef>): Promise<OutputOf<typeof registrySearchDef>>;
+  sdpSolve(input: InputOf<typeof sdpSolveDef>, flags?: FlagsArgOf<typeof sdpSolveDef>): Promise<OutputOf<typeof sdpSolveDef>>;
   solve(input: InputOf<typeof solveDef>, flags?: FlagsArgOf<typeof solveDef>): Promise<OutputOf<typeof solveDef>>;
   sturmControlled(input: InputOf<typeof sturmControlledDef>, flags?: FlagsArgOf<typeof sturmControlledDef>): Promise<OutputOf<typeof sturmControlledDef>>;
   sturmEquivalent(input: InputOf<typeof sturmEquivalentDef>, flags?: FlagsArgOf<typeof sturmEquivalentDef>): Promise<OutputOf<typeof sturmEquivalentDef>>;
@@ -215,6 +217,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     registrySearch(input, flags) {
       return workbench.run("registry-search", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof registrySearchDef>>;
     },
+    sdpSolve(input, flags) {
+      return workbench.run("sdp-solve", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof sdpSolveDef>>;
+    },
     solve(input, flags) {
       return workbench.run("solve", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof solveDef>>;
     },
@@ -282,6 +287,7 @@ export const defs = {
   realRootIsolate: realRootIsolateDef,
   registryList: registryListDef,
   registrySearch: registrySearchDef,
+  sdpSolve: sdpSolveDef,
   solve: solveDef,
   sturmControlled: sturmControlledDef,
   sturmEquivalent: sturmEquivalentDef,

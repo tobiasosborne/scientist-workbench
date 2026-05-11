@@ -491,6 +491,15 @@
         "@workbench/protocol": "workspace:*",
       },
     },
+    "tools/sdp-solve": {
+      "name": "@workbench/tool-sdp-solve",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/contract": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+        "@workbench/solver-ipm": "workspace:*",
+      },
+    },
     "tools/solve": {
       "name": "@workbench/tool-solve",
       "version": "0.1.0",
@@ -689,6 +698,8 @@
     "@workbench/tool-registry-list": ["@workbench/tool-registry-list@workspace:tools/registry-list"],
 
     "@workbench/tool-registry-search": ["@workbench/tool-registry-search@workspace:tools/registry-search"],
+
+    "@workbench/tool-sdp-solve": ["@workbench/tool-sdp-solve@workspace:tools/sdp-solve"],
 
     "@workbench/tool-solve": ["@workbench/tool-solve@workspace:tools/solve"],
 
