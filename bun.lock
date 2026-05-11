@@ -49,6 +49,13 @@
         "@workbench/protocol": "workspace:*",
       },
     },
+    "packages/copt-ipm": {
+      "name": "@workbench/copt-ipm",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/linalg-core": "workspace:*",
+      },
+    },
     "packages/groebner": {
       "name": "@workbench/groebner",
       "version": "0.1.0",
@@ -582,6 +589,8 @@
     "@workbench/compose": ["@workbench/compose@workspace:packages/compose"],
 
     "@workbench/contract": ["@workbench/contract@workspace:packages/contract"],
+
+    "@workbench/copt-ipm": ["@workbench/copt-ipm@workspace:packages/copt-ipm"],
 
     "@workbench/groebner": ["@workbench/groebner@workspace:packages/groebner"],
 
