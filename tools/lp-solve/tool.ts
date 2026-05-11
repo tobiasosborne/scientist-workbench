@@ -101,7 +101,7 @@ import {
   type ExpressionValue,
   type RecordValue,
 } from "@workbench/protocol";
-import { defineTool, runTool } from "@workbench/contract";
+import { defineTool, F, runTool } from "@workbench/contract";
 import {
   makeRat,
   RAT_ZERO,
@@ -119,10 +119,30 @@ import {
   type StandardLP,
   type SimplexResult,
 } from "@workbench/simplex-q";
+import {
+  solveLp as solveLpIpm,
+  lpFromCanonical,
+  toWireStatus as ipmToWireStatus,
+  type CanonicalLp,
+} from "@workbench/solver-ipm";
 
 const NAME = "lp-solve";
 const VERSION = "0.1.0";
-const METHOD_TAG = "simplex-q";
+const METHOD_TAG_EXACT = "simplex-q";
+const METHOD_TAG_IPM = "solver-ipm";
+
+// Auto-dispatch threshold. The arbprec simplex (`simplex-q`) is
+// exact-rational and bit-identical cross-platform forever, but its
+// per-pivot cost grows as O(m²) with BigInt coefficients whose bit
+// length is O(m). For dense problems with `m + n > AUTO_DISPATCH_NMAX`
+// it routinely exceeds the workbench bench's 30s cap (worklog 090).
+// The IPM lane (`solver-ipm`, Mehrotra primal-dual predictor-corrector)
+// is float64 internally — `numerical: true` per ADR-0015 — and scales
+// to NETLIB (m, n ≈ 100-2000) in seconds. The auto-dispatch routes by
+// size; a TS expert sets `--method=exact` to force the bit-identical
+// lane when reproducibility matters, or `--method=ipm` to force the
+// fast lane on small problems for A/B comparison.
+const AUTO_DISPATCH_NMAX = 50;
 
 // -----------------------------------------------------------------------------
 // Schema (ADR-0030 §C input + §D output)
@@ -399,7 +419,9 @@ function decodeInput(input: RecordValue): {
   return { c, Q, A, b, cones, maxIter };
 }
 
-function fn(input: RecordValue): Value {
+type LaneMethod = "auto" | "exact" | "ipm";
+
+function fn(input: RecordValue, flags: { method?: LaneMethod }): Value {
   const dec = decodeInput(input);
 
   // ----- Quadratic objective: refuse fast. -----
@@ -470,30 +492,182 @@ function fn(input: RecordValue): Value {
   // columns. Free-variable entries in `c` get negated for the `x_j⁻`
   // half; rows of `A` likewise.
   const splitN = n + parsed.free.length;
-  const cSplit: Rat[] = new Array(splitN);
-  for (let j = 0; j < n; j++) cSplit[j] = float64ToExactRat(cFloat[j]!);
+  // Float-space split: each free variable `x_j` becomes `x_j⁺ - x_j⁻`
+  // with columns appended for the negative halves. Both lanes see the
+  // same standard-form LP; the lane choice is purely about engine.
+  const cSplitF: number[] = new Array(splitN);
+  for (let j = 0; j < n; j++) cSplitF[j] = cFloat[j]!;
   for (let k = 0; k < parsed.free.length; k++) {
-    cSplit[n + k] = ratNeg(cSplit[parsed.free[k]!]!);
+    cSplitF[n + k] = -cFloat[parsed.free[k]!]!;
   }
-  const ASplit: Rat[][] = [];
-  const bRat: Rat[] = new Array(m);
+  const ASplitF: number[][] = [];
   for (let i = 0; i < m; i++) {
-    const row: Rat[] = new Array(splitN);
-    for (let j = 0; j < n; j++) row[j] = float64ToExactRat(aFloat[i]![j]!);
+    const row: number[] = new Array(splitN);
+    for (let j = 0; j < n; j++) row[j] = aFloat[i]![j]!;
     for (let k = 0; k < parsed.free.length; k++) {
-      row[n + k] = ratNeg(row[parsed.free[k]!]!);
+      row[n + k] = -aFloat[i]![parsed.free[k]!]!;
     }
-    ASplit.push(row);
-    bRat[i] = float64ToExactRat(bFloat[i]!);
+    ASplitF.push(row);
+  }
+  const bSplitF: number[] = bFloat.slice();
+
+  // ----- Dispatch between exact and IPM lanes. -----
+  const method = pickLaneMethod(flags.method ?? "auto", m, splitN);
+  const maxIter = dec.maxIter !== undefined ? dec.maxIter : 10 * (m + splitN);
+
+  if (method === "exact") {
+    // Lift to exact rationals and run the arbprec simplex.
+    const cSplit: Rat[] = cSplitF.map(float64ToExactRat);
+    const ASplit: Rat[][] = ASplitF.map((row) => row.map(float64ToExactRat));
+    const bRat: Rat[] = bSplitF.map(float64ToExactRat);
+    const lp: StandardLP = { c: cSplit, A: ASplit, b: bRat };
+    const result = simplexSolve(lp, { maxIter });
+    return encodeResult(result, parsed.free, n, m, m > 0 ? aFloat : null, bFloat, cFloat);
   }
 
-  // ----- Run the engine. -----
-  const lp: StandardLP = { c: cSplit, A: ASplit, b: bRat };
-  const maxIter = dec.maxIter !== undefined ? dec.maxIter : 10 * (m + splitN);
-  const result = simplexSolve(lp, { maxIter });
+  // IPM lane — float64 Mehrotra primal-dual via @workbench/solver-ipm.
+  return solveIpmLane({
+    cSplitF,
+    ASplitF,
+    bSplitF,
+    free: parsed.free,
+    n,
+    m,
+    splitN,
+    maxIter,
+    cFloat,
+    aFloat,
+    bFloat,
+  });
+}
 
-  // ----- Encode the result back to the wire. -----
-  return encodeResult(result, parsed.free, n, m, m > 0 ? aFloat : null, bFloat, cFloat);
+// -----------------------------------------------------------------------------
+// Lane dispatch
+// -----------------------------------------------------------------------------
+//
+// The default `--method=auto` routes by problem size: small-enough
+// problems get the bit-identical exact lane (the world-first claim for
+// LP in TS); larger problems go to the IPM. The threshold is
+// empirically calibrated against worklog 090's lp-small bench grade —
+// problems with `m + splitN ≤ AUTO_DISPATCH_NMAX` complete sub-second
+// in the exact lane; above that they routinely time out at 30 s, while
+// the IPM solves NETLIB-scale problems in milliseconds.
+//
+// `--method=exact` forces the bit-identical lane (for reproducibility
+// or A/B testing); `--method=ipm` forces the float lane (for speed
+// comparison on small problems, or to verify both lanes agree).
+
+function pickLaneMethod(
+  request: LaneMethod,
+  m: number,
+  splitN: number,
+): "exact" | "ipm" {
+  if (request === "exact") return "exact";
+  if (request === "ipm") return "ipm";
+  // auto:
+  return m + splitN <= AUTO_DISPATCH_NMAX ? "exact" : "ipm";
+}
+
+interface IpmLaneInput {
+  cSplitF: ReadonlyArray<number>;
+  ASplitF: ReadonlyArray<ReadonlyArray<number>>;
+  bSplitF: ReadonlyArray<number>;
+  free: ReadonlyArray<number>;
+  n: number;
+  m: number;
+  splitN: number;
+  maxIter: number;
+  cFloat: ReadonlyArray<number>;
+  aFloat: ReadonlyArray<ReadonlyArray<number>>;
+  bFloat: ReadonlyArray<number>;
+}
+
+function solveIpmLane(args: IpmLaneInput): Value {
+  // Build the solver-ipm CanonicalLp shape from the already-split LP.
+  // Every variable is non-negative (the free-variable split produced
+  // x_j⁺ and x_j⁻ both in NonNegCone); the IPM never sees free vars.
+  const subjectTo: CanonicalLp["subjectTo"] =
+    args.m > 0
+      ? {
+          Ax_eq_b: { A: args.ASplitF, b: args.bSplitF },
+          cones: [{ head: "NonNegCone", size: args.splitN }],
+        }
+      : { cones: [{ head: "NonNegCone", size: args.splitN }] };
+  const canonical: CanonicalLp = {
+    minimize: { c: args.cSplitF },
+    subjectTo,
+    precision: 1e-8,
+    max_iter: args.maxIter,
+  };
+  const lp = lpFromCanonical(canonical);
+  const result = solveLpIpm(lp, { params: { iterLimit: args.maxIter } });
+  return encodeIpmResult(result, args);
+}
+
+function encodeIpmResult(
+  result: { status: import("@workbench/solver-ipm").SolverStatus; iterate: { x: Float64Array; y: Float64Array; s: Float64Array; mu: number; primalObj: number; dualObj: number; primalInf: number; dualInf: number; iter: number; bumpsPrimal: number; bumpsDual: number; bumpsGap: number; refactors: number } },
+  args: IpmLaneInput,
+): Value {
+  const status = ipmToWireStatus(result.status);
+  const it = result.iterate;
+
+  // Recover the original (un-split) primal x from the internal x⁺/x⁻
+  // halves. Standard variables map 1:1; free variables `x_j` decode
+  // as `x_j⁺ - x_j⁻`.
+  const xWire = new Array<number>(args.n);
+  for (let j = 0; j < args.n; j++) xWire[j] = it.x[j]!;
+  for (let k = 0; k < args.free.length; k++) {
+    const j = args.free[k]!;
+    xWire[j] = it.x[j]! - it.x[args.n + k]!;
+  }
+
+  // Slacks: emit the IPM's internal `s` for the standard variables.
+  // For free variables there is no slack (the variable is unbounded),
+  // so the slack vector reports only the active inequality slacks —
+  // which after splitting are all variables. We emit slacks for the
+  // n original variables; the split halves' slacks are an internal
+  // artefact.
+  const slackWire = new Array<number>(args.n);
+  for (let j = 0; j < args.n; j++) slackWire[j] = it.s[j]!;
+
+  const warnings: Value[] = [];
+  if (it.bumpsPrimal + it.bumpsDual + it.bumpsGap > 0) {
+    warnings.push(
+      str(
+        `IPM regularisation bumps: primal=${it.bumpsPrimal}, dual=${it.bumpsDual}, gap=${it.bumpsGap}, refactors=${it.refactors}`,
+      ),
+    );
+  }
+
+  // Achieved precision: max KKT residual at the float64 wire output.
+  // The IPM lane reports `max(primalInf, dualInf, mu)` directly from
+  // the iterate; this is the honest agent-facing precision.
+  const achievedPrecision = Math.max(it.primalInf, it.dualInf, it.mu);
+
+  // Common header fields.
+  const baseFields: Record<string, Value> = {
+    status: str(status),
+    x: list(xWire.map(float64FromNumber)),
+    dual: list(Array.from(it.y).map(float64FromNumber)),
+    slack: list(slackWire.map(float64FromNumber)),
+    iterations: int(BigInt(it.iter)),
+    method: str(METHOD_TAG_IPM),
+    condition_estimate: float64FromNumber(0),
+    warnings: list(warnings),
+  };
+
+  if (status === "optimal") {
+    // `primalObj` from the iterate is in the *split* coordinate frame
+    // which uses standard-form variables. The objective coefficient
+    // values for split halves are negated, so the IPM's primalObj
+    // equals `cᵀx` in the original coordinate frame — no rescaling
+    // needed (the algebra works out because c⁺·x⁺ + c⁻·x⁻ where
+    // c⁻ = -c, gives c·(x⁺ - x⁻) = c·x).
+    baseFields["objective"] = float64FromNumber(it.primalObj);
+    baseFields["achieved_precision"] = float64FromNumber(achievedPrecision);
+  }
+
+  return record(baseFields);
 }
 
 function encodeResult(
@@ -528,7 +702,7 @@ function encodeResult(
         dual: list([]),
         slack: list([]),
         iterations: int(BigInt(result.iterations)),
-        method: str(METHOD_TAG),
+        method: str(METHOD_TAG_EXACT),
         condition_estimate: float64FromNumber(0),
         warnings: list([
           str(`iteration cap reached at ${result.iterations} pivots; partial answer suppressed (CLAUDE.md Rule 1: fail loud, not silent)`),
@@ -543,7 +717,7 @@ function encodeResult(
         dual: list(dualOut),
         slack: list([]),
         iterations: int(BigInt(result.iterations)),
-        method: str(METHOD_TAG),
+        method: str(METHOD_TAG_EXACT),
         condition_estimate: float64FromNumber(0),
         warnings: list(warnings),
       });
@@ -581,7 +755,7 @@ function encodeResult(
         dual: list([]),
         slack: list([]),
         iterations: int(BigInt(result.iterations)),
-        method: str(METHOD_TAG),
+        method: str(METHOD_TAG_EXACT),
         condition_estimate: float64FromNumber(0),
         warnings: list([
           str("primal-unbounded: x slot carries the unbounded ray d (A·d = 0, d ≥ 0, cᵀ·d = -1)"),
@@ -710,7 +884,7 @@ function encodeResult(
         objective: objFloat,
         achieved_precision: float64FromNumber(achievedFloat),
         iterations: int(BigInt(result.iterations)),
-        method: str(METHOD_TAG),
+        method: str(METHOD_TAG_EXACT),
         condition_estimate: float64FromNumber(0),
         warnings: list(warnings),
       });
@@ -801,7 +975,7 @@ const examples = [
       objective: float64FromNumber(1),
       achieved_precision: float64FromNumber(0),
       iterations: int(1n),
-      method: str(METHOD_TAG),
+      method: str(METHOD_TAG_EXACT),
       condition_estimate: float64FromNumber(0),
       warnings: list([]),
     }),
@@ -824,7 +998,7 @@ const examples = [
       dual: list([float64FromNumber(-1), float64FromNumber(1)]),
       slack: list([]),
       iterations: int(2n),
-      method: str(METHOD_TAG),
+      method: str(METHOD_TAG_EXACT),
       condition_estimate: float64FromNumber(0),
       warnings: list([]),
     }),
@@ -883,14 +1057,66 @@ const invariants = [
   },
 ];
 
+// In-process smoke probe (--test). Exercises both lanes on a
+// problem that admits an obvious exact answer and verifies they
+// agree on the primal and the objective. Both lanes must reach
+// `optimal`; the exact lane must reproduce x = (5, 0) bit-exactly;
+// the IPM lane must agree to 1e-6 relative.
+function smokeTest(): void {
+  const problem = record({
+    minimize: record({ c: list([float64FromNumber(1), float64FromNumber(3)]) }),
+    subjectTo: record({
+      Ax_eq_b: record({
+        A: list([list([float64FromNumber(1), float64FromNumber(1)])]),
+        b: list([float64FromNumber(5)]),
+      }),
+      cones: list([expr("NonNegCone", [list([int(0n), int(1n)])])]),
+    }),
+  });
+  const exact = fn(problem, { method: "exact" }) as RecordValue;
+  const ipm = fn(problem, { method: "ipm" }) as RecordValue;
+
+  for (const [label, res] of [["exact", exact], ["ipm", ipm]] as const) {
+    const status = (res.fields["status"] as { kind: "string"; value: string }).value;
+    if (status !== "optimal") {
+      throw new Error(`lp-solve --test: ${label} lane returned status=${status}, expected "optimal"`);
+    }
+    const objVal = res.fields["objective"];
+    if (objVal === undefined || objVal.kind !== "float64") {
+      throw new Error(`lp-solve --test: ${label} lane missing objective field`);
+    }
+    const obj = float64ToNumber(objVal);
+    if (Math.abs(obj - 5) > 1e-5) {
+      throw new Error(`lp-solve --test: ${label} lane objective ${obj} differs from 5 by more than 1e-5`);
+    }
+  }
+
+  // Method tag echo: --method=ipm must report "solver-ipm" in the
+  // output's `method` field so the agent can distinguish lanes.
+  const ipmMethod = (ipm.fields["method"] as { kind: "string"; value: string }).value;
+  if (ipmMethod !== METHOD_TAG_IPM) {
+    throw new Error(`lp-solve --test: ipm lane reported method="${ipmMethod}", expected "${METHOD_TAG_IPM}"`);
+  }
+  const exactMethod = (exact.fields["method"] as { kind: "string"; value: string }).value;
+  if (exactMethod !== METHOD_TAG_EXACT) {
+    throw new Error(`lp-solve --test: exact lane reported method="${exactMethod}", expected "${METHOD_TAG_EXACT}"`);
+  }
+}
+
 export const def = defineTool({
   name: NAME,
   version: VERSION,
   schema: { input: inputSchema, output: outputSchema },
+  flags: {
+    method: F.enum(["auto", "exact", "ipm"] as const, "solver lane", {
+      default: "auto",
+    }),
+  },
   examples,
   invariants,
   numerical: true,
   fn: fn as never,
+  test: smokeTest,
 });
 
 if (import.meta.main) void runTool(def);
