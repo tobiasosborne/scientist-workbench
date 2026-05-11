@@ -20,6 +20,7 @@ export {
   type IterLogLine,
 } from "./solver/Solver.js";
 export { formatIterLine, formatIterHeader } from "./solver/LogFormat.js";
+export { toWireStatus, type WireStatus } from "./solver/Status.js";
 
 // SDP
 export { parseSdpaSparse, type SdpaSparseProblem } from "./format/SdpaSparse.js";

@@ -122,6 +122,7 @@ import {
 import {
   solveLp as solveLpIpm,
   lpFromCanonical,
+  toWireStatus as ipmToWireStatus,
   type CanonicalLp,
 } from "@workbench/copt-ipm";
 
@@ -603,32 +604,11 @@ function solveIpmLane(args: IpmLaneInput): Value {
   return encodeIpmResult(result, args);
 }
 
-// Map copt-ipm's SolverStatus to ADR-0030 §A.3 wire status taxonomy.
-// `optimal` and `iter-limit` map straight across; the two infeasibility
-// codes collapse to the standard primal/dual taxonomy; the rest become
-// `numerical-breakdown` (which the arbprec lane never emits but the IPM
-// lane does, per the schema's reserved field).
-function mapIpmStatus(s: string): "optimal" | "infeasible" | "unbounded" | "iter-cap" | "numerical-breakdown" {
-  switch (s) {
-    case "optimal":
-      return "optimal";
-    case "primal-infeasible":
-      return "infeasible";
-    case "dual-infeasible":
-      return "unbounded";
-    case "iter-limit":
-    case "time-limit":
-      return "iter-cap";
-    default:
-      return "numerical-breakdown";
-  }
-}
-
 function encodeIpmResult(
-  result: { status: string; iterate: { x: Float64Array; y: Float64Array; s: Float64Array; mu: number; primalObj: number; dualObj: number; primalInf: number; dualInf: number; iter: number; bumpsPrimal: number; bumpsDual: number; bumpsGap: number; refactors: number } },
+  result: { status: import("@workbench/copt-ipm").SolverStatus; iterate: { x: Float64Array; y: Float64Array; s: Float64Array; mu: number; primalObj: number; dualObj: number; primalInf: number; dualInf: number; iter: number; bumpsPrimal: number; bumpsDual: number; bumpsGap: number; refactors: number } },
   args: IpmLaneInput,
 ): Value {
-  const status = mapIpmStatus(result.status);
+  const status = ipmToWireStatus(result.status);
   const it = result.iterate;
 
   // Recover the original (un-split) primal x from the internal x⁺/x⁻
@@ -1077,6 +1057,52 @@ const invariants = [
   },
 ];
 
+// In-process smoke probe (--test). Exercises both lanes on a
+// problem that admits an obvious exact answer and verifies they
+// agree on the primal and the objective. Both lanes must reach
+// `optimal`; the exact lane must reproduce x = (5, 0) bit-exactly;
+// the IPM lane must agree to 1e-6 relative.
+function smokeTest(): void {
+  const problem = record({
+    minimize: record({ c: list([float64FromNumber(1), float64FromNumber(3)]) }),
+    subjectTo: record({
+      Ax_eq_b: record({
+        A: list([list([float64FromNumber(1), float64FromNumber(1)])]),
+        b: list([float64FromNumber(5)]),
+      }),
+      cones: list([expr("NonNegCone", [list([int(0n), int(1n)])])]),
+    }),
+  });
+  const exact = fn(problem, { method: "exact" }) as RecordValue;
+  const ipm = fn(problem, { method: "ipm" }) as RecordValue;
+
+  for (const [label, res] of [["exact", exact], ["ipm", ipm]] as const) {
+    const status = (res.fields["status"] as { kind: "string"; value: string }).value;
+    if (status !== "optimal") {
+      throw new Error(`lp-solve --test: ${label} lane returned status=${status}, expected "optimal"`);
+    }
+    const objVal = res.fields["objective"];
+    if (objVal === undefined || objVal.kind !== "float64") {
+      throw new Error(`lp-solve --test: ${label} lane missing objective field`);
+    }
+    const obj = float64ToNumber(objVal);
+    if (Math.abs(obj - 5) > 1e-5) {
+      throw new Error(`lp-solve --test: ${label} lane objective ${obj} differs from 5 by more than 1e-5`);
+    }
+  }
+
+  // Method tag echo: --method=ipm must report "copt-ipm" in the
+  // output's `method` field so the agent can distinguish lanes.
+  const ipmMethod = (ipm.fields["method"] as { kind: "string"; value: string }).value;
+  if (ipmMethod !== METHOD_TAG_IPM) {
+    throw new Error(`lp-solve --test: ipm lane reported method="${ipmMethod}", expected "${METHOD_TAG_IPM}"`);
+  }
+  const exactMethod = (exact.fields["method"] as { kind: "string"; value: string }).value;
+  if (exactMethod !== METHOD_TAG_EXACT) {
+    throw new Error(`lp-solve --test: exact lane reported method="${exactMethod}", expected "${METHOD_TAG_EXACT}"`);
+  }
+}
+
 export const def = defineTool({
   name: NAME,
   version: VERSION,
@@ -1090,6 +1116,7 @@ export const def = defineTool({
   invariants,
   numerical: true,
   fn: fn as never,
+  test: smokeTest,
 });
 
 if (import.meta.main) void runTool(def);
