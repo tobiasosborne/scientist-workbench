@@ -39,6 +39,7 @@ import { def as linalgQrDef } from "../../../../tools/linalg-qr/tool.js";
 import { def as linalgSolveDef } from "../../../../tools/linalg-solve/tool.js";
 import { def as linalgSvdDef } from "../../../../tools/linalg-svd/tool.js";
 import { def as linsolveQDef } from "../../../../tools/linsolve-q/tool.js";
+import { def as lpSolveDef } from "../../../../tools/lp-solve/tool.js";
 import { def as meijerGDef } from "../../../../tools/meijer-g/tool.js";
 import { def as meijerGAsymptoticOnlyDef } from "../../../../tools/meijer-g-asymptotic-only/tool.js";
 import { def as meijerGSlaterOnlyDef } from "../../../../tools/meijer-g-slater-only/tool.js";
@@ -81,6 +82,7 @@ export interface TypedWorkbench extends Workbench {
   linalgSolve(input: InputOf<typeof linalgSolveDef>, flags?: FlagsArgOf<typeof linalgSolveDef>): Promise<OutputOf<typeof linalgSolveDef>>;
   linalgSvd(input: InputOf<typeof linalgSvdDef>, flags?: FlagsArgOf<typeof linalgSvdDef>): Promise<OutputOf<typeof linalgSvdDef>>;
   linsolveQ(input: InputOf<typeof linsolveQDef>, flags?: FlagsArgOf<typeof linsolveQDef>): Promise<OutputOf<typeof linsolveQDef>>;
+  lpSolve(input: InputOf<typeof lpSolveDef>, flags?: FlagsArgOf<typeof lpSolveDef>): Promise<OutputOf<typeof lpSolveDef>>;
   meijerG(input: InputOf<typeof meijerGDef>, flags?: FlagsArgOf<typeof meijerGDef>): Promise<OutputOf<typeof meijerGDef>>;
   meijerGAsymptoticOnly(input: InputOf<typeof meijerGAsymptoticOnlyDef>, flags?: FlagsArgOf<typeof meijerGAsymptoticOnlyDef>): Promise<OutputOf<typeof meijerGAsymptoticOnlyDef>>;
   meijerGSlaterOnly(input: InputOf<typeof meijerGSlaterOnlyDef>, flags?: FlagsArgOf<typeof meijerGSlaterOnlyDef>): Promise<OutputOf<typeof meijerGSlaterOnlyDef>>;
@@ -167,6 +169,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     },
     linsolveQ(input, flags) {
       return workbench.run("linsolve-q", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof linsolveQDef>>;
+    },
+    lpSolve(input, flags) {
+      return workbench.run("lp-solve", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof lpSolveDef>>;
     },
     meijerG(input, flags) {
       return workbench.run("meijer-g", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof meijerGDef>>;
@@ -262,6 +267,7 @@ export const defs = {
   linalgSolve: linalgSolveDef,
   linalgSvd: linalgSvdDef,
   linsolveQ: linsolveQDef,
+  lpSolve: lpSolveDef,
   meijerG: meijerGDef,
   meijerGAsymptoticOnly: meijerGAsymptoticOnlyDef,
   meijerGSlaterOnly: meijerGSlaterOnlyDef,

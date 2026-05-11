@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "scientist-workbench",
@@ -46,6 +47,17 @@
       "version": "0.2.0",
       "dependencies": {
         "@workbench/protocol": "workspace:*",
+      },
+    },
+    "packages/groebner": {
+      "name": "@workbench/groebner",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/alg-num": "workspace:*",
+        "@workbench/cas-core": "workspace:*",
+        "@workbench/poly-factor": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+        "@workbench/real-roots": "workspace:*",
       },
     },
     "packages/hypergeometric": {
@@ -123,12 +135,21 @@
         "@workbench/protocol": "workspace:*",
       },
     },
+    "packages/simplex-q": {
+      "name": "@workbench/simplex-q",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/cas-core": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+      },
+    },
     "packages/solve": {
       "name": "@workbench/solve",
       "version": "0.1.0",
       "dependencies": {
         "@workbench/alg-num": "workspace:*",
         "@workbench/cas-core": "workspace:*",
+        "@workbench/groebner": "workspace:*",
         "@workbench/poly-factor": "workspace:*",
         "@workbench/protocol": "workspace:*",
         "@workbench/real-roots": "workspace:*",
@@ -210,6 +231,16 @@
       "version": "0.2.0",
       "dependencies": {
         "@workbench/contract": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+      },
+    },
+    "tools/groebner-basis": {
+      "name": "@workbench/tool-groebner-basis",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/cas-core": "workspace:*",
+        "@workbench/contract": "workspace:*",
+        "@workbench/groebner": "workspace:*",
         "@workbench/protocol": "workspace:*",
       },
     },
@@ -307,6 +338,16 @@
         "@workbench/cas-core": "workspace:*",
         "@workbench/contract": "workspace:*",
         "@workbench/protocol": "workspace:*",
+      },
+    },
+    "tools/lp-solve": {
+      "name": "@workbench/tool-lp-solve",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/cas-core": "workspace:*",
+        "@workbench/contract": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+        "@workbench/simplex-q": "workspace:*",
       },
     },
     "tools/meijer-g": {
@@ -542,6 +583,8 @@
 
     "@workbench/contract": ["@workbench/contract@workspace:packages/contract"],
 
+    "@workbench/groebner": ["@workbench/groebner@workspace:packages/groebner"],
+
     "@workbench/hypergeometric": ["@workbench/hypergeometric@workspace:packages/hypergeometric"],
 
     "@workbench/json-bridge": ["@workbench/json-bridge@workspace:packages/json-bridge"],
@@ -564,6 +607,8 @@
 
     "@workbench/real-roots": ["@workbench/real-roots@workspace:packages/real-roots"],
 
+    "@workbench/simplex-q": ["@workbench/simplex-q@workspace:packages/simplex-q"],
+
     "@workbench/solve": ["@workbench/solve@workspace:packages/solve"],
 
     "@workbench/sturm": ["@workbench/sturm@workspace:packages/sturm"],
@@ -584,6 +629,8 @@
 
     "@workbench/tool-expr-parse": ["@workbench/tool-expr-parse@workspace:tools/expr-parse"],
 
+    "@workbench/tool-groebner-basis": ["@workbench/tool-groebner-basis@workspace:tools/groebner-basis"],
+
     "@workbench/tool-hypergeometric-pfq": ["@workbench/tool-hypergeometric-pfq@workspace:tools/hypergeometric-pfq"],
 
     "@workbench/tool-integrate-1d": ["@workbench/tool-integrate-1d@workspace:tools/integrate-1d"],
@@ -603,6 +650,8 @@
     "@workbench/tool-linalg-svd": ["@workbench/tool-linalg-svd@workspace:tools/linalg-svd"],
 
     "@workbench/tool-linsolve-q": ["@workbench/tool-linsolve-q@workspace:tools/linsolve-q"],
+
+    "@workbench/tool-lp-solve": ["@workbench/tool-lp-solve@workspace:tools/lp-solve"],
 
     "@workbench/tool-meijer-g": ["@workbench/tool-meijer-g@workspace:tools/meijer-g"],
 
