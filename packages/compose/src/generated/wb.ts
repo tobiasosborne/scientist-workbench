@@ -26,6 +26,7 @@ import { def as algNumArithDef } from "../../../../tools/alg-num-arith/tool.js";
 import { def as casDiffDef } from "../../../../tools/cas-diff/tool.js";
 import { def as casSimplifyDef } from "../../../../tools/cas-simplify/tool.js";
 import { def as casVerifyDef } from "../../../../tools/cas-verify/tool.js";
+import { def as choiIsoDef } from "../../../../tools/choi-iso/tool.js";
 import { def as entropySourceDef } from "../../../../tools/entropy-source/tool.js";
 import { def as exprParseDef } from "../../../../tools/expr-parse/tool.js";
 import { def as groebnerBasisDef } from "../../../../tools/groebner-basis/tool.js";
@@ -50,6 +51,7 @@ import { def as nttDef } from "../../../../tools/ntt/tool.js";
 import { def as optimizeLbfgsProjectedDef } from "../../../../tools/optimize-lbfgs-projected/tool.js";
 import { def as oracleDef } from "../../../../tools/oracle/tool.js";
 import { def as partialTraceDef } from "../../../../tools/partial-trace/tool.js";
+import { def as partialTransposeDef } from "../../../../tools/partial-transpose/tool.js";
 import { def as polyFactorDef } from "../../../../tools/poly-factor/tool.js";
 import { def as polyRootsDef } from "../../../../tools/poly-roots/tool.js";
 import { def as realRootIsolateDef } from "../../../../tools/real-root-isolate/tool.js";
@@ -72,6 +74,7 @@ export interface TypedWorkbench extends Workbench {
   casDiff(input: InputOf<typeof casDiffDef>, flags?: FlagsArgOf<typeof casDiffDef>): Promise<OutputOf<typeof casDiffDef>>;
   casSimplify(input: InputOf<typeof casSimplifyDef>, flags?: FlagsArgOf<typeof casSimplifyDef>): Promise<OutputOf<typeof casSimplifyDef>>;
   casVerify(input: InputOf<typeof casVerifyDef>, flags?: FlagsArgOf<typeof casVerifyDef>): Promise<OutputOf<typeof casVerifyDef>>;
+  choiIso(input: InputOf<typeof choiIsoDef>, flags?: FlagsArgOf<typeof choiIsoDef>): Promise<OutputOf<typeof choiIsoDef>>;
   entropySource(input: InputOf<typeof entropySourceDef>, flags?: FlagsArgOf<typeof entropySourceDef>): Promise<OutputOf<typeof entropySourceDef>>;
   exprParse(input: InputOf<typeof exprParseDef>, flags?: FlagsArgOf<typeof exprParseDef>): Promise<OutputOf<typeof exprParseDef>>;
   groebnerBasis(input: InputOf<typeof groebnerBasisDef>, flags?: FlagsArgOf<typeof groebnerBasisDef>): Promise<OutputOf<typeof groebnerBasisDef>>;
@@ -96,6 +99,7 @@ export interface TypedWorkbench extends Workbench {
   optimizeLbfgsProjected(input: InputOf<typeof optimizeLbfgsProjectedDef>, flags?: FlagsArgOf<typeof optimizeLbfgsProjectedDef>): Promise<OutputOf<typeof optimizeLbfgsProjectedDef>>;
   oracle(input: InputOf<typeof oracleDef>, flags?: FlagsArgOf<typeof oracleDef>): Promise<OutputOf<typeof oracleDef>>;
   partialTrace(input: InputOf<typeof partialTraceDef>, flags?: FlagsArgOf<typeof partialTraceDef>): Promise<OutputOf<typeof partialTraceDef>>;
+  partialTranspose(input: InputOf<typeof partialTransposeDef>, flags?: FlagsArgOf<typeof partialTransposeDef>): Promise<OutputOf<typeof partialTransposeDef>>;
   polyFactor(input: InputOf<typeof polyFactorDef>, flags?: FlagsArgOf<typeof polyFactorDef>): Promise<OutputOf<typeof polyFactorDef>>;
   polyRoots(input: InputOf<typeof polyRootsDef>, flags?: FlagsArgOf<typeof polyRootsDef>): Promise<OutputOf<typeof polyRootsDef>>;
   realRootIsolate(input: InputOf<typeof realRootIsolateDef>, flags?: FlagsArgOf<typeof realRootIsolateDef>): Promise<OutputOf<typeof realRootIsolateDef>>;
@@ -136,6 +140,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     },
     casVerify(input, flags) {
       return workbench.run("cas-verify", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof casVerifyDef>>;
+    },
+    choiIso(input, flags) {
+      return workbench.run("choi-iso", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof choiIsoDef>>;
     },
     entropySource(input, flags) {
       return workbench.run("entropy-source", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof entropySourceDef>>;
@@ -209,6 +216,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     partialTrace(input, flags) {
       return workbench.run("partial-trace", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof partialTraceDef>>;
     },
+    partialTranspose(input, flags) {
+      return workbench.run("partial-transpose", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof partialTransposeDef>>;
+    },
     polyFactor(input, flags) {
       return workbench.run("poly-factor", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof polyFactorDef>>;
     },
@@ -269,6 +279,7 @@ export const defs = {
   casDiff: casDiffDef,
   casSimplify: casSimplifyDef,
   casVerify: casVerifyDef,
+  choiIso: choiIsoDef,
   entropySource: entropySourceDef,
   exprParse: exprParseDef,
   groebnerBasis: groebnerBasisDef,
@@ -293,6 +304,7 @@ export const defs = {
   optimizeLbfgsProjected: optimizeLbfgsProjectedDef,
   oracle: oracleDef,
   partialTrace: partialTraceDef,
+  partialTranspose: partialTransposeDef,
   polyFactor: polyFactorDef,
   polyRoots: polyRootsDef,
   realRootIsolate: realRootIsolateDef,

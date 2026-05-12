@@ -26,7 +26,7 @@
 // if you want a clean provenance store; absent, the demos use the
 // global default (`~/.scientist-workbench/cas-store`).
 
-import { float64FromNumber, float64ToNumber, hash, int, list, parse, rat, record, str, sym, expr, type Value } from "@workbench/protocol";
+import { float64FromNumber, float64ToNumber, hash, int, list, parse, rat, record, str, sym, expr, tagged, type Value } from "@workbench/protocol";
 import { canonicalize } from "@workbench/protocol";
 import { spawnBun } from "@workbench/contract";
 import { loadWorkbench, typed } from "@workbench/compose";
@@ -1148,6 +1148,118 @@ function reportSdp(label: string, out: Value): void {
 reportSdp("default (nt)", await wb.sdpSolve(sdpInput as never));
 reportSdp("--method=aho", await wb.sdpSolve(sdpInput as never, { method: "aho" }));
 reportSdp("--method=hsde-nt", await wb.sdpSolve(sdpInput as never, { method: "hsde-nt" }));
+
+// -----------------------------------------------------------------------------
+// 21. choi-iso ∘ linalg-eigh — the Peres–Horodecki CP test, end-to-end
+// -----------------------------------------------------------------------------
+//
+// The transpose map T(ρ) = ρᵀ is positive (it sends Hermitian to Hermitian,
+// PSD to PSD on a single system) but not completely positive (extending it
+// by an identity factor on a second system breaks positivity). The
+// Choi–Jamiołkowski isomorphism makes this abstract property concrete:
+// J(Φ) ⪰ 0 ⟺ Φ is CP. So computing the Choi matrix of T and feeding it to
+// linalg-eigh should expose a negative eigenvalue. This is exactly the
+// Peres–Horodecki PPT entanglement-detection criterion, viewed as a CP
+// witness rather than as a witness on a particular bipartite state.
+//
+// Two tools, one wire. The whole composition runs in this process.
+
+console.log("\n" + "=".repeat(60));
+console.log("  21. choi-iso ∘ linalg-eigh — the transpose map is not CP");
+console.log("=".repeat(60));
+console.log(
+  "T(ρ) = ρᵀ has superoperator matrix SWAP_4 in column-stacking vec.\n" +
+  "choi(T) is *also* SWAP_4 (a fixed point of the iso for this map);\n" +
+  "eigh of SWAP_4 reveals eigenvalues {-1, 1, 1, 1} — the negative one\n" +
+  "is the Peres–Horodecki witness that T is positive but not CP.",
+);
+
+// Transpose-map superoperator (= SWAP_4) on the wire.
+const T_super = list([
+  list([1, 0, 0, 0].map(float64FromNumber)),
+  list([0, 0, 1, 0].map(float64FromNumber)),
+  list([0, 1, 0, 0].map(float64FromNumber)),
+  list([0, 0, 0, 1].map(float64FromNumber)),
+]);
+const choiResult = await wb.choiIso(
+  tagged(
+    "channel-to-choi",
+    record({ channel: T_super, dim_in: int(2n), dim_out: int(2n) }),
+  ),
+);
+if (choiResult.kind === "record") {
+  const J = choiResult.fields["J"];
+  if (J?.kind === "list") {
+    const eighOut = await wb.linalgEigh({
+      kind: "record",
+      fields: { A: J },
+    });
+    if (eighOut.kind === "record") {
+      const lams = eighOut.fields["eigenvalues"];
+      if (lams?.kind === "list") {
+        const eigs = lams.items
+          .filter((it): it is { kind: "float64" } & typeof it => it.kind === "float64")
+          .map((it) => float64ToNumber(it as never).toFixed(4));
+        console.log("  J(T) eigenvalues:   [" + eigs.join(", ") + "]");
+        console.log("  the negative eigenvalue is the not-CP witness; T fails J ⪰ 0.");
+      }
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 22. partial-transpose ∘ linalg-eigh — the Peres–Horodecki PPT entanglement
+//     witness, end-to-end
+// -----------------------------------------------------------------------------
+//
+// The state-side companion to #21. There the input was a channel (the
+// transpose map T), and we asked "is T completely positive?" — answer no,
+// because J(T) had a negative eigenvalue. Here the input is a *bipartite
+// state* (the Bell pair |Φ+⟩⟨Φ+|), and we ask "is this state entangled?"
+// — answer yes, because PT_B(|Φ+⟩⟨Φ+|) has a negative eigenvalue. The
+// matrix-level connection: PT on one qubit of the maximally entangled
+// state equals (1/2) SWAP, so the min eigenvalue is −1/2. The criterion
+// is necessary AND sufficient on 2×2 systems (Horodecki³ 1996).
+
+console.log("\n" + "=".repeat(60));
+console.log("  22. partial-transpose ∘ linalg-eigh — Bell state is entangled");
+console.log("=".repeat(60));
+console.log(
+  "PT_B(|Φ+⟩⟨Φ+|) = (1/2) SWAP_4; eigh reveals a −1/2 eigenvalue,\n" +
+  "the Peres–Horodecki witness — Bell state is entangled.",
+);
+const ptBell = await wb.partialTranspose({
+  kind: "record",
+  fields: {
+    M: list([
+      list([0.5, 0, 0, 0.5].map(float64FromNumber)),
+      list([0, 0, 0, 0].map(float64FromNumber)),
+      list([0, 0, 0, 0].map(float64FromNumber)),
+      list([0.5, 0, 0, 0.5].map(float64FromNumber)),
+    ]),
+    dims: list([int(2n), int(2n)]),
+    transposeOn: list([int(1n)]),
+  },
+});
+if (ptBell.kind === "record") {
+  const Mpt = ptBell.fields["M_pt"];
+  if (Mpt?.kind === "list") {
+    const eighOut = await wb.linalgEigh({
+      kind: "record",
+      fields: { A: Mpt },
+    });
+    if (eighOut.kind === "record") {
+      const lams = eighOut.fields["eigenvalues"];
+      if (lams?.kind === "list") {
+        const eigs = lams.items
+          .filter((it): it is { kind: "float64" } & typeof it => it.kind === "float64")
+          .map((it) => float64ToNumber(it as never).toFixed(4));
+        console.log("  eigenvalues of PT_B(|Φ+⟩⟨Φ+|): [" + eigs.join(", ") + "]");
+        console.log("  the −0.5 eigenvalue certifies entanglement (Peres 1996).");
+      }
+    }
+  }
+}
 
 // -----------------------------------------------------------------------------
 // Bonus — content-addressing
