@@ -1034,6 +1034,122 @@ if (transResult.kind === "record") {
 }
 
 // -----------------------------------------------------------------------------
+// 19. lp-solve — three lanes, one wire (ADR-0030/-0031/-0032/-0033)
+// -----------------------------------------------------------------------------
+//
+// Linear programming specialist. The unified cone-tier wire dispatches
+// across three engines: arbitrary-precision rational simplex (`exact`),
+// Mehrotra primal-dual IPM (`ipm`), and HSDE homogeneous self-dual
+// embedding (`hsde-lp`). The same problem runs all three; the
+// `method` field of each output names the engine that ran, and
+// `achieved_precision` reports the honest KKT residual at the wire.
+//
+// Problem: minimise x + 3y s.t. x + y = 5, x,y ≥ 0. The optimum is
+// (x, y) = (5, 0) with objective 5 — the y coefficient 3 makes the
+// y-axis vertex worse than the x-axis vertex.
+
+console.log("\n" + "=".repeat(60));
+console.log("  19. lp-solve — three lanes (exact / ipm / hsde-lp), one wire");
+console.log("=".repeat(60));
+console.log(
+  "min x + 3y  s.t.  x + y = 5,  x,y ≥ 0  ⟹  (x, y) = (5, 0), obj = 5.\n" +
+  "Same wire input through all three engines; the `method` field reports\n" +
+  "which lane ran. The `exact` lane returns 1-ULP `achieved_precision`.",
+);
+const lpInput = record({
+  minimize: record({ c: list([float64FromNumber(1), float64FromNumber(3)]) }),
+  subjectTo: record({
+    Ax_eq_b: record({
+      A: list([list([float64FromNumber(1), float64FromNumber(1)])]),
+      b: list([float64FromNumber(5)]),
+    }),
+    cones: list([expr("NonNegCone", [list([int(0n), int(1n)])])]),
+  }),
+});
+function reportLp(label: string, out: Value): void {
+  if (out.kind !== "record") return;
+  const status = out.fields["status"];
+  const method = out.fields["method"];
+  const obj = out.fields["objective"];
+  const ap = out.fields["achieved_precision"];
+  const xVec = out.fields["x"];
+  let xs = "?";
+  if (xVec?.kind === "list") {
+    xs = xVec.items.map((it) =>
+      it.kind === "float64" ? float64ToNumber(it as never).toFixed(6) : "?",
+    ).join(", ");
+  }
+  const objStr = obj?.kind === "float64" ? float64ToNumber(obj).toFixed(6) : "?";
+  const apStr = ap?.kind === "float64" ? float64ToNumber(ap).toExponential(2) : "?";
+  console.log(
+    `  ${label.padEnd(18)} status=${status?.kind === "string" ? status.value : "?"}  ` +
+    `method=${method?.kind === "string" ? method.value : "?"}  ` +
+    `obj=${objStr}  ap=${apStr}  x=[${xs}]`,
+  );
+}
+reportLp("default (auto)", await wb.lpSolve(lpInput as never));
+reportLp("--method=exact", await wb.lpSolve(lpInput as never, { method: "exact" }));
+reportLp("--method=ipm", await wb.lpSolve(lpInput as never, { method: "ipm" }));
+reportLp("--method=hsde-lp", await wb.lpSolve(lpInput as never, { method: "hsde-lp" }));
+
+// -----------------------------------------------------------------------------
+// 20. sdp-solve — semidefinite programming via primal-dual IPM (ADR-0030 §B)
+// -----------------------------------------------------------------------------
+//
+// SDP specialist of the cone-solver tier. The four lanes (`nt`, `aho`,
+// `hkm-debug`, `hsde-nt`) share the same Mosek-format wire with √2
+// off-diagonal svec scaling so `<C, X>_F = svec(C)ᵀ svec(X)` exactly.
+// Bench grade at default tol is 5/6 on sdp-sdplib (worklog 095);
+// hinf2 holdout addressable by HSDE + Phase 5 iterative refinement
+// per docs/HANDOFF_solver_ipm_hsde_part2.md.
+//
+// Problem: minimise -tr(X) s.t. tr(X) = 4, X ⪰ 0 — a 2×2 PSD block.
+// The optimum is any rank-1 X = 4·v vᵀ on the trace-4 face; the IPM
+// finds the central-path point X = diag(2, 2), primal value -4.
+// Wire variables: x = svec(X) = (X[0,0], √2·X[0,1], X[1,1]), so the
+// trace-equality is (1, 0, 1)·x = 4 and the objective is (-1, 0, -1)·x.
+
+console.log("\n" + "=".repeat(60));
+console.log("  20. sdp-solve — primal-dual IPM with four search-direction lanes");
+console.log("=".repeat(60));
+console.log(
+  "min -tr(X)  s.t.  tr(X) = 4,  X ⪰ 0  ⟹  X = diag(2, 2), obj = -4.\n" +
+  "2×2 PSD block in svec wire; Mosek √2 off-diagonal scaling makes\n" +
+  "<C, X>_F = c·x exactly. Runs NT, AHO, and HSDE-NT in the same wire.",
+);
+const sdpInput = record({
+  minimize: record({
+    c: list([float64FromNumber(-1), float64FromNumber(0), float64FromNumber(-1)]),
+  }),
+  subjectTo: record({
+    Ax_eq_b: record({
+      A: list([list([float64FromNumber(1), float64FromNumber(0), float64FromNumber(1)])]),
+      b: list([float64FromNumber(4)]),
+    }),
+    cones: list([expr("PSDCone", [int(2n), list([int(0n), int(1n), int(2n)])])]),
+  }),
+});
+function reportSdp(label: string, out: Value): void {
+  if (out.kind !== "record") return;
+  const status = out.fields["status"];
+  const method = out.fields["method"];
+  const obj = out.fields["objective"];
+  const ap = out.fields["achieved_precision"];
+  const iter = out.fields["iterations"];
+  const objStr = obj?.kind === "float64" ? float64ToNumber(obj).toFixed(6) : "?";
+  const apStr = ap?.kind === "float64" ? float64ToNumber(ap).toExponential(2) : "?";
+  const iterStr = iter?.kind === "integer" ? iter.value : "?";
+  console.log(
+    `  ${label.padEnd(18)} status=${status?.kind === "string" ? status.value : "?"}  ` +
+    `method=${method?.kind === "string" ? method.value : "?"}  ` +
+    `obj=${objStr}  ap=${apStr}  iter=${iterStr}`,
+  );
+}
+reportSdp("default (nt)", await wb.sdpSolve(sdpInput as never));
+reportSdp("--method=aho", await wb.sdpSolve(sdpInput as never, { method: "aho" }));
+reportSdp("--method=hsde-nt", await wb.sdpSolve(sdpInput as never, { method: "hsde-nt" }));
+
+// -----------------------------------------------------------------------------
 // Bonus — content-addressing
 // -----------------------------------------------------------------------------
 

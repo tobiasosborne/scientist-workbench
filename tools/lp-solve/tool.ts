@@ -121,10 +121,12 @@ import {
 } from "@workbench/simplex-q";
 import {
   solveLp as solveLpIpm,
+  solveHsdeLp,
   lpFromCanonical,
   toWireStatus as ipmToWireStatus,
   formatVerboseLine,
   type CanonicalLp,
+  type HsdeLpSolveResult,
   type VerboseIterLine,
 } from "@workbench/solver-ipm";
 import { writeSync, openSync, closeSync } from "node:fs";
@@ -133,6 +135,7 @@ const NAME = "lp-solve";
 const VERSION = "0.1.0";
 const METHOD_TAG_EXACT = "simplex-q";
 const METHOD_TAG_IPM = "solver-ipm";
+const METHOD_TAG_HSDE_LP = "solver-ipm-hsde-lp";
 
 // Auto-dispatch threshold. The arbprec simplex (`simplex-q`) is
 // exact-rational and bit-identical cross-platform forever, but its
@@ -422,7 +425,7 @@ function decodeInput(input: RecordValue): {
   return { c, Q, A, b, cones, maxIter };
 }
 
-type LaneMethod = "auto" | "exact" | "ipm";
+type LaneMethod = "auto" | "exact" | "ipm" | "hsde-lp";
 
 function fn(input: RecordValue, flags: { method?: LaneMethod }): Value {
   const dec = decodeInput(input);
@@ -514,7 +517,7 @@ function fn(input: RecordValue, flags: { method?: LaneMethod }): Value {
   }
   const bSplitF: number[] = bFloat.slice();
 
-  // ----- Dispatch between exact and IPM lanes. -----
+  // ----- Dispatch between exact, IPM, and HSDE-LP lanes. -----
   const method = pickLaneMethod(flags.method ?? "auto", m, splitN);
   const maxIter = dec.maxIter !== undefined ? dec.maxIter : 10 * (m + splitN);
 
@@ -528,8 +531,7 @@ function fn(input: RecordValue, flags: { method?: LaneMethod }): Value {
     return encodeResult(result, parsed.free, n, m, m > 0 ? aFloat : null, bFloat, cFloat);
   }
 
-  // IPM lane — float64 Mehrotra primal-dual via @workbench/solver-ipm.
-  return solveIpmLane({
+  const laneArgs: IpmLaneInput = {
     cSplitF,
     ASplitF,
     bSplitF,
@@ -541,7 +543,19 @@ function fn(input: RecordValue, flags: { method?: LaneMethod }): Value {
     cFloat,
     aFloat,
     bFloat,
-  });
+  };
+
+  if (method === "hsde-lp") {
+    // HSDE LP lane — homogeneous self-dual embedding per ADR-0033 and
+    // docs/HANDOFF_solver_ipm_hsde_part2.md. Same canonical input shape
+    // as the legacy IPM lane (every variable already non-negative after
+    // free-variable splitting); the HSDE solver internally homogenizes
+    // with the τ-κ scalars.
+    return solveHsdeLpLane(laneArgs);
+  }
+
+  // IPM lane — float64 Mehrotra primal-dual via @workbench/solver-ipm.
+  return solveIpmLane(laneArgs);
 }
 
 // -----------------------------------------------------------------------------
@@ -564,10 +578,13 @@ function pickLaneMethod(
   request: LaneMethod,
   m: number,
   splitN: number,
-): "exact" | "ipm" {
+): "exact" | "ipm" | "hsde-lp" {
   if (request === "exact") return "exact";
   if (request === "ipm") return "ipm";
-  // auto:
+  if (request === "hsde-lp") return "hsde-lp";
+  // auto: existing size-based dispatch between exact and IPM. The HSDE
+  // lane is opt-in only today (bead 9vc9 tracks future precision-aware
+  // auto-dispatch that would include hsde-lp).
   return m + splitN <= AUTO_DISPATCH_NMAX ? "exact" : "ipm";
 }
 
@@ -610,6 +627,42 @@ function solveIpmLane(args: IpmLaneInput): Value {
       verbose,
     });
     return encodeIpmResult(result, args);
+  } finally {
+    close();
+  }
+}
+
+/**
+ * HSDE LP lane — homogeneous self-dual embedding. Shares the same
+ * canonical-LP plumbing as the legacy IPM lane (free-variable split
+ * already done, every variable non-negative); the difference is the
+ * solver: `solveHsdeLp` returns a flat result with `tau`/`kappa`/
+ * `achievedPrecision` rather than the nested `{status, iterate}` shape
+ * of the legacy Mehrotra path. The encoder branch handles that
+ * structural divergence.
+ */
+function solveHsdeLpLane(args: IpmLaneInput): Value {
+  const subjectTo: CanonicalLp["subjectTo"] =
+    args.m > 0
+      ? {
+          Ax_eq_b: { A: args.ASplitF, b: args.bSplitF },
+          cones: [{ head: "NonNegCone", size: args.splitN }],
+        }
+      : { cones: [{ head: "NonNegCone", size: args.splitN }] };
+  const canonical: CanonicalLp = {
+    minimize: { c: args.cSplitF },
+    subjectTo,
+    precision: 1e-8,
+    max_iter: args.maxIter,
+  };
+  const lp = lpFromCanonical(canonical);
+  const { verbose, close } = makeVerboseHook();
+  try {
+    const result = solveHsdeLp(lp, {
+      params: { iterLimit: args.maxIter },
+      verbose,
+    });
+    return encodeHsdeLpResult(result, args);
   } finally {
     close();
   }
@@ -707,6 +760,69 @@ function encodeIpmResult(
     // c⁻ = -c, gives c·(x⁺ - x⁻) = c·x).
     baseFields["objective"] = float64FromNumber(it.primalObj);
     baseFields["achieved_precision"] = float64FromNumber(achievedPrecision);
+  }
+
+  return record(baseFields);
+}
+
+/**
+ * Wire-encoder for the HSDE LP lane. The HSDE solver returns a flat
+ * result `{status, x, y, s, tau, kappa, primalObj, achievedPrecision, …}`
+ * (the iterate is **purified** — already divided by τ*); we reconstruct
+ * the user-facing `x` by undoing the free-variable split exactly as the
+ * legacy IPM encoder does. `achievedPrecision` is the Mosek-style
+ * `max(ρ_p, ρ_d, ρ_g)` (≤ 1 means converged to the requested tol; > 1
+ * means the returned iterate is a best-effort snapshot — honest scope
+ * per Rule 8).
+ */
+function encodeHsdeLpResult(result: HsdeLpSolveResult, args: IpmLaneInput): Value {
+  const status = ipmToWireStatus(result.status);
+
+  // Recover the original (un-split) primal x from the purified internal
+  // x⁺/x⁻ halves. Standard variables map 1:1; free variables decode as
+  // `x_j⁺ - x_j⁻`. The HSDE x is already purified, so the wire x is the
+  // direct subtraction (no τ rescaling needed at this layer).
+  const xWire = new Array<number>(args.n);
+  for (let j = 0; j < args.n; j++) xWire[j] = result.x[j]!;
+  for (let k = 0; k < args.free.length; k++) {
+    const j = args.free[k]!;
+    xWire[j] = result.x[j]! - result.x[args.n + k]!;
+  }
+
+  // Slacks for the n original variables (split halves' slacks are an
+  // internal artefact — same convention as the legacy IPM encoder).
+  const slackWire = new Array<number>(args.n);
+  for (let j = 0; j < args.n; j++) slackWire[j] = result.s[j]!;
+
+  const warnings: Value[] = [];
+  // Surface τ/κ when they reveal something diagnostic. τ ≪ 1 at exit
+  // signals approach to an infeasibility certificate; κ > 0 at exit
+  // signals dual-infeasibility (per ART03 ρ-dichotomy).
+  if (result.tau < 1e-3 || result.kappa > 1e-3) {
+    warnings.push(
+      str(
+        `HSDE termination at τ=${result.tau.toExponential(3)}, κ=${result.kappa.toExponential(3)}: small τ signals primal infeasibility; nonzero κ signals dual infeasibility`,
+      ),
+    );
+  }
+
+  const baseFields: Record<string, Value> = {
+    status: str(status),
+    x: list(xWire.map(float64FromNumber)),
+    dual: list(Array.from(result.y).map(float64FromNumber)),
+    slack: list(slackWire.map(float64FromNumber)),
+    iterations: int(BigInt(result.iter)),
+    method: str(METHOD_TAG_HSDE_LP),
+    condition_estimate: float64FromNumber(0),
+    warnings: list(warnings),
+  };
+
+  if (status === "optimal") {
+    // `primalObj` from the HSDE solver is already in the purified frame
+    // (c^T·(x/τ)); the c⁺·x⁺ + c⁻·x⁻ = c·(x⁺ - x⁻) algebra carries
+    // through the free-variable split.
+    baseFields["objective"] = float64FromNumber(result.primalObj);
+    baseFields["achieved_precision"] = float64FromNumber(result.achievedPrecision);
   }
 
   return record(baseFields);
@@ -1117,8 +1233,9 @@ function smokeTest(): void {
   });
   const exact = fn(problem, { method: "exact" }) as RecordValue;
   const ipm = fn(problem, { method: "ipm" }) as RecordValue;
+  const hsdeLp = fn(problem, { method: "hsde-lp" }) as RecordValue;
 
-  for (const [label, res] of [["exact", exact], ["ipm", ipm]] as const) {
+  for (const [label, res] of [["exact", exact], ["ipm", ipm], ["hsde-lp", hsdeLp]] as const) {
     const status = (res.fields["status"] as { kind: "string"; value: string }).value;
     if (status !== "optimal") {
       throw new Error(`lp-solve --test: ${label} lane returned status=${status}, expected "optimal"`);
@@ -1133,8 +1250,8 @@ function smokeTest(): void {
     }
   }
 
-  // Method tag echo: --method=ipm must report "solver-ipm" in the
-  // output's `method` field so the agent can distinguish lanes.
+  // Method tag echo: each lane must report the tag matching its engine
+  // so the agent can distinguish which dispatch ran.
   const ipmMethod = (ipm.fields["method"] as { kind: "string"; value: string }).value;
   if (ipmMethod !== METHOD_TAG_IPM) {
     throw new Error(`lp-solve --test: ipm lane reported method="${ipmMethod}", expected "${METHOD_TAG_IPM}"`);
@@ -1143,6 +1260,10 @@ function smokeTest(): void {
   if (exactMethod !== METHOD_TAG_EXACT) {
     throw new Error(`lp-solve --test: exact lane reported method="${exactMethod}", expected "${METHOD_TAG_EXACT}"`);
   }
+  const hsdeMethod = (hsdeLp.fields["method"] as { kind: "string"; value: string }).value;
+  if (hsdeMethod !== METHOD_TAG_HSDE_LP) {
+    throw new Error(`lp-solve --test: hsde-lp lane reported method="${hsdeMethod}", expected "${METHOD_TAG_HSDE_LP}"`);
+  }
 }
 
 export const def = defineTool({
@@ -1150,7 +1271,7 @@ export const def = defineTool({
   version: VERSION,
   schema: { input: inputSchema, output: outputSchema },
   flags: {
-    method: F.enum(["auto", "exact", "ipm"] as const, "solver lane", {
+    method: F.enum(["auto", "exact", "ipm", "hsde-lp"] as const, "solver lane: auto (default, dispatches by size), exact (arbprec simplex), ipm (Mehrotra primal-dual), hsde-lp (homogeneous self-dual embedding per ADR-0033)", {
       default: "auto",
     }),
   },

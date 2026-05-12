@@ -153,10 +153,12 @@ import {
   solveSdp as solveSdpNt,
   solveSdpAho,
   solveSdpHkm,
+  solveHsdeSdpNt,
   formatVerboseLine,
   type SdpProblem,
   type SdpBlock,
   type SdpSolveResult,
+  type HsdeSdpSolveResult,
   type SolverStatus,
   type VerboseIterLine,
   toWireStatus,
@@ -170,6 +172,7 @@ const VERSION = "0.1.0";
 const METHOD_TAG_NT = "solver-ipm-nt";
 const METHOD_TAG_AHO = "solver-ipm-aho";
 const METHOD_TAG_HKM = "solver-ipm-hkm";
+const METHOD_TAG_HSDE_NT = "solver-ipm-hsde-nt";
 
 // -----------------------------------------------------------------------------
 // Schema
@@ -798,7 +801,7 @@ function decodeInput(input: RecordValue): {
 // fn body
 // -----------------------------------------------------------------------------
 
-type Method = "auto" | "nt" | "aho" | "hkm-debug";
+type Method = "auto" | "nt" | "aho" | "hkm-debug" | "hsde-nt";
 
 interface IpmParamsLite {
   iterLimit?: number;
@@ -807,6 +810,11 @@ interface IpmParamsLite {
   stallIterCap?: number;
 }
 
+// HsdeSdpSolveResult is a structural superset of SdpSolveResult (it adds
+// `tau`, `kappa`, `achievedPrecision`); TS structural typing therefore
+// accepts the HSDE return into the legacy slot directly. The downstream
+// `encodeSdpResult` only reads the intersection (status, X, y, S, iter,
+// primalObj, primalInf, dualInf, mu), so no encoder branch is needed.
 function pickSolver(
   method: Method,
 ): {
@@ -824,6 +832,8 @@ function pickSolver(
       return { tag: METHOD_TAG_AHO, solve: solveSdpAho };
     case "hkm-debug":
       return { tag: METHOD_TAG_HKM, solve: solveSdpHkm };
+    case "hsde-nt":
+      return { tag: METHOD_TAG_HSDE_NT, solve: solveHsdeSdpNt };
   }
 }
 
@@ -1195,7 +1205,12 @@ const invariants = [
 
 function smokeTest(): void {
   const problem = example2Input as RecordValue;
-  for (const method of ["nt", "aho"] as const) {
+  const expectedTagFor: Record<string, string> = {
+    nt: METHOD_TAG_NT,
+    aho: METHOD_TAG_AHO,
+    "hsde-nt": METHOD_TAG_HSDE_NT,
+  };
+  for (const method of ["nt", "aho", "hsde-nt"] as const) {
     const out = fn(problem, { method }) as RecordValue;
     const status = (out.fields["status"] as { kind: "string"; value: string }).value;
     if (status !== "optimal") {
@@ -1214,7 +1229,7 @@ function smokeTest(): void {
       );
     }
     const tag = (out.fields["method"] as { kind: "string"; value: string }).value;
-    const expectedTag = method === "nt" ? METHOD_TAG_NT : METHOD_TAG_AHO;
+    const expectedTag = expectedTagFor[method]!;
     if (tag !== expectedTag) {
       throw new Error(
         `sdp-solve --test: method=${method} reported method tag "${tag}", expected "${expectedTag}"`,
@@ -1233,8 +1248,8 @@ export const def = defineTool({
   schema: { input: inputSchema, output: outputSchema },
   flags: {
     method: F.enum(
-      ["auto", "nt", "aho", "hkm-debug"] as const,
-      "search direction (Nesterov-Todd primary; AHO for A/B; HKM-debug for diagnostic)",
+      ["auto", "nt", "aho", "hkm-debug", "hsde-nt"] as const,
+      "search direction. nt (default): legacy NT; aho: AHO for A/B; hkm-debug: HKM diagnostic; hsde-nt: HSDE-NT (Phase 2 port per docs/HANDOFF_solver_ipm_hsde_part2.md — A/B-grade today, pending Phase 5 iterative refinement for tighter tol on hinf2-class problems)",
       { default: "auto" },
     ),
   },

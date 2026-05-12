@@ -134,6 +134,7 @@ Per-block Mehrotra predictor-corrector primal-dual IPM with three direction choi
 | `auto` (default), `nt` | Nesterov-Todd | Todd-Toh-Tütüncü 1998 | primary; symmetric, self-scaled, the SDPT3 v4 default |
 | `aho` | Alizadeh-Haeberly-Overton | Alizadeh-Haeberly-Overton 1997 | algebraically clean (Lyapunov solve); A/B reference |
 | `hkm-debug` | Helmberg-Kojima-Monteiro | Helmberg-Kojima-Monteiro 1996 | asymmetric; gated for diagnostic comparison only |
+| `hsde-nt` | HSDE + NT scaling | ART03 / Andersen 2009 (Mosek) | homogeneous self-dual embedding per [ADR-0033](../../docs/adr/0033-hsde-for-solver-ipm.md); τ-κ scalars detect infeasibility; A/B-grade today, pending Phase 5 iterative refinement (handoff [`docs/HANDOFF_solver_ipm_hsde_part2.md`](../../docs/HANDOFF_solver_ipm_hsde_part2.md)) |
 
 The substrate is `@workbench/solver-ipm` (ADR-0032). Convergence is gated by `feasTol = optTol = precision`; the `precision` flag default is `1e-8`. Termination at `iter >= max_iter` returns `status: "iter-cap"` with the best-effort iterate; `numerical-breakdown` covers Cholesky failure on the Schur complement, eigen-decomposition stall, or step-length collapse.
 

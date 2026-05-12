@@ -1,7 +1,7 @@
 # lp-solve
 
 Linear-programming specialist of the cone-solver tier
-([ADR-0030](../../docs/adr/0030-convex-cone-solver-tier.md)). Two
+([ADR-0030](../../docs/adr/0030-convex-cone-solver-tier.md)). Three
 internal lanes share one public wire:
 
 - **`--method=exact`** — arbitrary-precision rational engine via
@@ -14,10 +14,18 @@ internal lanes share one public wire:
   interior-point method via `@workbench/solver-ipm`. Float64 internals;
   scales to NETLIB (m, n ≈ 100–2000) in seconds. `numerical: true`
   with platform fingerprint.
+- **`--method=hsde-lp`** — homogeneous self-dual embedding (ART03 /
+  Mosek-aligned; [ADR-0033](../../docs/adr/0033-hsde-for-solver-ipm.md))
+  via `@workbench/solver-ipm`'s `solveHsdeLp`. Reports infeasibility
+  via the τ-κ ρ-dichotomy; the precision floor matches `ipm` today
+  (Phase 5 iterative refinement is the upcoming gain per the part-2
+  handoff). Opt-in; not the default.
 - **`--method=auto`** (default) — dispatch by problem size. Small
   problems (`m + n ≤ 50`) go to exact for the bit-identical answer;
-  larger problems go to IPM for the scaling. The `method` field of
-  the output record reports which lane actually ran.
+  larger problems go to IPM for the scaling. Precision-aware auto-
+  dispatch (selecting hsde-lp or exact for tight tol) tracked at bead
+  `9vc9`. The `method` field of the output record reports which lane
+  actually ran.
 
 The killer claim of the exact lane stands on its own: no other LP
 solver in any ecosystem ships exact-rational primary computation over
@@ -62,7 +70,7 @@ record {
 
 | flag | values | meaning |
 |---|---|---|
-| `--method` | `auto` (default), `exact`, `ipm` | Force a specific lane, or let the size-based auto-dispatch choose. |
+| `--method` | `auto` (default), `exact`, `ipm`, `hsde-lp` | Force a specific lane, or let the size-based auto-dispatch choose between `exact` and `ipm`. |
 
 ## Refusal envelopes
 
@@ -89,10 +97,10 @@ The engine's native taxonomy maps onto ADR-0030's public one:
 | `iter-cap` | `"iter-cap"` | absent |
 | `coefficient-explosion` | `tagged "lp-solve/coefficient-explosion"` | n/a |
 
-`"numerical-breakdown"` is emitted only by the IPM lane (Cholesky
-factorisation failure after the 3-tier Tikhonov retry exhausts).
-The exact lane never emits it — arbitrary-precision rational
-arithmetic does not break down numerically.
+`"numerical-breakdown"` is emitted by the IPM and HSDE lanes (Cholesky
+factorisation failure after the 3-tier Tikhonov retry exhausts). The
+exact lane never emits it — arbitrary-precision rational arithmetic
+does not break down numerically.
 
 ## Lane characteristics
 
