@@ -16,6 +16,7 @@ export {
   classifyInput,
   type ClassifiedLinear,
   type ClassifiedUnivariatePoly,
+  type ClassifiedMultivariatePoly,
   type ClassifiedUnsupported,
   type ClassifyResult,
 } from "./classify.js";

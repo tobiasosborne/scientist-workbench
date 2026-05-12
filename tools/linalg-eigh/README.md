@@ -237,6 +237,37 @@ determinism guarantee (`numerical: true`, ADR-0015).
   suggestion points at `linalg-svd`).
 - **non-rectangular-rejected**: ragged `A` raises `ToolError`.
 
+## Validation
+
+Bench corpus lives in [`scientist-workbench-corpus/benchmarks/linalg-eigh/`](../../../scientist-workbench-corpus/benchmarks/linalg-eigh/) (ADR-0028 migration).
+
+46-case golden battery, 316 invariant assertions
+(~7 checks per case):
+
+1. `no_tool_error` — clean exit.
+2. `shape` — output record has all expected fields.
+3. `Q_orthonormal` — `‖QᵀQ − I_n‖_F ≤ tol_orth`
+   (Higham 2002 §20.6 with 100× safety; independent of `κ(A)`).
+4. `reconstruction` — `‖A·Q − Q·diag(λ)‖_F / max(‖A‖_F, 1) ≤ tol_recon`.
+5. `eigenvalues_ascending` — `λ[i] ≤ λ[i+1]` for all `i < n−1`.
+6. `self_reported_honesty` — reported errors agree with recomputation
+   to `1e-6` relative.
+7. `warnings_present_for_large_n` — `n > 500` cases emit `warnings`
+   (ADR-0016 scale advisory).
+
+Tier breakdown: A (square SPD random) · B (indefinite) · C (Hilbert
+ill-conditioned) · D (near-defective / near-repeated eigenvalues) ·
+E (degenerate-shape and non-symmetric refusals) · F (NIST harwell-boeing
+SPD matrices) · G (stress: n=500).
+
+**5 NIST harwell-boeing SPD matrices** (`bench/_corpus/harwell-boeing/`):
+bcsstk01–05, all symmetric positive-definite, κ ∈ {4.3e3 … 6.8e6},
+n ∈ {48 … 153}.
+
+**Stress case:** n=500 (~7s pure TS Jacobi); green with scale warning.
+
+**Mutation-proven** per CLAUDE.md Rule 6.
+
 ## Run
 
 ```sh

@@ -117,6 +117,15 @@ VERIFY "$LHS" "$RHS" | SHORT
 
 echo
 echo "============================================================"
+echo "  Demo 8.5 — multivariate Solve via Gröbner basis (ADR-0029, bead x8d)"
+echo "          (x²+y²−5, x+y−3) ⟹ {(1,2), (2,1)}"
+echo "          Buchberger + sloppy sugar + FGLM + shape-lemma extraction."
+echo "============================================================"
+echo '{"kind":"record","fields":{"eqs":{"kind":"list","items":[{"kind":"expression","head":"-","args":[{"kind":"expression","head":"+","args":[{"kind":"expression","head":"^","args":[{"kind":"symbol","name":"x"},{"kind":"integer","value":"2"}]},{"kind":"expression","head":"^","args":[{"kind":"symbol","name":"y"},{"kind":"integer","value":"2"}]}]},{"kind":"integer","value":"5"}]},{"kind":"expression","head":"-","args":[{"kind":"expression","head":"+","args":[{"kind":"symbol","name":"x"},{"kind":"symbol","name":"y"}]},{"kind":"integer","value":"3"}]}]},"vars":{"kind":"list","items":[{"kind":"symbol","name":"x"},{"kind":"symbol","name":"y"}]}}}' \
+  | bun tools/solve/tool.ts | SHORT
+
+echo
+echo "============================================================"
 echo "  Demo 9 — discoverability: agent plans a composition by type"
 echo "          'I have plain text. What can consume strings?'"
 echo "          'I want a verdict. What produces records?'"

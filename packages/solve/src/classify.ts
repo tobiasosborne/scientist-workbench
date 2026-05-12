@@ -6,7 +6,7 @@
 // ------
 // `classifyInput(eqs, vars)` decides which substrate path the
 // `tools/solve` dispatcher should take for a given equation list and
-// unknown list. The four v0.1 lanes:
+// unknown list. The four v0.1 lanes (post-x8d):
 //
 //   • `linear`              — every equation is linear in `vars`,
 //                             dispatches to `bareissSolve` (cas-core)
@@ -22,9 +22,21 @@
 //                             `solve/complex-roots-not-yet-named`
 //                             when an irreducible deg-≥5 factor has
 //                             complex roots (alg-num v0.1 limit).
-//   • `unsupported`         — multivariate-polynomial (Krull dim 0
-//                             via Buchberger is bead pending),
-//                             transcendental, parametric, or
+//   • `multivariate-poly`   — multiple equations or multiple
+//                             variables with at least one nonlinear
+//                             monomial. Dispatches to
+//                             `solveGroebner` from
+//                             `@workbench/groebner` (Buchberger +
+//                             FGLM + shape lemma; ADR-0029, bead
+//                             scientist-workbench-x8d). Zero-
+//                             dimensional ideals produce a finite
+//                             solution set; positive-dim refuses with
+//                             `solve/multivariate-non-zero-dim`;
+//                             non-shape lex GB refuses with
+//                             `solve/shape-lemma-failure`; complex
+//                             algebraic roots refuse with
+//                             `solve/complex-roots-not-yet-named`.
+//   • `unsupported`         — transcendental, parametric, or
 //                             out-of-vocabulary input. Carries a
 //                             refusal class string per ADR-0017's
 //                             roster.
@@ -77,6 +89,14 @@ export type ClassifiedUnivariatePoly = {
   readonly varName: string;
 };
 
+export type ClassifiedMultivariatePoly = {
+  readonly kind: "multivariate-poly";
+  /** The polynomial equations interpreted as eq_i = 0. */
+  readonly polys: readonly Poly<Rat>[];
+  /** The variable list. */
+  readonly vars: readonly string[];
+};
+
 export type ClassifiedUnsupported = {
   readonly kind: "unsupported";
   /**
@@ -92,6 +112,7 @@ export type ClassifiedUnsupported = {
 export type ClassifyResult =
   | ClassifiedLinear
   | ClassifiedUnivariatePoly
+  | ClassifiedMultivariatePoly
   | ClassifiedUnsupported;
 
 /**
@@ -176,14 +197,14 @@ export function classifyInput(
   }
 
   // If we land here: multivariate / nonlinear polynomial system.
-  // Detect: are all equations polynomial (after the parametric filter
-  // above, they trivially are)? Then the failure is multivariate-
-  // non-zero-dim or higher-dim — a Gröbner basis is needed.
-  return {
-    kind: "unsupported",
-    reasonClass: "multivariate-non-zero-dim",
-    detail: `polynomial system in ${vars.length} variables with ${eqs.length} equations is non-linear; Gröbner-basis dispatch is bead 'multivariate-polynomial path' (deferred)`,
-  };
+  // After x8d (ADR-0029), this routes to the Gröbner lane —
+  // `dispatchClassified` then calls `solveGroebner` from
+  // `@workbench/groebner`. Whether the system has a finite solution
+  // set is decided by the zero-dim test inside `solveGroebner`; the
+  // classifier's job is only to identify the lane. Cases that the
+  // groebner stack itself can't handle (positive-dim, shape failure,
+  // complex roots) surface their refusals from the dispatcher.
+  return { kind: "multivariate-poly", polys: eqs, vars };
 }
 
 // -----------------------------------------------------------------------------

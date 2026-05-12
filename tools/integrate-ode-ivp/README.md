@@ -266,6 +266,33 @@ echo '{"kind":"record","fields":{"f":...,"vars":...,"t_var":...,"y0":...,"t_span
   | bun tools/integrate-ode-ivp/tool.ts
 ```
 
+## Validation
+
+The bench corpus lives in the sibling repo:
+`../scientist-workbench-corpus/benchmarks/integrate-ode-ivp/`
+(ADR-0028, bead `scientist-workbench-g6dn`).  To run the full battery:
+
+```sh
+bash scripts/bench-grade.sh integrate-ode-ivp
+```
+
+29-case golden battery, 7 invariant checks per case (~179 assertions):
+
+1. `shape` — all required fields present, correct types, trajectory m×n.
+2. `finite_entries` — no NaN/Inf in trajectory or error_estimate.
+3. `monotone_t_values` — ascending/descending per integration direction; matches t_eval element-wise.
+4. `status_consistency` — converged iff status==="success"; counters sane.
+5. `trajectory_accuracy` — sup-norm error vs DOP853 oracle ≤ 100·rtol·|oracle|·horizon_factor.
+6. `self_reported_error_estimate` — error_estimate ≥ 0; ≤ max(1, atol·1e6) on success.
+7. `conservation` — conserved-quantity drift ≤ 100·rtol·|tf-t0| where applicable.
+
+**Oracle:** SciPy `solve_ivp(method='DOP853', rtol=1e-13, atol=1e-15)` at
+extended precision — orthogonal implementation, same DOPRI5 family,
+different floating-point arithmetic order. Comparison threshold `100 ×
+rtol × |oracle|`.
+
+**Mutation-proven** per CLAUDE.md Rule 6.
+
 ## Standard flags
 
 `--schema --examples --invariants --version --help --provenance-of <hash> --test --platform-fingerprint`

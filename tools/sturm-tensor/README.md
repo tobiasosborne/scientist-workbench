@@ -60,7 +60,8 @@ echo '<record-IR-JSON>' | bun tools/sturm-tensor/tool.ts
 
 ## Invariants
 
-- **deterministic** — same input bytes ⇒ same output bytes.
+- **deterministic** — same input bytes ⇒ same output bytes (symbolic
+  tier, ADR-0015 — bit-identical cross-platform forever).
 - **left preserved verbatim** — left's wire ids and body are
   unchanged; the composite's first `len(left.body)` ops byte-equal
   `left.body`.

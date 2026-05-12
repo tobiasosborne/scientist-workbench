@@ -239,6 +239,47 @@ guarantee (`numerical: true`, ADR-0015).
   re-thrown as `ToolError` carrying attempted-byte count.
 - **non-rectangular-rejected**: ragged `A` raises `ToolError`.
 
+## Validation
+
+Bench corpus lives in `../scientist-workbench-corpus/benchmarks/linalg-svd/`
+(ADR-0028, bead `scientist-workbench-dx0l`).  56-case golden battery,
+448 invariant assertions (8 checks per case).  Run from the workbench root:
+
+```sh
+bash scripts/bench-grade.sh linalg-svd
+# expect: cases: 56/56   invariants: 448/448
+```
+
+The 8 checks per case are:
+
+1. `shape` — U, S, Vt dimensions match (m, n, mode); all required
+   fields present with correct types.
+2. `finite_entries` — no NaN, no ±Inf in factors or scalar diagnostics.
+3. `S_nonneg_descending` — all `S[i] ≥ −tol_struct`, `S[i] + tol_struct ≥ S[i+1]`
+   where `tol_struct = 100·ε·max(S[0], 1)`.
+4. `U_orthonormal` — `‖UᵀU − I_q‖_F ≤ 100·ε·m·√q` (Higham 2002 §20.3).
+5. `Vt_orthonormal` — `‖Vt·Vtᵀ − I_q‖_F ≤ 100·ε·m·√q`.
+6. `factorisation_residual` — `‖U·diag(S)·Vᵀ − A‖_F / ‖A‖_F ≤ 100·ε·max(m,n)·√min(m,n)`
+   (Higham 2002 §20.3 with 100× safety).
+7. `self_reported_residual` — reported `reconstruction_error` agrees with
+   verifier recomputation to `1e-6` relative.
+8. `self_reported_orthogonality` — both `orthogonality_error_U` and
+   `orthogonality_error_Vt` agree with verifier recomputation to `1e-6` relative.
+
+Tier breakdown mirrors `linalg-qr`; additionally, Jacobi vs
+Golub-Reinsch dispatch is verified: the `method` field must be
+`"one-sided-jacobi"` for `n ≤ 500` and `"golub-reinsch"` for `n > 500`
+(or the explicit force via `--method`).
+
+**5 NIST harwell-boeing structural matrices** (`bench/_corpus/harwell-
+boeing/`): same bcsstk01–05 corpus as `linalg-qr`; all 5 symmetric
+positive-definite (consistent with `eigh` stress cases).
+
+**Stress cases:** n=500 (~17.6s Jacobi; dispatches to Golub-Reinsch
+in the uncapped regime) added post-ADR-0016.
+
+**Mutation-proven** per CLAUDE.md Rule 6.
+
 ## Run
 
 ```sh

@@ -1,5 +1,6 @@
 // =============================================================================
-// dispatch.ts — top-level solve dispatcher (linear / univariate-poly / refusal)
+// dispatch.ts — top-level solve dispatcher (linear / univariate-poly /
+// multivariate-poly / refusal)
 // =============================================================================
 //
 // Intent
@@ -15,6 +16,13 @@
 //                        irreducible factor to the right radical
 //                        solver. Multiplicities are preserved; deg ≥ 5
 //                        irreducibles trigger refusal.
+//   • multivariate-poly — `solveGroebner` (Buchberger + FGLM + shape
+//                        lemma) from `@workbench/groebner` (ADR-0029,
+//                        bead scientist-workbench-x8d). Zero-dim
+//                        ideals produce a finite solution set;
+//                        positive-dim, shape failure, and complex
+//                        algebraic roots refuse with the appropriate
+//                        `solve/<class>` tag.
 //   • unsupported      — return refusal info; caller wraps as tagged.
 //
 // Why the dispatcher lives in a package, not in the tool
@@ -47,6 +55,7 @@ import {
   rootToValue,
 } from "@workbench/alg-num";
 import { isolateRealRoots } from "@workbench/real-roots";
+import { solveGroebner } from "@workbench/groebner";
 import {
   expr,
   int,
@@ -106,6 +115,8 @@ export function dispatchClassified(
     case "linear":      return dispatchLinear(verdict.A, verdict.b, vars);
     case "univariate-poly":
       return dispatchUnivariatePoly(verdict.poly, verdict.varName);
+    case "multivariate-poly":
+      return dispatchMultivariatePoly(verdict.polys, verdict.vars);
     case "unsupported":
       return {
         kind: "refusal",
@@ -113,6 +124,34 @@ export function dispatchClassified(
         detail: verdict.detail,
       };
   }
+}
+
+// -----------------------------------------------------------------------------
+// Multivariate-polynomial lane (Gröbner basis via @workbench/groebner)
+// -----------------------------------------------------------------------------
+
+function dispatchMultivariatePoly(
+  polys: readonly Poly<Rat>[],
+  vars: readonly string[],
+): SolveResult {
+  const result = solveGroebner(polys, vars);
+  if (result.kind === "refusal") {
+    return {
+      kind: "refusal",
+      reasonClass: result.reasonClass,
+      detail: result.detail,
+    };
+  }
+  return {
+    kind: "success",
+    vars: result.vars,
+    solutions: result.solutions.map((s) => ({
+      bindings: s.bindings.map((b) => ({ var: b.var, value: b.value })),
+      branches: [],
+    })),
+    completeness: "complete",
+    warnings: result.warnings,
+  };
 }
 
 // -----------------------------------------------------------------------------

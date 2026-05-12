@@ -280,18 +280,28 @@ function canonicalisePolyTerms(
     if (coef === 0n) continue;
     result.push({ exp: expByKey.get(key)!, coef });
   }
-  // cas-core's poly canonical order uses compareExp; we mirror by
-  // lexicographic comparison on (var, exp) pairs (descending in total
-  // degree if needed, but the simple lex is consistent with cas-core's
-  // sorted-monomial form when monomials have a single variable).
+  // cas-core's poly canonical order uses compareExp which sorts in DESCENDING
+  // degree order (higher exponents first). We must match this exactly so that
+  // polynomials produced here are byte-compatible with polynomials produced by
+  // cas-core's polyMul / combine. The original ascending sort here was a bug
+  // that caused polyEqInt's positional comparison in henselLiftPair to fail
+  // on monic-transformed polynomials (their terms were in ascending order while
+  // the product of mod-p factors from polyMul was in descending order).
   result.sort((a, b) => {
     const ae = a.exp, be = b.exp;
-    for (let i = 0; i < Math.min(ae.length, be.length); i++) {
-      if (ae[i]![0] < be[i]![0]) return -1;
-      if (ae[i]![0] > be[i]![0]) return 1;
-      if (ae[i]![1] !== be[i]![1]) return ae[i]![1] - be[i]![1];
+    // Build union of variable names (same logic as cas-core's compareExp).
+    const varSet = new Set<string>();
+    for (const [nm] of ae) varSet.add(nm);
+    for (const [nm] of be) varSet.add(nm);
+    const vars = [...varSet].sort();
+    const ma = new Map(ae.map(([nm, e]) => [nm, e] as const));
+    const mb = new Map(be.map(([nm, e]) => [nm, e] as const));
+    for (const vv of vars) {
+      const ea = ma.get(vv) ?? 0;
+      const eb = mb.get(vv) ?? 0;
+      if (ea !== eb) return eb - ea;   // DESCENDING: higher exponent first
     }
-    return ae.length - be.length;
+    return 0;
   });
   return { terms: result };
 }

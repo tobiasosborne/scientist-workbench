@@ -118,6 +118,44 @@ echo '<input json>' | bun tools/meijer-g-asymptotic-only/tool.ts --precision=50
 
 `--schema --examples --invariants --version --help --provenance-of <hash> --test --precision=N`
 
+## Optimal-index notation
+
+The partial sum truncates at the *optimal index* `k* = k_turn`, the
+index where the term magnitude first begins to grow again:
+
+```
+k* = argmin_k |t_{k+1}|,   i.e. |t_{k*+1}| ≥ |t_{k*}|
+```
+
+The error estimate is `~|t_{k*+1}|` (Olver §3.7).  The
+`optimal_term_indices` output field carries one `k*_h` per pole sequence
+`h = 1..n`; the `error_estimate` field is
+`Σ_h |B_h z^{a_h−1} t_{k*_h+1}|`.
+
+**Stokes-line proximity threshold:** `|arg z| > π/2 − π/64`.  The
+constant `π/64 ≈ 0.049` rad (≈ 2.8°) is a conservative margin that
+keeps the asymptotic error estimate inside the claimed bound with a 4×
+guard factor. Inputs within this margin of the Stokes line (sector
+boundary) produce `tagged meijer-g-asymptotic-only/stokes-line` rather
+than a value with an unreliable bound.  The threshold is implemented as
+`2^{−workingBits/4}` as a function of working bits, giving a
+platform-consistent cutoff that tightens as precision grows.
+
+## Validation
+
+**Oracles:** mpmath at 80 dps (5 cases) + wolframscript `MeijerG` at
+60 dps (5 cases); both oracles agree at their mutual comparison
+threshold for all 5 numerical cases.
+
+**Method-agreement with Slater:** the overlap region where both
+`meijer-g-slater-only` and `meijer-g-asymptotic-only` apply (`q > p`,
+`|z| ≫ 1`, `|arg z| < π/2 − π/64`) is tested at 30 dps; agreement
+is required at `10^{−28}` relative tolerance.
+
+**Mutation-prove tests (5):** sign flip in the Slater prefactor, pole
+prefactor `B_h` sign error, truncation-too-early, wrong sector gate,
+recurrence-coefficient error. All 5 cause RED in the verifier.
+
 ## See also
 
 - `tools/meijer-g-slater-only` — Slater residue sum (the

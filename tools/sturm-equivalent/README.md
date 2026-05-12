@@ -104,7 +104,8 @@ composition is unusual in the workbench — most tools depend on
 - **honest-scope**: undecidable cases return `equal=false reason='out-of-scope'`,
   never an unwarranted `equal=true`.
 - **symmetry**: `equivalent(a, b).equal === equivalent(b, a).equal`.
-- **deterministic**: same input → same output bytes.
+- **deterministic**: same input → same output bytes (symbolic tier,
+  ADR-0015 — bit-identical cross-platform forever).
 
 ## Run
 

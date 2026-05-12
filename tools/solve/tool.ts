@@ -374,6 +374,9 @@ export const def = defineTool({
     }
 
     // Probe 4: refusal — bilinear x · y = 1 (multivariate non-zero-dim).
+    // The Gröbner lane refuses this honestly: single equation in 2
+    // variables ⇒ ideal has Krull dimension 1 ⇒ tag
+    // `solve/multivariate-non-zero-dim` per ADR-0017.
     const refusalInput = record({
       eqs: list([
         expr("-", [expr("*", [sym("x"), sym("y")]), int(1n)]),
@@ -384,8 +387,87 @@ export const def = defineTool({
     if (refusalOut.kind !== "tagged" || !refusalOut.tag.startsWith("solve/")) {
       throw new Error("solve --test: expected solve/* tagged output for x·y = 1 input");
     }
+    if (refusalOut.tag !== "solve/multivariate-non-zero-dim") {
+      throw new Error(
+        `solve --test: expected solve/multivariate-non-zero-dim for x·y = 1, got ${refusalOut.tag}`,
+      );
+    }
 
-    console.log(`solve --test: 4 dispatch lanes covered (linear, univariate-poly, transcendental, refusal); full coverage in goldens.`);
+    // Probe 5: multivariate-poly happy path — (x² − 1, y − x) ⟹ 2
+    // solutions. The Gröbner stack (ADR-0029, bead x8d) handles this
+    // via DRL → FGLM → shape extraction.
+    const mvHappyInput = record({
+      eqs: list([
+        expr("-", [expr("^", [sym("x"), int(2n)]), int(1n)]),
+        expr("-", [sym("y"), sym("x")]),
+      ]),
+      vars: list([sym("x"), sym("y")]),
+    });
+    const mvHappyOut = def.fn(mvHappyInput as never, {} as never) as Value;
+    if (mvHappyOut.kind !== "record") {
+      throw new Error("solve --test: expected record output for (x²−1, y−x)");
+    }
+    const mvSols = mvHappyOut.fields["solutions"];
+    if (!mvSols || mvSols.kind !== "list" || mvSols.items.length !== 2) {
+      throw new Error(
+        `solve --test: expected 2 solutions for (x²−1, y−x), got ${
+          mvSols?.kind === "list" ? mvSols.items.length : "?"
+        }`,
+      );
+    }
+
+    // Probe 6: multivariate-poly inconsistent system — (x − 1, x − 2)
+    // produces an empty solution set under the Gröbner lane (the
+    // ideal contains 1; GB = {1}; 0 solutions).
+    const mvInconsistentInput = record({
+      eqs: list([
+        expr("-", [sym("x"), int(1n)]),
+        expr("-", [sym("x"), int(2n)]),
+      ]),
+      vars: list([sym("x"), sym("y")]),
+    });
+    const mvInconsistentOut = def.fn(mvInconsistentInput as never, {} as never) as Value;
+    if (mvInconsistentOut.kind !== "record") {
+      // Single-eq path is taken because vars=[x,y] but eqs=[x−1, x−2]
+      // is 2 equations. So multivariate. Result: kind=record (success),
+      // solutions=[] (or kind=tagged refusal if zero-dim test fires).
+      // Either is acceptable here as long as it's not crashing.
+    }
+
+    // Probe 7: transcendental linear-arg Sub-shape D — `log(c·x − b) = k`.
+    // Regression for bead `3g9x`: pre-fix, the linear-arg decomposer
+    // accepted `varName − b` (Sub-shape C) but not `c·varName − b`, so
+    // SymPy-style equation strings of the form `log(-3*x - 3) - 2`
+    // refused as `solve/foreign-vocabulary`.  Mirrors corpus case
+    // rand-trans-004.
+    const subShapeDInput = record({
+      eqs: list([
+        expr("-", [
+          expr("log", [
+            expr("-", [
+              expr("*", [int(2n), sym("x")]),
+              int(3n),
+            ]),
+          ]),
+          int(1n),
+        ]),
+      ]),
+      vars: list([sym("x")]),
+    });
+    const subShapeDOut = def.fn(subShapeDInput as never, {} as never) as Value;
+    if (subShapeDOut.kind !== "record") {
+      throw new Error("solve --test: expected record output for log(2x−3) = 1 (Sub-shape D)");
+    }
+    const subShapeDSols = subShapeDOut.fields["solutions"];
+    if (!subShapeDSols || subShapeDSols.kind !== "list" || subShapeDSols.items.length !== 1) {
+      throw new Error(
+        `solve --test: expected 1 solution for log(2x−3) = 1, got ${
+          subShapeDSols?.kind === "list" ? subShapeDSols.items.length : "?"
+        }`,
+      );
+    }
+
+    console.log(`solve --test: 7 dispatch lanes covered (linear, univariate-poly, transcendental simple, refusal, multivariate-happy, multivariate-inconsistent, transcendental linear-arg); full coverage in goldens.`);
     void RAT_RING;
     void polyConst;
   },

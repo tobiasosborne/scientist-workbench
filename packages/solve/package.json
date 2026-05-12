@@ -11,6 +11,7 @@
     "@workbench/poly-factor": "workspace:*",
     "@workbench/protocol": "workspace:*",
     "@workbench/alg-num": "workspace:*",
-    "@workbench/real-roots": "workspace:*"
+    "@workbench/real-roots": "workspace:*",
+    "@workbench/groebner": "workspace:*"
   }
 }

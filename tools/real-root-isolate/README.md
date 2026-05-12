@@ -91,12 +91,45 @@ parse the input record, validate (squarefree, polynomial, single
 variable), extract coefficients via `valueToRatFn`, call the package,
 build the output record.
 
-## Bench
+## Validation
 
-Validated against `bench/real-root-isolate/` (37-case 7-tier battery;
-9-mutation RED gate; triple-witness via SymPy + Wolfram count
-agreement). See `bench/real-root-isolate/PROMPT.md` for the full
-verifier contract.
+Golden battery migrated to corpus per ADR-0028 (bead `scientist-workbench-3pby`):
+`scientist-workbench-corpus/benchmarks/real-root-isolate/` — 37 cases,
+185 invariants, graded via `bash scripts/bench-grade.sh real-root-isolate`.
+
+Local bench removed (~72 KB freed).  The corpus verifier (`verify.ts`) ports all
+4 Python invariants from `verify.py` with exact Sturm-sequence semantics.
+
+`bench/real-root-isolate/` (former) — 37-case 7-tier battery. Verifier follows
+ADR-0019 §1 4-check discipline:
+
+1. `no_tool_error` — clean exit.
+2. `shape` — output has `intervals`, `method`, `warnings`.
+3. `root_count_correct` — `len(intervals)` equals the known root count
+   from the oracle. Boundary correction applied: for each output
+   interval `(lo, hi)`, the Sturm-sequence root count over `(lo, hi)`
+   minus `[f(lo) = 0]` minus `[f(hi) = 0]` (open/singleton boundary
+   correction) yields exactly 1 root. This tests that neither open
+   intervals nor singleton (rational-root) endpoints are
+   double-counted.
+4. `tag_envelope` — refusal cases produce the correct tagged boundary.
+
+**Sign-change-via-Sturm count + open/singleton boundary correction:**
+the verifier does not merely count intervals — it runs a Sturm-sequence
+root count on each interval and adjusts for rational endpoints (where
+`f(lo) = 0` means the endpoint is itself a root and must not be counted
+again by the open-interval bracket). This ensures the isolation
+property: each interval contains exactly one real root.
+
+**9-mutation RED gate**: wrong number of intervals, merged interval
+(two roots in one bracket), sign error on interval bound, missing
+rational root, extra spurious interval, wrong singleton endpoint, wrong
+tag, wrong `method` string, non-squarefree bypass (tagged instead of
+refusing). All 9 cause RED.
+
+**Triple-witness:** SymPy + Wolfram root-count agreement for every case
+(Wolfram `CountRoots`, SymPy `count_roots`). See
+`bench/real-root-isolate/PROMPT.md` for the full verifier contract.
 
 ## Bead
 

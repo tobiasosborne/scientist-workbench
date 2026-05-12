@@ -267,6 +267,45 @@ wire-encoding wrapper.
   applications to many-body theories and statistical physics." J.
   Math. Phys. 32, 400-407.
 
+## Validation
+
+Golden battery migrated to corpus per ADR-0028 (bead `scientist-workbench-yj80`):
+`scientist-workbench-corpus/benchmarks/integrate-ode-symplectic/` — 17 cases,
+95 invariants, graded via `bash scripts/bench-grade.sh integrate-ode-symplectic`.
+
+Local bench removed (freed ~1.7 MB).  The corpus verifier (`verify.ts`) ports all
+7 Python invariants from `verify.py` with byte-identical tolerances.
+
+`bench/integrate-ode-symplectic/` (former) — 17-case golden battery, 8 invariant
+checks per case (~136 assertions):
+
+1. `no_tool_error` — clean exit.
+2. `shape` — output record has all required fields.
+3. `converged_true` — `converged === true` on success cases.
+4. `trajectory_shape` — `q_trajectory` is `(n_steps+1, |q_vars|)`,
+   `p_trajectory` is `(n_steps+1, |p_vars|)`.
+5. `monotone_uniform_t_values` — `t_values` uniformly spaced `t0..tf`
+   with step `h = (tf − t0) / n_steps`.
+6. `energy_drift_bounded` — `energy_drift_max ≤ 100 · h^p ·
+   drift_constant` for integrator order `p` (HLW §VI.6 with 100×
+   safety).
+7. **`energy_drift_not_secular`** — `energy_drift_secular === false`
+   for all separable-H cases. The headline discriminator: a
+   non-symplectic candidate on Kepler 100 orbits or an NVE MD
+   simulation fails this while `energy_drift_max` might still look
+   finite in the short term.
+8. `non_separable_tagged` — non-separable H produces the boundary
+   tag, never wrong-quality output.
+
+Cases include: harmonic oscillator (Verlet + Yoshida-4), Kepler orbit
+(100 periods, long-horizon conservation), NVE Lennard-Jones pair,
+Hénon-Heiles (chaotic), and non-separable-H refusal cases.
+
+**Tolerances:** HLW §VI.6 backward-error bound ×100 safety factor,
+consistent with the linalg and ODE-IVP benches.
+
+**Mutation-proven** per CLAUDE.md Rule 6.
+
 ## Run
 
 ```sh

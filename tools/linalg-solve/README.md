@@ -33,9 +33,12 @@ const r = solve(A, b)!;
 ```
 
 A is `n × n` (must be square), b is length `n`. Each `float64` carries
-the 16-hex-char IEEE-754 binary64 bit pattern (PRD §0.1). v0.1 caps `n`
-at 200; larger inputs are rejected with a pointer to the blob-by-hash
-follow-up bead.
+the 16-hex-char IEEE-754 binary64 bit pattern (PRD §0.1). Per ADR-0016
+there is **no hard size cap** — large inputs run with scale-advisory
+warnings appended to the output's `warnings` field; only a true
+allocation OOM (RangeError on Float64Array allocation) raises a
+`ToolError`. LU with partial pivoting scales as `O(n³)`: in pure TS,
+`n=500 ≈ 1s`, `n=1000 ≈ 8s`, `n=2000 ≈ several minutes`.
 
 ## Output
 
@@ -83,8 +86,10 @@ that tool exists — bead 71f).
 - A non-square (with dimensions reported)
 - `rows(A) ≠ length(b)`
 - any non-finite (NaN / ±Inf) entry in A or b (path-into-tree reported)
-- `n > 200` (suggestion points to bead `wmm`)
 - `n = 0` (empty matrix)
+- true allocation OOM (`RangeError` on `Float64Array` allocation) — caught
+  and re-thrown as `ToolError` carrying attempted-bytes detail (ADR-0016;
+  the only refusal class for oversize inputs)
 
 ## How
 
@@ -99,9 +104,9 @@ References: Higham, *Accuracy and Stability of Numerical Algorithms*,
 Linear Algebra* (Lectures 20–22).
 
 Out of scope (v0.1): other decompositions (QR, SVD, eigenvalues, bead
-71f), iterative methods, sparse matrices, complex arithmetic, n > 200
-(bead `wmm`), FFI BLAS path (bead `e7y`), cross-platform determinism
-guarantee (ADR-0015 / bead `0ck`).
+71f), iterative methods, sparse matrices, complex arithmetic, FFI BLAS
+path (bead `e7y`), cross-platform determinism guarantee (ADR-0015 / bead
+`0ck`).
 
 ## Invariants
 
@@ -110,7 +115,10 @@ guarantee (ADR-0015 / bead `0ck`).
 - **round-trip-residual**: for every successful solve,
   `||A x - b||_2 ≤ residual_norm + machine epsilon`.
 - **non-square-rejected, dim-mismatch-rejected, non-finite-rejected,
-  size-cap-rejected**: malformed input fails loud (`ToolError`).
+  oom-becomes-toolerror**: malformed or OOM input fails loud (`ToolError`).
+- **scale-warnings-emitted**: `n > 500` populates the `warnings` field
+  with measurement-driven advisories (estimated wall-clock + memory
+  footprint per ADR-0016); the algorithm still runs.
 - **singular-tagged**: exactly singular A produces
   `tagged "linalg-solve/singular"`, never a silently wrong `x`.
 

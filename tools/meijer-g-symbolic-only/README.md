@@ -116,6 +116,16 @@ echo '{"kind":"record","fields":{
 }}' | bun tools/meijer-g-symbolic-only/tool.ts
 ```
 
+## Validation
+
+`dispatch-mpmath.test.ts` re-validates the symbolic-dispatch output per
+build: for every matched rule that maps to a special-function form, the
+emitted expression is numerically evaluated at 30 dps via mpmath and
+compared against the direct `MeijerG` computation. Any rule that
+produces a wrong value (sign error, factor of 2, wrong exponent) is
+caught immediately at the unit-test level, not just in the bench. This
+keeps the rule table honest under refactoring.
+
 ## Standard flags
 
 `--schema --examples --invariants --version --help --provenance-of <hash> --test`

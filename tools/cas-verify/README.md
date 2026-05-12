@@ -20,6 +20,11 @@ Decide `A = B` as elements of `Q(x_1,…,x_n)`.
 
 Cross-multiplication: `a/b = c/d ⟺ a·d = c·b` as polynomials. Sound and complete because `Q[x_1,…,x_n]` is an integral domain. **No polynomial GCD required for the equality decision itself** — this tool's correctness has never depended on reduction. As of ADR-0013, `cas-simplify` also reduces rational functions, so the witness on inequality (`lhs − rhs`) is now in lowest terms.
 
+## Determinism
+
+Symbolic tier (ADR-0015) — bit-identical cross-platform forever.
+Same input bytes → same output bytes on any platform, any Bun version.
+
 ## Invariants
 
 - **soundness**: if `equal=true`, `lhs` and `rhs` denote the same element of `Q(x)`

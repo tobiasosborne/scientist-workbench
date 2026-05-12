@@ -70,7 +70,9 @@ Predicted Grover behavior:
 
 ## Invariants
 
-- **deterministic** — same input bytes → same output bytes (IEEE-754).
+- **deterministic** — same input bytes → same output bytes (symbolic
+  tier, ADR-0015 — bit-identical cross-platform forever, given fixed
+  entropy input).
 - **probabilities-sum-to-one** — distribution `prob` sums to 1 within 1e-9.
 - **marked-state-amplified** — n=2 single-marked → P(marked) = 1.
 - **optimal-iterations** — uses Brassard et al. 2002 Theorem 3.

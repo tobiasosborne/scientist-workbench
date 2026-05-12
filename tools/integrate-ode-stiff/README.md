@@ -288,6 +288,41 @@ file is only the wire-encoding wrapper.
   equations." Numerical Analysis: An Introduction, J. Walsh ed., 178–
   182. The canonical stiff test problem.
 
+## Validation
+
+The bench corpus lives in the sibling repo:
+`../scientist-workbench-corpus/benchmarks/integrate-ode-stiff/`
+(ADR-0028, bead `scientist-workbench-ifng`).  To run the full battery:
+
+```sh
+bash scripts/bench-grade.sh integrate-ode-stiff
+```
+
+19-case golden battery, 9 invariant checks per case (139 assertions):
+
+1. `shape` — all required fields present including `n_jacobian_evals` and
+   `n_lu_decompositions`; correct types; trajectory m×n; status in
+   `{success, max_step_exceeded, tspan_exhausted, newton-divergence}`.
+2. `finite_entries` — no NaN/Inf in trajectory or error_estimate.
+3. `monotone_t_values` — ascending/descending per integration direction;
+   matches t_eval element-wise.
+4. `status_consistency` — converged iff status==="success"; all five
+   counters non-negative.
+5. `trajectory_accuracy` — sup-norm error vs SciPy Radau oracle ≤
+   100·rtol·|oracle| + 100·atol. **No horizon scaling** — Radau is
+   L-stable and stiffly bounded (HW Vol II §IV.10).
+6. `self_reported_error_estimate` — error_estimate ≥ 0; ≤ max(1, atol·1e6)
+   on success.
+7. `stiffness_handled` — n_evals > 0 and n_jacobian_evals > 0 on success
+   (structural floor: the implicit method must touch J).
+8. `conservation` — conserved-quantity drift ≤ 100·rtol·|tf-t0| where
+   applicable.
+9. `jacobian_consumed` — if options.jacobian provided, n_jacobian_evals ≥ 1.
+
+**Oracle:** SciPy `solve_ivp(method='Radau', rtol=1e-13)`.
+
+**Mutation-proven** per CLAUDE.md Rule 6.
+
 ## Run
 
 ```sh

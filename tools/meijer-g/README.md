@@ -189,6 +189,37 @@ echo '<canonical input json>' | bun tools/meijer-g/tool.ts
 - `--schwarz-check` — run the Schwarz-reflection self-test on
   numerical success.
 
+## Validation
+
+The golden battery has been migrated to the corpus (ADR-0028):
+`scientist-workbench-corpus/benchmarks/meijer-g/` — 95-case battery,
+450 invariant assertions, nine tiers (0 closed-form anchors through
+G refusal envelope + H cross-cutting speed gate). Oracles: mpmath at
+110 dps + Wolfram at 110 dps (dual-oracle per ADR-0019 §3); Tier-0
+symbolic anchors re-evaluated at 200 dps. Mutation-proven via
+`golden/test_mutations.py`.
+
+To run: `PATH=/home/tobias/.amp/bin:$PATH bash scripts/bench-grade.sh meijer-g`
+from the workbench root.
+
+35 wire tests (`tool.test.ts` + the Schwarz-reflection self-test on
+every numerical success case in the batch).
+
+Additional details:
+
+- **`canUseContour` pre-filter**: refuses `m = 0` or `n = 0` at `|z| ≥ 1`
+  (contour quadrature requires at least one pole sequence on each
+  side). Tested explicitly in Tier-G.
+- **`request_mode` three-way gate semantics**: `"auto"` (cost-ascending
+  default), `"symbolic-required"` (returns
+  `meijer-g/symbolic-required-no-match` if no rule fires), and
+  `"numerical-required"` (skips the symbolic layer). The verifier
+  checks all three gate behaviours for applicable inputs.
+- **`diagnostics.onBranchCut`**: boolean field set `true` when `z` is
+  on the branch cut (Im(z) = 0 ∧ Re(z) < 0). Downstream consumers
+  match on this flag to decide whether to perturb or accept the
+  above-cut convention (DLMF §16.17.1).
+
 ## Related
 
 - ADR-0027 — design pin.

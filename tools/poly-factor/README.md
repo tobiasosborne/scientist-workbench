@@ -145,6 +145,26 @@ Output (pretty-printed):
   Local PDF `docs/ground-truth/factor/cox-little-oshea-…`.
 - Geddes-Czapor-Labahn, *Algorithms for Computer Algebra* §6.2, §8.4.
 
-Bench: `bench/poly-factor-q/` — 56-case golden battery covering tiers
-A (shape edges) through H (refusals), with mutation-prove on the
-verifier.
+## Validation
+
+Corpus bench `benchmarks/poly-factor-q/` (ADR-0028) — 56-case golden
+battery, eight tiers:
+
+| Tier | Cases | Description |
+|---|---|---|
+| A — shape edges | 6 | deg-1 (irreducible, with content); deg-2 (irreducible, splits, perfect square) |
+| B — random low-degree | 12 | deg 2..10 small-coefficient primitive ℤ[x]; mixed reducible/irreducible |
+| C — cyclotomic Φ_n | 8 | Φ_3, Φ_5, Φ_7, Φ_8, Φ_12, Φ_15, Φ_24, Φ_30 — all irreducible over ℚ |
+| D — Swinnerton-Dyer | 6 | minimal poly of √p_1+…+√p_n; irreducible but 2^n modular factors |
+| E — multiplicities | 8 | (x−1)^k for k=2,3,5,7; mixed-multiplicity products |
+| F — large coefficients | 6 | deg-8,12,15 products of distinct linears; Mignotte-bound-touching cases |
+| G — content/scaling | 6 | integer, rational, negative, large content; combined cases |
+| H — refusals | 4 | sin(x), 1/x, sqrt(x), x*y → tagged "poly-factor-q/non-polynomial" |
+
+**5-check verifier (verify.ts):** shape, product_equals_input (exact
+BigInt rational reconstruction), each_factor_irreducible (rational-root
+proxy), factors_primitive (BigInt GCD), factors_positive_leading.
+
+**ported_from** `scientist-workbench/bench/poly-factor-q@89b4bcd`.
+
+**Corpus grader**: `cd scientist-workbench-corpus && bun src/cli.ts grade scientist-workbench poly-factor-q`

@@ -212,11 +212,15 @@ function matchHeadOfLinear(v: Value, varName: string): HeadOfLinear | null {
   if (v.args.length !== 1) return null;
   const arg = v.args[0]!;
   // arg must be a linear function of varName: a · varName + b, with a, b
-  // numeric constants.  We accept three sub-shapes:
-  //   - expr("+", [c·varName, b]) or [b, c·varName]
-  //   - expr("-", [c·varName, b]) or [b, c·varName]
-  //   - expr("*", [c, varName]) (no constant term)
-  // Plus `varName` itself, but that's the "bare" case handled elsewhere.
+  // numeric constants.  We accept four structural sub-shapes (see
+  // `decomposeLinearInVar` for the full table):
+  //   A: expr("*", [c, varName])                       — c·x, no offset
+  //   B: expr("+", […, c·varName, …])                  — n-ary sum, one var term
+  //   C: expr("-", [varName, b])                       — x − b, a = 1
+  //   D: expr("-", [c·varName, b])                     — c·x − b
+  // Bare `varName` itself is the "head(x)" case handled by `matchHeadOfVar`.
+  // The mirrored `b − c·varName` shape is not currently emitted by the
+  // corpus parser, so an "E" arm is omitted; add if it ever surfaces.
   if (arg.kind === "symbol" && arg.name === varName) return null;
   return decomposeLinearInVar(arg, varName, v.head);
 }
@@ -284,12 +288,35 @@ function decomposeLinearInVar(
     return { head: headName, linearA: varCoef, linearB: offset };
   }
 
-  // Sub-shape C: varName − b (a = 1, negative offset).
+  // Sub-shape C/D: binary `−` form `(left) − b` with `b` a numeric
+  // constant. Two flavours:
+  //   • C: `varName − b`            (a = 1, negative offset).
+  //   • D: `c · varName − b`        (general; coefficient on either
+  //                                  side of the `*`).
+  // Bench-side rationale: SymPy-style equation strings such as
+  // `log(-3*x - 3)` round-trip through the corpus parser (left-
+  // associative `+ −`) as `expr("-", [expr("*", [-3, x]), 3])` —
+  // a `c · varName − b` shape with no enclosing `+`.  Without this
+  // arm the linear-arg path missed every `head(c·x − b)` input,
+  // refusing as `solve/foreign-vocabulary` (bead `3g9x`).
   if (arg.kind === "expression" && arg.head === "-" && arg.args.length === 2) {
     const left = arg.args[0]!;
     const right = arg.args[1]!;
-    if (left.kind === "symbol" && left.name === varName && isNumericConstant(right)) {
-      return { head: headName, linearA: int(1n), linearB: negateConstant(right) };
+    if (isNumericConstant(right)) {
+      const negB = negateConstant(right);
+      if (left.kind === "symbol" && left.name === varName) {
+        return { head: headName, linearA: int(1n), linearB: negB };
+      }
+      if (left.kind === "expression" && left.head === "*" && left.args.length === 2) {
+        const m0 = left.args[0]!;
+        const m1 = left.args[1]!;
+        if (isNumericConstant(m0) && m1.kind === "symbol" && m1.name === varName) {
+          return { head: headName, linearA: m0, linearB: negB };
+        }
+        if (isNumericConstant(m1) && m0.kind === "symbol" && m0.name === varName) {
+          return { head: headName, linearA: m1, linearB: negB };
+        }
+      }
     }
   }
 

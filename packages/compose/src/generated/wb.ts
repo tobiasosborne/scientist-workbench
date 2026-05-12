@@ -28,6 +28,7 @@ import { def as casSimplifyDef } from "../../../../tools/cas-simplify/tool.js";
 import { def as casVerifyDef } from "../../../../tools/cas-verify/tool.js";
 import { def as entropySourceDef } from "../../../../tools/entropy-source/tool.js";
 import { def as exprParseDef } from "../../../../tools/expr-parse/tool.js";
+import { def as groebnerBasisDef } from "../../../../tools/groebner-basis/tool.js";
 import { def as hypergeometricPfqDef } from "../../../../tools/hypergeometric-pfq/tool.js";
 import { def as integrate1dDef } from "../../../../tools/integrate-1d/tool.js";
 import { def as integrateOdeIvpDef } from "../../../../tools/integrate-ode-ivp/tool.js";
@@ -38,6 +39,7 @@ import { def as linalgQrDef } from "../../../../tools/linalg-qr/tool.js";
 import { def as linalgSolveDef } from "../../../../tools/linalg-solve/tool.js";
 import { def as linalgSvdDef } from "../../../../tools/linalg-svd/tool.js";
 import { def as linsolveQDef } from "../../../../tools/linsolve-q/tool.js";
+import { def as lpSolveDef } from "../../../../tools/lp-solve/tool.js";
 import { def as meijerGDef } from "../../../../tools/meijer-g/tool.js";
 import { def as meijerGAsymptoticOnlyDef } from "../../../../tools/meijer-g-asymptotic-only/tool.js";
 import { def as meijerGSlaterOnlyDef } from "../../../../tools/meijer-g-slater-only/tool.js";
@@ -52,6 +54,7 @@ import { def as polyRootsDef } from "../../../../tools/poly-roots/tool.js";
 import { def as realRootIsolateDef } from "../../../../tools/real-root-isolate/tool.js";
 import { def as registryListDef } from "../../../../tools/registry-list/tool.js";
 import { def as registrySearchDef } from "../../../../tools/registry-search/tool.js";
+import { def as sdpSolveDef } from "../../../../tools/sdp-solve/tool.js";
 import { def as solveDef } from "../../../../tools/solve/tool.js";
 import { def as sturmControlledDef } from "../../../../tools/sturm-controlled/tool.js";
 import { def as sturmEquivalentDef } from "../../../../tools/sturm-equivalent/tool.js";
@@ -69,6 +72,7 @@ export interface TypedWorkbench extends Workbench {
   casVerify(input: InputOf<typeof casVerifyDef>, flags?: FlagsArgOf<typeof casVerifyDef>): Promise<OutputOf<typeof casVerifyDef>>;
   entropySource(input: InputOf<typeof entropySourceDef>, flags?: FlagsArgOf<typeof entropySourceDef>): Promise<OutputOf<typeof entropySourceDef>>;
   exprParse(input: InputOf<typeof exprParseDef>, flags?: FlagsArgOf<typeof exprParseDef>): Promise<OutputOf<typeof exprParseDef>>;
+  groebnerBasis(input: InputOf<typeof groebnerBasisDef>, flags?: FlagsArgOf<typeof groebnerBasisDef>): Promise<OutputOf<typeof groebnerBasisDef>>;
   hypergeometricPfq(input: InputOf<typeof hypergeometricPfqDef>, flags?: FlagsArgOf<typeof hypergeometricPfqDef>): Promise<OutputOf<typeof hypergeometricPfqDef>>;
   integrate1d(input: InputOf<typeof integrate1dDef>, flags?: FlagsArgOf<typeof integrate1dDef>): Promise<OutputOf<typeof integrate1dDef>>;
   integrateOdeIvp(input: InputOf<typeof integrateOdeIvpDef>, flags?: FlagsArgOf<typeof integrateOdeIvpDef>): Promise<OutputOf<typeof integrateOdeIvpDef>>;
@@ -79,6 +83,7 @@ export interface TypedWorkbench extends Workbench {
   linalgSolve(input: InputOf<typeof linalgSolveDef>, flags?: FlagsArgOf<typeof linalgSolveDef>): Promise<OutputOf<typeof linalgSolveDef>>;
   linalgSvd(input: InputOf<typeof linalgSvdDef>, flags?: FlagsArgOf<typeof linalgSvdDef>): Promise<OutputOf<typeof linalgSvdDef>>;
   linsolveQ(input: InputOf<typeof linsolveQDef>, flags?: FlagsArgOf<typeof linsolveQDef>): Promise<OutputOf<typeof linsolveQDef>>;
+  lpSolve(input: InputOf<typeof lpSolveDef>, flags?: FlagsArgOf<typeof lpSolveDef>): Promise<OutputOf<typeof lpSolveDef>>;
   meijerG(input: InputOf<typeof meijerGDef>, flags?: FlagsArgOf<typeof meijerGDef>): Promise<OutputOf<typeof meijerGDef>>;
   meijerGAsymptoticOnly(input: InputOf<typeof meijerGAsymptoticOnlyDef>, flags?: FlagsArgOf<typeof meijerGAsymptoticOnlyDef>): Promise<OutputOf<typeof meijerGAsymptoticOnlyDef>>;
   meijerGSlaterOnly(input: InputOf<typeof meijerGSlaterOnlyDef>, flags?: FlagsArgOf<typeof meijerGSlaterOnlyDef>): Promise<OutputOf<typeof meijerGSlaterOnlyDef>>;
@@ -93,6 +98,7 @@ export interface TypedWorkbench extends Workbench {
   realRootIsolate(input: InputOf<typeof realRootIsolateDef>, flags?: FlagsArgOf<typeof realRootIsolateDef>): Promise<OutputOf<typeof realRootIsolateDef>>;
   registryList(input: InputOf<typeof registryListDef>, flags?: FlagsArgOf<typeof registryListDef>): Promise<OutputOf<typeof registryListDef>>;
   registrySearch(input: InputOf<typeof registrySearchDef>, flags?: FlagsArgOf<typeof registrySearchDef>): Promise<OutputOf<typeof registrySearchDef>>;
+  sdpSolve(input: InputOf<typeof sdpSolveDef>, flags?: FlagsArgOf<typeof sdpSolveDef>): Promise<OutputOf<typeof sdpSolveDef>>;
   solve(input: InputOf<typeof solveDef>, flags?: FlagsArgOf<typeof solveDef>): Promise<OutputOf<typeof solveDef>>;
   sturmControlled(input: InputOf<typeof sturmControlledDef>, flags?: FlagsArgOf<typeof sturmControlledDef>): Promise<OutputOf<typeof sturmControlledDef>>;
   sturmEquivalent(input: InputOf<typeof sturmEquivalentDef>, flags?: FlagsArgOf<typeof sturmEquivalentDef>): Promise<OutputOf<typeof sturmEquivalentDef>>;
@@ -133,6 +139,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     exprParse(input, flags) {
       return workbench.run("expr-parse", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof exprParseDef>>;
     },
+    groebnerBasis(input, flags) {
+      return workbench.run("groebner-basis", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof groebnerBasisDef>>;
+    },
     hypergeometricPfq(input, flags) {
       return workbench.run("hypergeometric-pfq", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof hypergeometricPfqDef>>;
     },
@@ -162,6 +171,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     },
     linsolveQ(input, flags) {
       return workbench.run("linsolve-q", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof linsolveQDef>>;
+    },
+    lpSolve(input, flags) {
+      return workbench.run("lp-solve", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof lpSolveDef>>;
     },
     meijerG(input, flags) {
       return workbench.run("meijer-g", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof meijerGDef>>;
@@ -205,6 +217,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     registrySearch(input, flags) {
       return workbench.run("registry-search", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof registrySearchDef>>;
     },
+    sdpSolve(input, flags) {
+      return workbench.run("sdp-solve", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof sdpSolveDef>>;
+    },
     solve(input, flags) {
       return workbench.run("solve", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof solveDef>>;
     },
@@ -246,6 +261,7 @@ export const defs = {
   casVerify: casVerifyDef,
   entropySource: entropySourceDef,
   exprParse: exprParseDef,
+  groebnerBasis: groebnerBasisDef,
   hypergeometricPfq: hypergeometricPfqDef,
   integrate1d: integrate1dDef,
   integrateOdeIvp: integrateOdeIvpDef,
@@ -256,6 +272,7 @@ export const defs = {
   linalgSolve: linalgSolveDef,
   linalgSvd: linalgSvdDef,
   linsolveQ: linsolveQDef,
+  lpSolve: lpSolveDef,
   meijerG: meijerGDef,
   meijerGAsymptoticOnly: meijerGAsymptoticOnlyDef,
   meijerGSlaterOnly: meijerGSlaterOnlyDef,
@@ -270,6 +287,7 @@ export const defs = {
   realRootIsolate: realRootIsolateDef,
   registryList: registryListDef,
   registrySearch: registrySearchDef,
+  sdpSolve: sdpSolveDef,
   solve: solveDef,
   sturmControlled: sturmControlledDef,
   sturmEquivalent: sturmEquivalentDef,

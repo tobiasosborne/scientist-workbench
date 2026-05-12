@@ -1,0 +1,12 @@
+{
+  "name": "@workbench/tool-lp-solve",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "tool.ts",
+  "dependencies": {
+    "@workbench/protocol": "workspace:*",
+    "@workbench/contract": "workspace:*",
+    "@workbench/cas-core": "workspace:*",
+    "@workbench/simplex-q": "workspace:*"
+  }
+}
