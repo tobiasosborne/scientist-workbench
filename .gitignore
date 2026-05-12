@@ -7,6 +7,10 @@ dist/
 .claude/
 temp/
 
+# SDPLIB stress-test verbose JSONL traces (bead jb1x). The CSV summary
+# is committed; per-(case, method) traces are large and regeneratable.
+scripts/sdplib-stress-traces/
+
 # bun.lock (text format) IS committed — keeps installs reproducible.
 
 
