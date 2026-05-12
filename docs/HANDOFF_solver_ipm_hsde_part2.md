@@ -1,5 +1,41 @@
 # Handoff — HSDE port: phase 2 done, precision floor on hinf2
 
+> **STATUS — 2026-05-12 evening (worklog 096).** Phase 3 tool
+> wiring (§6 of this document) has **shipped** in commit `e164046`:
+> `tools/sdp-solve --method=hsde-nt` and `tools/lp-solve
+> --method=hsde-lp` are agent-callable today. Defaults unchanged
+> (per §6's "DO NOT change the default to hsde-nt until Phase 5
+> lands"). The remaining gates against `--method=hsde-nt` becoming
+> the SDP default + `scripts/sdp-probe.ts --method=hsde-nt` support
+> are folded into Phase 5 Tier 3 (bead `lniy`); bead `y3qd` is now
+> superseded.
+>
+> Phase 5 (§§4–5 of this document — iterative refinement) has been
+> **decomposed into 5 dependency-chained beads** under parent
+> `qmrv`:
+> - `fuur` (Tier 0) — ground-truth read + diagnostic infrastructure
+>   (nitref1/2/3 fields in VerboseIterLine, mosek-log-to-jsonl
+>   parser). **Ready to claim**; everything else blocks on it.
+> - `vajd` (Tier 1) — `solveWithIR` helper + HsdeLp/HsdeNtSdp
+>   wiring at the 3 back-sub sites.
+> - `fsr7` (Tier 2) — `hsde-precision.test.ts` + Mosek-comparison
+>   oracle.
+> - `lniy` (Tier 3) — corpus 6/6 + `--method=auto` default →
+>   `hsde-nt` + `sdp-probe.ts` support.
+> - `rqbm` (Tier 4) — worklog 097 + supersession header + catalog
+>   refresh; closes `qmrv`.
+>
+> Read worklog 096's "Part B" section for the decomposition
+> rationale; read each bead body for per-tier acceptance.
+>
+> The rest of this document (§0–§13 below) is the **original
+> Phase 5 playbook**, unchanged. It is still the canonical
+> reference for *what* IR is and *why* it's needed — the
+> decomposition slices it into shippable units but doesn't
+> replace its prose.
+>
+> ---
+>
 > **Predecessor:** `docs/HANDOFF_solver_ipm_hsde.md` (the playbook
 > that got us here). That handoff is *superseded* by this one for
 > the *what's next* question, but its §0 (ground-truth reading
