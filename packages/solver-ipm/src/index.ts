@@ -26,6 +26,25 @@ export {
   formatVerboseLine,
 } from "./solver/LogFormat.js";
 export { toWireStatus, type WireStatus } from "./solver/Status.js";
+export {
+  type HsdeResiduals,
+  type HsdeStatus,
+  type HsdeLpIterate,
+  type HsdeSdpIterate,
+} from "./solver/HsdeIterate.js";
+export {
+  hsdeLpMaxStep,
+  hsdeSdpMaxStep,
+  tauKappaMaxStep,
+} from "./solver/HsdeStepLength.js";
+export {
+  solveHsdeLp,
+  type HsdeLpSolveResult,
+} from "./solver/HsdeLpSolver.js";
+export {
+  solveHsdeSdpNt,
+  type HsdeSdpSolveResult,
+} from "./solver/HsdeNtSdpSolver.js";
 
 // SDP
 export { parseSdpaSparse, type SdpaSparseProblem } from "./format/SdpaSparse.js";

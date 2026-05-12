@@ -62,6 +62,9 @@ function formatTime(t: number): string {
  *   fail      — most-recent Cholesky failRow (null = clean)
  *   Mdiag     — Schur diagonal [min,max] pre-lift
  *   eig(X,S)  — min eigenvalue across blocks (SDP only)
+ *   τ,κ       — HSDE homogenization scalars (HSDE kinds only)
+ *   gFeas     — |r_g| HSDE gap-feasibility residual (HSDE kinds only)
+ *   prSt      — PRSTATUS, → +1 optimal / → −1 cert. branch (HSDE kinds only)
  *   t=Δms     — phase timings: S=Schur F=Factor D=Direction ST=Step
  */
 export function formatVerboseLine(v: VerboseIterLine): string {
@@ -81,9 +84,15 @@ export function formatVerboseLine(v: VerboseIterLine): string {
   parts.push(`refac=${v.refactorsThisIter}`);
   parts.push(`fail=${v.failRow === null ? "-" : v.failRow}`);
   parts.push(`Mdiag=[${sci(v.schurDiagMin, 2)},${sci(v.schurDiagMax, 2)}]`);
-  if (v.kind !== "lp") {
+  if (v.kind !== "lp" && v.kind !== "lp-hsde") {
     parts.push(`eigX=${sci(v.eigMinX, 2)}`);
     parts.push(`eigS=${sci(v.eigMinS, 2)}`);
+  }
+  if (v.kind === "lp-hsde" || v.kind === "sdp-hsde-nt") {
+    parts.push(`τ=${sci(v.tau, 2)}`);
+    parts.push(`κ=${sci(v.kappa, 2)}`);
+    parts.push(`gFeas=${sci(v.gfeas, 2)}`);
+    parts.push(`prSt=${num(v.prstatus, 3)}`);
   }
   parts.push(
     `t=${v.timeSec.toFixed(2)}s` +

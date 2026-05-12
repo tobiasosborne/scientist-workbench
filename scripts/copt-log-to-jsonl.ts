@@ -68,6 +68,15 @@ interface CoptIterLine {
   schurDiagMax: number | null;
   eigMinX: number | null;
   eigMinS: number | null;
+  // HSDE-only fields (null for COPT — its default path is non-HSDE per
+  // ~/Dropbox/.../COPT-decomp/analysis/PD_IPM_DEEP.md). The Mosek-log-
+  // parser sibling (lands in Phase 2 per ADR-0033) will populate these
+  // from Mosek's PRSTATUS / GFEAS / MU columns and an inferred τ from
+  // PFEAS/(1+‖b‖) ratios.
+  tau: number | null;
+  kappa: number | null;
+  gfeas: number | null;
+  prstatus: number | null;
   tSchurMs: number | null;
   tFactorMs: number | null;
   tDirectionMs: number | null;
@@ -135,6 +144,10 @@ function tryParseIterLine(line: string): CoptIterLine | null {
     schurDiagMax: null,
     eigMinX: null,
     eigMinS: null,
+    tau: null,
+    kappa: null,
+    gfeas: null,
+    prstatus: null,
     tSchurMs: null,
     tFactorMs: null,
     tDirectionMs: null,

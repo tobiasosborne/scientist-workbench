@@ -809,7 +809,13 @@ interface IpmParamsLite {
 
 function pickSolver(
   method: Method,
-): { tag: string; solve: (p: SdpProblem, opts: { params?: IpmParamsLite }) => SdpSolveResult } {
+): {
+  tag: string;
+  solve: (
+    p: SdpProblem,
+    opts: { params?: IpmParamsLite; verbose?: (line: VerboseIterLine) => void },
+  ) => SdpSolveResult;
+} {
   switch (method) {
     case "auto":
     case "nt":

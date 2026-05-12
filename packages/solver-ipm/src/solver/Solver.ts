@@ -46,10 +46,12 @@ export interface IterLogLine {
  *
  * The `kind` discriminator tells consumers which solver variant produced
  * the line and which fields are populated:
- *   "lp"      — LP path (`solveLp` in this file). `eigMin{X,S}` are NaN.
- *   "sdp-nt"  — NT direction (`solveSdpNt`).
- *   "sdp-aho" — AHO direction (`solveSdpAho`).
- *   "sdp-hkm" — HKM direction (`solveSdp` in `SdpSolver.ts`).
+ *   "lp"           — legacy LP path (`solveLp` in this file). `eigMin{X,S}` are NaN.
+ *   "sdp-nt"       — legacy NT direction (`solveSdpNt`).
+ *   "sdp-aho"      — legacy AHO direction (`solveSdpAho`).
+ *   "sdp-hkm"      — legacy HKM direction (`solveSdp` in `SdpSolver.ts`).
+ *   "lp-hsde"      — HSDE LP path (`solveHsdeLp` in `HsdeLpSolver.ts`, Phase 1).
+ *   "sdp-hsde-nt"  — HSDE NT SDP path (`solveHsdeSdpNt` in `HsdeNtSdpSolver.ts`, Phase 2).
  *
  * The regularization bumps are per-iter (delta from iter start), not
  * cumulative — the cumulative jitter values are in `jitter*`. `failRow`
@@ -57,9 +59,18 @@ export interface IterLogLine {
  * factorisation attempt this iter, or `null` if the first attempt
  * succeeded. Phase timings (`t*Ms`) are derived from `Bun.nanoseconds()`
  * deltas; they bracket distinct work units of the iteration.
+ *
+ * HSDE-only fields (`tau`, `kappa`, `gfeas`, `prstatus`) are NaN for
+ * non-HSDE kinds. Per ADR-0033 §"Decision 8": the schema extends
+ * additively; the diff harness already treats `null` (JSON-serialised
+ * NaN) as "missing"; a future kind extension is wire-compatible. These
+ * fields land in Phase 0 so the trace pipeline is ready when the
+ * HSDE algorithm work begins (HANDOFF §3.8 "instrument before
+ * fixing" — the verbose trace was what turned worklog 095's stall
+ * diagnosis from a multi-day investigation into a 5-minute read).
  */
 export interface VerboseIterLine extends IterLogLine {
-  kind: "lp" | "sdp-nt" | "sdp-aho" | "sdp-hkm";
+  kind: "lp" | "sdp-nt" | "sdp-aho" | "sdp-hkm" | "lp-hsde" | "sdp-hsde-nt";
   // Centering / step
   sigma: number;
   sigmaRaw: number;       // (muAff / mu)^3 pre-clip
@@ -80,9 +91,19 @@ export interface VerboseIterLine extends IterLogLine {
   // Schur conditioning proxies
   schurDiagMin: number;
   schurDiagMax: number;
-  // SDP-only
+  // SDP-only (NaN for "lp", "lp-hsde")
   eigMinX: number;
   eigMinS: number;
+  // HSDE-only (NaN for non-HSDE kinds). Per ADR-0033 §"Decision 8":
+  //   tau      — homogenization scalar τ, > 0 strictly on trial iterates
+  //   kappa    — homogenization slack κ, > 0 strictly on trial iterates
+  //   gfeas    — |r_g| = |−cᵀx + bᵀy − κ| (Mosek GFEAS log column)
+  //   prstatus — (bᵀy − cᵀx) / max(‖b‖_∞, ‖c‖_∞, 1), → +1 on optimal
+  //              branch, → −1 on infeasibility-certificate branch
+  tau: number;
+  kappa: number;
+  gfeas: number;
+  prstatus: number;
   // Phase timings (milliseconds)
   tSchurMs: number;
   tFactorMs: number;
@@ -301,6 +322,10 @@ export function solveLp(lp: LpProblem, opts: SolveOptions = {}): SolveResult {
         schurDiagMax,
         eigMinX: NaN,
         eigMinS: NaN,
+        tau: NaN,
+        kappa: NaN,
+        gfeas: NaN,
+        prstatus: NaN,
         tSchurMs,
         tFactorMs,
         tDirectionMs,
