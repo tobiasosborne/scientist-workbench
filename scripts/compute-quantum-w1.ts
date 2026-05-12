@@ -381,17 +381,431 @@ async function caseN2(wb: ReturnType<typeof typed>): Promise<number> {
   return dw1;
 }
 
+// ─── n=2 Bell-phase case via sdp-solve with complex Hermitian embedding ──────
+//
+// ρ = |Φ_i⟩⟨Φ_i|,  σ = |Φ⁺⟩⟨Φ⁺|,    where  |Φ_i⟩ = (|00⟩ + i|11⟩)/√2
+//                                          |Φ⁺⟩ = (|00⟩ + |11⟩)/√2
+//
+// These are related by the local phase gate S = diag(1, i) on the
+// second qubit: |Φ_i⟩ = (I ⊗ S) |Φ⁺⟩, and S = e^{iπ/4} · exp(−iπZ/4)
+// (a Z-rotation by π/2 up to global phase).  The difference
+//
+//   ρ − σ = (1/2) · [[ 0, 0, 0, −1−i],
+//                    [ 0, 0, 0,    0],
+//                    [ 0, 0, 0,    0],
+//                    [−1+i, 0, 0,   0]]
+//
+// has purely complex off-diagonal entries — the SDP cannot be cast
+// over real-symmetric matrices alone.
+//
+// Complex Hermitian → real-symmetric embedding.  Write M = A + iB with
+// A symmetric real and B antisymmetric real (this is forced by M
+// being Hermitian).  Then
+//
+//                   ⎡  A   −B ⎤
+//   E(M)  :=        ⎢          ⎥                                            (✱)
+//                   ⎣  B    A ⎦
+//
+// is an `2n × 2n` real symmetric matrix; it is PSD iff `M` is PSD;
+// and `tr(E(M)) = 2·tr(M)`, `||E(M)||_1 = 2·||M||_1` (each eigenvalue
+// of `M` shows up *twice* in `E(M)`'s spectrum).  We declare each
+// PSD variable in the SDP as an 8×8 `PSDCone` and supplement it with
+// the **embedding-structure constraints** that force the (✱) block
+// pattern:
+//
+//   • A blocks identical:        E[i+4, j+4] = E[i, j]   for 0 ≤ i ≤ j ≤ 3
+//                                                        (10 constraints)
+//   • B antisymmetric:           E[i, i+4] = 0           for 0 ≤ i ≤ 3
+//                                E[i, j+4] + E[j, i+4] = 0  for 0 ≤ i < j ≤ 3
+//                                                        (4 + 6 = 10 constraints)
+//
+// 20 structural constraints per matrix × 4 matrices (M_1⁺, M_1⁻, M_2⁺,
+// M_2⁻) = 80 structural rows.  The original problem constraints
+// (sum-to-(ρ−σ): 16 rows, partial-trace-zero: 8 rows) bring the total
+// to 104 equality rows on 4·36 = 144 svec variables.
+//
+// Loose bounds for sanity-checking the answer:
+//   • trace distance T(ρ, σ) = (1/2)||ρ − σ||_1 = 1/√2 ≈ 0.7071
+//     gives the lower bound  D_W1 ≥ T(ρ, σ) ≈ 0.7071.
+//   • DMTL21 Prop. 14 (single-qubit Lipschitz):
+//        D_W1(U_j ρ U_j†, ρ) ≤ 2·sin(θ/2)  for U_j = exp(−iθH_j),
+//     with θ = π/2 here (the S-gate's Z-rotation angle) gives
+//        D_W1 ≤ 2·sin(π/4) = √2 ≈ 1.4142.
+
+const N_EMB = 8;              // size of each embedded PSD block
+const SVEC8_LEN = (N_EMB * (N_EMB + 1)) / 2;  // = 36
+const N_VARS_EMB = 4 * SVEC8_LEN;             // = 144
+
+function svecIndexN(n: number, i: number, j: number): number {
+  if (i > j) [i, j] = [j, i];
+  return i * n - (i * (i - 1)) / 2 + (j - i);
+}
+
+/** Coefficient row (length SVEC8_LEN) that, when dotted with svec(E),
+ *  recovers A[i, j] — the (i, j) entry of the upper-left 4×4 block of
+ *  the embedded matrix E.  Off-diagonal svec entries carry √2 by
+ *  convention, so we divide by √2 to land back in the unscaled-matrix
+ *  reading. */
+function rowA(i: number, j: number): number[] {
+  const r = new Array<number>(SVEC8_LEN).fill(0);
+  const k = svecIndexN(N_EMB, i, j);
+  r[k] = i === j ? 1 : 1 / SQRT2;
+  return r;
+}
+
+/** Coefficient row (length SVEC8_LEN) recovering B[i, j] — the (i, j)
+ *  entry of the (negated) upper-right block of E.  We have
+ *  E[i, j+4] = −B[i, j], hence B[i, j] = −E[i, j+4].  All such entries
+ *  are off-diagonal in the 8×8 (since j+4 > i always) and thus carry
+ *  a √2 in svec.  Used with `i, j ∈ {0..3}`, `i ≠ j` only (B's diagonal
+ *  is forced to zero by the embedding structure). */
+function rowB(i: number, j: number): number[] {
+  const r = new Array<number>(SVEC8_LEN).fill(0);
+  const k = svecIndexN(N_EMB, i, j + 4);
+  // Off-diagonal in the 8×8 → svec carries √2; final sign is negative
+  // because E[i, j+4] = −B[i, j].
+  r[k] = -1 / SQRT2;
+  return r;
+}
+
+/** Embedding-structure constraints for one 8×8 block at offset `off`
+ *  in the global variable vector.  Returns an array of length-144
+ *  coefficient rows; each row represents an equality `… = 0`.
+ *
+ *  20 constraints in three groups (see comment above): A blocks
+ *  identical, B diagonals = 0, B off-diagonal antisymmetric. */
+function embeddingStructureRows(off: number): number[][] {
+  const rows: number[][] = [];
+  const place = (block: readonly number[], sign: number): number[] => {
+    const r = new Array<number>(N_VARS_EMB).fill(0);
+    for (let k = 0; k < SVEC8_LEN; k++) r[off + k] = sign * block[k]!;
+    return r;
+  };
+  // (1) A blocks identical: E[i+4, j+4] = E[i, j] for 0 ≤ i ≤ j ≤ 3.
+  for (let i = 0; i < 4; i++) {
+    for (let j = i; j < 4; j++) {
+      const a = new Array<number>(SVEC8_LEN).fill(0);
+      a[svecIndexN(N_EMB, i + 4, j + 4)] = 1;
+      a[svecIndexN(N_EMB, i, j)] = -1;
+      rows.push(place(a, 1));
+    }
+  }
+  // (2) B diagonals = 0: E[i, i+4] = 0 for i = 0..3.
+  for (let i = 0; i < 4; i++) {
+    const a = new Array<number>(SVEC8_LEN).fill(0);
+    a[svecIndexN(N_EMB, i, i + 4)] = 1;
+    rows.push(place(a, 1));
+  }
+  // (3) B antisymmetric off-diagonal: E[i, j+4] + E[j, i+4] = 0 for i < j ≤ 3.
+  for (let i = 0; i < 4; i++) {
+    for (let j = i + 1; j < 4; j++) {
+      const a = new Array<number>(SVEC8_LEN).fill(0);
+      a[svecIndexN(N_EMB, i, j + 4)] += 1;
+      a[svecIndexN(N_EMB, j, i + 4)] += 1;
+      rows.push(place(a, 1));
+    }
+  }
+  return rows;
+}
+
+/** Embed a length-SVEC8_LEN coefficient row into the full length-144
+ *  vector at offset `off` with sign `sgn`. */
+function embedAt(off: number, sgn: number, block: readonly number[]): number[] {
+  const r = new Array<number>(N_VARS_EMB).fill(0);
+  for (let k = 0; k < SVEC8_LEN; k++) r[off + k] = sgn * block[k]!;
+  return r;
+}
+
+function addRowEmb(a: number[], b: number[]): number[] {
+  return a.map((x, i) => x + b[i]!);
+}
+
+async function caseN2BellPhase(
+  wb: ReturnType<typeof typed>,
+): Promise<number> {
+  // Variable layout: x = [emb(M_1⁺) | emb(M_1⁻) | emb(M_2⁺) | emb(M_2⁻)]
+  const OFF_EMB = [0, SVEC8_LEN, 2 * SVEC8_LEN, 3 * SVEC8_LEN] as const;
+
+  // Re(ρ−σ) and Im(ρ−σ) for the case at hand.
+  // ρ − σ = (1/2) · [[0, 0, 0, −1−i],
+  //                  [0, 0, 0,    0],
+  //                  [0, 0, 0,    0],
+  //                  [−1+i, 0, 0,  0]]
+  // ⇒ Re part has only (0,3)=(3,0) = −1/2,
+  //   Im part has only (0,3) = −1/2 (so (3,0) = +1/2 by antisymmetry).
+  const reTarget: Record<string, number> = {
+    "0,3": -0.5, // A[0, 3] = Re(ρ−σ)[0, 3]
+  };
+  const imTarget: Record<string, number> = {
+    "0,3": -0.5, // B[0, 3] = Im(ρ−σ)[0, 3]
+  };
+  // (All other A[i,j] and B[i,j] entries for i ≤ j are zero.)
+
+  // ─── Objective ────────────────────────────────────────────────────────────
+  //
+  //   minimise (1/2) · Σ_i (tr(M_i⁺) + tr(M_i⁻))
+  //         = (1/2) · Σ_i (tr A_i⁺ + tr A_i⁻)                    [complex tr]
+  //
+  // In embedded variables: A is the upper-left 4×4 of E, and its trace
+  // is svec_E[svecIdx(8, k, k)] for k = 0..3 (no √2 on diagonals).
+  const c = new Array<number>(N_VARS_EMB).fill(0);
+  for (const off of OFF_EMB) {
+    for (let k = 0; k < 4; k++) {
+      c[off + svecIndexN(N_EMB, k, k)] = 0.5;
+    }
+  }
+
+  // ─── Constraint set ──────────────────────────────────────────────────────
+  const Arows: number[][] = [];
+  const bVec: number[] = [];
+
+  // (a) Embedding-structure constraints — 20 per block × 4 = 80 rows.
+  for (const off of OFF_EMB) {
+    for (const r of embeddingStructureRows(off)) {
+      Arows.push(r);
+      bVec.push(0);
+    }
+  }
+
+  // (b) Σ_i (M_i⁺ − M_i⁻) = ρ − σ.
+  //     Lift into  Re part (A): 10 equations on 0 ≤ i ≤ j ≤ 3 of A.
+  //                Im part (B): 6 equations on 0 ≤ i < j ≤ 3 of B.
+  for (let i = 0; i < 4; i++) {
+    for (let j = i; j < 4; j++) {
+      const a = rowA(i, j);
+      const row = addRowEmb(
+        addRowEmb(embedAt(OFF_EMB[0]!, +1, a), embedAt(OFF_EMB[1]!, -1, a)),
+        addRowEmb(embedAt(OFF_EMB[2]!, +1, a), embedAt(OFF_EMB[3]!, -1, a)),
+      );
+      Arows.push(row);
+      bVec.push(reTarget[`${i},${j}`] ?? 0);
+    }
+  }
+  for (let i = 0; i < 4; i++) {
+    for (let j = i + 1; j < 4; j++) {
+      const b = rowB(i, j);
+      const row = addRowEmb(
+        addRowEmb(embedAt(OFF_EMB[0]!, +1, b), embedAt(OFF_EMB[1]!, -1, b)),
+        addRowEmb(embedAt(OFF_EMB[2]!, +1, b), embedAt(OFF_EMB[3]!, -1, b)),
+      );
+      Arows.push(row);
+      bVec.push(imTarget[`${i},${j}`] ?? 0);
+    }
+  }
+
+  // (c) Partial-trace constraints: tr_j(M_j⁺ − M_j⁻) = 0 for j = 1, 2.
+  //
+  //     For 4×4 complex M:
+  //        tr_1(M)[q2, q2'] = M[q2, q2'] + M[2+q2, 2+q2']
+  //        tr_2(M)[q1, q1'] = M[2q1, 2q1'] + M[2q1+1, 2q1'+1]
+  //     The result is 2×2 complex Hermitian; lift into Re (2×2 sym, 3
+  //     entries: (0,0),(0,1),(1,1)) and Im (2×2 antisym, 1 entry: (0,1)).
+  //
+  //     Translate via rowA / rowB on the 8×8 embedding of the input
+  //     matrix M.  e.g. Re(tr_1(M))[0,0] = A[0,0] + A[2,2], coefficient
+  //     on svec_E is rowA(0,0) + rowA(2,2).
+  type Block = readonly number[];
+  const addB = (a: Block, b: Block): number[] => a.map((x, i) => x + b[i]!);
+
+  // tr_1 partial-trace coefficient blocks (in svec_E).  Each entry of
+  // tr_1(M) (a 2×2 complex Hermitian) is one constraint row.
+  const tr1Re00 = addB(rowA(0, 0), rowA(2, 2));   // tr_1 Re [0,0]
+  const tr1Re01 = addB(rowA(0, 1), rowA(2, 3));   // tr_1 Re [0,1]
+  const tr1Re11 = addB(rowA(1, 1), rowA(3, 3));   // tr_1 Re [1,1]
+  const tr1Im01 = addB(rowB(0, 1), rowB(2, 3));   // tr_1 Im [0,1]
+
+  for (const block of [tr1Re00, tr1Re01, tr1Re11, tr1Im01]) {
+    const row = addRowEmb(
+      embedAt(OFF_EMB[0]!, +1, block),
+      embedAt(OFF_EMB[1]!, -1, block),
+    );
+    Arows.push(row);
+    bVec.push(0);
+  }
+
+  // tr_2 partial-trace coefficient blocks (in svec_E for M_2's block):
+  //   tr_2(M)[q1, q1'] = M[2q1, 2q1'] + M[2q1+1, 2q1'+1]
+  const tr2Re00 = addB(rowA(0, 0), rowA(1, 1));   // tr_2 Re [0,0]
+  const tr2Re01 = addB(rowA(0, 2), rowA(1, 3));   // tr_2 Re [0,1]
+  const tr2Re11 = addB(rowA(2, 2), rowA(3, 3));   // tr_2 Re [1,1]
+  const tr2Im01 = addB(rowB(0, 2), rowB(1, 3));   // tr_2 Im [0,1]
+
+  for (const block of [tr2Re00, tr2Re01, tr2Re11, tr2Im01]) {
+    const row = addRowEmb(
+      embedAt(OFF_EMB[2]!, +1, block),
+      embedAt(OFF_EMB[3]!, -1, block),
+    );
+    Arows.push(row);
+    bVec.push(0);
+  }
+
+  console.log(
+    `[n=2,Bell] SDP: ${Arows.length} eq constraints, ${N_VARS_EMB} vars, ` +
+      `4 PSDCones(8) — complex Hermitian embedded`,
+  );
+
+  // ─── Build input record and solve ────────────────────────────────────────
+  const indicesFor = (off: number): number[] =>
+    Array.from({ length: SVEC8_LEN }, (_, k) => off + k);
+
+  const input: Value = {
+    kind: "record",
+    fields: {
+      minimize: { kind: "record", fields: { c: f64List(c) } },
+      subjectTo: {
+        kind: "record",
+        fields: {
+          Ax_eq_b: {
+            kind: "record",
+            fields: { A: f64Matrix(Arows), b: f64List(bVec) },
+          },
+          cones: {
+            kind: "list",
+            items: OFF_EMB.map((off) => psdCone(N_EMB, indicesFor(off))),
+          },
+        },
+      },
+    },
+  };
+
+  const result = await wb.sdpSolve(input as never);
+  if (result.kind !== "record") {
+    throw new Error(`sdp-solve refused: ${JSON.stringify(result, null, 2)}`);
+  }
+  const statusF = result.fields.status;
+  const objF = result.fields.objective;
+  const iterF = result.fields.iterations;
+  const methodF = result.fields.method;
+  if (
+    statusF?.kind !== "string" ||
+    iterF?.kind !== "integer" ||
+    methodF?.kind !== "string"
+  ) {
+    throw new Error(
+      `sdp-solve output missing fields: ${JSON.stringify(result, null, 2)}`,
+    );
+  }
+  console.log(
+    `[n=2,Bell] status='${statusF.value}', iter=${iterF.value}, method='${methodF.value}'`,
+  );
+  if (statusF.value !== "optimal") {
+    throw new Error(`sdp-solve non-optimal: ${statusF.value}`);
+  }
+  if (objF?.kind !== "float64") throw new Error("expected float64 objective");
+  const dw1 = Buffer.from(objF.bits, "hex").readDoubleBE(0);
+
+  // ─── Recover the complex X_i = (A_i⁺ − A_i⁻) + i·(B_i⁺ − B_i⁻) ───────────
+  const xField = result.fields.x;
+  if (xField?.kind !== "list") throw new Error("expected x list");
+  const x: number[] = xField.items.map((v) => {
+    if (v.kind !== "float64") throw new Error("non-float64 x entry");
+    return Buffer.from(v.bits, "hex").readDoubleBE(0);
+  });
+
+  function recoverComplexHermitian(
+    offPlus: number,
+    offMinus: number,
+  ): { re: number[][]; im: number[][] } {
+    const re = Array.from({ length: 4 }, () => new Array(4).fill(0));
+    const im = Array.from({ length: 4 }, () => new Array(4).fill(0));
+    for (let i = 0; i < 4; i++) {
+      for (let j = 0; j < 4; j++) {
+        const dotRe =
+          x.slice(offPlus, offPlus + SVEC8_LEN).reduce(
+            (s, v, k) => s + v * rowA(i, j)[k]!,
+            0,
+          ) -
+          x.slice(offMinus, offMinus + SVEC8_LEN).reduce(
+            (s, v, k) => s + v * rowA(i, j)[k]!,
+            0,
+          );
+        re[i]![j] = dotRe;
+        if (i !== j) {
+          // rowB(i, j) extracts B[i, j] from the embedded svec via the
+          // identity E[i, j+4] = −B[i, j]; the formula works for *any*
+          // (i, j) with i, j ∈ {0..3} (the antisymmetry of B is enforced
+          // by the embedding-structure constraints, so B[i, j] and
+          // B[j, i] = −B[i, j] both have valid encodings via E[i, j+4]
+          // and E[j, i+4] respectively).
+          const dotIm =
+            x.slice(offPlus, offPlus + SVEC8_LEN).reduce(
+              (s, v, k) => s + v * rowB(i, j)[k]!,
+              0,
+            ) -
+            x.slice(offMinus, offMinus + SVEC8_LEN).reduce(
+              (s, v, k) => s + v * rowB(i, j)[k]!,
+              0,
+            );
+          im[i]![j] = dotIm;
+        }
+      }
+    }
+    return { re, im };
+  }
+  const X1 = recoverComplexHermitian(OFF_EMB[0]!, OFF_EMB[1]!);
+  const X2 = recoverComplexHermitian(OFF_EMB[2]!, OFF_EMB[3]!);
+
+  const fmtComplex = (m: { re: number[][]; im: number[][] }): string => {
+    const lines: string[] = [];
+    for (let i = 0; i < 4; i++) {
+      const row: string[] = [];
+      for (let j = 0; j < 4; j++) {
+        const r = m.re[i]![j]!;
+        const im = m.im[i]![j]!;
+        const sign = im >= 0 ? "+" : "−";
+        row.push(`${r.toFixed(3).padStart(6)}${sign}${Math.abs(im).toFixed(3)}i`);
+      }
+      lines.push("      " + row.join("  "));
+    }
+    return lines.join("\n");
+  };
+  console.log(`[n=2,Bell] recovered X_1 (Hermitian, complex) =\n${fmtComplex(X1)}`);
+  console.log(`[n=2,Bell] recovered X_2 (Hermitian, complex) =\n${fmtComplex(X2)}`);
+
+  // Independent oracle: verify X_1 + X_2 ≈ ρ − σ.
+  let maxConstraintErr = 0;
+  for (let i = 0; i < 4; i++) {
+    for (let j = 0; j < 4; j++) {
+      const targetRe =
+        i === 0 && j === 3 ? -0.5 : i === 3 && j === 0 ? -0.5 : 0;
+      const targetIm =
+        i === 0 && j === 3 ? -0.5 : i === 3 && j === 0 ? 0.5 : 0;
+      const reErr = Math.abs(X1.re[i]![j]! + X2.re[i]![j]! - targetRe);
+      const imErr = Math.abs(X1.im[i]![j]! + X2.im[i]![j]! - targetIm);
+      maxConstraintErr = Math.max(maxConstraintErr, reErr, imErr);
+    }
+  }
+  console.log(
+    `[n=2,Bell] max |X_1 + X_2 − (ρ−σ)| (independent check) = ${maxConstraintErr.toExponential(3)}`,
+  );
+
+  const traceDist = 1 / Math.SQRT2;
+  const lipBound = Math.SQRT2;
+  console.log(
+    `[n=2,Bell] D_W1 = ${dw1.toFixed(12)}   ` +
+      `(bounds: trace dist 1/√2 ≈ ${traceDist.toFixed(6)} ≤ D_W1 ≤ √2 ≈ ${lipBound.toFixed(6)})`,
+  );
+  return dw1;
+}
+
+
+
 // ─── main ─────────────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
   const wb = typed(await loadWorkbench());
   console.log("=== n=1: ρ=|0⟩⟨0|, σ=|1⟩⟨1| — via linalg-eigh ===\n");
   const d1 = await caseN1(wb);
-  console.log("\n=== n=2: ρ=|00⟩⟨00|, σ=|11⟩⟨11| — via sdp-solve ===\n");
+  console.log("\n=== n=2: ρ=|00⟩⟨00|, σ=|11⟩⟨11| — real symmetric SDP ===\n");
   const d2 = await caseN2(wb);
+  console.log(
+    "\n=== n=2 Bell-phase: ρ=|Φ_i⟩⟨Φ_i|, σ=|Φ⁺⟩⟨Φ⁺| — complex Hermitian SDP via real embedding ===\n",
+  );
+  const d3 = await caseN2BellPhase(wb);
   console.log("\n=== summary ===");
-  console.log(`  D_W1(|0⟩⟨0|, |1⟩⟨1|)   = ${d1.toFixed(12)}   (Hamming = 1)`);
+  console.log(`  D_W1(|0⟩⟨0|, |1⟩⟨1|)    = ${d1.toFixed(12)}   (Hamming = 1)`);
   console.log(`  D_W1(|00⟩⟨00|, |11⟩⟨11|) = ${d2.toFixed(12)}   (Hamming = 2)`);
+  console.log(`  D_W1(|Φ_i⟩⟨Φ_i|, |Φ⁺⟩⟨Φ⁺|) = ${d3.toFixed(12)}   (1/√2 ≤ · ≤ √2)`);
 }
 
 await main();
