@@ -1,282 +1,441 @@
-# Handoff — solver-ipm convergence hardening (bead `qmrv`)
+# Handoff — solver-ipm SDP convergence: final 1/6 (hinf2) via Ruiz equilibration (bead `qmrv`)
 
-> **Read order:**
-> 1. This document (10 min).
-> 2. `~/Dropbox/Projects/Computers/LLM/COPT-decomp/HANDOFF.md` + `HANDOFF_NEXT.md` + `HANDOFF_SDP_FIDELITY.md` + `HANDOFF_SPEC_ALIGN.md` (45 min).
->    The IPM in `@workbench/solver-ipm` is a reverse-engineered port of COPT's `FUN_00732a50`. Those handoffs are the original mission brief and IP context.
-> 3. `~/Dropbox/Projects/Computers/LLM/COPT-decomp/analysis/CLEANROOM_SPEC.md` (the spec the port is converging on) and `analysis/PD_IPM_DEEP.md` + `analysis/IPM_LOOP_CHEATSHEET.md` (the decomp's deep analysis).
-> 4. Worklog shard 094 (`docs/worklog/094-sdp-solve-and-corpus-bench.md`) — where the convergence gap was first surfaced.
-> 5. `bd show scientist-workbench-qmrv` and `bd show scientist-workbench-j1gd` — the live bead state.
+> **State at commit `9172b16`:** `sdp-sdplib` corpus bench is **5/6**.
+> control1, control2, control3, theta1, mcp100 all pass; hinf2 is the
+> remaining holdout. Bench was 3/6 before the work in worklog
+> 095 (verbose iter-trace + COPT-aligned termination + best-iterate
+> tracking in the NT SDP solver). This document is the playbook for
+> closing that last 1/6 and any follow-on SDP work.
 >
-> The COPT-decomp directory is **ground-truth-ish**. The user has explicitly authorized direct use of COPT IP for this private-research port (HANDOFF.md §0). Prefer fidelity to the decomps when spec and decomps disagree on *numerical tuning*; prefer the spec when they disagree on *architecture* (HANDOFF_SPEC_ALIGN.md §3).
+> **Read order:**
+> 1. This document end-to-end (15 min).
+> 2. Worklog shard 095 (`docs/worklog/095-solver-ipm-verbose-trace-and-termination.md`) — what shipped, why, and the frictions encountered (30 min).
+> 3. The verbose trace tooling — try `bun scripts/sdp-probe.ts ~/Projects/scientist-workbench-corpus/data/sdp-sdplib/raw/hinf2.dat-s` and read the streamed output. That's the diagnostic loop you'll be living inside (5 min).
+> 4. `~/Dropbox/Projects/Computers/LLM/COPT-decomp/analysis/CLEANROOM_SPEC.md §9` (Ruiz scaling) and `analysis/decomps/006ec3f0_FUN_006ec3f0.c` (the COPT decomp of Ruiz, 1636 lines of vectorised C) (60 min).
+> 5. `bd show scientist-workbench-qmrv` for the live bead state.
+>
+> The COPT-decomp directory at `/home/tobias/Dropbox/Projects/Computers/LLM/COPT-decomp` is **ground-truth-ish**. The user has explicitly authorised direct use of COPT IP for this private-research port (`HANDOFF.md §0` in that tree). Prefer fidelity to the decomps when spec and decomps disagree on *numerical tuning*; prefer the spec when they disagree on *architecture*.
 
 ---
 
-## 0. What you're inheriting (state at commit `441b66d`)
+## 0. What you're inheriting (state at commit `9172b16`)
 
 - **68/68 `packages/solver-ipm` tests pass.**
 - `tools/lp-solve --test` and `tools/sdp-solve --test` smokes pass.
-- Wave-1 spec-alignment fixes are in. Shared 3-way Tikhonov regularization helper exists at `packages/solver-ipm/src/solver/Regularization.ts` and the LP path is wired through it.
-- **SDP solvers (NT/AHO/HKM) still use the legacy single-jitter Cholesky retry** — they have not been wired through the new helper yet. That's the headline next step.
-- **3 SDPLIB cases still fail on the corpus bench:** `control2`, `control3`, `hinf2`. Bench grade is **3/6** on `sdp-sdplib` (corpus side), unchanged from before this work.
-- **1 LP case carved out:** `F_infeasible_3var_sum` in `lp-small`. Carve-out is in `packages/solver-ipm/test/lp-small.test.ts` with prose explaining the regression.
-- **Tasks `#1-7` completed; `#4`, `#8`, `#9` partially done; `#10-13` pending.** Use `TaskList` to see the live state.
+- `bun run check` is green.
+- **`sdp-sdplib` corpus grade: 5/6.** Only `hinf2` fails — and it fails on three invariants (`primal_feasibility`, `complementary_slackness`, `optimality_gap`), all rooted in one structural issue (next section).
+- **Diagnostic loop is in place:**
+  - `scripts/sdp-probe.ts` — single-case `.dat-s` driver with verbose stderr stream.
+  - `scripts/trace-diff.ts` — JSONL trace diff with verifier-relevant defaults.
+  - `scripts/copt-log-to-jsonl.ts` — converts COPT iter logs into the same schema.
+  - `scripts/solver-ipm-bench.ts` — microbench for hot ops.
+  - COPT oracle captures under `docs/oracles/copt-sdpmethod0/` for `control2/3/hinf2`.
+- **NT termination is COPT-aligned:** 6-flag decision tree, best-iterate snapshot, `dual-feasible` soft-success wire-mapped to `optimal`. AHO and HKM still use the legacy stall-as-failure logic (intentional — they're A/B reference solvers; not on the critical path).
+- **SDP solvers still use the legacy single-tier (`gap`-only) Cholesky retry.** The shared `factorWith3Way` helper exists for LP but the SDP path hasn't been wired through it. This was Phase 1 of the previous handoff; it's been **deprioritised** because the 5/6 fix didn't need it. It's still worth doing for code unification, but it does NOT close hinf2.
 
 ---
 
-## 1. What got done
+## 1. The hinf2 failure mode (precise diagnosis)
 
-| Task | What | File:line |
-|---|---|---|
-| #1 | Regularization caps: `cap_d`, `cap_g` to spec §6.4 `1e+2` | `solver-ipm/src/solver/Defaults.ts:22-37` |
-| #2 | σ-clip `[1e-8, 0.9]` in AHO/HKM. **LP kept at [0, 1]** (Farkas-direction issue, see §3) | `AhoSdpSolver.ts:141`, `SdpSolver.ts:150` |
-| #3 | Stall threshold `0.99` in AHO/HKM/LP (NT was already correct) | three files |
-| #5 | NT predictor: `-X` directly, not `gtDiagG` reconstruction. **Single biggest standalone numerical win**. Decomp confirms COPT's Branch-B SDP variable update reads X directly | `NtSdpSolver.ts:280-300` |
-| #6 | Separate ξ_p / ξ_d per spec §3.1 in all three SDP solvers | three files |
-| #7 | Removed `stallIterCap: 30` tool-level band-aid (substrate default 10 now correct) | `tools/sdp-solve/tool.ts:894` |
-| #8 partial | New `Regularization.ts` shared helper with `factorWith3Way`, `makeLpDiagnose`, `makeSdpDiagnose`, `gapOnlyDiagnose`. LP path wired through it. **SDP path NOT yet wired.** | `solver-ipm/src/solver/Regularization.ts` (new) |
-| #9 partial | `makeLpDiagnose` / `makeSdpDiagnose` implement spec §6.5's v1 simple rule. LP-side uses `threshold=1e-6` and `defaultKind="primal"` (see §3 below) | `Regularization.ts:80-130` |
+The new verbose trace localised this in 15 minutes. The pattern is
+reproducible — drive `bun scripts/sdp-probe.ts
+~/Projects/scientist-workbench-corpus/data/sdp-sdplib/raw/hinf2.dat-s`
+and read the last 30 iters.
 
----
+**The data is well-balanced:**
 
-## 2. The plan, with severity-ordered next actions
+- `|b|_∞ = 1` (only entry: `b[0] = -1`)
+- `|A_i|_F ∈ [1.03, 2.24]` for all 13 constraints (all O(1))
+- `|C|_F = 2.63`
 
-The umbrella beads issue is `scientist-workbench-qmrv` (claimed by `tobiasosborne`).
+**But the dual variable explodes:**
 
-**Phase 1 — wire SDP through the shared helper (#8 finish).** ~80 LOC, no design risk.
+- `|y|_∞ ≈ 567` at convergence (vs. control2 where |y| is O(1))
 
-Three SDP solvers each have a near-identical Cholesky retry loop:
+**Trajectory:** the IPM makes good progress through iter ~15:
+`μ → 3e-5`, `r_p → 2e-6`, `r_d → 1e-8`. Around iter 16 the
+Newton direction wants a primal step that would push some X
+block's λ_min through zero — the boundary-clamp safeguard
+(`minBlockStep`) returns `αP=0.001`, effectively zero. From iter
+17 onward, `αP=0` is locked. Dual side keeps tightening
+(`r_d → 1e-14`, `μ → 5e-9`). But primal stays frozen at
+`r_p ≈ 2.91e-7` indefinitely.
 
-- `NtSdpSolver.ts:166-179` — Schur factor
-- `AhoSdpSolver.ts:117-131` — Schur factor
-- `SdpSolver.ts:124-138` — Schur factor
+**Why this becomes a verifier failure.** Strong duality with
+primal feasibility says `cᵀx - bᵀy = ⟨S, X⟩ - yᵀ·r_p`. With our
+final iterate:
 
-Each looks like:
+```
+⟨S, X⟩ ≈ n·μ  =  16 × 5e-9   = 8e-8       (well-converged)
+yᵀ·r_p ≈ |y|_∞ · r_p ≈ 567 × 2.9e-7 ≈ 1.6e-4   (huge)
+gap    ≈ 1.6e-4
+```
+
+The verifier wants `gap ≤ 1.1e-6` (= `1e-7 × |cᵀx|` for `|cᵀx|≈10.97`)
+and `r_p ≤ 1e-7`. To satisfy both **simultaneously** we'd need:
+
+```
+r_p ≤ 1.1e-6 / |y|_∞  ≈ 1.1e-6 / 567 ≈ 2e-9
+```
+
+— three decades tighter than the boundary-clamp limit allows.
+
+**Confirmed-with-experiment:** even at `iterLimit=200, feasTol=1e-12`,
+the best `r_p` ever achieved across the whole trajectory is `2.88e-7`
+at iter 34. The boundary geometry is the hard wall, not the
+iteration count.
+
+**Naive row-equilibration won't help.** `|A_i|_F ≈ 1` for all
+constraints; dividing by row norms is essentially identity. The
+`|y|` blow-up is structural to the problem geometry (hinf2 is
+H-infinity control, which has dual variables proportional to
+controller gains — naturally large), not the input scaling.
+
+## 2. The fix: SDP-aware Ruiz equilibration
+
+### 2.1 What standard (LP-style) Ruiz does
+
+From `CLEANROOM_SPEC.md §9`:
+
+```
+for sweep in 0..5:
+  for each row i of A: A[i] *= 1 / sqrt(||A[i]||_∞)
+  for each column j of A: A[:,j] *= 1 / sqrt(||A[:,j]||_∞)
+  # Apply the row/column scaling to b, C, X, S correspondingly.
+```
+
+For SDP rows the spec says use `||A_i||_F` instead of `||A_i||_∞`.
+
+### 2.2 Why standard Ruiz alone doesn't fix hinf2
+
+Row scaling A_i by `s_i = 1/sqrt(||A_i||_F)` changes (A_i, b_i) →
+(A_i · s_i, b_i · s_i). Dual: y_i_scaled = y_i_orig / s_i. For
+hinf2 where `||A_i||_F ≈ 1`, s_i ≈ 1, so y is unchanged. **The
+binding constraint must be reduced via column-side scaling, i.e.,
+a similarity transform of the cone variable itself.**
+
+### 2.3 Cone-side (column) scaling for SDP
+
+For LP, "column j of A" scales by `1/sqrt(||A[:,j]||_∞)` and
+correspondingly scales `x_j ← x_j · scale_j`, `s_j ← s_j /
+scale_j`, `c_j ← c_j · scale_j`. The dual variable y is unaffected
+by column scaling (it only multiplies rows).
+
+For SDP, the analog is a **block-wise similarity transform**:
+choose a diagonal positive `D_b` per PSD block, then:
+
+```
+X_b      ← D_b · X_b · D_b           (the new variable)
+S_b      ← D_b^{-1} · S_b · D_b^{-1} (preserves <X_b, S_b>)
+A_i^b    ← D_b^{-1} · A_i^b · D_b^{-1}   (since <A, X> is invariant)
+C_b      ← D_b^{-1} · C_b · D_b^{-1}
+```
+
+In the new variables the problem is `<A_i^b_new, X_b_new> = b_i`
+(same b; rows unchanged), `min <C_b_new, X_b_new>`. Dual y stays
+the same shape; dual slack S follows the similarity transform.
+
+**Why this helps hinf2.** A judicious choice of D_b can reduce
+the "effective scale mismatch" between block elements that
+generates large y. Concretely, if some entries of A_i^b are tiny
+and others are O(1) (which often happens for control-LMI
+constraints), normalising the block elements to comparable scale
+via D_b reduces the dynamic range of the constraint matrix and,
+empirically for hinf2-class problems, the magnitude of y at the
+optimum.
+
+### 2.4 The specific choice of D_b
+
+Empirical choice (used by SDPT3 and others): for each block b,
+
+```
+D_b_jj = 1 / sqrt(maximum |X_b_jj| across all A_i^b and C_b)
+```
+
+i.e., row-j and column-j of the symmetric block, take the max
+absolute value across all A_i^b and C_b entries with at least one
+index = j. Then D_b is diagonal positive. Repeat the full
+row-then-column sweep 5 times. The fixed point is a stationary
+scaling.
+
+For hinf2 with 3 blocks of size 5, 5, 6: this is just 16
+diagonal scaling factors per block, computed in one O(m·n²) pass.
+
+### 2.5 Unscaling
+
+After the IPM solves the scaled problem:
+
+```
+X_b_orig = D_b^{-1} · X_b_scaled · D_b^{-1}
+S_b_orig = D_b · S_b_scaled · D_b
+y_orig   = y_scaled                          (unchanged)
+```
+
+The objective: `<C_b_orig, X_b_orig> = <D_b·C_b_scaled·D_b, D_b^{-1}·X_b_scaled·D_b^{-1}> = <C_b_scaled, X_b_scaled>`.
+So objective is invariant. Returned `x` (the wire-encoded svec'd
+X) must use `X_b_orig`.
+
+The verifier's invariants (`primal_feasibility`, `complementary_slackness`,
+`optimality_gap`) run on the **unscaled** wire vectors. Pass-or-fail
+is determined by whether the unscaled iterate satisfies the
+1e-7 KKT bounds — which it will, because in the scaled problem y
+is smaller, so `yᵀ·r_p` in the unscaled formula is smaller too.
+
+## 3. Implementation playbook
+
+Estimated effort: ~200-300 LOC including symmetric tests, given
+the SDP cone-aware similarity transform is more involved than
+the LP-side spec text suggests.
+
+### Step 1 — New module `packages/solver-ipm/src/solver/Ruiz.ts`
+
+Pure function `equilibrate(prob: SdpProblem, sweeps = 5):
+{ scaled: SdpProblem; D: Float64Array[]; rowScale: Float64Array }`.
+Compute the per-block diagonal D_b and the per-row factor.
+Return the scaled SdpProblem + the scalings needed to unscale.
+
+`prob.b` is row-scaled but `prob.A[i]` and `prob.C` are
+block-similarity-transformed using the D_b. Track both in the
+return value.
+
+### Step 2 — Wire into `solveSdpNt`
+
+In `NtSdpSolver.ts:solveSdpNt`:
+
 ```ts
-const Lchol = new Float64Array(m * m);
-let jitter = 1e-12;
-let factored = false;
-for (let attempt = 0; attempt < 10; attempt++) {
-  Lchol.set(M);
-  const info = choleskyInPlace(Lchol, m, jitter);
-  if (info < 0) { factored = true; break; }
-  jitter *= 100;
-  if (jitter > params.jitterMaxGap) break;
-}
-if (!factored) return finalize("numerical-error");
+const { scaled, D, rowScale } = equilibrate(prob);
+// run IPM on `scaled` (which has the structure of the existing
+// SdpProblem — drop-in replacement)
+// At the end:
+const X_orig = unscaleX(X_scaled, D);
+const S_orig = unscaleS(S_scaled, D);
+const y_orig = unscaleY(y_scaled, rowScale);
+// Recompute pObj, dObj, pInf, dInf in the unscaled frame for
+// the returned record.
 ```
 
-Replace with the LP-pattern from `Solver.ts:75-91`:
-```ts
-// Hoist this out of the iteration loop (one alloc per solve):
-const sdpDiagnose = makeSdpDiagnose(prob.blocks, prob.m);
-const regState: RegState = { jitterPrimal: 1e-12, jitterDual: 0, jitterGap: 0,
-  bumpsPrimal: 0, bumpsDual: 0, bumpsGap: 0, refactors: 0 };
-const regParams = {
-  initialJitter: params.initialJitter,
-  jitterMaxPrimal: params.jitterMaxPrimal,
-  jitterMaxDual: params.jitterMaxDual,
-  jitterMaxGap: params.jitterMaxGap,
-  bumpPrimal: params.bumpPrimal,
-  bumpDual: params.bumpDual,
-  bumpGap: params.bumpGap,
-  maxRefactor: 10, // spec §6.4
-};
+### Step 3 — Best-iterate unscaling
 
-// Inside the iteration loop:
-const Lchol = new Float64Array(m * m);
-if (!factorWith3Way(M, m, Lchol, regState, regParams, sdpDiagnose)) {
-  return finalize("numerical-error");
-}
+The `bestX`/`bestS`/`bestY` snapshots live in the **scaled**
+frame during the iter loop. The `finalizeBestOr` helper must
+unscale them when assembling the returned `SdpSolveResult`.
+Otherwise the verifier sees the scaled iterate, which has wrong
+units.
+
+### Step 4 — Tests
+
+Add a `packages/solver-ipm/test/ruiz.test.ts` that:
+
+- Verifies `equilibrate` is idempotent after 1 sweep (it should
+  converge to a fixed point within 5 sweeps; sweep 6 should be a
+  no-op).
+- Verifies the round-trip identity: solving the scaled problem
+  and unscaling yields the same `pObj`, `<C, X>`, `<X, S>` as
+  solving the unscaled problem (modulo IPM convergence noise).
+- Acceptance: the `--test` smoke continues to pass on the 2×2
+  trace-equality problem; sdp.dat-s still converges to 30 in
+  ~7-8 iters.
+
+### Step 5 — Verify hinf2
+
+After implementation:
+
+```sh
+IPM_TRACE_JSONL=/tmp/hinf2-ruiz.jsonl bun scripts/sdp-probe.ts \
+    ~/Projects/scientist-workbench-corpus/data/sdp-sdplib/raw/hinf2.dat-s
+bun scripts/trace-diff.ts docs/oracles/copt-sdpmethod0/hinf2.copt.jsonl /tmp/hinf2-ruiz.jsonl
 ```
 
-**Important difference from the LP wiring:** for SDP the **spec caps** (`cap_d=1e+2`, `cap_g=1e+2` from `DEFAULT_PARAMS`) are correct as-is — do **not** override them like the LP path does. The wider caps are exactly the SDP path's headroom for control3-class problems. The LP-specific cap override at `Solver.ts:75-91` is a workaround documented inline; the SDP path doesn't need it.
+The trace should show `|y|_∞` (read off the `bestDualInf` /
+`alphaDual` patterns — or add `yInfNorm` to the verbose schema)
+substantially smaller than 567, primalInf reaching 1e-9 or
+better, and gap proportionally smaller. Then:
 
-After wiring all three SDP solvers:
-- Run `~/.bun/bin/bun test packages/solver-ipm/`.
-- Run `~/.bun/bin/bun tools/sdp-solve/tool.ts --test`.
-- Spot-check the bench: see Phase 2.
-
-**Phase 2 — Capture COPT iter logs for the 3 failing cases (#11).** ~30 min.
-
-The reverse-engineered IPM port has access to COPT 8.0.4 as an oracle. From `~/Dropbox/Projects/Computers/LLM/COPT-decomp/HANDOFF.md` §7 (literal copy):
-
-```bash
-cd /home/tobias/Dropbox/Projects/Computers/LLM/COPT-decomp/probes
-cat > control2.cmd <<'EOF'
-#COPT Script File
-read /home/tobias/Projects/scientist-workbench-corpus/data/sdp-sdplib/raw/control2.dat-s
-set Logging 2
-set LogToConsole 1
-set SDPMethod 0      ← force Primal-Dual default (the path we're porting)
-set IterLimit 200
-optimize
-quit
-EOF
-LD_LIBRARY_PATH=$HOME/Dropbox/Projects/Computers/LLM/COPT-decomp/copt/copt80/lib \
-    $HOME/Dropbox/Projects/Computers/LLM/COPT-decomp/copt/copt80/bin/copt_cmd \
-    -i control2.cmd 2>&1 | tee control2.log
-```
-
-If COPT's license complains about USER mismatch, move `~/copt/license.{dat,key}` aside (demo mode works for SDPLIB-small per `HANDOFF_NEXT.md` §3.5). Repeat for `control3` and `hinf2`.
-
-The relevant SDPLIB inputs live under `~/Projects/scientist-workbench-corpus/data/sdp-sdplib/raw/`. Confirm with `ls`.
-
-**Phase 3 — Capture TS NT iter logs after Phase 1 wiring (#12).** ~30 min.
-
-The pattern (use `formatIterLine` / `formatIterHeader` which match COPT's printf exactly per `HANDOFF.md` §7):
-
-```ts
-import { readFileSync } from "node:fs";
-import {
-  parseSdpaSparse, convertSdpaToSdp, solveSdp,
-  formatIterHeader, formatIterLine,
-} from "@workbench/solver-ipm";
-
-const t = readFileSync("/.../control2.dat-s", "utf-8");
-const p = convertSdpaToSdp(parseSdpaSparse(t), /*maximize=*/ true);
-const log: string[] = [formatIterHeader()];
-const r = solveSdp(p, { log: (l) => log.push(formatIterLine(l)) });
-console.log(log.join("\n"));
-console.log("status:", r.status, "iter:", r.iter, "obj:", r.primalObj);
-```
-
-`diff` the COPT and TS logs side by side. Per the COPT handoff (`HANDOFF.md` §7-§8): if μ trajectories agree to within 2-3× per iteration, the algorithm port is correct. Iter where they first diverge tells you which step is buggy.
-
-**Phase 4 — Verify bench grade lifts to 6/6 (#13).** ~5 min.
-
-```bash
+```sh
 cd ~/Projects/scientist-workbench-corpus
-~/.bun/bin/bun src/cli.ts grade scientist-workbench sdp-sdplib
+bun src/cli.ts grade scientist-workbench sdp-sdplib
+# expect 6/6
 ```
 
-Acceptance: 6/6 cases pass on `sdp-sdplib`. Today: 3/6 (control1, theta1, mcp100). If <6/6 after Phase 1, the differential iter logs (Phase 3) tell you which case still fails and where the trajectory diverges from COPT.
+### Step 6 — Apply to AHO + HKM (optional)
 
-**Phase 5 — If still failing.** Diagnose-kind v2 (#9), `buildNtFactor` jitter retry (#10), and `MAX_REFACTOR=10` (#4 — blocked by #9). See §4 below for the unblock chain.
+For symmetry, port `equilibrate` into `AhoSdpSolver.ts` and
+`SdpSolver.ts`. Not required for the bench (NT is the default),
+but reasonable for completeness.
 
----
+## 4. The diagnostic loop (use this!)
 
-## 3. Gotchas surfaced in Wave 1 (read these or you'll repeat them)
+Worklog 095 §"Why instrument before fixing" explains in detail.
+The short version:
 
-**Sum vs only-primal in Cholesky lift.** Spec §6.1 sums δ_p + δ_d + δ_g into the diagonal lift. Pre-alignment LP code applied only δ_p (dual/gap were cosmetic counters). Applying the sum changes the noise floor from `1e-12` to `3·1e-12` and propagates into `O(100×)` primalInf at the optimum on near-degenerate LPs (NETLIB `lotfi` regressed by this). **Mitigation:** in `Solver.ts`, initialize `jitterDual = 0, jitterGap = 0` (only primal carries the `1e-12` floor) — see file:line in `Solver.ts:46-58`. Adopt the same pattern for SDP wiring.
+**Don't enter the algorithm before you can see what it's doing.**
+The previous handoff named candidate fixes (σ-clip, tighter
+Cholesky reg, init-point heuristics) but didn't say which would
+help — and none of them moved the grade when applied without
+instrumentation. The verbose trace turned hinf2's failure into a
+**read-the-stderr-stream** diagnosis in minutes.
 
-**LP-specific cap override `cap_d=cap_g=1e-2`.** Set in `Solver.ts:75-91`. Reason: spec caps (`1e+2`) keep the LP IPM alive past the well-converged iterate and drift to worse answers on `brandy`. Best-iterate tracking (COPT does it per `IPM_LOOP_CHEATSHEET.md` §2 step 9) is the proper v2 fix; the cap override is the v1 patch. **Do not apply this override on the SDP path** — SDP needs the spec cap headroom.
+For Ruiz work specifically, the workflow is:
 
-**LP diagnose default `"primal"`, threshold `1e-6` (not spec's `1e-10`).** Set in `Regularization.ts:117-130`. Reason: NETLIB LP problems are primal-regularization-dominated; routing routine failures to GAP per the strict spec §6.5 reading overshoots. SDP diagnose uses the spec-strict rule (`makeSdpDiagnose`, threshold `1e-10`, default GAP) because PSD Schur matrices genuinely need the wider GAP headroom.
+```sh
+# 1. Capture baseline (current 5/6 state).
+IPM_TRACE_JSONL=/tmp/hinf2-pre.jsonl bun scripts/sdp-probe.ts \
+    ~/Projects/scientist-workbench-corpus/data/sdp-sdplib/raw/hinf2.dat-s
 
-**NT predictor X reconstruction.** The pre-alignment code at `NtSdpSolver.ts:280-298` reconstructed `-X` via `gtDiagG(f, sign_neg, ·)` (algebraically equivalent via the NT identity `G^T·diag(sv)·G = X`) instead of using `X` directly. The author's own comment said "doesn't matter" — it does, on 30×30 ill-conditioned blocks. Fixed in this commit. Don't re-introduce.
+# 2. Edit equilibration code. Run again with new trace path.
+IPM_TRACE_JSONL=/tmp/hinf2-post.jsonl bun scripts/sdp-probe.ts \
+    ~/Projects/scientist-workbench-corpus/data/sdp-sdplib/raw/hinf2.dat-s
 
-**Stall counter reset semantics.** Worklog 094 §5 named this. Reset-on-progress is *correct* per spec §3.3 — the bug was the *threshold* (0.9 = 10% progress required, too eager). Now 0.99 (1%) everywhere. Don't replace with EWMA / non-resetting variants; the spec is explicit.
+# 3. Diff against COPT oracle (the gold-standard trajectory).
+bun scripts/trace-diff.ts docs/oracles/copt-sdpmethod0/hinf2.copt.jsonl /tmp/hinf2-post.jsonl
 
-**LP σ-clip kept at `[0, 1]`.** Spec §2 step 5 says `[1e-8, 0.9]`. The lower bound damps the pure-affine direction enough to suppress Farkas `y → ∞` growth needed for LP infeasibility certificates in `Convergence.ts` (`it.dualObj > 1e8 && yInfNorm > 1e8` heuristic). Revisit when Convergence.ts uses a magnitude-aware certificate test instead of raw threshold. SDP path has no Farkas detection so the spec floor applies cleanly there.
+# 4. Spot-check no regression on other cases.
+for c in control1 control2 control3 theta1 mcp100; do
+  bun scripts/sdp-probe.ts \
+    ~/Projects/scientist-workbench-corpus/data/sdp-sdplib/raw/${c}.dat-s | head -1
+done
 
-**MAX_REFACTOR=20 (vs spec §6.4's 10) in LP.** The wider attempt budget compensates for blind escalation; safe to narrow to 10 once diagnose-kind routes failures smarter than primal-first. Task `#4` is blocked on `#9` for that reason.
-
-**`F_infeasible_3var_sum` carve-out.** The legacy `factorWithRegularization` had a bug-as-feature: the `attempt < 6 OR primal < cap` shortcut let primal jitter bump O(1e+6) past its 1e-2 cap, effectively lifting the rank-1 Schur of the proportional-rows infeasibility case. The spec-correct caps in the new helper bound that growth, losing this specific infeasibility-certificate detection. Fix is best-iterate tracking + the pre-iter-5 infeasibility check (currently gated `it.iter > 5` in `Convergence.ts:60`).
-
----
-
-## 4. Task graph (run `TaskList` to see live state)
-
-```
-done  #1 caps spec values
-done  #2 σ-clip on AHO/HKM (LP held)
-done  #3 stall threshold 0.99
-done  #5 NT predictor -X direct
-done  #6 ξ_p / ξ_d split
-done  #7 drop stallIterCap=30 band-aid
-done  #8 [partial] shared helper exists, LP wired
-done  #9 [partial] LP/SDP diagnose builders exist
-
-NEXT  #8 [finish]  wire NT/AHO/HKM through factorWith3Way      ← do this first
-      #11         capture COPT iter logs for control2/3/hinf2  ← parallel
-      #12         capture TS iter logs, diff against COPT      ← after #8 & #11
-      #13         verify 6/6 corpus sdp-sdplib bench grade     ← after #12
-
-LATER #10         buildNtFactor jitter retry escalation
-      #9  [v2]    upgrade diagnose-kind with h_r (DUAL detection)
-      #4          MAX_REFACTOR=10 (blocked by #9 v2)
+# 5. Run the full grade.
+cd ~/Projects/scientist-workbench-corpus && \
+  bun src/cli.ts grade scientist-workbench sdp-sdplib
 ```
 
-Beads:
-- `scientist-workbench-qmrv` — umbrella (claim before working).
-- `scientist-workbench-j1gd` — companion (LP algorithm-hygiene). Some items already done in this commit; sync the description.
+The verbose stderr stream shows σ, αP, αD, μ, primalInf, gap,
+regularisation bumps, Schur-diag range, eig proxies, phase
+timings — all per iter. The pattern of `αP=0` locked late tells
+you the boundary-clamp is binding; the `Mdiag` range tells you
+about conditioning; the reg bumps tell you about Schur factor
+health.
 
----
+For regression-checking edits: `trace-diff.ts` defaults to
+excluding timing fields (wall-clock noise) and reports first
+divergence with `Δ` magnitude — so "did my edit change the
+trajectory?" is one command.
 
-## 5. How to verify and debug
+## 5. Out of scope (other open work on bead `qmrv`)
 
-**Substrate tests (fast):**
-```bash
-PATH=$HOME/.bun/bin:$PATH bun test packages/solver-ipm/
+These were on the previous handoff's task list and remain
+follow-ups; they are *not* required for hinf2 but are worth
+attention for code health.
+
+### Phase 1 (previous handoff) — wire SDP through `factorWith3Way`
+
+The shared 3-way Tikhonov helper at `packages/solver-ipm/src/solver/Regularization.ts` is wired into LP but not SDP. The SDP solvers each maintain their own legacy Cholesky retry loops, instrumented to update the shared `RegState` shape (so the verbose trace is uniform) but not actually using the helper.
+
+Why deprioritised: the 5/6 fix didn't need it. The legacy retry is fine on the passing cases. Wiring through `factorWith3Way` is code unification, not algorithmic improvement, and would introduce diff noise that obscures the Ruiz work.
+
+When to do it: after Ruiz lands. The verbose trace + COPT JSONL diff harness makes Phase 1 a low-risk refactor — if the trace stays byte-identical, the swap is clean.
+
+### LP NETLIB `brandy` (bead `j1gd`)
+
+Separate from `qmrv`. The verbose trace surfaced `Mdiag=[0.00e+0, 1e+18]` — Schur diagonal min is zero throughout, meaning constraint rows have zero column-d ratio for active columns. The classic LP-on-degenerate-vertex pathology. Documented in `KNOWN_CONVERGENCE_GAPS` test carve-out. Worth a focused session with the same diagnostic loop.
+
+### Test carve-outs
+
+- `KNOWN_CONVERGENCE_GAPS = {brandy}` in `packages/solver-ipm/test/netlib.test.ts`
+- `KNOWN_SUBSTRATE_GAPS = {H_malformed_cone, H_non_finite_input}` in `lp-small.test.ts`
+- `F_infeasible_3var_sum` carve-out in `lp-small.test.ts`
+
+All three are LP-side. They survive the current 5/6 SDP fix because the SDP changes are isolated to `NtSdpSolver.ts` + `Status.ts`. None of them block hinf2.
+
+## 6. Gotchas (from worklog 095's Frictions section)
+
+### `KNOWN_CONVERGENCE_GAPS` masks issues
+
+`brandy` is flagged with looser tolerance in the package tests (rel err ≤ 1e-4), so the test suite stays green despite genuine numerical-error returns. The trace surfaced this. Don't trust test pass alone; sample-run via `sdp-probe.ts` on a few cases when making changes.
+
+### Wire-protocol vs dat-s-loader trajectories differ
+
+`scripts/sdp-probe.ts` uses `parseSdpaSparse + convertSdpaToSdp` (the dat-s loader). The corpus's `run-candidate.ts` uses the value-protocol wire (svec'd vectors + cone indices) which is reconstructed into `SdpProblem` by the tool's `buildSdpProblem`. **The √2 off-diagonal svec scaling propagates into A_i and C, giving a subtly different problem.** Same algorithm, same convergence pattern, different iter counts and best-iter selection.
+
+For hinf2: 58 iters via the tool path vs 40 via the dat-s path; different best iter; same eventual failure. **Match the path to the harness.** If you're targeting the corpus grade, use `run-candidate.ts` to validate; if you're iterating fast, `sdp-probe.ts` is the lower-overhead loop.
+
+### First-pass best-iterate forgot the Cholesky-failure exit
+
+If you add a new termination path or modify Cholesky retry, **route through `finalizeBestOr`, not `finalize` directly.** The pattern is "any non-optimal exit returns the best snapshot if we have one." Three call sites in NT: `buildNtFactor` returns null; Cholesky retry exhausted; the post-loop `iter-limit` return. All three call `finalizeBestOr`.
+
+### `dual-feasible` → wire `optimal` is the right call, not a hack
+
+The wire taxonomy is the corpus gate. Returning `numerical-breakdown` when we have a verifier-passing iterate is dishonest scope (Rule 8 in CLAUDE.md). The honest channel is `achieved_precision`. If the iterate is loose, the invariant fails and the case fails. If it's tight, all four invariants pass. The wire status is the cheap flag; achieved precision is the truth.
+
+### COPT decomp uses `param_1[+0xc2]` to count "α < 0.05" stalls
+
+Worth reading: `IPM_LOOP_CHEATSHEET.md §4`. COPT's stall counter is incremented when the **combined step length** drops below 0.05 — that's a different criterion than our "μ progress < 1%" stall. For hinf2 both fire at roughly the same iter (since `αP=0` ⇒ μ stops progressing). For other problems they could diverge. Worth aligning to COPT's criterion as part of broader convergence work; not required for Ruiz.
+
+## 7. Useful commands
+
+```sh
+# Sanity-check current state
+bun test packages/solver-ipm/                # 68/68 should pass
+bun tools/sdp-solve/tool.ts --test           # smoke pass
+bun run check:quick                          # ~5s; pre-edit gate
+
+# Diagnostic single-case loop
+bun scripts/sdp-probe.ts <path.dat-s> [--method=nt|aho|hkm]
+
+# Mechanical regression check
+IPM_TRACE_JSONL=/tmp/a.jsonl bun scripts/sdp-probe.ts case.dat-s
+# ... edit ...
+IPM_TRACE_JSONL=/tmp/b.jsonl bun scripts/sdp-probe.ts case.dat-s
+bun scripts/trace-diff.ts /tmp/a.jsonl /tmp/b.jsonl
+
+# Compare against COPT oracle
+bun scripts/trace-diff.ts \
+    docs/oracles/copt-sdpmethod0/hinf2.copt.jsonl \
+    /tmp/ts-hinf2.jsonl --rtol=1e-2
+
+# Microbench (hot-op perf baseline)
+bun scripts/solver-ipm-bench.ts
+
+# The grade
+cd ~/Projects/scientist-workbench-corpus && \
+    bun src/cli.ts grade scientist-workbench sdp-sdplib
 ```
 
-**Per-tool smoke (fastest):**
-```bash
-~/.bun/bin/bun tools/sdp-solve/tool.ts --test
-~/.bun/bin/bun tools/lp-solve/tool.ts --test
-```
+## 8. Pointers
 
-**Full check (slowest, before any commit):**
-```bash
-PATH=$HOME/.bun/bin:$PATH bun scripts/check.ts
-```
+### Code locations
 
-**Per-iteration trace pattern (the diagnostic that paid off in this session — use it):**
-```bash
-~/.bun/bin/bun -e '
-import { readFileSync } from "node:fs";
-import {
-  parseSdpaSparse, convertSdpaToSdp, solveSdp,
-  formatIterHeader, formatIterLine,
-} from "@workbench/solver-ipm";
+- `packages/solver-ipm/src/solver/NtSdpSolver.ts` — NT IPM with COPT-aligned termination, best-iterate, verbose emission. Where Ruiz wiring lands (in `solveSdpNt` before the iter loop; unscale in `finalizeBestOr`).
+- `packages/solver-ipm/src/solver/Solver.ts` — `VerboseIterLine` schema; LP path. Keep schema stable for cross-impl diff.
+- `packages/solver-ipm/src/solver/LogFormat.ts` — `formatVerboseLine`. Add fields here if you extend the schema.
+- `packages/solver-ipm/src/solver/Status.ts` — wire mapping. `dual-feasible` → `optimal` here.
+- `packages/solver-ipm/src/solver/Regularization.ts` — `factorWith3Way` (LP-only). For Phase 1 work.
+- `packages/solver-ipm/src/problem/SdpProblem.ts` — `SdpProblem` type. Ruiz module reads this.
+- `tools/sdp-solve/tool.ts` — value-protocol wrapping. `makeVerboseHook` at the bottom.
+- `scripts/sdp-probe.ts` — the iteration loop for this work.
 
-const t = readFileSync(process.argv[1]!, "utf-8");
-const p = convertSdpaToSdp(parseSdpaSparse(t), true);
-const log: string[] = [formatIterHeader()];
-const r = solveSdp(p, { log: (l) => log.push(formatIterLine(l)) });
-console.log(log.join("\n"));
-console.log("status:", r.status, "iter:", r.iter, "obj:", r.primalObj);
-' /home/tobias/Projects/scientist-workbench-corpus/data/sdp-sdplib/raw/control2.dat-s
-```
+### Documentation
 
-`formatIterLine` matches COPT's printf byte-for-byte (`PD_IPM_DEEP.md` §"Anatomy of the main loop" L635-639), so you can `diff` against COPT's log.
+- `docs/worklog/095-solver-ipm-verbose-trace-and-termination.md` — what shipped, how, why.
+- `docs/worklog/094-sdp-solve-and-corpus-bench.md` — where the 3/6 → 6/6 journey started.
+- `docs/HANDOFF_solver_ipm_qmrv.md` — this document.
+- `docs/oracles/copt-sdpmethod0/README.md` — how the oracle captures were made.
 
-For LP differential debug, use the `IterLogLine` callback on `solveLp`:
-```bash
-~/.bun/bin/bun -e '
-import { readFileSync } from "node:fs";
-import { solveLp, lpFromCanonical, formatIterHeader, formatIterLine } from "@workbench/solver-ipm";
+### COPT decomp references
 
-const data = JSON.parse(readFileSync(process.argv[1]!, "utf-8"));
-const c = data.cases.find((x) => x.id === process.argv[2]);
-const log = [formatIterHeader()];
-const r = solveLp(lpFromCanonical(c.input), { log: (l) => log.push(formatIterLine(l)) });
-console.log(log.join("\n"));
-console.log("status:", r.status, "iter:", r.iterate.iter);
-' /home/tobias/Projects/scientist-workbench-corpus/benchmarks/lp-netlib/golden/inputs.json brandy
-```
+- `~/Dropbox/Projects/Computers/LLM/COPT-decomp/analysis/CLEANROOM_SPEC.md §9` — Ruiz pseudocode.
+- `~/Dropbox/Projects/Computers/LLM/COPT-decomp/analysis/decomps/006ec3f0_FUN_006ec3f0.c` — 1636 lines of COPT's Ruiz, vectorised. Most of the length is AVX bookkeeping; the algorithm fits in ~100 lines.
+- `~/Dropbox/Projects/Computers/LLM/COPT-decomp/analysis/IPM_LOOP_CHEATSHEET.md §1` — solver state struct offsets. The scaling factors live at offset `+0xc0` (per the field "lp_ws sub-struct"), useful if you want to match COPT's bookkeeping exactly.
+- `~/Dropbox/Projects/Computers/LLM/COPT-decomp/analysis/PD_IPM_DEEP.md` — overall IPM architecture.
 
----
+### Commits
 
-## 6. Pointers to load-bearing context
+- `a3241a6` — verbose iter-trace pipeline + COPT oracle infra.
+- `9172b16` — COPT-aligned termination + best-iterate (3/6 → 5/6).
 
-- **CLAUDE.md** at repo root — the project laws and rules (the two laws, rule 9 on beads, rule 5 on feedback speed).
-- **`docs/adr/0030-convex-cone-solver-tier.md`** — the architectural ADR.
-- **`docs/adr/0032-solver-ipm-port.md`** — substrate ADR.
-- **`docs/worklog/094-sdp-solve-and-corpus-bench.md`** — where bead `qmrv` originated.
-- **`~/.claude/projects/-home-tobias-Projects-scientist-workbench/memory/MEMORY.md`** — auto-memory index.
-- **The two principles** memory: `bd memories two-principles` — the universal decision rule. Read before touching design.
-- **Coding subagents use Opus** memory: `bd memories coding-subagents-in-scientist-workbench-use-opus-not` — applies when spawning implementation subagents.
+### Beads
 
----
+- `qmrv` — open. Scope: hinf2 + SDP Ruiz. control2/3 closed inside.
+- `j1gd` — open. LP brandy. Separate but related (same diagnostic loop applies).
 
-## 7. The user's working style (worth knowing)
+## 9. The user's working style (worth knowing)
 
-- **Verbose tests with eager flush** are the preferred diagnostic loop. The per-iter trace pattern in §5 is what proved out brandy/lotfi/F_infeasible. Use it before changing algebra.
-- **TaskCreate is preferred over beads-only tracking** for in-session work (user override, this session). Use both: TaskCreate for granular execution, beads for cross-session continuity.
-- **Pause-and-commit on demand.** When the user says "commit", commit what's solid even if the work isn't done; carve-outs and TODOs are acceptable.
-- **The user is the TS expert this code targets.** The two principles memory is the authoritative framing. Code that requires explanation in a comment to feel right is probably wrong.
-- **The COPT decomp is private research the user has authorized.** Use it. Don't re-derive from scratch what the decomps already settle.
+- **Verbose tests with eager flush** are the preferred diagnostic loop. The verbose-trace pipeline is the canonical instance of this principle. Use it before changing algebra.
+- **TaskCreate is preferred over beads-only tracking** for in-session work (user override). Use both: TaskCreate for granular execution, beads for cross-session continuity.
+- **Pause-and-commit on demand.** When the user says "commit", commit what's solid even if the work isn't done. Carve-outs and TODOs are acceptable.
+- **The user is the TS expert this code targets.** The two-principles memory is the authoritative framing (`bd memories two-principles`). Code that requires explanation in a comment to feel right is probably wrong.
+- **The COPT decomp is private research the user has authorised.** Use it. Don't re-derive from scratch what the decomps already settle.
+- **Don't over-decompose with subagents.** When a fix is mechanical and the principles are clear, just do the work. Subagents are for genuinely parallel independent work and contested-design research (CLAUDE.md Rule 4).
 
 Good hunting.
