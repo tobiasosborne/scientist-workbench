@@ -67,9 +67,9 @@ export function solveSdpNt(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveR
   const m = prob.m;
   const nb = prob.blocks.length;
 
-  const xi = initialScale(prob);
-  const X: Float64Array[] = prob.blocks.map((b) => eyeScaled(b.size, xi));
-  const S: Float64Array[] = prob.blocks.map((b) => eyeScaled(b.size, xi));
+  const { xiP, xiD } = initialScale(prob);
+  const X: Float64Array[] = prob.blocks.map((b) => eyeScaled(b.size, xiP));
+  const S: Float64Array[] = prob.blocks.map((b) => eyeScaled(b.size, xiD));
   const y = new Float64Array(m);
 
   const log: IterLogLine[] = [];
@@ -182,7 +182,7 @@ export function solveSdpNt(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveR
     const dyAff = new Float64Array(m);
     const dSaff = prob.blocks.map((b) => new Float64Array(b.size * b.size));
     const dXaff = prob.blocks.map((b) => new Float64Array(b.size * b.size));
-    solveNtNewton(prob, NT, Rd, hRd, rp, /*sigmaMu=*/ 0, /*affineSecondOrder=*/ null,
+    solveNtNewton(prob, NT, X, Rd, hRd, rp, /*sigmaMu=*/ 0, /*affineSecondOrder=*/ null,
       Lchol, dyAff, dSaff, dXaff);
 
     const aPaff = minBlockStep(X, dXaff, prob.blocks);
@@ -197,7 +197,7 @@ export function solveSdpNt(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveR
     const dy = new Float64Array(m);
     const dS = prob.blocks.map((b) => new Float64Array(b.size * b.size));
     const dX = prob.blocks.map((b) => new Float64Array(b.size * b.size));
-    solveNtNewton(prob, NT, Rd, hRd, rp, sigmaMu,
+    solveNtNewton(prob, NT, X, Rd, hRd, rp, sigmaMu,
       { dXaff, dSaff }, Lchol, dy, dS, dX);
 
     const aPmax = minBlockStep(X, dX, prob.blocks);
@@ -255,6 +255,7 @@ export function solveSdpNt(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveR
 function solveNtNewton(
   prob: SdpProblem,
   NT: NtFactor[],
+  X: Float64Array[],
   Rd: Float64Array[],
   hRd: Float64Array,
   rp: Float64Array,
@@ -276,16 +277,16 @@ function solveNtNewton(
   for (let b = 0; b < nb; b++) {
     const n = prob.blocks[b]!.size;
     const f = NT[b]!;
+    const Xb = X[b]!;
     const Eb = new Float64Array(n * n);
 
-    // E starts as -X. We compute X from the NT factor: X = G^T diag(sv) G.
-    // Easier: pass X in directly — but to avoid threading X through, recompute.
-    // For numerical fidelity we use the original X (passed via X above).
-    // Here we instead rebuild from sv, G: X_reb = G^T diag(sv) G.
-    // (Same as the original X up to symmetrisation drift; doesn't matter.)
-    // Actually simpler: caller has X; let's pass it via affine struct.
-    // For predictor (affine === null) we still need X. So reconstruct here.
-    gtDiagG(f, sign_neg, Eb);
+    // E_pred = -X (the algebraic identity is G^T·diag(sv)·G = X, which lets
+    // -X be reconstructed via the NT factor — but doing so accumulates float
+    // drift through chol(S) + eigh(L^T·X·L) + dense matmuls. The original X
+    // is right here in `Xb`; copy it. This matches the COPT decomp's
+    // Branch-B SDP variable update (FUN_0072e120 family) which reads X
+    // directly rather than reconstructing through the cone factor.
+    for (let k = 0; k < Eb.length; k++) Eb[k] = -Xb[k]!;
 
     if (sigmaMu > 0) {
       // Add σμ S^{-1}.
@@ -440,8 +441,12 @@ function buildNtFactor(X: Float64Array, S: Float64Array, n: number): NtFactor | 
 }
 
 // out ← G^T · diag(d(sv)) · G,  d a per-element transformation function.
+// The only callsite uses `sign_invSv` to assemble S^{-1} via the identity
+// S^{-1} = G^T · diag(1/sv) · G (proven in the NT-factor derivation comments
+// at the top of this file). The previous `sign_neg` path that reconstructed
+// -X via the NT factor has been replaced with a direct `-X` copy at the
+// predictor RHS — same algebra, no roundoff accumulation through chol+eigh.
 type SvFn = (s: number) => number;
-const sign_neg: SvFn = (s) => -s;
 const sign_invSv: SvFn = (s) => 1 / s;
 function gtDiagG(f: NtFactor, d: SvFn, out: Float64Array): void {
   const n = f.n;
@@ -614,12 +619,22 @@ function eyeScaled(n: number, scale: number): Float64Array {
   return A;
 }
 
-function initialScale(p: SdpProblem): number {
+// Separate ξ_p (primal) and ξ_d (dual) per CLEANROOM_SPEC.md §3.1.
+//   ξ_p = max(1, 10·‖b‖_∞)
+//   ξ_d = max(1, 10·‖C‖_F + ‖b‖_∞)
+// Pre-alignment used a single ξ for both, which on problems with widely
+// differing primal/dual scales (most SDPLIB cases) put either X⁰ or S⁰
+// far from the optimal manifold and burnt iterations on recovery.
+function initialScale(p: SdpProblem): { xiP: number; xiD: number } {
   let bNorm = 0;
   for (let i = 0; i < p.m; i++) bNorm = Math.max(bNorm, Math.abs(p.b[i]!));
-  let cFrob = 0;
-  for (const b of p.blocks) for (let k = 0; k < b.C.length; k++) cFrob += b.C[k]! ** 2;
-  return Math.max(1, 10 * bNorm, Math.sqrt(cFrob));
+  let cFrobSq = 0;
+  for (const b of p.blocks) for (let k = 0; k < b.C.length; k++) cFrobSq += b.C[k]! ** 2;
+  const cFrob = Math.sqrt(cFrobSq);
+  return {
+    xiP: Math.max(1, 10 * bNorm),
+    xiD: Math.max(1, 10 * cFrob + bNorm),
+  };
 }
 
 function vecInfNorm(v: Float64Array): number {

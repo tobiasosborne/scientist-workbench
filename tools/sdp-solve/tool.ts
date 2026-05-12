@@ -892,18 +892,12 @@ function fn(
   const problem = buildSdpProblem(dec.c, dec.A, dec.b, layout);
 
   const { tag: methodTag, solve } = pickSolver(flags.method ?? "auto");
-  const params: IpmParamsLite = {
-    // The IPM substrate's default `stallIterCap=10` triggers
-    // `numerical-difficulty` early on SDPLIB problems with
-    // non-strictly-complementary optima (control2/3, hinf2 — late-
-    // iteration mu stagnation as the iterate hugs the optimal face).
-    // The substrate's stall detection is too aggressive for SDP; we
-    // bump the cap so the IPM gets a chance to finish on these
-    // pathological-but-feasible cases. The corpus bench documents
-    // which cases this affects; the proper fix is algorithm-hygiene
-    // (bead j1gd / SDP analog).
-    stallIterCap: 30,
-  };
+  // Substrate default stallIterCap=10 per CLEANROOM_SPEC.md §3.3 — relies on
+  // the spec-aligned 0.99 threshold (1% min progress) in the SDP solvers.
+  // The pre-alignment 0.9 threshold required 10% progress per iter, which is
+  // too eager for late-stage SDP convergence near the optimal face — that
+  // mismatch was the reason for the previous `stallIterCap: 30` band-aid.
+  const params: IpmParamsLite = {};
   if (dec.maxIter !== undefined) params.iterLimit = dec.maxIter;
   if (dec.precision !== undefined) {
     params.feasTol = dec.precision;

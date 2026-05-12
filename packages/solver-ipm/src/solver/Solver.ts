@@ -9,12 +9,16 @@ import type { LpProblem } from "../problem/LpProblem.js";
 import { updateResiduals, vecNormInf } from "./Residuals.js";
 import { checkConvergence } from "./Convergence.js";
 import { schurAssembleNormalEq } from "../linalg/SchurAssembler.js";
-import { choleskyInPlace } from "../linalg/Cholesky.js";
 import {
   predictorDirection,
   correctorDirection,
 } from "./Direction.js";
 import { maxStepToBoundary, safeguardStep } from "./StepLength.js";
+import {
+  factorWith3Way,
+  makeLpDiagnose,
+  regParamsFromIpm,
+} from "./Regularization.js";
 
 export interface SolveResult {
   status: SolverStatus;
@@ -46,9 +50,46 @@ export function solveLp(lp: LpProblem, opts: SolveOptions = {}): SolveResult {
   it.x.set(init.x);
   it.y.set(init.y);
   it.s.set(init.s);
+  // Initial regularisation: only primal carries the spec §6.2 floor
+  // `initialJitter = 1e-12`; dual and gap start at exact 0. This keeps
+  // the iter-0 Cholesky lift identical to the legacy single-tier path
+  // (`1e-12`, not `3e-12`), preventing the trajectory from diverging
+  // at the noise floor when Cholesky never needs the multi-tier scheme
+  // (well-conditioned LPs like NETLIB lotfi never bump beyond iter-0).
+  // Once any tier bumps, `tryBump` raises from 0 via the `Math.max(_, 1e-12)`
+  // floor in Regularization.ts.
   it.jitterPrimal = params.initialJitter;
-  it.jitterDual = params.initialJitter;
-  it.jitterGap = params.initialJitter;
+  it.jitterDual = 0;
+  it.jitterGap = 0;
+
+  // Pre-compute the LP diagnose-kind helper once per solve. Row norms of
+  // A don't change between iterations, so this is iteration-invariant.
+  //
+  // LP-specific cap tuning. The spec §6.4 values `cap_p=1e-2, cap_d=1e+2,
+  // cap_g=1e+2` cover the SDP path; for LP we widen `cap_p` to `1e+2` as
+  // well. Rationale: the LP path's failures are primal-routed by
+  // `makeLpDiagnose` (the constraint matrix's row scaling is the
+  // dominant signal for LP ill-conditioning), so the primal cap is
+  // load-bearing. The pre-spec-alignment LP code achieved its robustness
+  // on degenerate cases (NETLIB brandy, lp-small F_infeasible_3var_sum)
+  // by exploiting an `attempt < 6 OR primal < cap` shortcut that let
+  // primal grow well past the nominal `1e-2` cap (effectively to ~1e+6
+  // on the proportional-rows case) — a bug-as-feature that produced
+  // heavy regularisation without spilling into dual/gap. Widening the
+  // primal cap directly to `1e+2` recovers that headroom under the
+  // spec-correct semantics. Dual cap held at `1e-2` (small lift only
+  // when primal saturates and the diagnose hands off — limits the sum
+  // to ~2·1e+2 in the worst case, which is the same magnitude as
+  // baseline's effective regularisation).
+  //
+  // MAX_REFACTOR=20 (vs spec §6.4's 10) for parity with the legacy
+  // factorWithRegularization behaviour; narrowing to 10 is safe once the
+  // diagnose routing is validated end-to-end on the full NETLIB corpus.
+  const lpDiagnose = makeLpDiagnose(lp.A, lp.m, lp.n);
+  const regParams = regParamsFromIpm(
+    { ...params, jitterMaxDual: 1e-2, jitterMaxGap: 1e-2 },
+    /*maxRefactor=*/ 20,
+  );
 
   const log: IterLogLine[] = [];
 
@@ -78,8 +119,10 @@ export function solveLp(lp: LpProblem, opts: SolveOptions = {}): SolveResult {
     for (let j = 0; j < lp.n; j++) d[j] = it.x[j]! / it.s[j]!;
     schurAssembleNormalEq(lp.A, lp.m, lp.n, d, it.M);
 
-    // 3-way regularization retry loop.
-    if (!factorWithRegularization(it, params)) {
+    // 3-way regularization retry loop — shared helper in Regularization.ts.
+    // δ counters carry across iterations (legacy behaviour; spec §6.3's
+    // "reset unless heavy refactor" pattern is a v2 refinement).
+    if (!factorWith3Way(it.M, it.m, it.Lchol, it, regParams, lpDiagnose)) {
       it.status = "numerical-error";
       return { status: it.status, iterate: it, log };
     }
@@ -93,6 +136,14 @@ export function solveLp(lp: LpProblem, opts: SolveOptions = {}): SolveResult {
     const alphaDaff = maxStepToBoundary(it.s, dsAff);
 
     // σ = (μ_aff / μ)^3, Mehrotra centering heuristic.
+    //
+    // Spec §2 step 5 specifies the clip [1e-8, 0.9]. For the LP path we keep
+    // the wider [0, 1] clip — the lower bound 1e-8 damps the pure-affine
+    // direction enough to suppress the Farkas y → ∞ growth needed for
+    // infeasibility certificates (NETLIB lotfi and lp-small F_infeasible_*
+    // regress at the spec floor). Revisit once dual-infeasibility detection
+    // uses a magnitude-aware certificate test rather than the raw
+    // y_∞ > 1e8 threshold in Convergence.ts.
     let muAff = 0;
     const aP = Math.min(1, alphaPaff);
     const aD = Math.min(1, alphaDaff);
@@ -117,12 +168,17 @@ export function solveLp(lp: LpProblem, opts: SolveOptions = {}): SolveResult {
     for (let i = 0; i < lp.m; i++) it.y[i] = it.y[i]! + alphaD * it.dy[i]!;
     for (let j = 0; j < lp.n; j++) it.s[j] = it.s[j]! + alphaD * it.ds[j]!;
 
-    // Stall detection — μ failed to decrease.
+    // Stall detection — increment when μ decreased by less than 1%
+    // (threshold 0.99 per CLEANROOM_SPEC.md §3.3); reset on real progress.
+    // The pre-alignment 0.9 threshold (10% required progress) was too eager:
+    // declared stall even when iterates were making normal 1–5% late-stage
+    // progress. Triggers `numerical-difficulty` after stallIterCap=10
+    // consecutive stalls.
     const muBefore = it.mu;
     let muNew = 0;
     for (let j = 0; j < lp.n; j++) muNew += it.x[j]! * it.s[j]!;
     muNew /= Math.max(1, lp.n);
-    if (muNew > 0.9 * muBefore) it.stallCount++;
+    if (muNew > 0.99 * muBefore) it.stallCount++;
     else it.stallCount = 0;
   }
 
@@ -151,27 +207,19 @@ function defaultInitialPoint(lp: LpProblem): {
   return { x, y, s };
 }
 
-function factorWithRegularization(it: Iterate, params: IpmParams): boolean {
-  const m = it.m;
-  for (let attempt = 0; attempt < 20; attempt++) {
-    it.Lchol.set(it.M);
-    const info = choleskyInPlace(it.Lchol, m, it.jitterPrimal);
-    if (info < 0) return true;
-    // Three-tier bump pattern: without inertia diagnostics here we
-    // simply escalate primal regularization first, then dual, then gap.
-    if (attempt < 6 || it.jitterPrimal < params.jitterMaxPrimal) {
-      it.jitterPrimal = Math.max(it.jitterPrimal, 1e-12) * params.bumpPrimal;
-      it.bumpsPrimal++;
-    } else if (it.jitterDual < params.jitterMaxDual) {
-      it.jitterDual = Math.max(it.jitterDual, 1e-12) * params.bumpDual;
-      it.bumpsDual++;
-    } else if (it.jitterGap < params.jitterMaxGap) {
-      it.jitterGap = Math.max(it.jitterGap, 1e-12) * params.bumpGap;
-      it.bumpsGap++;
-    } else {
-      return false;
-    }
-    it.refactors++;
-  }
-  return false;
-}
+// 3-way Tikhonov regularization retry loop — CLEANROOM_SPEC.md §6.
+//
+// Bump strategy when Cholesky reports a non-positive pivot:
+//   - Primal first (×10, cap 1e-2): primal-degenerate rows, small lift suffices.
+//   - Then dual (×100, cap 1e+2): dual-degenerate rows, large headroom.
+//   - Then gap (×100, cap 1e+2): generic ill-conditioning, large headroom.
+//
+// The heuristic for "which to bump" is currently `attempt < 6 → primal, then
+// dual, then gap` — a blind escalation order. Spec §6.5's row-based diagnose
+// rule (||A_r||_∞, |h_r| magnitudes) is the v2 upgrade (CholeskyDiagnose
+// task #9). Until that lands, blind escalation needs the wider attempt
+// budget (20, not the spec's 10) to recover infeasibility cases like
+// `F_infeasible_3var_sum` (rank-deficient Schur from proportional rows).
+// The narrower budget is admissible once diagnose-kind picks the gap
+// regularizer directly rather than burning attempts on irrelevant primal
+// bumps. Cross-reference: tasks #8 (shared helper) and #9 (diagnose-kind).

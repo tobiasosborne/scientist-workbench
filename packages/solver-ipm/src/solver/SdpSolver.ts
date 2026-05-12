@@ -48,12 +48,12 @@ export function solveSdp(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveRes
   const m = prob.m;
   const nb = prob.blocks.length;
 
-  // Initial point: X^b = ξ I, S^b = η I, y = 0.
-  // ξ = η chosen so complementarity measure is reasonable.
-  const xi = initialDiagScale(prob);
-  const eta = xi;
-  const X: Float64Array[] = prob.blocks.map((b) => eyeScaled(b.size, xi));
-  const S: Float64Array[] = prob.blocks.map((b) => eyeScaled(b.size, eta));
+  // Initial point: X^0 = ξ_p · I, S^0 = ξ_d · I, y = 0.
+  // Separate primal/dual scales per CLEANROOM_SPEC.md §3.1 (see NtSdpSolver
+  // for prose on why this matters for SDPLIB-class problems).
+  const { xiP, xiD } = initialDiagScale(prob);
+  const X: Float64Array[] = prob.blocks.map((b) => eyeScaled(b.size, xiP));
+  const S: Float64Array[] = prob.blocks.map((b) => eyeScaled(b.size, xiD));
   const y = new Float64Array(m);
 
   const log: IterLogLine[] = [];
@@ -147,7 +147,8 @@ export function solveSdp(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveRes
 
     // μ_aff for Mehrotra centering.
     const muAff = predictedMu(prob, X, S, dXaff, dSaff, alphaPaff, alphaDaff);
-    const sigma = Math.max(0, Math.min(1, (muAff / Math.max(muV, 1e-300)) ** 3));
+    // σ clipped to [1e-8, 0.9] per CLEANROOM_SPEC.md §2 step 5.
+    const sigma = Math.max(1e-8, Math.min(0.9, (muAff / Math.max(muV, 1e-300)) ** 3));
     const sigmaMu = sigma * muV;
 
     // ── Corrector: centering + Mehrotra second-order correction ──
@@ -178,8 +179,8 @@ export function solveSdp(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveRes
     }
     for (let i = 0; i < m; i++) y[i] = y[i]! + alphaD * dy[i]!;
 
-    // Stall detection.
-    if (muV > 0.9 * prevMu) stallCount++;
+    // Stall detection — threshold 0.99 (1% min progress) per CLEANROOM_SPEC.md §3.3.
+    if (muV > 0.99 * prevMu) stallCount++;
     else stallCount = 0;
     prevMu = muV;
     if (stallCount >= params.stallIterCap) return finalize("numerical-difficulty");
@@ -616,12 +617,16 @@ function eyeScaled(n: number, scale: number): Float64Array {
   return A;
 }
 
-function initialDiagScale(p: SdpProblem): number {
+function initialDiagScale(p: SdpProblem): { xiP: number; xiD: number } {
   let bNorm = 0;
   for (let i = 0; i < p.m; i++) bNorm = Math.max(bNorm, Math.abs(p.b[i]!));
-  let cFrob = 0;
-  for (const b of p.blocks) for (let k = 0; k < b.C.length; k++) cFrob += b.C[k]! ** 2;
-  return Math.max(1, 10 * bNorm, Math.sqrt(cFrob));
+  let cFrobSq = 0;
+  for (const b of p.blocks) for (let k = 0; k < b.C.length; k++) cFrobSq += b.C[k]! ** 2;
+  const cFrob = Math.sqrt(cFrobSq);
+  return {
+    xiP: Math.max(1, 10 * bNorm),
+    xiD: Math.max(1, 10 * cFrob + bNorm),
+  };
 }
 
 function vecInfNorm(v: Float64Array): number {
