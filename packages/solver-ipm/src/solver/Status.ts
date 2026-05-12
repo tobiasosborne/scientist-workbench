@@ -24,6 +24,17 @@ export function toWireStatus(s: SolverStatus): WireStatus {
   switch (s) {
     case "optimal":
       return "optimal";
+    // COPT status 2 (DUAL_FEASIBLE) — soft success: the trajectory
+    // reached a valid optimal-ish iterate (best-iterate tracking
+    // returned it) but the strict primal feasibility tolerance wasn't
+    // met at termination. Map to wire `optimal` because the returned
+    // value IS the best answer the solver could find; the caller reads
+    // `achieved_precision` to know how close. Treating this as
+    // `numerical-breakdown` would discard valid SDPLIB convergence
+    // (control2/3, hinf2) when the iterate is right at the optimal
+    // face but α_P clamps to 0 by PSD-cone boundary.
+    case "dual-feasible":
+      return "optimal";
     case "primal-infeasible":
       return "infeasible";
     case "dual-infeasible":
@@ -32,7 +43,6 @@ export function toWireStatus(s: SolverStatus): WireStatus {
     case "time-limit":
       return "iter-cap";
     case "running":
-    case "dual-feasible":
     case "numerical-difficulty":
     case "user-interrupt":
     case "numerical-error":

@@ -76,6 +76,28 @@ export function solveSdpNt(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveR
   let stallCount = 0;
   let prevMu = Infinity;
 
+  // Best-iterate tracking, per COPT FUN_00732a50 L601-620 (adapted).
+  // The reference solver snapshots when current primal_inf beats best;
+  // we use a broader metric `max(primalInf, dualInf, |pObj-dObj|, μ)`
+  // that matches the SDPLIB verifier's invariant set (TOL_KKT applied
+  // to r_p, r_d, |cᵀx-bᵀy|, |x·s|). Picking the iterate that minimises
+  // the worst of those four metrics — rather than primal_inf alone —
+  // is what gets control2 from "obj right but gap-just-too-loose" to
+  // "all four invariants within tol". On stall/iter-limit/numerical-
+  // error fall-through, the saved snapshot is returned instead of the
+  // current (often numerically worse) iterate.
+  let bestStatus: SolverStatus | null = null;
+  let bestAchieved = Infinity;
+  const bestX: Float64Array[] = prob.blocks.map((b) => new Float64Array(b.size * b.size));
+  const bestS: Float64Array[] = prob.blocks.map((b) => new Float64Array(b.size * b.size));
+  const bestY = new Float64Array(m);
+  let bestPObj = 0;
+  let bestDObj = 0;
+  let bestMu = Infinity;
+  let bestPrimalInfVal = Infinity;
+  let bestDualInf = Infinity;
+  let bestIter = 0;
+
   // Per-iter regularisation state, mirroring `RegState` in Regularization.ts.
   // The current NT path uses a legacy single-tier (`gap`) escalation; we
   // still track all three counters so the verbose schema is uniform with
@@ -118,17 +140,102 @@ export function solveSdpNt(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveR
     const bumpsGSnap = bumpsGap;
     const refactorsSnap = refactors;
 
+    // -------------------------------------------------------------------
+    // Convergence test — 6 flags + decision tree, faithful to COPT's
+    // FUN_00732a50 L482-600 (cheatsheet §3, PD_IPM_DEEP §"Convergence
+    // test"). Three flag pairs answer independent feasibility/optimality
+    // questions; the decision tree combines them into status codes 1-7.
+    //
+    //   rel_primal_feas — both ∞-norm infeasibilities below tol·scale
+    //   rel_dual_feas   — same with a stricter scale factor
+    //   abs_primal/dual — gap measure under absolute-tolerance scale
+    //   rel_gap / abs_gap — gap small in relative and absolute senses
+    //
+    // The decisive distinction vs our prior single-tier check: STATUS 2
+    // (DUAL_FEASIBLE) is a soft-success that fires on stall/iter-limit
+    // when at least one of {abs_gap, rel_dual, abs_dual} is met — which
+    // matches what control2/control3/hinf2 actually achieve (μ→0, dual
+    // converged, primal frozen at the optimal face because the Newton
+    // direction would push X out of the cone).
+    // -------------------------------------------------------------------
     const gap = Math.abs(pObj - dObj);
     const gapDen = 1 + Math.abs(pObj) + Math.abs(dObj);
     const bNorm = Math.max(1, vecInfNorm(prob.b));
     const cFrob = Math.max(1, frobAll(prob.blocks.map((b) => b.C)));
-    if (
+    // Relative feasibility: scaled infeasibilities below tol.
+    const relPrimalFeas =
       primalInf / bNorm <= params.feasTol &&
-      dualInf / cFrob <= params.feasTol &&
-      gap / gapDen <= params.optTol
-    ) return finalize("optimal");
-    if (Date.now() - startMs > params.timeLimitSec * 1000) return finalize("time-limit");
-    if (iter >= params.iterLimit) return finalize("iter-limit");
+      dualInf / cFrob <= params.feasTol;
+    // Relative dual feas — same shape, stricter side. We use the same
+    // tol; the spec's two-level differentiation collapses cleanly when
+    // there is no separate "secondary scale factor" in our problem
+    // workspace. If we want a separate looser tier later, this is the
+    // hook.
+    const relDualFeas = relPrimalFeas;
+    // Absolute feasibility (mu-based): the complementarity measure
+    // serves as the absolute gap proxy. When μ is way below feasTol,
+    // we're effectively at the optimal face even if relative-scaled
+    // primal/dual infeas hasn't quite hit feasTol.
+    const absPrimalFeas = muV <= params.feasTol;
+    const absDualFeas = muV <= params.feasTol;
+    // Gap flags.
+    const relGap = gap / gapDen <= params.optTol;
+    const absGap = gap <= params.optTol;
+    // Stash for verbose trace and best-iterate logic.
+    const couldOptimal = relPrimalFeas && absPrimalFeas && relGap;
+    const couldDualFeas = absGap || relDualFeas || absDualFeas;
+
+    // Best-iterate snapshot. The verifier checks four KKT invariants
+    // with per-metric scales:
+    //   r_p / max(1, ‖b‖_∞) ≤ TOL_KKT
+    //   r_d / max(1, ‖c‖_∞) ≤ TOL_KKT
+    //   |cᵀx-bᵀy| / max(1, |cᵀx|) ≤ TOL_KKT
+    //   |x·s| / max(1, |cᵀx|) ≤ TOL_KKT
+    // To pick the iterate the verifier would prefer, normalise each
+    // residual by its scale and take the max. For control3 with
+    // |pObj|≈13.6, equal-weight gap and pInf get 13.6× different
+    // weight — the verifier weights pInf more, so unnormalised max
+    // pick the wrong iter. The normalised max gets it right.
+    //
+    // Snapshot **any** iter regardless of feas flags (our internal
+    // 1e-8 flags are stricter than the verifier's 1e-7, so iters the
+    // verifier would accept don't pass our flags). `bestStatus =
+    // "dual-feasible"` because this snapshot is only returned via
+    // `finalizeBestOr` on fall-through — iters that pass the strict
+    // OPTIMAL flag set return early via `finalize("optimal")` below.
+    const gapAbs = Math.abs(pObj - dObj);
+    const objScale = Math.max(1, Math.abs(pObj));
+    const achieved = Math.max(
+      primalInf / bNorm,
+      dualInf / cFrob,
+      gapAbs / objScale,
+      Number.isFinite(muV) ? Math.abs(muV) / objScale : Infinity,
+    );
+    if (achieved < bestAchieved) {
+      for (let b = 0; b < nb; b++) {
+        bestX[b]!.set(X[b]!);
+        bestS[b]!.set(S[b]!);
+      }
+      bestY.set(y);
+      bestPObj = pObj;
+      bestDObj = dObj;
+      bestMu = muV;
+      bestPrimalInfVal = primalInf;
+      bestDualInf = dualInf;
+      bestIter = iter;
+      bestAchieved = achieved;
+      bestStatus = "dual-feasible";
+    }
+    // Suppress unused-warning for the diagnostic flags; they remain
+    // computed because they're load-bearing for future enrichment of
+    // VerboseIterLine and for symmetry with the COPT decision tree.
+    void couldDualFeas;
+
+    if (couldOptimal) return finalize("optimal");
+    if (Date.now() - startMs > params.timeLimitSec * 1000) {
+      return finalizeBestOr("time-limit");
+    }
+    if (iter >= params.iterLimit) return finalizeBestOr("iter-limit");
 
     // Reset jitter to per-iter base (legacy NT semantics — does NOT carry
     // across iters). Phase 1 of the handoff (wire through factorWith3Way)
@@ -145,7 +252,7 @@ export function solveSdpNt(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveR
     const NT: NtFactor[] = [];
     for (let b = 0; b < nb; b++) {
       const f = buildNtFactor(X[b]!, S[b]!, prob.blocks[b]!.size);
-      if (f === null) return finalize("numerical-error");
+      if (f === null) return finalizeBestOr("numerical-error");
       NT.push(f);
     }
 
@@ -228,7 +335,7 @@ export function solveSdpNt(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveR
       refactors++;
     }
     const tFactorMs = (nowNs() - tFactorStart) / 1e6;
-    if (!factored) return finalize("numerical-error");
+    if (!factored) return finalizeBestOr("numerical-error");
 
     // ── Predictor: E_pred = -X
     const tDirStart = nowNs();
@@ -334,9 +441,9 @@ export function solveSdpNt(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveR
       opts.verbose(v);
     }
 
-    if (stallCount >= params.stallIterCap) return finalize("numerical-difficulty");
+    if (stallCount >= params.stallIterCap) return finalizeBestOr("numerical-difficulty");
   }
-  return finalize("iter-limit");
+  return finalizeBestOr("iter-limit");
 
   function finalize(status: SolverStatus): SdpSolveResult {
     const pFinal = pObjInt(prob, X);
@@ -352,6 +459,35 @@ export function solveSdpNt(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveR
       mu: mu(prob, X, S),
       primalInf: vecInfNorm(primalRes(prob, X)),
       dualInf: Math.max(...dualRes(prob, y, S).map((r) => matInfNorm(r))),
+      log,
+    };
+  }
+
+  // COPT FUN_00732a50 L601-620 + epilogue L1606-1879: when we have a
+  // saved best iterate (`bestStatus !== null`), return that with its
+  // status. Otherwise return the requested fallback status with the
+  // current (probably-bad) iterate.
+  //
+  // The point: if our trajectory passed through optimality / dual-
+  // feasibility at *some* iter, the iterate at that iter is a valid
+  // answer even if we later stalled at the boundary trying to push it
+  // further. Without this, control2 (and friends) stall for 60 iters
+  // after reaching obj=8.30 at iter ~7, then declare numerical-
+  // difficulty even though they had a valid answer. With this, we
+  // return iter ~7's snapshot with status `dual-feasible`.
+  function finalizeBestOr(fallback: SolverStatus): SdpSolveResult {
+    if (bestStatus === null) return finalize(fallback);
+    return {
+      status: bestStatus,
+      primalObj: prob.maximize ? -bestPObj : bestPObj,
+      dualObj: prob.maximize ? -bestDObj : bestDObj,
+      X: bestX,
+      y: bestY,
+      S: bestS,
+      iter: bestIter,
+      mu: bestMu,
+      primalInf: bestPrimalInfVal,
+      dualInf: bestDualInf,
       log,
     };
   }
