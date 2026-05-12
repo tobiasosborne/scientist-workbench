@@ -257,16 +257,54 @@ Decision tree:
 
 | Condition | Status |
 |---|---|
-| `max(ρ_p, ρ_d, ρ_g) ≤ 1` AND `PRSTATUS > 0.5` | OPTIMAL — return `(x*, y*, s*)/τ*` |
-| `max(ρ_p, ρ_d, ρ_g) ≤ 1` AND `PRSTATUS < −0.5` | INFEASIBLE — return `(x*, y*, s*)` as certificate |
-| `α_τ → 0, τ → 0` | ILL-POSED |
-| `iter ≥ iterLimit` | ITER-LIMIT — return best snapshot |
-| `μ stalled, ρ > 1` | NUMERICAL-DIFFICULTY — return best snapshot |
+| `τ + κ ≥ TAU_KAPPA_FLOOR` AND `max(ρ_p, ρ_d, ρ_g) ≤ 1` AND `PRSTATUS > 0.5` | OPTIMAL — return `(x*, y*, s*)/τ*` |
+| `τ + κ ≥ TAU_KAPPA_FLOOR` AND `PRSTATUS < −0.5` AND `bᵀy > WITNESS_FLOOR` AND `‖r_d‖ ≤ ε_inf · (1 + bᵀy)` | PRIMAL-INFEASIBLE — Farkas y certificate |
+| `τ + κ ≥ TAU_KAPPA_FLOOR` AND `PRSTATUS < −0.5` AND `cᵀx < −WITNESS_FLOOR` AND `‖r_p‖ ≤ ε_inf · (1 + |cᵀx|)` | DUAL-INFEASIBLE — primal recession ray |
+| `τ + κ < TAU_KAPPA_FLOOR` | RUNNING (homogenization collapsed; let outer loop fall through) |
+| `iter ≥ iterLimit` | ITER-LIMIT — return best snapshot with fallback status |
+| `μ stalled` | NUMERICAL-DIFFICULTY — return best snapshot with fallback status |
+
+Constants (default: `TAU_KAPPA_FLOOR = 1e-8`, `WITNESS_FLOOR = 1e-6`,
+`ε_inf = max(ε_p, 1e-8)`).
+
+**Important departure from an earlier draft of this ADR.** A prior
+version gated *both* the OPTIMAL and the INFEASIBLE classifications on
+`max(ρ_p, ρ_d, ρ_g) ≤ 1`. That gate looked symmetric — but the ρ
+metrics are *purified* (each divides by τ), so on an iterate heading
+to the τ→0 limit (which is exactly the infeasibility-certificate
+regime), the ρ metrics inflate and the gate never trips. The
+implementation followed the ADR faithfully, and the consequence was
+bead `io2v`: the four explicitly-infeasible SDPLIB cases (infp1/infp2/
+infd1/infd2) returned wire `status=optimal` with `achieved_precision`
+in the 1e+1 to 1e+5 range, because the cert tests never fired and
+soft-success best-iterate took over.
+
+The fix is to split the two classifications:
+  - OPTIMAL uses *purified* ρ-metrics (correct shape — we hand back the
+    purified iterate, so feasibility/optimality tolerances are
+    naturally `residual / τ`).
+  - INFEASIBILITY certificates use *unpurified* residual+witness tests
+    (correct shape — the Farkas certificate IS the unpurified iterate
+    at τ→0, and dividing by τ is a category error there). The witness
+    floor on |bᵀy| / |cᵀx| guards against the degenerate "everything
+    collapses to zero" iterate that satisfies the inequalities
+    vacuously; `PRSTATUS < −0.5` guards against an almost-converged
+    optimal problem with `|bᵀy| ≫ ‖c‖_F` spuriously firing the
+    primal-infeas cert.
+
+This mirrors Mosek `hom_terminatelo` (decomp `003f8460`) — gate to
+classification on `pfeasinff < tolP OR dfeasinff ≤ tolD` (NOT a
+conjunction with ρ), then independent witness-ratio tests. SCS
+`solver.c::solve` has the same structural shape. The original ADR
+draft inadvertently copied the "ρ-test as universal gate" shorthand
+from the ART03 *optimal-case* analysis and applied it to
+infeasibility — which the ART03 paper itself does not.
 
 The 6-flag tree machinery in the legacy NT solver is **not
 ported** to HSDE — different termination semantics; the HSDE
 exit codes map directly to our wire taxonomy without going
-through the soft-success bucket.
+through the soft-success bucket. (See Decision 7 for the related
+fix to NT-path best-iterate gating.)
 
 ### Decision 7 — Best-iterate snapshot on UNPURIFIED iterate (hazard §3.3)
 
@@ -276,6 +314,29 @@ metric improves. For HSDE we snapshot the iterate `(x*, y*, s*, τ*,
 moment we return to the caller. Saving a purified iterate and then
 re-purifying double-divides; symptom is the returned objective off
 by `1/τ²`.
+
+**Bead `io2v` follow-up — `bestStatus` stamping.** The HSDE solver
+does *not* stamp the snapshot with `bestStatus = "dual-feasible"`.
+That stamp is reserved for the legacy NT path's 6-flag soft-success
+bucket (worklog 095, control2/control3/hinf2). HSDE has a comprehensive
+classification: optimal + primal-infeasible + dual-infeasible via the
+τ-κ tests in Decision 6. Any iter that the test doesn't positively
+classify falls through to the fallback status (iter-limit / numerical-
+difficulty / numerical-error) — `finalizeBestOr` still returns the
+best snapshot (always at least as good as the current iterate, which
+may have just blown up), but with the honest fallback status, never
+`dual-feasible`. Pre-fix the stamp was unconditional and the wire map
+`dual-feasible → optimal` turned every snapshot — including iter-0
+snapshots on infeasible inputs — into wire `optimal`.
+
+The same fix applies to the legacy `NtSdpSolver.ts`: stamp
+`bestStatus = "dual-feasible"` only when `couldDualFeas` is honestly
+true (the iterate meets at least `abs_gap` OR `rel_dual_feas` OR
+`abs_dual_feas`). The control2/control3/hinf2 motivation for the soft
+bucket is preserved (those cases DO hit `couldDualFeas` along their
+trajectory); infeasible inputs (infp/infd) never hit it, so the snapshot
+is returned with the fallback status (typically `numerical-error` —
+NT can't tell infeasibility from "S leaves the cone after 2 iters").
 
 ### Decision 8 — Verbose trace schema extension
 

@@ -412,7 +412,9 @@ export function solveHsdeSdpNt(
     opts.log?.(line, null as never);
 
     // ─── Convergence + best-iterate ───
-    const term = checkHsdeTermination(rp, rd, rg, pObj, dObj, tau, kappa, prob, params);
+    const term = checkHsdeTermination(
+      rp, rd, rg, pObj, dObj, tau, kappa, primalInf, dualInf, prob, params,
+    );
     const gapAbs = Math.abs(pObjPure - dObjPure);
     const objScale = Math.max(1, Math.abs(pObjPure));
     const achieved = Math.max(
@@ -431,7 +433,15 @@ export function solveHsdeSdpNt(
       bestKappa = kappa;
       bestIter = iter;
       bestAchieved = achieved;
-      bestStatus = "dual-feasible";
+      // bestStatus stays null: HSDE's termination test is comprehensive (it
+      // already classifies optimal + primal-infeasible + dual-infeasible
+      // via the τ-κ witness tests below). Any iter that the test doesn't
+      // accept is not converged — the snapshot is preserved so the caller
+      // gets the *best* iterate seen, but `finalizeBestOr` honestly returns
+      // the fallback status (iter-limit / numerical-difficulty / numerical-
+      // error). The legacy "dual-feasible soft success" map (Status.ts)
+      // applies only to NT's 6-flag tree, not HSDE.
+      void bestStatus;
     }
 
     if (term.status !== "running") {
@@ -855,8 +865,20 @@ export function solveHsdeSdpNt(
       bestAchieved);
   }
   function finalizeBestOr(fallback: SolverStatus): HsdeSdpSolveResult {
-    if (bestStatus === null) return finalize(fallback);
-    return purifyAndReturn(bestStatus, bestX, bestY, bestS, bestTau, bestKappa, bestIter, bestAchieved);
+    // Always prefer the best snapshot when we have one (the current iterate
+    // may have just blown up — e.g. NT factor failure on a degenerate τ→0
+    // limit). Status is the honest fallback: bestStatus is reserved for
+    // classifications the termination test made positively (today: never
+    // assigned — bestStatus is always null at this site, and the certificate
+    // tests in `checkHsdeTermination` short-circuit via `finalize(...)` when
+    // they fire). Falling through here means "didn't converge"; the wire
+    // taxonomy maps the fallback to `numerical-breakdown` / `iter-cap`,
+    // never `optimal`.
+    if (bestAchieved === Infinity) return finalize(fallback);
+    return purifyAndReturn(
+      bestStatus ?? fallback,
+      bestX, bestY, bestS, bestTau, bestKappa, bestIter, bestAchieved,
+    );
   }
   function purifyAndReturn(
     status: SolverStatus,
@@ -945,6 +967,33 @@ interface TerminationCheck {
   prstatus: number;
 }
 
+// HSDE termination — three classifications via two structurally distinct tests.
+//
+// Optimal classification uses the **purified** ρ-metrics (ρ_p, ρ_d, ρ_g all ≤ 1
+// AND τ ≫ κ AND τ + κ substantial). Purification by τ makes ρ the right shape
+// for the optimal regime: τ > 0 and (X/τ, y/τ, S/τ) is the actual primal-dual
+// pair we hand back, so feasibility/optimality tolerances are naturally
+// expressed in terms of `residual / τ`.
+//
+// Infeasibility certificates use **unpurified** residuals + objectives — the
+// τ→0 limit point (X*, y*, S*, τ*=0, κ*>0) IS the Farkas certificate, and
+// dividing by τ is a category error there (it would blow up exactly because
+// τ→0 is what we're trying to detect). This mirrors Mosek's `hom_terminatelo`
+// (decomp 003f8460) — the gate to classification is `pfeasinff < tolP OR
+// dfeasinff ≤ tolD` (NOT a conjunction with ρ), and the certificate tests are
+// ratio tests on unpurified `b^T y` vs `‖r_d‖` and `⟨C, X⟩` vs `‖r_p‖`.
+// The earlier ADR-0033 design (Decision 6) gated *both* on `max(ρ_p, ρ_d, ρ_g)
+// ≤ 1` — that gate never trips on actually-infeasible problems because the
+// purified ρ-metrics inflate as τ→0, so the τ-κ ρ-dichotomy never fired
+// (bead `io2v`).
+//
+// The witness floor (1e-6) on |b^T y| / |⟨C, X⟩| guards against the
+// degenerate "everything collapses to zero" iterate that satisfies the
+// certificate inequalities vacuously. The τ + κ collapse floor (1e-8) does
+// the analogous job for the optimal branch — without it, an iterate with
+// τ = 1e-15 and κ = 1e-24 would have prstatus → +1 and ρ-metrics → 0
+// because rp, rd, gap also collapse, and we'd declare optimal on a
+// degenerate point with no usable purified iterate.
 function checkHsdeTermination(
   rp: Float64Array,
   rd: Float64Array[],
@@ -953,6 +1002,8 @@ function checkHsdeTermination(
   dObj: number,
   tau: number,
   kappa: number,
+  primalInf: number,
+  dualInf: number,
   prob: SdpProblem,
   params: IpmParams,
 ): TerminationCheck {
@@ -963,13 +1014,11 @@ function checkHsdeTermination(
   const eps_p = params.feasTol;
   const eps_d = params.feasTol;
   const eps_g = params.optTol;
-
-  const primalInf = vecInfNorm(rp);
-  let dualInf = 0;
-  for (const r of rd) {
-    const di = matInfNorm(r);
-    if (di > dualInf) dualInf = di;
-  }
+  // Infeasibility-certificate tolerance: looser than feasTol since the
+  // unpurified residual is being compared to a witness magnitude that can
+  // itself be modest (e.g. b^T y ~ 1 on small SDPLIB cases). Matches the
+  // Mosek `tolinfeas` default of 1e-8 scaled by witness.
+  const eps_inf = Math.max(params.feasTol, 1e-8);
 
   const rhoP = tau > 0 ? primalInf / (tau * eps_p * (1 + bInfNorm)) : Infinity;
   const rhoD = tau > 0 ? dualInf / (tau * eps_d * (1 + cFrob)) : Infinity;
@@ -982,19 +1031,58 @@ function checkHsdeTermination(
 
   const prstatus = (tau - kappa) / Math.max(tau + kappa, 1e-300);
 
-  let status: SolverStatus = "running";
-  const rhoMax = Math.max(rhoP, rhoD, rhoG);
-  if (rhoMax <= 1) {
-    if (prstatus > 0.5) {
-      status = "optimal";
-    } else if (prstatus < -0.5) {
-      if (dObj > 0) status = "primal-infeasible";
-      else if (pObj < 0) status = "dual-infeasible";
-      else status = "primal-infeasible";
-    }
+  // Anti-collapse floor. A healthy HSDE iterate has τ + κ comparable to its
+  // initialization (we init both to 1). Below this floor the iterate is
+  // degenerate — neither classification can be trusted; let the outer loop
+  // continue or hit numerical-difficulty / iter-limit on fall-through.
+  const TAU_KAPPA_FLOOR = 1e-8;
+  if (tau + kappa < TAU_KAPPA_FLOOR) {
+    return { status: "running", rhoP, rhoD, rhoG, prstatus };
   }
-  void rg;  // r_g residual is reported via gfeas in the trace; not used in the ρ-test directly
-  return { status, rhoP, rhoD, rhoG, prstatus };
+
+  // Optimal: purified ρ-metrics small, τ dominates κ, scale is substantial.
+  if (rhoP <= 1 && rhoD <= 1 && rhoG <= 1 && prstatus > 0.5) {
+    void rg;  // r_g already enters via rhoG; preserved for trace plumbing
+    return { status: "optimal", rhoP, rhoD, rhoG, prstatus };
+  }
+
+  // Infeasibility certificates fire only in the κ-dominant regime
+  // (`prstatus < -0.5`, i.e. τ ≪ κ — the HSDE iterate is heading to the
+  // τ→0 limit). Without this guard an almost-converged optimal problem
+  // where |b^T y| ≫ ‖C‖_F could spuriously fire the primal-infeasibility
+  // cert before the ρ-metrics drop below 1 (the cert's `eps_inf · |b^T y|`
+  // bound is generous enough to admit dualInf the optimal test would reject).
+  // The guard makes the regime-switch explicit: optimal is τ-dominant,
+  // infeasibility is κ-dominant — they never overlap.
+  const WITNESS_FLOOR = 1e-6;
+
+  // Primal-infeasibility certificate (Farkas y witness). The unpurified
+  // iterate (y, S) satisfies Σ y_i A_i + S = -r_d with S ⪰ 0, so as r_d → 0
+  // we have Σ y_i A_i ⪯ 0. Combined with b^T y > 0, this is a Farkas y for
+  // primal infeasibility. Test: `dualInf / b^T y` is small AND `b^T y` is
+  // substantial in absolute terms (avoid collapse-noise).
+  if (
+    prstatus < -0.5 &&
+    dObj > WITNESS_FLOOR &&
+    dualInf <= eps_inf * (1 + Math.abs(dObj))
+  ) {
+    return { status: "primal-infeasible", rhoP, rhoD, rhoG, prstatus };
+  }
+
+  // Dual-infeasibility certificate (primal recession ray). The unpurified
+  // iterate X satisfies Σ ⟨A_i, X⟩ - b_i τ = r_p → 0 as r_p, τ → 0, so
+  // ⟨A_i, X⟩ → 0. Combined with ⟨C, X⟩ < 0 strictly, X is a primal
+  // recession ray (primal unbounded ⟺ dual infeasible).
+  if (
+    prstatus < -0.5 &&
+    pObj < -WITNESS_FLOOR &&
+    primalInf <= eps_inf * (1 + Math.abs(pObj))
+  ) {
+    return { status: "dual-infeasible", rhoP, rhoD, rhoG, prstatus };
+  }
+
+  void rg;
+  return { status: "running", rhoP, rhoD, rhoG, prstatus };
 }
 
 function initialScale(p: SdpProblem): { xiP: number; xiD: number } {
