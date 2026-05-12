@@ -36,10 +36,67 @@ export interface IterLogLine {
   timeSec: number;
 }
 
+/**
+ * Verbose per-iter trace — every diagnostic scalar the solver computed
+ * this iteration, in a unified schema across LP and SDP solvers. Fields
+ * irrelevant to the current solver kind carry `NaN`. The schema is
+ * **stable**: written to JSONL traces, parsed by `scripts/trace-diff.ts`,
+ * mirrored from COPT iter logs by `scripts/copt-log-to-jsonl.ts`. Changes
+ * to the field set are a breaking change for the diff harness — coordinate.
+ *
+ * The `kind` discriminator tells consumers which solver variant produced
+ * the line and which fields are populated:
+ *   "lp"      — LP path (`solveLp` in this file). `eigMin{X,S}` are NaN.
+ *   "sdp-nt"  — NT direction (`solveSdpNt`).
+ *   "sdp-aho" — AHO direction (`solveSdpAho`).
+ *   "sdp-hkm" — HKM direction (`solveSdp` in `SdpSolver.ts`).
+ *
+ * The regularization bumps are per-iter (delta from iter start), not
+ * cumulative — the cumulative jitter values are in `jitter*`. `failRow`
+ * is the Cholesky-reported failure row index for the most-recent failed
+ * factorisation attempt this iter, or `null` if the first attempt
+ * succeeded. Phase timings (`t*Ms`) are derived from `Bun.nanoseconds()`
+ * deltas; they bracket distinct work units of the iteration.
+ */
+export interface VerboseIterLine extends IterLogLine {
+  kind: "lp" | "sdp-nt" | "sdp-aho" | "sdp-hkm";
+  // Centering / step
+  sigma: number;
+  sigmaRaw: number;       // (muAff / mu)^3 pre-clip
+  muAff: number;
+  alphaPrimal: number;
+  alphaDual: number;
+  alphaPrimalRaw: number; // pre-safeguard maxStepToBoundary
+  alphaDualRaw: number;
+  // Regularization (3-way Tikhonov)
+  jitterPrimal: number;
+  jitterDual: number;
+  jitterGap: number;
+  bumpsPrimalThisIter: number;
+  bumpsDualThisIter: number;
+  bumpsGapThisIter: number;
+  refactorsThisIter: number;
+  failRow: number | null;
+  // Schur conditioning proxies
+  schurDiagMin: number;
+  schurDiagMax: number;
+  // SDP-only
+  eigMinX: number;
+  eigMinS: number;
+  // Phase timings (milliseconds)
+  tSchurMs: number;
+  tFactorMs: number;
+  tDirectionMs: number;
+  tStepMs: number;
+}
+
 export interface SolveOptions {
   params?: Partial<IpmParams>;
   initialPoint?: (lp: LpProblem) => { x: Float64Array; y: Float64Array; s: Float64Array };
+  /** COPT-format-compatible per-iter callback. Slim, byte-stable. */
   log?: (line: IterLogLine, it: Iterate) => void;
+  /** Diagnostic per-iter callback. Rich schema (see `VerboseIterLine`). */
+  verbose?: (line: VerboseIterLine) => void;
 }
 
 export function solveLp(lp: LpProblem, opts: SolveOptions = {}): SolveResult {
@@ -93,6 +150,12 @@ export function solveLp(lp: LpProblem, opts: SolveOptions = {}): SolveResult {
 
   const log: IterLogLine[] = [];
 
+  // High-resolution clock for phase timings. `Bun.nanoseconds()` returns
+  // an integer nanosecond count from a monotonic clock; we convert to ms
+  // at emission time. `performance.now()` would also work but is float
+  // and accumulates rounding under the noise floor of our sub-ms phases.
+  const nowNs = (): number => Bun.nanoseconds();
+
   for (it.iter = 0; it.iter <= params.iterLimit; it.iter++) {
     updateResiduals(it, lp);
 
@@ -114,26 +177,52 @@ export function solveLp(lp: LpProblem, opts: SolveOptions = {}): SolveResult {
       return { status: it.status, iterate: it, log };
     }
 
+    // Snapshot reg counters at iter start so we can emit per-iter deltas
+    // (the absolute counts are also in `it.bumps*` if a caller wants them).
+    const bumpsPSnap = it.bumpsPrimal;
+    const bumpsDSnap = it.bumpsDual;
+    const bumpsGSnap = it.bumpsGap;
+    const refactorsSnap = it.refactors;
+
     // Build LP Schur complement M = A · diag(x/s) · A^T.
+    const tSchurStart = nowNs();
     const d = new Float64Array(lp.n);
     for (let j = 0; j < lp.n; j++) d[j] = it.x[j]! / it.s[j]!;
     schurAssembleNormalEq(lp.A, lp.m, lp.n, d, it.M);
 
+    // Schur-diag conditioning proxy: min/max of M's diagonal pre-lift.
+    // For a well-conditioned LP this range is tight; large ratios herald
+    // upcoming Cholesky retries.
+    let schurDiagMin = Infinity;
+    let schurDiagMax = -Infinity;
+    for (let i = 0; i < lp.m; i++) {
+      const d_ii = it.M[i * lp.m + i]!;
+      if (d_ii < schurDiagMin) schurDiagMin = d_ii;
+      if (d_ii > schurDiagMax) schurDiagMax = d_ii;
+    }
+    const tSchurMs = (nowNs() - tSchurStart) / 1e6;
+
     // 3-way regularization retry loop — shared helper in Regularization.ts.
     // δ counters carry across iterations (legacy behaviour; spec §6.3's
     // "reset unless heavy refactor" pattern is a v2 refinement).
-    if (!factorWith3Way(it.M, it.m, it.Lchol, it, regParams, lpDiagnose)) {
+    const tFactorStart = nowNs();
+    const factorRes = factorWith3Way(it.M, it.m, it.Lchol, it, regParams, lpDiagnose);
+    const tFactorMs = (nowNs() - tFactorStart) / 1e6;
+    if (!factorRes.success) {
       it.status = "numerical-error";
       return { status: it.status, iterate: it, log };
     }
 
     // Predictor: σ = 0.
+    const tDirStart = nowNs();
     predictorDirection(it, lp);
     const dxAff = new Float64Array(it.dx);
     const dyAff = new Float64Array(it.dy);
     const dsAff = new Float64Array(it.ds);
+    const tStepStart = nowNs();
     const alphaPaff = maxStepToBoundary(it.x, dxAff);
     const alphaDaff = maxStepToBoundary(it.s, dsAff);
+    let tStepMs = (nowNs() - tStepStart) / 1e6;
 
     // σ = (μ_aff / μ)^3, Mehrotra centering heuristic.
     //
@@ -151,15 +240,19 @@ export function solveLp(lp: LpProblem, opts: SolveOptions = {}): SolveResult {
       muAff += (it.x[j]! + aP * dxAff[j]!) * (it.s[j]! + aD * dsAff[j]!);
     }
     muAff /= Math.max(1, lp.n);
-    const sigma = Math.max(0, Math.min(1, (muAff / Math.max(it.mu, 1e-300)) ** 3));
+    const sigmaRaw = (muAff / Math.max(it.mu, 1e-300)) ** 3;
+    const sigma = Math.max(0, Math.min(1, sigmaRaw));
     const sigmaMu = sigma * it.mu;
 
     // Corrector: rc = -XSe + σμ - Δx_aff ∘ Δs_aff, reusing Cholesky factor.
     correctorDirection(it, lp, sigmaMu, dxAff, dsAff);
+    const tDirectionMs = (nowNs() - tDirStart) / 1e6 - tStepMs;
 
     // Step lengths with Mehrotra safeguard.
+    const tStep2Start = nowNs();
     const alphaPraw = Math.min(1, maxStepToBoundary(it.x, it.dx));
     const alphaDraw = Math.min(1, maxStepToBoundary(it.s, it.ds));
+    tStepMs += (nowNs() - tStep2Start) / 1e6;
     const alphaP = safeguardStep(alphaPraw, params.stepFactor);
     const alphaD = safeguardStep(alphaDraw, params.stepFactor);
 
@@ -180,6 +273,41 @@ export function solveLp(lp: LpProblem, opts: SolveOptions = {}): SolveResult {
     muNew /= Math.max(1, lp.n);
     if (muNew > 0.99 * muBefore) it.stallCount++;
     else it.stallCount = 0;
+
+    // Verbose trace emission — fire after the iter is fully resolved so
+    // every diagnostic field reflects the work done. `log?` already fired
+    // at the top of the iter; verbose fires at the bottom on purpose
+    // (sigma/alpha/reg-deltas/timings only exist post-iter).
+    if (opts.verbose) {
+      const v: VerboseIterLine = {
+        ...line,
+        kind: "lp",
+        sigma,
+        sigmaRaw,
+        muAff,
+        alphaPrimal: alphaP,
+        alphaDual: alphaD,
+        alphaPrimalRaw: alphaPraw,
+        alphaDualRaw: alphaDraw,
+        jitterPrimal: it.jitterPrimal,
+        jitterDual: it.jitterDual,
+        jitterGap: it.jitterGap,
+        bumpsPrimalThisIter: it.bumpsPrimal - bumpsPSnap,
+        bumpsDualThisIter: it.bumpsDual - bumpsDSnap,
+        bumpsGapThisIter: it.bumpsGap - bumpsGSnap,
+        refactorsThisIter: it.refactors - refactorsSnap,
+        failRow: factorRes.lastFailRow,
+        schurDiagMin,
+        schurDiagMax,
+        eigMinX: NaN,
+        eigMinS: NaN,
+        tSchurMs,
+        tFactorMs,
+        tDirectionMs,
+        tStepMs,
+      };
+      opts.verbose(v);
+    }
   }
 
   it.status = "iter-limit";

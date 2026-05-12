@@ -20,7 +20,7 @@ import { DEFAULT_PARAMS, type IpmParams } from "./Defaults.js";
 import { eighJacobi, frobInner, matMul, symmetrize } from "../cone/PsdCone.js";
 import { choleskyInPlace, choleskySolveInPlace } from "../linalg/Cholesky.js";
 import type { SolverStatus } from "./Iterate.js";
-import type { IterLogLine, SolveOptions } from "./Solver.js";
+import type { IterLogLine, SolveOptions, VerboseIterLine } from "./Solver.js";
 import type { SdpSolveResult } from "./SdpSolver.js";
 
 export function solveSdpAho(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveResult {
@@ -37,6 +37,20 @@ export function solveSdpAho(prob: SdpProblem, opts: SolveOptions = {}): SdpSolve
   const log: IterLogLine[] = [];
   let stallCount = 0;
   let prevMu = Infinity;
+
+  // Per-iter regularisation state — same shape as NT/LP path for trace
+  // schema uniformity. Legacy AHO single-tier escalation: jitter × 10
+  // each retry, no maxGap cap (only attempt-count cap of 20). Routing
+  // through these counters keeps the verbose line consistent.
+  let jitterPrimal = 0;
+  let jitterDual = 0;
+  let jitterGap = 1e-12;
+  let bumpsPrimal = 0;
+  let bumpsDual = 0;
+  let bumpsGap = 0;
+  let refactors = 0;
+
+  const nowNs = (): number => Bun.nanoseconds();
 
   for (let iter = 0; iter <= params.iterLimit; iter++) {
     const rp = primalRes(prob, X);
@@ -59,6 +73,11 @@ export function solveSdpAho(prob: SdpProblem, opts: SolveOptions = {}): SdpSolve
     log.push(line);
     opts.log?.(line, null as never);
 
+    const bumpsPSnap = bumpsPrimal;
+    const bumpsDSnap = bumpsDual;
+    const bumpsGSnap = bumpsGap;
+    const refactorsSnap = refactors;
+
     const gap = Math.abs(pObj - dObj);
     const gapDen = 1 + Math.abs(pObj) + Math.abs(dObj);
     const bNorm = Math.max(1, vecInfNorm(prob.b));
@@ -72,6 +91,13 @@ export function solveSdpAho(prob: SdpProblem, opts: SolveOptions = {}): SdpSolve
     }
     if (Date.now() - startMs > params.timeLimitSec * 1000) return finalize("time-limit");
     if (iter >= params.iterLimit) return finalize("iter-limit");
+
+    // Reset jitter per iter (legacy AHO semantics).
+    jitterPrimal = 0;
+    jitterDual = 0;
+    jitterGap = 1e-12;
+
+    const tSchurStart = nowNs();
 
     // Per-block: eigendecompose S = Q Λ Q^T for the Lyapunov solve.
     // Lyapunov solve: V·S + S·V = R  ⇒  V = Q · ( (Q^T R Q)_{ij} / (λ_i + λ_j) ) · Q^T
@@ -116,18 +142,35 @@ export function solveSdpAho(prob: SdpProblem, opts: SolveOptions = {}): SdpSolve
       }
     }
 
-    // Factor M with regularisation retry.
+    let schurDiagMin = Infinity;
+    let schurDiagMax = -Infinity;
+    for (let i = 0; i < m; i++) {
+      const d = M[i * m + i]!;
+      if (d < schurDiagMin) schurDiagMin = d;
+      if (d > schurDiagMax) schurDiagMax = d;
+    }
+    const tSchurMs = (nowNs() - tSchurStart) / 1e6;
+
+    // Factor M with regularisation retry. Legacy AHO: jitter × 10, no
+    // cap (only the attempt-count cap of 20). Routed through shared
+    // counters for verbose-schema parity.
+    const tFactorStart = nowNs();
     const Lchol = new Float64Array(m * m);
-    let jitter = 1e-12;
     let factored = false;
+    let lastFailRow: number | null = null;
     for (let attempt = 0; attempt < 20; attempt++) {
       Lchol.set(M);
-      const info = choleskyInPlace(Lchol, m, jitter);
+      const info = choleskyInPlace(Lchol, m, jitterGap);
       if (info < 0) { factored = true; break; }
-      jitter *= 10;
+      lastFailRow = info;
+      jitterGap = jitterGap * 10;
+      bumpsGap++;
+      refactors++;
     }
+    const tFactorMs = (nowNs() - tFactorStart) / 1e6;
     if (!factored) return finalize("numerical-error");
 
+    const tDirStart = nowNs();
     // Predictor (σ=0, corr=0). R̂ = -sym(XS).
     const dyAff = new Float64Array(m);
     const dSaff = prob.blocks.map((b) => new Float64Array(b.size * b.size));
@@ -135,11 +178,15 @@ export function solveSdpAho(prob: SdpProblem, opts: SolveOptions = {}): SdpSolve
     solveAhoNewton(prob, X, eigs, Rd, rp, /*sigmaMu*/ 0, /*corr*/ null,
       VA, Lchol, dyAff, dSaff, dXaff);
 
+    const tStep1Start = nowNs();
     const aPaff = Math.min(1, minBlockStep(X, dXaff, prob.blocks));
     const aDaff = Math.min(1, minBlockStep(S, dSaff, prob.blocks));
+    let tStepMs = (nowNs() - tStep1Start) / 1e6;
+
     const muAff = predictedMu(prob, X, S, dXaff, dSaff, aPaff, aDaff);
     // σ clipped to [1e-8, 0.9] per CLEANROOM_SPEC.md §2 step 5.
-    const sigma = Math.max(1e-8, Math.min(0.9, (muAff / Math.max(muV, 1e-300)) ** 3));
+    const sigmaRaw = (muAff / Math.max(muV, 1e-300)) ** 3;
+    const sigma = Math.max(1e-8, Math.min(0.9, sigmaRaw));
     const sigmaMu = sigma * muV;
 
     // Corrector: corr = sym(ΔX_aff · ΔS_aff) per block.
@@ -161,10 +208,15 @@ export function solveSdpAho(prob: SdpProblem, opts: SolveOptions = {}): SdpSolve
     const dX = prob.blocks.map((b) => new Float64Array(b.size * b.size));
     solveAhoNewton(prob, X, eigs, Rd, rp, sigmaMu, corr, VA, Lchol, dy, dS, dX);
 
+    const tStep2Start = nowNs();
     const aPmax = Math.min(1, minBlockStep(X, dX, prob.blocks));
     const aDmax = Math.min(1, minBlockStep(S, dS, prob.blocks));
+    tStepMs += (nowNs() - tStep2Start) / 1e6;
+    const alphaPraw = aPmax;
+    const alphaDraw = aDmax;
     const alphaP = clipStep(Math.max(0.95 * aPmax, 2 * aPmax - 1));
     const alphaD = clipStep(Math.max(0.95 * aDmax, 2 * aDmax - 1));
+    const tDirectionMs = (nowNs() - tDirStart) / 1e6 - tStepMs;
 
     for (let b = 0; b < nb; b++) {
       const n = prob.blocks[b]!.size;
@@ -179,6 +231,52 @@ export function solveSdpAho(prob: SdpProblem, opts: SolveOptions = {}): SdpSolve
     if (muV > 0.99 * prevMu) stallCount++;
     else stallCount = 0;
     prevMu = muV;
+
+    let eigMinX = Infinity;
+    let eigMinS = Infinity;
+    for (let b = 0; b < nb; b++) {
+      const nb_b = prob.blocks[b]!.size;
+      const xb = X[b]!;
+      const sb = S[b]!;
+      for (let i = 0; i < nb_b; i++) {
+        const dx = xb[i * nb_b + i]!;
+        const ds = sb[i * nb_b + i]!;
+        if (dx < eigMinX) eigMinX = dx;
+        if (ds < eigMinS) eigMinS = ds;
+      }
+    }
+
+    if (opts.verbose) {
+      const v: VerboseIterLine = {
+        ...line,
+        kind: "sdp-aho",
+        sigma,
+        sigmaRaw,
+        muAff,
+        alphaPrimal: alphaP,
+        alphaDual: alphaD,
+        alphaPrimalRaw: alphaPraw,
+        alphaDualRaw: alphaDraw,
+        jitterPrimal,
+        jitterDual,
+        jitterGap,
+        bumpsPrimalThisIter: bumpsPrimal - bumpsPSnap,
+        bumpsDualThisIter: bumpsDual - bumpsDSnap,
+        bumpsGapThisIter: bumpsGap - bumpsGSnap,
+        refactorsThisIter: refactors - refactorsSnap,
+        failRow: lastFailRow,
+        schurDiagMin,
+        schurDiagMax,
+        eigMinX,
+        eigMinS,
+        tSchurMs,
+        tFactorMs,
+        tDirectionMs,
+        tStepMs,
+      };
+      opts.verbose(v);
+    }
+
     if (stallCount >= params.stallIterCap) return finalize("numerical-difficulty");
   }
   return finalize("iter-limit");

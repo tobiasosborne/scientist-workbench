@@ -47,7 +47,7 @@ import { DEFAULT_PARAMS, type IpmParams } from "./Defaults.js";
 import { eighJacobi, frobInner, matMul, symmetrize } from "../cone/PsdCone.js";
 import { choleskyInPlace, choleskySolveInPlace } from "../linalg/Cholesky.js";
 import type { SolverStatus } from "./Iterate.js";
-import type { IterLogLine, SolveOptions } from "./Solver.js";
+import type { IterLogLine, SolveOptions, VerboseIterLine } from "./Solver.js";
 import type { SdpSolveResult } from "./SdpSolver.js";
 
 // ── Per-block NT factorisation: everything needed to assemble W, W^{-1}, etc.
@@ -76,6 +76,21 @@ export function solveSdpNt(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveR
   let stallCount = 0;
   let prevMu = Infinity;
 
+  // Per-iter regularisation state, mirroring `RegState` in Regularization.ts.
+  // The current NT path uses a legacy single-tier (`gap`) escalation; we
+  // still track all three counters so the verbose schema is uniform with
+  // the LP path (and so Phase 1 of the handoff — wiring through
+  // `factorWith3Way` — can drop in without changing the trace plumbing).
+  let jitterPrimal = 0;
+  let jitterDual = 0;
+  let jitterGap = params.initialJitter;
+  let bumpsPrimal = 0;
+  let bumpsDual = 0;
+  let bumpsGap = 0;
+  let refactors = 0;
+
+  const nowNs = (): number => Bun.nanoseconds();
+
   for (let iter = 0; iter <= params.iterLimit; iter++) {
     const rp = primalRes(prob, X);
     const Rd = dualRes(prob, y, S);
@@ -97,6 +112,12 @@ export function solveSdpNt(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveR
     log.push(line);
     opts.log?.(line, null as never);
 
+    // Snapshot reg counters for per-iter delta in the verbose line.
+    const bumpsPSnap = bumpsPrimal;
+    const bumpsDSnap = bumpsDual;
+    const bumpsGSnap = bumpsGap;
+    const refactorsSnap = refactors;
+
     const gap = Math.abs(pObj - dObj);
     const gapDen = 1 + Math.abs(pObj) + Math.abs(dObj);
     const bNorm = Math.max(1, vecInfNorm(prob.b));
@@ -108,6 +129,17 @@ export function solveSdpNt(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveR
     ) return finalize("optimal");
     if (Date.now() - startMs > params.timeLimitSec * 1000) return finalize("time-limit");
     if (iter >= params.iterLimit) return finalize("iter-limit");
+
+    // Reset jitter to per-iter base (legacy NT semantics — does NOT carry
+    // across iters). Phase 1 of the handoff (wire through factorWith3Way)
+    // will switch to carry-across; the verbose schema stays stable, so
+    // trace-diff will localise the change.
+    jitterPrimal = 0;
+    jitterDual = 0;
+    jitterGap = params.initialJitter;
+
+    // tSchurMs = NT factor build + WAW caching + Schur M assembly + symm.
+    const tSchurStart = nowNs();
 
     // Build per-block NT factorisation. May fail if S or X is not numerically PD.
     const NT: NtFactor[] = [];
@@ -165,31 +197,56 @@ export function solveSdpNt(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveR
       }
     }
 
-    // Factor M with adaptive jitter retry.
+    // Schur-diag conditioning proxy.
+    let schurDiagMin = Infinity;
+    let schurDiagMax = -Infinity;
+    for (let i = 0; i < m; i++) {
+      const d = M[i * m + i]!;
+      if (d < schurDiagMin) schurDiagMin = d;
+      if (d > schurDiagMax) schurDiagMax = d;
+    }
+    const tSchurMs = (nowNs() - tSchurStart) / 1e6;
+
+    // Factor M with adaptive jitter retry. Legacy single-tier (gap-only)
+    // escalation, ×100 bump factor, capped at `params.jitterMaxGap`, max
+    // 10 attempts. Counters routed through the shared RegState fields so
+    // the verbose schema is uniform with the LP path. Phase 1 of the
+    // handoff replaces this block with a `factorWith3Way` call against
+    // `makeSdpDiagnose` and a `RegState`; the schema stays the same.
+    const tFactorStart = nowNs();
     const Lchol = new Float64Array(m * m);
-    let jitter = params.initialJitter;
     let factored = false;
+    let lastFailRow: number | null = null;
     for (let attempt = 0; attempt < 10; attempt++) {
       Lchol.set(M);
-      const info = choleskyInPlace(Lchol, m, jitter);
+      const info = choleskyInPlace(Lchol, m, jitterGap);
       if (info < 0) { factored = true; break; }
-      jitter *= 100;
-      if (jitter > params.jitterMaxGap) break;
+      lastFailRow = info;
+      if (jitterGap >= params.jitterMaxGap) break;
+      jitterGap = Math.min(jitterGap * 100, params.jitterMaxGap);
+      bumpsGap++;
+      refactors++;
     }
+    const tFactorMs = (nowNs() - tFactorStart) / 1e6;
     if (!factored) return finalize("numerical-error");
 
     // ── Predictor: E_pred = -X
+    const tDirStart = nowNs();
     const dyAff = new Float64Array(m);
     const dSaff = prob.blocks.map((b) => new Float64Array(b.size * b.size));
     const dXaff = prob.blocks.map((b) => new Float64Array(b.size * b.size));
     solveNtNewton(prob, NT, X, Rd, hRd, rp, /*sigmaMu=*/ 0, /*affineSecondOrder=*/ null,
       Lchol, dyAff, dSaff, dXaff);
 
+    const tStep1Start = nowNs();
     const aPaff = minBlockStep(X, dXaff, prob.blocks);
     const aDaff = minBlockStep(S, dSaff, prob.blocks);
+    let tStepMs = (nowNs() - tStep1Start) / 1e6;
+
     const muAff = predictedMu(prob, X, S, dXaff, dSaff,
       Math.min(1, aPaff), Math.min(1, aDaff));
-    const sigma = clip((muAff / Math.max(muV, 1e-300)) ** 3, 1e-8, 0.9);
+    const sigmaRaw = (muAff / Math.max(muV, 1e-300)) ** 3;
+    const sigma = clip(sigmaRaw, 1e-8, 0.9);
     const sigmaMu = sigma * muV;
 
     // ── Corrector: E_corr = σμ S^{-1} - X - Rq
@@ -200,10 +257,15 @@ export function solveSdpNt(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveR
     solveNtNewton(prob, NT, X, Rd, hRd, rp, sigmaMu,
       { dXaff, dSaff }, Lchol, dy, dS, dX);
 
+    const tStep2Start = nowNs();
     const aPmax = minBlockStep(X, dX, prob.blocks);
     const aDmax = minBlockStep(S, dS, prob.blocks);
+    tStepMs += (nowNs() - tStep2Start) / 1e6;
+    const alphaPraw = aPmax;
+    const alphaDraw = aDmax;
     const alphaP = clipStep(Math.max(0.95 * aPmax, 2 * aPmax - 1));
     const alphaD = clipStep(Math.max(0.95 * aDmax, 2 * aDmax - 1));
+    const tDirectionMs = (nowNs() - tDirStart) / 1e6 - tStepMs;
 
     for (let b = 0; b < nb; b++) {
       const n = prob.blocks[b]!.size;
@@ -221,6 +283,57 @@ export function solveSdpNt(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveR
     if (muV > 0.99 * prevMu) stallCount++;
     else stallCount = 0;
     prevMu = muV;
+
+    // eigMin proxy: min diagonal of X and S across blocks. Upper bound on
+    // the true min eigenvalue; cheap to compute (O(Σn_b)). Useful as a
+    // "are iterates approaching the PSD boundary" signal. True eigMin
+    // would require an extra eighJacobi per block — defer to v2 if the
+    // diagonal proxy doesn't expose enough.
+    let eigMinX = Infinity;
+    let eigMinS = Infinity;
+    for (let b = 0; b < nb; b++) {
+      const nb_b = prob.blocks[b]!.size;
+      const xb = X[b]!;
+      const sb = S[b]!;
+      for (let i = 0; i < nb_b; i++) {
+        const dx = xb[i * nb_b + i]!;
+        const ds = sb[i * nb_b + i]!;
+        if (dx < eigMinX) eigMinX = dx;
+        if (ds < eigMinS) eigMinS = ds;
+      }
+    }
+
+    if (opts.verbose) {
+      const v: VerboseIterLine = {
+        ...line,
+        kind: "sdp-nt",
+        sigma,
+        sigmaRaw,
+        muAff,
+        alphaPrimal: alphaP,
+        alphaDual: alphaD,
+        alphaPrimalRaw: alphaPraw,
+        alphaDualRaw: alphaDraw,
+        jitterPrimal,
+        jitterDual,
+        jitterGap,
+        bumpsPrimalThisIter: bumpsPrimal - bumpsPSnap,
+        bumpsDualThisIter: bumpsDual - bumpsDSnap,
+        bumpsGapThisIter: bumpsGap - bumpsGSnap,
+        refactorsThisIter: refactors - refactorsSnap,
+        failRow: lastFailRow,
+        schurDiagMin,
+        schurDiagMax,
+        eigMinX,
+        eigMinS,
+        tSchurMs,
+        tFactorMs,
+        tDirectionMs,
+        tStepMs,
+      };
+      opts.verbose(v);
+    }
+
     if (stallCount >= params.stallIterCap) return finalize("numerical-difficulty");
   }
   return finalize("iter-limit");

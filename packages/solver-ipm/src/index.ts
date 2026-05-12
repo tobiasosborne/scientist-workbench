@@ -18,8 +18,13 @@ export {
   type SolveResult,
   type SolveOptions,
   type IterLogLine,
+  type VerboseIterLine,
 } from "./solver/Solver.js";
-export { formatIterLine, formatIterHeader } from "./solver/LogFormat.js";
+export {
+  formatIterLine,
+  formatIterHeader,
+  formatVerboseLine,
+} from "./solver/LogFormat.js";
 export { toWireStatus, type WireStatus } from "./solver/Status.js";
 
 // SDP

@@ -153,13 +153,16 @@ import {
   solveSdp as solveSdpNt,
   solveSdpAho,
   solveSdpHkm,
+  formatVerboseLine,
   type SdpProblem,
   type SdpBlock,
   type SdpSolveResult,
   type SolverStatus,
+  type VerboseIterLine,
   toWireStatus,
   type WireStatus,
 } from "@workbench/solver-ipm";
+import { writeSync, openSync, closeSync } from "node:fs";
 
 const NAME = "sdp-solve";
 const VERSION = "0.1.0";
@@ -903,7 +906,13 @@ function fn(
     params.feasTol = dec.precision;
     params.optTol = dec.precision;
   }
-  const result = solve(problem, { params });
+  const { verbose, close } = makeVerboseHook();
+  let result: SdpSolveResult;
+  try {
+    result = solve(problem, { params, verbose });
+  } finally {
+    close();
+  }
 
   return encodeSdpResult(result, {
     n,
@@ -914,6 +923,31 @@ function fn(
     bFloat: dec.b,
     methodTag,
   });
+}
+
+/**
+ * Verbose iter-trace hook factory. Mirrors the lp-solve implementation.
+ * Always emits a human-readable verbose line per iter to stderr
+ * (`writeSync(2, ...)` — genuinely synchronous, survives mid-iter crash).
+ * When `IPM_TRACE_JSONL=<path>` is set, also appends JSONL to that
+ * path for `scripts/trace-diff.ts`. Tool-CLI-only by design: library
+ * callers (tests, scripts) that invoke `solveSdpNt` etc. directly stay
+ * silent unless they pass `verbose:` themselves.
+ */
+function makeVerboseHook(): {
+  verbose: (line: VerboseIterLine) => void;
+  close: () => void;
+} {
+  const jsonlPath = process.env.IPM_TRACE_JSONL;
+  const jsonlFd = jsonlPath ? openSync(jsonlPath, "a") : -1;
+  const verbose = (line: VerboseIterLine): void => {
+    writeSync(2, formatVerboseLine(line) + "\n");
+    if (jsonlFd >= 0) writeSync(jsonlFd, JSON.stringify(line) + "\n");
+  };
+  const close = (): void => {
+    if (jsonlFd >= 0) closeSync(jsonlFd);
+  };
+  return { verbose, close };
 }
 
 // -----------------------------------------------------------------------------

@@ -123,8 +123,11 @@ import {
   solveLp as solveLpIpm,
   lpFromCanonical,
   toWireStatus as ipmToWireStatus,
+  formatVerboseLine,
   type CanonicalLp,
+  type VerboseIterLine,
 } from "@workbench/solver-ipm";
+import { writeSync, openSync, closeSync } from "node:fs";
 
 const NAME = "lp-solve";
 const VERSION = "0.1.0";
@@ -600,8 +603,47 @@ function solveIpmLane(args: IpmLaneInput): Value {
     max_iter: args.maxIter,
   };
   const lp = lpFromCanonical(canonical);
-  const result = solveLpIpm(lp, { params: { iterLimit: args.maxIter } });
-  return encodeIpmResult(result, args);
+  const { verbose, close } = makeVerboseHook();
+  try {
+    const result = solveLpIpm(lp, {
+      params: { iterLimit: args.maxIter },
+      verbose,
+    });
+    return encodeIpmResult(result, args);
+  } finally {
+    close();
+  }
+}
+
+/**
+ * Verbose iter-trace hook factory. Always emits a one-line formatted
+ * trace per iter to stderr (`writeSync(2, ...)` — genuinely synchronous,
+ * so the line is on disk before the next iter begins; survives a
+ * mid-solve crash). When the env var `IPM_TRACE_JSONL=<path>` is set,
+ * additionally appends a JSON line per iter to that path for
+ * mechanical diff via `scripts/trace-diff.ts`.
+ *
+ * Both channels use `writeSync` for genuine eager flush. The cost is
+ * one syscall per iter — negligible relative to a Schur factor.
+ *
+ * Tool-CLI-only by design: the library defaults to silent unless
+ * callers pass a `verbose:` callback themselves. Tests and library
+ * scripts that import `solveLp` directly stay quiet.
+ */
+function makeVerboseHook(): {
+  verbose: (line: VerboseIterLine) => void;
+  close: () => void;
+} {
+  const jsonlPath = process.env.IPM_TRACE_JSONL;
+  const jsonlFd = jsonlPath ? openSync(jsonlPath, "a") : -1;
+  const verbose = (line: VerboseIterLine): void => {
+    writeSync(2, formatVerboseLine(line) + "\n");
+    if (jsonlFd >= 0) writeSync(jsonlFd, JSON.stringify(line) + "\n");
+  };
+  const close = (): void => {
+    if (jsonlFd >= 0) closeSync(jsonlFd);
+  };
+  return { verbose, close };
 }
 
 function encodeIpmResult(

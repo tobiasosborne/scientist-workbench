@@ -26,7 +26,7 @@ import {
 } from "../cone/PsdCone.js";
 import { choleskyInPlace, choleskySolveInPlace } from "../linalg/Cholesky.js";
 import { type SolverStatus } from "./Iterate.js";
-import type { IterLogLine, SolveOptions } from "./Solver.js";
+import type { IterLogLine, SolveOptions, VerboseIterLine } from "./Solver.js";
 
 export interface SdpSolveResult {
   status: SolverStatus;
@@ -60,6 +60,17 @@ export function solveSdp(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveRes
   let stallCount = 0;
   let prevMu = Infinity;
 
+  // Reg state for verbose trace uniformity (legacy HKM gap-only escalation).
+  let jitterPrimal = 0;
+  let jitterDual = 0;
+  let jitterGap = 1e-12;
+  let bumpsPrimal = 0;
+  let bumpsDual = 0;
+  let bumpsGap = 0;
+  let refactors = 0;
+
+  const nowNs = (): number => Bun.nanoseconds();
+
   for (let iter = 0; iter <= params.iterLimit; iter++) {
     // Compute residuals.
     const rp = primalResidual(prob, X);
@@ -87,6 +98,11 @@ export function solveSdp(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveRes
     log.push(line);
     opts.log?.(line, null as never);
 
+    const bumpsPSnap = bumpsPrimal;
+    const bumpsDSnap = bumpsDual;
+    const bumpsGSnap = bumpsGap;
+    const refactorsSnap = refactors;
+
     // Convergence check.
     const gap = Math.abs(pObj - dObj);
     const gapDen = 1 + Math.abs(pObj) + Math.abs(dObj);
@@ -100,6 +116,13 @@ export function solveSdp(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveRes
     if (optimal) return finalize("optimal");
     if (Date.now() - startMs > params.timeLimitSec * 1000) return finalize("time-limit");
     if (iter >= params.iterLimit) return finalize("iter-limit");
+
+    // Reset jitter per iter (legacy HKM semantics).
+    jitterPrimal = 0;
+    jitterDual = 0;
+    jitterGap = 1e-12;
+
+    const tSchurStart = nowNs();
 
     // Compute S_inv per block via Cholesky of S, solve L L^T X = I.
     const Sinv: Float64Array[] = [];
@@ -122,18 +145,35 @@ export function solveSdp(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveRes
       }
     }
 
-    // Factor M with regularization retry.
+    let schurDiagMin = Infinity;
+    let schurDiagMax = -Infinity;
+    for (let i = 0; i < m; i++) {
+      const d = M[i * m + i]!;
+      if (d < schurDiagMin) schurDiagMin = d;
+      if (d > schurDiagMax) schurDiagMax = d;
+    }
+    const tSchurMs = (nowNs() - tSchurStart) / 1e6;
+
+    // Factor M with regularization retry. Legacy HKM: jitter × 10, no
+    // cap (attempt-count cap of 20). Routed through shared counters for
+    // verbose-schema parity.
+    const tFactorStart = nowNs();
     const Lchol = new Float64Array(m * m);
-    let jitter = 1e-12;
     let factored = false;
+    let lastFailRow: number | null = null;
     for (let attempt = 0; attempt < 20; attempt++) {
       Lchol.set(M);
-      const info = choleskyInPlace(Lchol, m, jitter);
+      const info = choleskyInPlace(Lchol, m, jitterGap);
       if (info < 0) { factored = true; break; }
-      jitter *= 10;
+      lastFailRow = info;
+      jitterGap = jitterGap * 10;
+      bumpsGap++;
+      refactors++;
     }
+    const tFactorMs = (nowNs() - tFactorStart) / 1e6;
     if (!factored) return finalize("numerical-error");
 
+    const tDirStart = nowNs();
     // ── Predictor: σ = 0, corr = 0 ──
     const dyAff = new Float64Array(m);
     const dSaff = prob.blocks.map((blk) => new Float64Array(blk.size ** 2));
@@ -142,13 +182,16 @@ export function solveSdp(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveRes
     solveHkmNewton(prob, X, S, Sinv, Rd, /*sigmaMu=*/ 0,
       Lchol, dyAff, dSaff, dXaff, rp);
 
+    const tStep1Start = nowNs();
     const alphaPaff = maxSafePsdStep(X, dXaff, prob.blocks);
     const alphaDaff = maxSafePsdStep(S, dSaff, prob.blocks);
+    let tStepMs = (nowNs() - tStep1Start) / 1e6;
 
     // μ_aff for Mehrotra centering.
     const muAff = predictedMu(prob, X, S, dXaff, dSaff, alphaPaff, alphaDaff);
     // σ clipped to [1e-8, 0.9] per CLEANROOM_SPEC.md §2 step 5.
-    const sigma = Math.max(1e-8, Math.min(0.9, (muAff / Math.max(muV, 1e-300)) ** 3));
+    const sigmaRaw = (muAff / Math.max(muV, 1e-300)) ** 3;
+    const sigma = Math.max(1e-8, Math.min(0.9, sigmaRaw));
     const sigmaMu = sigma * muV;
 
     // ── Corrector: centering + Mehrotra second-order correction ──
@@ -158,12 +201,15 @@ export function solveSdp(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveRes
     solveHkmNewtonCorrected(prob, X, S, Sinv, Rd, sigmaMu,
       dXaff, dSaff, alphaPaff, alphaDaff, Lchol, dy, dS, dX, rp);
 
+    const tStep2Start = nowNs();
     const alphaPraw = maxSafePsdStep(X, dX, prob.blocks);
     const alphaDraw = maxSafePsdStep(S, dS, prob.blocks);
+    tStepMs += (nowNs() - tStep2Start) / 1e6;
 
     // Safeguard step: use 0.99995 factor (Mehrotra interior).
     const alphaP = alphaPraw * params.stepFactor;
     const alphaD = alphaDraw * params.stepFactor;
+    const tDirectionMs = (nowNs() - tDirStart) / 1e6 - tStepMs;
 
     // Update iterates.
     for (let b = 0; b < nb; b++) {
@@ -183,6 +229,52 @@ export function solveSdp(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveRes
     if (muV > 0.99 * prevMu) stallCount++;
     else stallCount = 0;
     prevMu = muV;
+
+    let eigMinX = Infinity;
+    let eigMinS = Infinity;
+    for (let b = 0; b < nb; b++) {
+      const nb_b = prob.blocks[b]!.size;
+      const xb = X[b]!;
+      const sb = S[b]!;
+      for (let i = 0; i < nb_b; i++) {
+        const dx = xb[i * nb_b + i]!;
+        const ds = sb[i * nb_b + i]!;
+        if (dx < eigMinX) eigMinX = dx;
+        if (ds < eigMinS) eigMinS = ds;
+      }
+    }
+
+    if (opts.verbose) {
+      const v: VerboseIterLine = {
+        ...line,
+        kind: "sdp-hkm",
+        sigma,
+        sigmaRaw,
+        muAff,
+        alphaPrimal: alphaP,
+        alphaDual: alphaD,
+        alphaPrimalRaw: alphaPraw,
+        alphaDualRaw: alphaDraw,
+        jitterPrimal,
+        jitterDual,
+        jitterGap,
+        bumpsPrimalThisIter: bumpsPrimal - bumpsPSnap,
+        bumpsDualThisIter: bumpsDual - bumpsDSnap,
+        bumpsGapThisIter: bumpsGap - bumpsGSnap,
+        refactorsThisIter: refactors - refactorsSnap,
+        failRow: lastFailRow,
+        schurDiagMin,
+        schurDiagMax,
+        eigMinX,
+        eigMinS,
+        tSchurMs,
+        tFactorMs,
+        tDirectionMs,
+        tStepMs,
+      };
+      opts.verbose(v);
+    }
+
     if (stallCount >= params.stallIterCap) return finalize("numerical-difficulty");
   }
   return finalize("iter-limit");

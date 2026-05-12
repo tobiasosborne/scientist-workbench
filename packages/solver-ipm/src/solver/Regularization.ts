@@ -63,8 +63,11 @@
 // API contract
 // ------------
 // • `factorWith3Way(M, m, Lchol, reg, params, diagnose)` — factor with
-//   adaptive retry. Returns `true` on success (Lchol contains factor);
-//   `false` on permanent failure (all caps exhausted).
+//   adaptive retry. Returns `{ success, lastFailRow }`: `success=true`
+//   means Lchol contains the factor; `lastFailRow` is the Cholesky-
+//   reported row index of the most-recent failed attempt (or null when
+//   the first attempt succeeded). The failRow is surfaced for the
+//   diagnostic trace, not the algorithm.
 // • `makeLpDiagnose(A, m, n)` — diagnose helper for LP path.
 // • `makeSdpDiagnose(blocks, m)` — diagnose helper for SDP path.
 // • Both diagnose helpers pre-compute row norms once and close over them
@@ -195,12 +198,27 @@ export function makeSdpDiagnose(blocks: readonly SdpBlock[], m: number): Diagnos
 export const gapOnlyDiagnose: DiagnoseFn = () => "gap";
 
 /**
+ * Result of a `factorWith3Way` call. `success=true` means `Lchol` carries
+ * the lower-triangular factor of `M + (δ_p + δ_d + δ_g)·I`. `lastFailRow`
+ * is the row index Cholesky reported on its most-recent failure within
+ * this iteration's retry loop, or `null` if the first attempt succeeded
+ * with no bump (the well-conditioned case). Surfaced for the diagnostic
+ * trace — see `VerboseIterLine.failRow` in `Solver.ts`.
+ */
+export interface FactorResult {
+  success: boolean;
+  lastFailRow: number | null;
+}
+
+/**
  * Factor a symmetric `m × m` matrix `M` (row-major) into its Cholesky
  * factor `Lchol`, with adaptive 3-way Tikhonov regularisation.
  *
- * On success, returns `true` with `Lchol` containing the lower-triangular
- * factor of `M + (δ_p + δ_d + δ_g)·I`. On permanent failure (every tier
- * capped without producing a clean factor), returns `false`.
+ * On success, returns `success=true` with `Lchol` containing the
+ * lower-triangular factor of `M + (δ_p + δ_d + δ_g)·I`. On permanent
+ * failure (every tier capped without producing a clean factor), returns
+ * `success=false`. `lastFailRow` carries the row index Cholesky reported
+ * on the most-recent failed attempt (or `null` if none).
  *
  * The retry loop tries up to `params.maxRefactor` factorisations. Each
  * failed factorisation diagnoses the kind of failure (PRIMAL / DUAL /
@@ -217,12 +235,14 @@ export function factorWith3Way(
   reg: RegState,
   params: RegParams,
   diagnose: DiagnoseFn,
-): boolean {
+): FactorResult {
+  let lastFailRow: number | null = null;
   for (let attempt = 0; attempt < params.maxRefactor; attempt++) {
     Lchol.set(M);
     const lift = reg.jitterPrimal + reg.jitterDual + reg.jitterGap;
     const info = choleskyInPlace(Lchol, m, lift);
-    if (info < 0) return true;
+    if (info < 0) return { success: true, lastFailRow };
+    lastFailRow = info;
 
     const kind = diagnose(info);
     if (tryBump(reg, params, kind)) {
@@ -242,10 +262,10 @@ export function factorWith3Way(
         break;
       }
     }
-    if (!bumped) return false;
+    if (!bumped) return { success: false, lastFailRow };
     reg.refactors++;
   }
-  return false;
+  return { success: false, lastFailRow };
 }
 
 /**
