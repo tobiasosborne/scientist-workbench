@@ -93,10 +93,22 @@ Numbered, non-negotiable. Re-read after compaction.
    happy path, record-with-flag for routine non-success, tagged for
    boundary failure. `ToolError` is reserved for *malformed* input.
 
-9. **Beads is the only tracker.** `bd create / update / claim / close`.
-   No TodoWrite, no TaskCreate, no markdown TODO lists. Run `bd ready`
-   at session start; `bd close <id1> <id2> ...` at the end. Never use
-   `bd edit` (it opens $EDITOR and blocks).
+9. **Beads is the only *persistent* tracker.** `bd create / update /
+   claim / close` for anything that should outlive the conversation:
+   features, bugs, epics, decisions, cross-session work. No TodoWrite,
+   no markdown TODO lists. Run `bd ready` at session start; `bd close
+   <id1> <id2> ...` at the end. Never use `bd edit` (it opens $EDITOR
+   and blocks).
+
+   **Exception — `TaskCreate` is permitted for in-session progress
+   tracking** (user-granted 2026-05-12). Use it for the harness-visible
+   checklist of "what I'm doing right now in this conversation": the
+   ordered steps of a single task, sub-items the user wants to see
+   ticked off live. It is ephemeral by design; it does not replace
+   `bd` for anything an agent in a future session needs to find. Rule
+   of thumb: if the work would be filed as an issue, it belongs in
+   beads; if it's a step *inside* claiming/closing such an issue, it
+   can live in `TaskCreate`.
 
    **Multi-device sync.** The Dolt DB is local; the cross-device
    sync vehicle is `.beads/issues.jsonl` (tracked in git). Tracked
