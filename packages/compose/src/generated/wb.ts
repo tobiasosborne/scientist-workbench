@@ -49,6 +49,7 @@ import { def as modPowDef } from "../../../../tools/mod-pow/tool.js";
 import { def as nttDef } from "../../../../tools/ntt/tool.js";
 import { def as optimizeLbfgsProjectedDef } from "../../../../tools/optimize-lbfgs-projected/tool.js";
 import { def as oracleDef } from "../../../../tools/oracle/tool.js";
+import { def as partialTraceDef } from "../../../../tools/partial-trace/tool.js";
 import { def as polyFactorDef } from "../../../../tools/poly-factor/tool.js";
 import { def as polyRootsDef } from "../../../../tools/poly-roots/tool.js";
 import { def as realRootIsolateDef } from "../../../../tools/real-root-isolate/tool.js";
@@ -64,6 +65,7 @@ import { def as sturmSampleDef } from "../../../../tools/sturm-sample/tool.js";
 import { def as sturmSimplifyDef } from "../../../../tools/sturm-simplify/tool.js";
 import { def as sturmTensorDef } from "../../../../tools/sturm-tensor/tool.js";
 import { def as sturmThenDef } from "../../../../tools/sturm-then/tool.js";
+import { def as tensorProductDef } from "../../../../tools/tensor-product/tool.js";
 
 export interface TypedWorkbench extends Workbench {
   algNumArith(input: InputOf<typeof algNumArithDef>, flags?: FlagsArgOf<typeof algNumArithDef>): Promise<OutputOf<typeof algNumArithDef>>;
@@ -93,6 +95,7 @@ export interface TypedWorkbench extends Workbench {
   ntt(input: InputOf<typeof nttDef>, flags?: FlagsArgOf<typeof nttDef>): Promise<OutputOf<typeof nttDef>>;
   optimizeLbfgsProjected(input: InputOf<typeof optimizeLbfgsProjectedDef>, flags?: FlagsArgOf<typeof optimizeLbfgsProjectedDef>): Promise<OutputOf<typeof optimizeLbfgsProjectedDef>>;
   oracle(input: InputOf<typeof oracleDef>, flags?: FlagsArgOf<typeof oracleDef>): Promise<OutputOf<typeof oracleDef>>;
+  partialTrace(input: InputOf<typeof partialTraceDef>, flags?: FlagsArgOf<typeof partialTraceDef>): Promise<OutputOf<typeof partialTraceDef>>;
   polyFactor(input: InputOf<typeof polyFactorDef>, flags?: FlagsArgOf<typeof polyFactorDef>): Promise<OutputOf<typeof polyFactorDef>>;
   polyRoots(input: InputOf<typeof polyRootsDef>, flags?: FlagsArgOf<typeof polyRootsDef>): Promise<OutputOf<typeof polyRootsDef>>;
   realRootIsolate(input: InputOf<typeof realRootIsolateDef>, flags?: FlagsArgOf<typeof realRootIsolateDef>): Promise<OutputOf<typeof realRootIsolateDef>>;
@@ -108,6 +111,7 @@ export interface TypedWorkbench extends Workbench {
   sturmSimplify(input: InputOf<typeof sturmSimplifyDef>, flags?: FlagsArgOf<typeof sturmSimplifyDef>): Promise<OutputOf<typeof sturmSimplifyDef>>;
   sturmTensor(input: InputOf<typeof sturmTensorDef>, flags?: FlagsArgOf<typeof sturmTensorDef>): Promise<OutputOf<typeof sturmTensorDef>>;
   sturmThen(input: InputOf<typeof sturmThenDef>, flags?: FlagsArgOf<typeof sturmThenDef>): Promise<OutputOf<typeof sturmThenDef>>;
+  tensorProduct(input: InputOf<typeof tensorProductDef>, flags?: FlagsArgOf<typeof tensorProductDef>): Promise<OutputOf<typeof tensorProductDef>>;
 }
 
 export function typed(workbench: Workbench): TypedWorkbench {
@@ -202,6 +206,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     oracle(input, flags) {
       return workbench.run("oracle", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof oracleDef>>;
     },
+    partialTrace(input, flags) {
+      return workbench.run("partial-trace", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof partialTraceDef>>;
+    },
     polyFactor(input, flags) {
       return workbench.run("poly-factor", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof polyFactorDef>>;
     },
@@ -247,6 +254,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     sturmThen(input, flags) {
       return workbench.run("sturm-then", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof sturmThenDef>>;
     },
+    tensorProduct(input, flags) {
+      return workbench.run("tensor-product", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof tensorProductDef>>;
+    },
   };
 }
 
@@ -282,6 +292,7 @@ export const defs = {
   ntt: nttDef,
   optimizeLbfgsProjected: optimizeLbfgsProjectedDef,
   oracle: oracleDef,
+  partialTrace: partialTraceDef,
   polyFactor: polyFactorDef,
   polyRoots: polyRootsDef,
   realRootIsolate: realRootIsolateDef,
@@ -297,4 +308,5 @@ export const defs = {
   sturmSimplify: sturmSimplifyDef,
   sturmTensor: sturmTensorDef,
   sturmThen: sturmThenDef,
+  tensorProduct: tensorProductDef,
 } as const;

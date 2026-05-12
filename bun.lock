@@ -119,6 +119,10 @@
       "name": "@workbench/protocol",
       "version": "0.2.0",
     },
+    "packages/qinfo": {
+      "name": "@workbench/qinfo",
+      "version": "0.1.0",
+    },
     "packages/quadrature": {
       "name": "@workbench/quadrature",
       "version": "0.1.0",
@@ -443,6 +447,15 @@
         "@workbench/protocol": "workspace:*",
       },
     },
+    "tools/partial-trace": {
+      "name": "@workbench/tool-partial-trace",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/contract": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+        "@workbench/qinfo": "workspace:*",
+      },
+    },
     "tools/poly-factor": {
       "name": "@workbench/tool-poly-factor",
       "version": "0.1.0",
@@ -583,6 +596,15 @@
         "@workbench/sturm-ir": "workspace:*",
       },
     },
+    "tools/tensor-product": {
+      "name": "@workbench/tool-tensor-product",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/contract": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+        "@workbench/qinfo": "workspace:*",
+      },
+    },
   },
   "packages": {
     "@types/bun": ["@types/bun@1.3.13", "", { "dependencies": { "bun-types": "1.3.13" } }, "sha512-9fqXWk5YIHGGnUau9TEi+qdlTYDAnOj+xLCmSTwXfAIqXr2x4tytJb43E9uCvt09zJURKXwAtkoH4nLQfzeTXw=="],
@@ -618,6 +640,8 @@
     "@workbench/poly-factor": ["@workbench/poly-factor@workspace:packages/poly-factor"],
 
     "@workbench/protocol": ["@workbench/protocol@workspace:packages/protocol"],
+
+    "@workbench/qinfo": ["@workbench/qinfo@workspace:packages/qinfo"],
 
     "@workbench/quadrature": ["@workbench/quadrature@workspace:packages/quadrature"],
 
@@ -689,6 +713,8 @@
 
     "@workbench/tool-oracle": ["@workbench/tool-oracle@workspace:tools/oracle"],
 
+    "@workbench/tool-partial-trace": ["@workbench/tool-partial-trace@workspace:tools/partial-trace"],
+
     "@workbench/tool-poly-factor": ["@workbench/tool-poly-factor@workspace:tools/poly-factor"],
 
     "@workbench/tool-poly-roots": ["@workbench/tool-poly-roots@workspace:tools/poly-roots"],
@@ -718,6 +744,8 @@
     "@workbench/tool-sturm-tensor": ["@workbench/tool-sturm-tensor@workspace:tools/sturm-tensor"],
 
     "@workbench/tool-sturm-then": ["@workbench/tool-sturm-then@workspace:tools/sturm-then"],
+
+    "@workbench/tool-tensor-product": ["@workbench/tool-tensor-product@workspace:tools/tensor-product"],
 
     "bun-types": ["bun-types@1.3.13", "", { "dependencies": { "@types/node": "*" } }, "sha512-QXKeHLlOLqQX9LgYaHJfzdBaV21T63HhFJnvuRCcjZiaUDpbs5ED1MgxbMra71CsryN/1dAoXuJJJwIv/2drVA=="],
 
