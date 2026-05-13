@@ -1,0 +1,1 @@
+{"fields":{"input":{"fields":{"rho":{"fields":{"im":{"items":[],"kind":"list"},"re":{"items":[],"kind":"list"}},"kind":"record"}},"kind":"record"},"output":{"kind":"tagged","payload":{"fields":{"m":{"kind":"integer","value":"0"},"n":{"kind":"integer","value":"0"}},"kind":"record"},"tag":"purity/degenerate-shape"}},"kind":"record"}

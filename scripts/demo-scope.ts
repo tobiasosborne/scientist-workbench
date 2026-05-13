@@ -1335,6 +1335,80 @@ if (tnDiff2.kind === "record") {
 }
 
 // -----------------------------------------------------------------------------
+// 24. purity ∘ partial-trace — entanglement as purity loss under partial trace
+// -----------------------------------------------------------------------------
+//
+// Purity γ(ρ) = tr(ρ²) is unity exactly on the rank-1 pure states and 1/d on
+// the maximally mixed state I/d. For a bipartite pure state |Ψ⟩_AB the marginal
+// ρ_A = tr_B(|Ψ⟩⟨Ψ|) is pure iff |Ψ⟩ is a *product* state — equivalently
+// (Schmidt 1907; entanglement-monotone literature), the reduction's purity
+// drops *below* 1 by exactly the amount of entanglement between A and B.
+//
+// The Bell state |Φ+⟩⟨Φ+| is maximally entangled on two qubits: γ(|Φ+⟩⟨Φ+|)
+// = 1 (rank-1 pure), but γ(tr_B |Φ+⟩⟨Φ+|) = γ(I/2) = 1/2 (maximally mixed
+// marginal). The drop 1 → 1/2 *is* the entanglement signature, parallel to
+// the Peres witness in #22 but on the state side rather than the operator
+// side.
+
+console.log("\n" + "=".repeat(60));
+console.log("  24. purity ∘ partial-trace — entanglement as purity loss");
+console.log("=".repeat(60));
+console.log(
+  "γ(|Φ+⟩⟨Φ+|) = 1 (Bell state pure);\n" +
+  "γ(tr_B |Φ+⟩⟨Φ+|) = γ(I/2) = 1/2 (maximally mixed marginal).\n" +
+  "The drop is the entanglement signature.",
+);
+const zeroIm4 = list([
+  list([0, 0, 0, 0].map(float64FromNumber)),
+  list([0, 0, 0, 0].map(float64FromNumber)),
+  list([0, 0, 0, 0].map(float64FromNumber)),
+  list([0, 0, 0, 0].map(float64FromNumber)),
+]);
+const bellRho = list([
+  list([0.5, 0, 0, 0.5].map(float64FromNumber)),
+  list([0, 0, 0, 0].map(float64FromNumber)),
+  list([0, 0, 0, 0].map(float64FromNumber)),
+  list([0.5, 0, 0, 0.5].map(float64FromNumber)),
+]);
+const purityBell = await wb.purity({
+  kind: "record",
+  fields: { rho: record({ re: bellRho, im: zeroIm4 }) },
+});
+if (purityBell.kind === "record") {
+  const v = purityBell.fields["value"];
+  if (v?.kind === "float64") {
+    console.log(`  γ(|Φ+⟩⟨Φ+|)        = ${float64ToNumber(v as never).toFixed(4)}  (pure rank-1 — γ = 1)`);
+  }
+}
+const ptBellRho = await wb.partialTrace({
+  kind: "record",
+  fields: {
+    M: bellRho,
+    dims: list([int(2n), int(2n)]),
+    trace_out: list([int(1n)]),
+  },
+});
+if (ptBellRho.kind === "record") {
+  const reduced = ptBellRho.fields["reduced"];
+  if (reduced?.kind === "list") {
+    const zeroIm2 = list([
+      list([0, 0].map(float64FromNumber)),
+      list([0, 0].map(float64FromNumber)),
+    ]);
+    const purityRed = await wb.purity({
+      kind: "record",
+      fields: { rho: record({ re: reduced, im: zeroIm2 }) },
+    });
+    if (purityRed.kind === "record") {
+      const v = purityRed.fields["value"];
+      if (v?.kind === "float64") {
+        console.log(`  γ(tr_B |Φ+⟩⟨Φ+|)   = ${float64ToNumber(v as never).toFixed(4)}  (maximally mixed — γ = 1/d = 0.5)`);
+      }
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
 // Bonus — content-addressing
 // -----------------------------------------------------------------------------
 

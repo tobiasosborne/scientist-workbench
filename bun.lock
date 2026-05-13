@@ -505,6 +505,14 @@
         "@workbench/real-roots": "workspace:*",
       },
     },
+    "tools/purity": {
+      "name": "@workbench/tool-purity",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/contract": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+      },
+    },
     "tools/real-root-isolate": {
       "name": "@workbench/tool-real-root-isolate",
       "version": "0.1.0",
@@ -760,6 +768,8 @@
     "@workbench/tool-poly-factor": ["@workbench/tool-poly-factor@workspace:tools/poly-factor"],
 
     "@workbench/tool-poly-roots": ["@workbench/tool-poly-roots@workspace:tools/poly-roots"],
+
+    "@workbench/tool-purity": ["@workbench/tool-purity@workspace:tools/purity"],
 
     "@workbench/tool-real-root-isolate": ["@workbench/tool-real-root-isolate@workspace:tools/real-root-isolate"],
 
