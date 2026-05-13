@@ -254,6 +254,15 @@
         "@workbench/protocol": "workspace:*",
       },
     },
+    "tools/fidelity": {
+      "name": "@workbench/tool-fidelity",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/contract": "workspace:*",
+        "@workbench/linalg-core": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+      },
+    },
     "tools/groebner-basis": {
       "name": "@workbench/tool-groebner-basis",
       "version": "0.1.0",
@@ -725,6 +734,8 @@
     "@workbench/tool-entropy-source": ["@workbench/tool-entropy-source@workspace:tools/entropy-source"],
 
     "@workbench/tool-expr-parse": ["@workbench/tool-expr-parse@workspace:tools/expr-parse"],
+
+    "@workbench/tool-fidelity": ["@workbench/tool-fidelity@workspace:tools/fidelity"],
 
     "@workbench/tool-groebner-basis": ["@workbench/tool-groebner-basis@workspace:tools/groebner-basis"],
 

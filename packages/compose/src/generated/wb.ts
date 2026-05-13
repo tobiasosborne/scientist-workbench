@@ -29,6 +29,7 @@ import { def as casVerifyDef } from "../../../../tools/cas-verify/tool.js";
 import { def as choiIsoDef } from "../../../../tools/choi-iso/tool.js";
 import { def as entropySourceDef } from "../../../../tools/entropy-source/tool.js";
 import { def as exprParseDef } from "../../../../tools/expr-parse/tool.js";
+import { def as fidelityDef } from "../../../../tools/fidelity/tool.js";
 import { def as groebnerBasisDef } from "../../../../tools/groebner-basis/tool.js";
 import { def as hypergeometricPfqDef } from "../../../../tools/hypergeometric-pfq/tool.js";
 import { def as integrate1dDef } from "../../../../tools/integrate-1d/tool.js";
@@ -81,6 +82,7 @@ export interface TypedWorkbench extends Workbench {
   choiIso(input: InputOf<typeof choiIsoDef>, flags?: FlagsArgOf<typeof choiIsoDef>): Promise<OutputOf<typeof choiIsoDef>>;
   entropySource(input: InputOf<typeof entropySourceDef>, flags?: FlagsArgOf<typeof entropySourceDef>): Promise<OutputOf<typeof entropySourceDef>>;
   exprParse(input: InputOf<typeof exprParseDef>, flags?: FlagsArgOf<typeof exprParseDef>): Promise<OutputOf<typeof exprParseDef>>;
+  fidelity(input: InputOf<typeof fidelityDef>, flags?: FlagsArgOf<typeof fidelityDef>): Promise<OutputOf<typeof fidelityDef>>;
   groebnerBasis(input: InputOf<typeof groebnerBasisDef>, flags?: FlagsArgOf<typeof groebnerBasisDef>): Promise<OutputOf<typeof groebnerBasisDef>>;
   hypergeometricPfq(input: InputOf<typeof hypergeometricPfqDef>, flags?: FlagsArgOf<typeof hypergeometricPfqDef>): Promise<OutputOf<typeof hypergeometricPfqDef>>;
   integrate1d(input: InputOf<typeof integrate1dDef>, flags?: FlagsArgOf<typeof integrate1dDef>): Promise<OutputOf<typeof integrate1dDef>>;
@@ -157,6 +159,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     },
     exprParse(input, flags) {
       return workbench.run("expr-parse", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof exprParseDef>>;
+    },
+    fidelity(input, flags) {
+      return workbench.run("fidelity", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof fidelityDef>>;
     },
     groebnerBasis(input, flags) {
       return workbench.run("groebner-basis", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof groebnerBasisDef>>;
@@ -302,6 +307,7 @@ export const defs = {
   choiIso: choiIsoDef,
   entropySource: entropySourceDef,
   exprParse: exprParseDef,
+  fidelity: fidelityDef,
   groebnerBasis: groebnerBasisDef,
   hypergeometricPfq: hypergeometricPfqDef,
   integrate1d: integrate1dDef,

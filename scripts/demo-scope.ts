@@ -1467,6 +1467,68 @@ console.log(`Triangle:  D(a, b) = ${dAB.toFixed(4)}, D(b, c) = ${dBC.toFixed(4)}
 console.log(`           D(a, b) + D(b, c) = ${(dAB + dBC).toFixed(4)}  ≥  D(a, c) = ${dAC.toFixed(4)}  (collinear ⇒ saturated)`);
 
 // -----------------------------------------------------------------------------
+// 26. fidelity ↔ trace-distance — the Fuchs–van de Graaf inequality, numerical
+// -----------------------------------------------------------------------------
+//
+// Both deliverables of the qinfo v0.2 state-distance pair ship in the same
+// session, so the natural demo is the inequality that ties them:
+//
+//     1 − √F(ρ, σ)   ≤   D(ρ, σ)   ≤   √(1 − F(ρ, σ))           (Fuchs–vdG)
+//
+// The upper bound is saturated when both states are pure (then
+// F = |⟨ψ|φ⟩|² and D = √(1−F) exactly). The lower bound is generally
+// loose. We probe two regimes — pure-vs-max-mixed (illustrating
+// non-saturated bounds far apart) and a generic mixed pair (where the
+// upper bound is nearly tight) — printing all four quantities side-by-side.
+
+console.log("\n" + "=".repeat(60));
+console.log("  26. fidelity ↔ trace-distance — the Fuchs–van de Graaf inequality");
+console.log("=".repeat(60));
+
+const zeroIm2x2_FvG = list([
+  list([0, 0].map(float64FromNumber)),
+  list([0, 0].map(float64FromNumber)),
+]);
+const dfPair = async (rho: number[][], sigma: number[][]) => {
+  const wireRho   = record({ re: list(rho.map((r)   => list(r.map(float64FromNumber)))), im: zeroIm2x2_FvG });
+  const wireSigma = record({ re: list(sigma.map((r) => list(r.map(float64FromNumber)))), im: zeroIm2x2_FvG });
+  const dOut = await wb.traceDistance({
+    kind: "record",
+    fields: { rho: wireRho, sigma: wireSigma },
+  });
+  const fOut = await wb.fidelity({
+    kind: "record",
+    fields: { rho: wireRho, sigma: wireSigma },
+  });
+  if (dOut.kind === "record" && fOut.kind === "record") {
+    const dV = dOut.fields["value"];
+    const fV = fOut.fields["value"];
+    if (dV?.kind === "float64" && fV?.kind === "float64") {
+      return { D: float64ToNumber(dV as never), F: float64ToNumber(fV as never) };
+    }
+  }
+  throw new Error("unexpected output kind");
+};
+
+console.log("Probe 1: ρ = |0⟩⟨0|, σ = I/2 (pure vs max-mixed — wide gap between bounds)");
+{
+  const { D, F } = await dfPair([[1, 0], [0, 0]], [[0.5, 0], [0, 0.5]]);
+  const lo = 1 - Math.sqrt(F);
+  const hi = Math.sqrt(1 - F);
+  console.log(`  D = ${D.toFixed(4)}, F = ${F.toFixed(4)}, √F = ${Math.sqrt(F).toFixed(4)}`);
+  console.log(`  Fuchs–vdG: 1 − √F = ${lo.toFixed(4)}  ≤  D = ${D.toFixed(4)}  ≤  √(1 − F) = ${hi.toFixed(4)}`);
+}
+
+console.log("\nProbe 2: ρ = diag(0.7, 0.3), σ = [[0.4, 0.1],[0.1, 0.6]] (generic mixed pair)");
+{
+  const { D, F } = await dfPair([[0.7, 0], [0, 0.3]], [[0.4, 0.1], [0.1, 0.6]]);
+  const lo = 1 - Math.sqrt(F);
+  const hi = Math.sqrt(1 - F);
+  console.log(`  D = ${D.toFixed(4)}, F = ${F.toFixed(4)}, √F = ${Math.sqrt(F).toFixed(4)}`);
+  console.log(`  Fuchs–vdG: 1 − √F = ${lo.toFixed(4)}  ≤  D = ${D.toFixed(4)}  ≤  √(1 − F) = ${hi.toFixed(4)}`);
+}
+
+// -----------------------------------------------------------------------------
 // Bonus — content-addressing
 // -----------------------------------------------------------------------------
 
