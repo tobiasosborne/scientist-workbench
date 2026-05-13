@@ -59,6 +59,8 @@ Spec & implementation: `packages/protocol/src/canonical.ts`. Round-trip property
 
 **Foreign-pass-through invariant.** Tools touch only the kinds they declare. Subterms outside a tool's scope must round-trip verbatim, either passed through or wrapped in a `tagged` value with the tool's name in the tag (e.g. `tagged "cas-simplify/out-of-scope"`). PRD §2.3.
 
+**Complex matrices on the wire** (ADR-0035). The canonical wire shape for a complex matrix — input or output of any `linalg-*-complex` tool — is `record{re: list<list<float64>>, im: list<list<float64>>}` with both fields **required** and shape-matched. A Hermitian matrix with known-zero imaginary part still passes `im: [[0, …], …]` explicitly. Per-cell complex (`list<list<record{re, im}>>`) is rejected: bulk numerics travel as single-kind `list<…>` leaves, not nested records. The optional-`im` `Matrix` shape used inside `@workbench/qinfo` for its index-only operations (`tensor-product`, `partial-trace`, `partial-transpose`, `choi-iso`) is a *substrate* convention; the *wire* requires both parts.
+
 ---
 
 ## Tool invocation
