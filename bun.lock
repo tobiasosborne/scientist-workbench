@@ -640,6 +640,15 @@
         "@workbench/qinfo": "workspace:*",
       },
     },
+    "tools/trace-distance": {
+      "name": "@workbench/tool-trace-distance",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/contract": "workspace:*",
+        "@workbench/linalg-core": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+      },
+    },
     "tools/trace-norm": {
       "name": "@workbench/tool-trace-norm",
       "version": "0.1.0",
@@ -798,6 +807,8 @@
     "@workbench/tool-sturm-then": ["@workbench/tool-sturm-then@workspace:tools/sturm-then"],
 
     "@workbench/tool-tensor-product": ["@workbench/tool-tensor-product@workspace:tools/tensor-product"],
+
+    "@workbench/tool-trace-distance": ["@workbench/tool-trace-distance@workspace:tools/trace-distance"],
 
     "@workbench/tool-trace-norm": ["@workbench/tool-trace-norm@workspace:tools/trace-norm"],
 

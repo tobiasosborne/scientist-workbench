@@ -70,6 +70,7 @@ import { def as sturmSimplifyDef } from "../../../../tools/sturm-simplify/tool.j
 import { def as sturmTensorDef } from "../../../../tools/sturm-tensor/tool.js";
 import { def as sturmThenDef } from "../../../../tools/sturm-then/tool.js";
 import { def as tensorProductDef } from "../../../../tools/tensor-product/tool.js";
+import { def as traceDistanceDef } from "../../../../tools/trace-distance/tool.js";
 import { def as traceNormDef } from "../../../../tools/trace-norm/tool.js";
 
 export interface TypedWorkbench extends Workbench {
@@ -121,6 +122,7 @@ export interface TypedWorkbench extends Workbench {
   sturmTensor(input: InputOf<typeof sturmTensorDef>, flags?: FlagsArgOf<typeof sturmTensorDef>): Promise<OutputOf<typeof sturmTensorDef>>;
   sturmThen(input: InputOf<typeof sturmThenDef>, flags?: FlagsArgOf<typeof sturmThenDef>): Promise<OutputOf<typeof sturmThenDef>>;
   tensorProduct(input: InputOf<typeof tensorProductDef>, flags?: FlagsArgOf<typeof tensorProductDef>): Promise<OutputOf<typeof tensorProductDef>>;
+  traceDistance(input: InputOf<typeof traceDistanceDef>, flags?: FlagsArgOf<typeof traceDistanceDef>): Promise<OutputOf<typeof traceDistanceDef>>;
   traceNorm(input: InputOf<typeof traceNormDef>, flags?: FlagsArgOf<typeof traceNormDef>): Promise<OutputOf<typeof traceNormDef>>;
 }
 
@@ -279,6 +281,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     tensorProduct(input, flags) {
       return workbench.run("tensor-product", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof tensorProductDef>>;
     },
+    traceDistance(input, flags) {
+      return workbench.run("trace-distance", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof traceDistanceDef>>;
+    },
     traceNorm(input, flags) {
       return workbench.run("trace-norm", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof traceNormDef>>;
     },
@@ -338,5 +343,6 @@ export const defs = {
   sturmTensor: sturmTensorDef,
   sturmThen: sturmThenDef,
   tensorProduct: tensorProductDef,
+  traceDistance: traceDistanceDef,
   traceNorm: traceNormDef,
 } as const;

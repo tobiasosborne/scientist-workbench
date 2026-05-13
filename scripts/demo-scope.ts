@@ -1409,6 +1409,64 @@ if (ptBellRho.kind === "record") {
 }
 
 // -----------------------------------------------------------------------------
+// 25. trace-distance — Helstrom + triangle inequality (with saturation)
+// -----------------------------------------------------------------------------
+//
+// `trace-distance` packages the demo-#23 manual composition (subtract,
+// trace-norm, halve) into one tool call: D(ρ, σ) = ½‖ρ − σ‖₁. Two
+// illustrative claims this demo verifies:
+//
+// 1. **Helstrom orthogonal-pure-state saturation.** D(|0⟩⟨0|, |1⟩⟨1|) = 1
+//    ⇒ P_distinguish = (1 + 1)/2 = 1. Perfect distinguishability.
+//
+// 2. **Triangle inequality with saturation.** Pick three diagonal density
+//    operators with Bloch vectors collinear in 1D:
+//        ρ_a = diag(0.8, 0.2)  r = +0.6
+//        ρ_b = diag(0.5, 0.5)  r =  0.0
+//        ρ_c = diag(0.2, 0.8)  r = -0.6
+//    All three on a straight Bloch-vector line. The trace distances are
+//    Euclidean half-distances:
+//        D(a, b) = 0.3,  D(b, c) = 0.3,  D(a, c) = 0.6
+//    so D(a, c) = D(a, b) + D(b, c) — the triangle inequality is
+//    *saturated*, exactly as it should be for three collinear states on
+//    the Bloch line.
+
+console.log("\n" + "=".repeat(60));
+console.log("  25. trace-distance — Helstrom + triangle inequality (saturated)");
+console.log("=".repeat(60));
+
+const zeroIm2x2 = list([
+  list([0, 0].map(float64FromNumber)),
+  list([0, 0].map(float64FromNumber)),
+]);
+const td = async (rho: number[][], sigma: number[][]) => {
+  const out = await wb.traceDistance({
+    kind: "record",
+    fields: {
+      rho:   record({ re: list(rho.map((r) => list(r.map(float64FromNumber)))),   im: zeroIm2x2 }),
+      sigma: record({ re: list(sigma.map((r) => list(r.map(float64FromNumber)))), im: zeroIm2x2 }),
+    },
+  });
+  if (out.kind === "record") {
+    const v = out.fields["value"];
+    if (v?.kind === "float64") return float64ToNumber(v as never);
+  }
+  throw new Error("unexpected output kind");
+};
+
+const dPure = await td([[1, 0], [0, 0]], [[0, 0], [0, 1]]);
+console.log(`Helstrom: D(|0⟩⟨0|, |1⟩⟨1|) = ${dPure.toFixed(4)} ⇒ P_distinguish = ${((1 + dPure) / 2).toFixed(4)}`);
+
+const rhoA: number[][] = [[0.8, 0], [0, 0.2]];
+const rhoB: number[][] = [[0.5, 0], [0, 0.5]];
+const rhoC: number[][] = [[0.2, 0], [0, 0.8]];
+const dAB = await td(rhoA, rhoB);
+const dBC = await td(rhoB, rhoC);
+const dAC = await td(rhoA, rhoC);
+console.log(`Triangle:  D(a, b) = ${dAB.toFixed(4)}, D(b, c) = ${dBC.toFixed(4)}, D(a, c) = ${dAC.toFixed(4)}`);
+console.log(`           D(a, b) + D(b, c) = ${(dAB + dBC).toFixed(4)}  ≥  D(a, c) = ${dAC.toFixed(4)}  (collinear ⇒ saturated)`);
+
+// -----------------------------------------------------------------------------
 // Bonus — content-addressing
 // -----------------------------------------------------------------------------
 
