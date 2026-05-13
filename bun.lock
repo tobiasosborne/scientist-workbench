@@ -632,6 +632,15 @@
         "@workbench/qinfo": "workspace:*",
       },
     },
+    "tools/trace-norm": {
+      "name": "@workbench/tool-trace-norm",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/contract": "workspace:*",
+        "@workbench/linalg-core": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+      },
+    },
   },
   "packages": {
     "@types/bun": ["@types/bun@1.3.13", "", { "dependencies": { "bun-types": "1.3.13" } }, "sha512-9fqXWk5YIHGGnUau9TEi+qdlTYDAnOj+xLCmSTwXfAIqXr2x4tytJb43E9uCvt09zJURKXwAtkoH4nLQfzeTXw=="],
@@ -779,6 +788,8 @@
     "@workbench/tool-sturm-then": ["@workbench/tool-sturm-then@workspace:tools/sturm-then"],
 
     "@workbench/tool-tensor-product": ["@workbench/tool-tensor-product@workspace:tools/tensor-product"],
+
+    "@workbench/tool-trace-norm": ["@workbench/tool-trace-norm@workspace:tools/trace-norm"],
 
     "bun-types": ["bun-types@1.3.13", "", { "dependencies": { "@types/node": "*" } }, "sha512-QXKeHLlOLqQX9LgYaHJfzdBaV21T63HhFJnvuRCcjZiaUDpbs5ED1MgxbMra71CsryN/1dAoXuJJJwIv/2drVA=="],
 

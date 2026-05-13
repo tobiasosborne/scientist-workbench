@@ -1262,6 +1262,79 @@ if (ptBell.kind === "record") {
 }
 
 // -----------------------------------------------------------------------------
+// 23. trace-norm — Helstrom trace distance between two density operators
+// -----------------------------------------------------------------------------
+//
+// Trace distance T(ρ, σ) = ½ · ‖ρ − σ‖₁ is the operationally-meaningful
+// distance between density operators: the optimal probability of
+// distinguishing them by a measurement is (1 + T)/2 (Helstrom 1969).
+// Two orthogonal pure states ρ = |0⟩⟨0| and σ = |1⟩⟨1| have T = 1 — they
+// are *perfectly* distinguishable; the trace norm of their difference is
+// diag(1, −1) whose Schatten-1 norm = |1| + |−1| = 2.
+//
+// One subtraction + one trace-norm call. ADR-0035 phase 1 (the complex
+// eigh substrate) makes this two lines instead of fifty lines of
+// hand-rolled diagonalisation per session.
+
+console.log("\n" + "=".repeat(60));
+console.log("  23. trace-norm — Helstrom trace distance between density operators");
+console.log("=".repeat(60));
+console.log(
+  "T(|0⟩⟨0|, |1⟩⟨1|) = ½ ‖diag(1, −1)‖₁ = 1 (perfectly distinguishable);\n" +
+  "T(|0⟩⟨0|, I/2)    = ½ ‖diag(½, −½)‖₁ = ½ (Bloch-vector half-distance).",
+);
+const tnDiff1 = await wb.traceNorm({
+  kind: "record",
+  fields: {
+    M: {
+      kind: "record",
+      fields: {
+        re: list([
+          list([1, 0].map(float64FromNumber)),
+          list([0, -1].map(float64FromNumber)),
+        ]),
+        im: list([
+          list([0, 0].map(float64FromNumber)),
+          list([0, 0].map(float64FromNumber)),
+        ]),
+      },
+    },
+  },
+});
+if (tnDiff1.kind === "record") {
+  const v = tnDiff1.fields["value"];
+  if (v?.kind === "float64") {
+    const half = float64ToNumber(v as never) / 2;
+    console.log(`  ‖|0⟩⟨0| − |1⟩⟨1|‖₁ = ${float64ToNumber(v as never).toFixed(4)};  T = ${half.toFixed(4)}`);
+  }
+}
+const tnDiff2 = await wb.traceNorm({
+  kind: "record",
+  fields: {
+    M: {
+      kind: "record",
+      fields: {
+        re: list([
+          list([0.5, 0].map(float64FromNumber)),
+          list([0, -0.5].map(float64FromNumber)),
+        ]),
+        im: list([
+          list([0, 0].map(float64FromNumber)),
+          list([0, 0].map(float64FromNumber)),
+        ]),
+      },
+    },
+  },
+});
+if (tnDiff2.kind === "record") {
+  const v = tnDiff2.fields["value"];
+  if (v?.kind === "float64") {
+    const half = float64ToNumber(v as never) / 2;
+    console.log(`  ‖|0⟩⟨0| − I/2‖₁    = ${float64ToNumber(v as never).toFixed(4)};  T = ${half.toFixed(4)}`);
+  }
+}
+
+// -----------------------------------------------------------------------------
 // Bonus — content-addressing
 // -----------------------------------------------------------------------------
 
