@@ -324,6 +324,15 @@
         "@workbench/protocol": "workspace:*",
       },
     },
+    "tools/linalg-eigh-complex": {
+      "name": "@workbench/tool-linalg-eigh-complex",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/contract": "workspace:*",
+        "@workbench/linalg-core": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+      },
+    },
     "tools/linalg-qr": {
       "name": "@workbench/tool-linalg-qr",
       "version": "0.1.0",
@@ -704,6 +713,8 @@
     "@workbench/tool-integrate-ode-symplectic": ["@workbench/tool-integrate-ode-symplectic@workspace:tools/integrate-ode-symplectic"],
 
     "@workbench/tool-linalg-eigh": ["@workbench/tool-linalg-eigh@workspace:tools/linalg-eigh"],
+
+    "@workbench/tool-linalg-eigh-complex": ["@workbench/tool-linalg-eigh-complex@workspace:tools/linalg-eigh-complex"],
 
     "@workbench/tool-linalg-qr": ["@workbench/tool-linalg-qr@workspace:tools/linalg-qr"],
 

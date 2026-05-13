@@ -36,6 +36,7 @@ import { def as integrateOdeIvpDef } from "../../../../tools/integrate-ode-ivp/t
 import { def as integrateOdeStiffDef } from "../../../../tools/integrate-ode-stiff/tool.js";
 import { def as integrateOdeSymplecticDef } from "../../../../tools/integrate-ode-symplectic/tool.js";
 import { def as linalgEighDef } from "../../../../tools/linalg-eigh/tool.js";
+import { def as linalgEighComplexDef } from "../../../../tools/linalg-eigh-complex/tool.js";
 import { def as linalgQrDef } from "../../../../tools/linalg-qr/tool.js";
 import { def as linalgSolveDef } from "../../../../tools/linalg-solve/tool.js";
 import { def as linalgSvdDef } from "../../../../tools/linalg-svd/tool.js";
@@ -84,6 +85,7 @@ export interface TypedWorkbench extends Workbench {
   integrateOdeStiff(input: InputOf<typeof integrateOdeStiffDef>, flags?: FlagsArgOf<typeof integrateOdeStiffDef>): Promise<OutputOf<typeof integrateOdeStiffDef>>;
   integrateOdeSymplectic(input: InputOf<typeof integrateOdeSymplecticDef>, flags?: FlagsArgOf<typeof integrateOdeSymplecticDef>): Promise<OutputOf<typeof integrateOdeSymplecticDef>>;
   linalgEigh(input: InputOf<typeof linalgEighDef>, flags?: FlagsArgOf<typeof linalgEighDef>): Promise<OutputOf<typeof linalgEighDef>>;
+  linalgEighComplex(input: InputOf<typeof linalgEighComplexDef>, flags?: FlagsArgOf<typeof linalgEighComplexDef>): Promise<OutputOf<typeof linalgEighComplexDef>>;
   linalgQr(input: InputOf<typeof linalgQrDef>, flags?: FlagsArgOf<typeof linalgQrDef>): Promise<OutputOf<typeof linalgQrDef>>;
   linalgSolve(input: InputOf<typeof linalgSolveDef>, flags?: FlagsArgOf<typeof linalgSolveDef>): Promise<OutputOf<typeof linalgSolveDef>>;
   linalgSvd(input: InputOf<typeof linalgSvdDef>, flags?: FlagsArgOf<typeof linalgSvdDef>): Promise<OutputOf<typeof linalgSvdDef>>;
@@ -170,6 +172,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     },
     linalgEigh(input, flags) {
       return workbench.run("linalg-eigh", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof linalgEighDef>>;
+    },
+    linalgEighComplex(input, flags) {
+      return workbench.run("linalg-eigh-complex", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof linalgEighComplexDef>>;
     },
     linalgQr(input, flags) {
       return workbench.run("linalg-qr", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof linalgQrDef>>;
@@ -289,6 +294,7 @@ export const defs = {
   integrateOdeStiff: integrateOdeStiffDef,
   integrateOdeSymplectic: integrateOdeSymplecticDef,
   linalgEigh: linalgEighDef,
+  linalgEighComplex: linalgEighComplexDef,
   linalgQr: linalgQrDef,
   linalgSolve: linalgSolveDef,
   linalgSvd: linalgSvdDef,
