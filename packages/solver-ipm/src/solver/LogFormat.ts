@@ -65,6 +65,7 @@ function formatTime(t: number): string {
  *   τ,κ       — HSDE homogenization scalars (HSDE kinds only)
  *   gFeas     — |r_g| HSDE gap-feasibility residual (HSDE kinds only)
  *   prSt      — PRSTATUS, → +1 optimal / → −1 cert. branch (HSDE kinds only)
+ *   nitref    — ECOS/SDPT3-style IR counts for the three HSDE Schur solves
  *   t=Δms     — phase timings: S=Schur F=Factor D=Direction ST=Step
  */
 export function formatVerboseLine(v: VerboseIterLine): string {
@@ -93,6 +94,7 @@ export function formatVerboseLine(v: VerboseIterLine): string {
     parts.push(`κ=${sci(v.kappa, 2)}`);
     parts.push(`gFeas=${sci(v.gfeas, 2)}`);
     parts.push(`prSt=${num(v.prstatus, 3)}`);
+    parts.push(`nitref=(${v.nitref1},${v.nitref2},${v.nitref3})`);
   }
   parts.push(
     `t=${v.timeSec.toFixed(2)}s` +

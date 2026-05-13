@@ -340,7 +340,7 @@ NT can't tell infeasibility from "S leaves the cone after 2 iters").
 
 ### Decision 8 — Verbose trace schema extension
 
-`VerboseIterLine` in `Solver.ts` gains four fields:
+`VerboseIterLine` in `Solver.ts` gains the HSDE scalar fields:
 
 ```typescript
 tau: number;       // homogenization scalar (NaN for non-HSDE kinds)
@@ -349,20 +349,36 @@ gfeas: number;     // |r_g| (NaN for non-HSDE kinds)
 prstatus: number;  // (bᵀy − cᵀx) / max(‖b‖, ‖c‖, 1) (NaN for non-HSDE)
 ```
 
+Phase 5 Tier 0 adds ECOS/SDPT3-style iterative-refinement counters:
+
+```typescript
+nitref1: number;   // data-direction Schur back-substitution
+nitref2: number;   // affine-direction Schur back-substitution
+nitref3: number;   // combined-direction Schur back-substitution
+```
+
+The counters are `0` for HSDE traces until Tier 1 wires the IR helper,
+and `NaN` for non-HSDE traces. They exist before the algorithm change
+so the diagnostic pipeline can prove where refinement fires.
+
 The `kind` discriminator extends:
 
 ```typescript
-kind: "lp" | "sdp-nt" | "sdp-aho" | "sdp-hkm" | "lp-hsde" | "sdp-hsde-nt";
+kind:
+  | "lp" | "sdp-nt" | "sdp-aho" | "sdp-hkm"
+  | "lp-hsde" | "sdp-hsde-nt"
+  | "mosek";
 ```
 
 JSONL stability: NaN-for-inapplicable is preserved (JSON
 serialises as `null`). The diff harness `scripts/trace-diff.ts`
 treats `null` as "missing" and already handles arbitrary fields —
 no harness changes needed. `scripts/copt-log-to-jsonl.ts` (LP
-COPT logs) leaves these fields `null` since COPT is not HSDE; a
-new `scripts/mosek-log-to-jsonl.ts` will populate them from
-Mosek's iter trace (out of scope for Phase 0; lands with Phase 2's
-trace-diff infrastructure).
+COPT logs) leaves these fields `null` since COPT is not HSDE.
+`scripts/mosek-log-to-jsonl.ts` parses Mosek's
+`ITE PFEAS DFEAS GFEAS PRSTATUS POBJ DOBJ MU TIME` table into the
+same schema, populating `kind: "mosek"`, `gfeas`, and `prstatus`
+directly while leaving TS-internal fields `null`.
 
 ### Decision 9 — Determinism tier unchanged: `numerical: true` (ADR-0015)
 

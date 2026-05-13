@@ -7,20 +7,17 @@
 // tagged refusal". This is the "resolved" branch.
 
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
 import { solveHsdeLp, lpFromCanonical, type CanonicalLp } from "../src/index.js";
+import { loadSuite } from "./corpus.js";
 
-const corpus = JSON.parse(
-  readFileSync(
-    "/home/tobias/Projects/scientist-workbench-corpus/benchmarks/lp-netlib/golden/inputs.json",
-    "utf-8",
-  ),
-);
-const cases: { id: string; input: CanonicalLp }[] = corpus.cases;
-const brandy = cases.find((c) => c.id === "brandy")!;
+const suite = loadSuite<CanonicalLp>("lp-netlib");
+const brandy = suite?.cases.find((c) => c.id === "brandy") ?? null;
 
 describe("brandy NETLIB LP via HSDE", () => {
   test("solves to optimality near 1518.5099 (legacy path numerical-errors here)", () => {
+    if (brandy === null) {
+      throw new Error("lp-netlib corpus missing; set WORKBENCH_CORPUS or place scientist-workbench-corpus alongside the workbench");
+    }
     const res = solveHsdeLp(lpFromCanonical(brandy.input), {
       params: { iterLimit: 300 },
     });

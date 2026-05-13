@@ -128,6 +128,9 @@ describe("HSDE LP — verbose trace", () => {
       expect(Number.isFinite(l.kappa)).toBe(true);
       expect(Number.isFinite(l.gfeas)).toBe(true);
       expect(Number.isFinite(l.prstatus)).toBe(true);
+      expect(l.nitref1).toBe(0);
+      expect(l.nitref2).toBe(0);
+      expect(l.nitref3).toBe(0);
       // Non-HSDE eigMin fields should be NaN
       expect(Number.isNaN(l.eigMinX)).toBe(true);
       expect(Number.isNaN(l.eigMinS)).toBe(true);

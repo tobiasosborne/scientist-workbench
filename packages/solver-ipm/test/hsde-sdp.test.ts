@@ -66,12 +66,14 @@ describe("HSDE SDP NT — invariants", () => {
     let sawHsdeKind = false;
     let sawFiniteTauKappa = false;
     let sawEigMin = false;
+    let sawZeroNitref = false;
     const res = solveHsdeSdpNt(prob, {
       verbose: (l) => {
         count++;
         if (l.kind === "sdp-hsde-nt") sawHsdeKind = true;
         if (Number.isFinite(l.tau) && Number.isFinite(l.kappa)) sawFiniteTauKappa = true;
         if (Number.isFinite(l.eigMinX) && Number.isFinite(l.eigMinS)) sawEigMin = true;
+        if (l.nitref1 === 0 && l.nitref2 === 0 && l.nitref3 === 0) sawZeroNitref = true;
       },
     });
     expect(res.status).toBe("optimal");
@@ -79,6 +81,7 @@ describe("HSDE SDP NT — invariants", () => {
     expect(sawHsdeKind).toBe(true);
     expect(sawFiniteTauKappa).toBe(true);
     expect(sawEigMin).toBe(true);
+    expect(sawZeroNitref).toBe(true);
   });
 
   test("primal+dual objectives agree at optimal", () => {

@@ -70,13 +70,15 @@ interface CoptIterLine {
   eigMinS: number | null;
   // HSDE-only fields (null for COPT — its default path is non-HSDE per
   // ~/Dropbox/.../COPT-decomp/analysis/PD_IPM_DEEP.md). The Mosek-log-
-  // parser sibling (lands in Phase 2 per ADR-0033) will populate these
-  // from Mosek's PRSTATUS / GFEAS / MU columns and an inferred τ from
-  // PFEAS/(1+‖b‖) ratios.
+  // parser sibling populates PRSTATUS / GFEAS / MU directly from Mosek's
+  // iteration table.
   tau: number | null;
   kappa: number | null;
   gfeas: number | null;
   prstatus: number | null;
+  nitref1: number | null;
+  nitref2: number | null;
+  nitref3: number | null;
   tSchurMs: number | null;
   tFactorMs: number | null;
   tDirectionMs: number | null;
@@ -148,6 +150,9 @@ function tryParseIterLine(line: string): CoptIterLine | null {
     kappa: null,
     gfeas: null,
     prstatus: null,
+    nitref1: null,
+    nitref2: null,
+    nitref3: null,
     tSchurMs: null,
     tFactorMs: null,
     tDirectionMs: null,

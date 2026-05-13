@@ -5,21 +5,17 @@
 // something is fundamentally broken.
 
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
 import { solveHsdeLp, lpFromCanonical, type CanonicalLp } from "../src/index.js";
+import { loadSuite } from "./corpus.js";
 
-const corpus = JSON.parse(
-  readFileSync(
-    "/home/tobias/Projects/scientist-workbench-corpus/benchmarks/lp-netlib/golden/inputs.json",
-    "utf-8",
-  ),
-);
-
-const cases: { id: string; input: CanonicalLp }[] = corpus.cases;
-const afiro = cases.find((c) => c.id === "afiro")!;
+const suite = loadSuite<CanonicalLp>("lp-netlib");
+const afiro = suite?.cases.find((c) => c.id === "afiro") ?? null;
 
 describe("afiro NETLIB LP via HSDE", () => {
   test("solves to optimality near -464.75314", () => {
+    if (afiro === null) {
+      throw new Error("lp-netlib corpus missing; set WORKBENCH_CORPUS or place scientist-workbench-corpus alongside the workbench");
+    }
     const res = solveHsdeLp(lpFromCanonical(afiro.input));
     expect(res.status).toBe("optimal");
     expect(Math.abs(res.primalObj - -464.7531428571429)).toBeLessThan(1e-4);

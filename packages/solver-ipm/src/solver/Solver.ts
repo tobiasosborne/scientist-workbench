@@ -68,9 +68,14 @@ export interface IterLogLine {
  * HSDE algorithm work begins (HANDOFF §3.8 "instrument before
  * fixing" — the verbose trace was what turned worklog 095's stall
  * diagnosis from a multi-day investigation into a 5-minute read).
+ *
+ * IR-counter fields (`nitref1/2/3`) are the Phase-5 diagnostic slots
+ * for ECOS/SDPT3-style iterative refinement on the three Schur back-
+ * substitutions. Tier 0 populates them with 0 in HSDE solvers and NaN
+ * elsewhere; Tier 1 increments them when refinement actually runs.
  */
 export interface VerboseIterLine extends IterLogLine {
-  kind: "lp" | "sdp-nt" | "sdp-aho" | "sdp-hkm" | "lp-hsde" | "sdp-hsde-nt";
+  kind: "lp" | "sdp-nt" | "sdp-aho" | "sdp-hkm" | "lp-hsde" | "sdp-hsde-nt" | "mosek";
   // Centering / step
   sigma: number;
   sigmaRaw: number;       // (muAff / mu)^3 pre-clip
@@ -104,6 +109,14 @@ export interface VerboseIterLine extends IterLogLine {
   kappa: number;
   gfeas: number;
   prstatus: number;
+  // Iterative-refinement counters (HSDE Phase 5). For HSDE kinds:
+  //   nitref1 — data-direction Schur back-substitution
+  //   nitref2 — affine-direction Schur back-substitution
+  //   nitref3 — combined-direction Schur back-substitution
+  // Non-HSDE kinds carry NaN.
+  nitref1: number;
+  nitref2: number;
+  nitref3: number;
   // Phase timings (milliseconds)
   tSchurMs: number;
   tFactorMs: number;
@@ -326,6 +339,9 @@ export function solveLp(lp: LpProblem, opts: SolveOptions = {}): SolveResult {
         kappa: NaN,
         gfeas: NaN,
         prstatus: NaN,
+        nitref1: NaN,
+        nitref2: NaN,
+        nitref3: NaN,
         tSchurMs,
         tFactorMs,
         tDirectionMs,
