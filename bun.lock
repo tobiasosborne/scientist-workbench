@@ -42,6 +42,13 @@
         "@workbench/protocol": "workspace:*",
       },
     },
+    "packages/cone-core": {
+      "name": "@workbench/cone-core",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/linalg-core": "workspace:*",
+      },
+    },
     "packages/contract": {
       "name": "@workbench/contract",
       "version": "0.2.0",
@@ -680,6 +687,8 @@
     "@workbench/cas-core": ["@workbench/cas-core@workspace:packages/cas-core"],
 
     "@workbench/compose": ["@workbench/compose@workspace:packages/compose"],
+
+    "@workbench/cone-core": ["@workbench/cone-core@workspace:packages/cone-core"],
 
     "@workbench/contract": ["@workbench/contract@workspace:packages/contract"],
 
