@@ -70,9 +70,14 @@ export interface SCSOpts {
    */
   readonly precision: number;
   /**
-   * Iteration cap. ADR-0030 default for the SCS-ADMM path is `2500`.
-   * Hitting it returns `status: "iter-cap"` with the best-effort iterate,
-   * never a `optimal` lie.
+   * Iteration cap. The default for the SCS-ADMM path is `50000`
+   * (ADR-0037 §D, superseding ADR-0030 §A.1's pre-convergence-finding
+   * guess of `2500`): the `lp-netlib` universal-tier profile reaches its
+   * genuine optima — `afiro` 1711, `sc50b` 21259, `sc50a` 37565
+   * iterations — only with a budget this size, so the no-flag default
+   * matches the documented profile rather than capping problems the
+   * method can in fact solve. Hitting the cap returns `status:
+   * "iter-cap"` with the best-effort iterate, never an `optimal` lie.
    */
   readonly maxIter: number;
   /**
@@ -92,10 +97,10 @@ export interface SCSOpts {
   readonly andersonMemory: number;
 }
 
-/** ADR-0030 + ADR-0036 defaults for the SCS-ADMM path. */
+/** ADR-0030 + ADR-0036 + ADR-0037 defaults for the SCS-ADMM path. */
 export const DEFAULT_SCS_OPTS: SCSOpts = {
   precision: 1e-8,
-  maxIter: 2500,
+  maxIter: 50000,
   alpha: 1.5,
   andersonMemory: 10,
 };

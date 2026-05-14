@@ -28,7 +28,7 @@
 //       cones:    list<expression>          // NonNegCone[idx], ZeroCone[idx], …
 //     },
 //     precision?: float64,                  // default 1e-8
-//     max_iter?:  integer                   // default 2500 (SCS-ADMM)
+//     max_iter?:  integer                   // default 50000 (SCS-ADMM, ADR-0037 §D)
 //   }
 //
 // The §C problem is `minimise cᵀx s.t. A x = b, x ∈ 𝒦` — the cone
@@ -41,8 +41,12 @@
 // --------------------------
 //   record { status, x, dual, slack, objective?, achieved_precision?,
 //            iterations, method, condition_estimate, warnings }
-//     — `objective` / `achieved_precision` present only when
-//       `status === "optimal"`; the five status classes are
+//     — `objective` is present only when `status === "optimal"`.
+//       `achieved_precision` is present on `optimal` and on `iter-cap`
+//       whenever a primal–dual iterate was recoverable — it is the
+//       §C-wire-form KKT residual of the *returned* point (`kktResidualC`;
+//       bead `rgl8`), so `optimal` always means `achieved_precision ≤
+//       precision`. The five status classes are
 //       `optimal | infeasible | unbounded | iter-cap | numerical-breakdown`.
 //   | tagged "cone-solve/{non-finite-input,degenerate-shape,malformed-cone,
 //                         unsupported-cone,quadratic-objective}"
@@ -482,6 +486,87 @@ function f64List(xs: readonly number[]) {
 }
 
 /**
+ * The §C-wire-form KKT residual of a recovered primal–dual point.
+ *
+ * `achieved_precision` must describe the point the tool *returns* — the
+ * §C `(x, dual, slack)` — measured the way the consumer measures it, not
+ * `cone-core`'s internal O'Donoghue-embedded-form residual. The two
+ * genuinely differ (bead `rgl8`, worklog 114): `cone-core`'s
+ * `achievedPrecision` is the §3.5 relative residual of the *translated,
+ * embedded* problem in 2-norm, and it has no `xᵀs` term (it uses the
+ * duality gap `cᵀx + bᵀy`, which equals `xᵀs` only in exact arithmetic).
+ * `cone-core` is not wrong — it honestly describes *its* form; the
+ * §C-form residual of the *recovered* point is a tool-layer concern
+ * (worklog 112: protocol / wire shape lives in the tool layer).
+ *
+ * This recomputes the exact three residuals the corpus `lp-netlib`
+ * `verifier_protocol.md` defines (checks 4 / 6 / 7), against the original
+ * §C data:
+ *
+ *   r_p = ‖A·x − b‖_∞ / max(1, ‖b‖_∞)        — primal feasibility
+ *   r_d = ‖Aᵀ·y + s − c‖_∞ / max(1, ‖c‖_∞)   — dual feasibility
+ *   r_c = |xᵀ·s| / max(1, |cᵀ·x|)            — complementary slackness
+ *
+ * and returns their max. With no equality block (`A` empty) `r_p` is
+ * vacuously 0 and the `Aᵀy` term is the zero vector — the formula
+ * degrades correctly. Inf-norm throughout, matching the verifier: this
+ * is precisely the number the verifier's `self_reported_precision` check
+ * (#10) recomputes and gates `achieved_precision` against, so reporting
+ * it here makes the honest-scope contract hold by construction.
+ */
+function kktResidualC(
+  A: readonly (readonly number[])[],
+  b: readonly number[],
+  c: readonly number[],
+  x: readonly number[],
+  y: readonly number[],
+  s: readonly number[],
+): number {
+  const m = A.length;
+  const n = c.length;
+  const infNorm = (v: readonly number[]): number => {
+    let mx = 0;
+    for (const e of v) {
+      const a = Math.abs(e);
+      if (a > mx) mx = a;
+    }
+    return mx;
+  };
+
+  // r_p = ‖A·x − b‖_∞ / max(1, ‖b‖_∞)
+  let rpNum = 0;
+  for (let i = 0; i < m; i++) {
+    const row = A[i]!;
+    let acc = 0;
+    for (let j = 0; j < n; j++) acc += row[j]! * x[j]!;
+    rpNum = Math.max(rpNum, Math.abs(acc - b[i]!));
+  }
+  const rP = rpNum / Math.max(1, infNorm(b));
+
+  // r_d = ‖Aᵀ·y + s − c‖_∞ / max(1, ‖c‖_∞)
+  const aty = new Float64Array(n);
+  for (let i = 0; i < m; i++) {
+    const row = A[i]!;
+    const yi = y[i]!;
+    for (let j = 0; j < n; j++) aty[j]! += row[j]! * yi;
+  }
+  let rdNum = 0;
+  for (let j = 0; j < n; j++) rdNum = Math.max(rdNum, Math.abs(aty[j]! + s[j]! - c[j]!));
+  const rD = rdNum / Math.max(1, infNorm(c));
+
+  // r_c = |xᵀ·s| / max(1, |cᵀ·x|)
+  let xs = 0;
+  let cx = 0;
+  for (let j = 0; j < n; j++) {
+    xs += x[j]! * s[j]!;
+    cx += c[j]! * x[j]!;
+  }
+  const rC = Math.abs(xs) / Math.max(1, Math.abs(cx));
+
+  return Math.max(rP, rD, rC);
+}
+
+/**
  * Encode the `scsSolve` result as the ADR-0030 §D output. `optimal`,
  * `iter-cap`, `infeasible`, `unbounded` and `numerical-breakdown` are all
  * the §D *record* (with the `status` field) — only *malformed input* gets
@@ -492,9 +577,20 @@ function f64List(xs: readonly number[]) {
  *   - §C `x`     = `x'`
  *   - §C `y`     = `−y'_eq`           (negate the first `mEq` duals)
  *   - §C `slack` = `y'_cone`          (re-indexed via `coneRowOfVar`)
+ *
+ * `achieved_precision` is recomputed here, in §C wire form, from the
+ * *recovered* `(x, dual, slack)` against the original §C `(A, b, c)` —
+ * `kktResidualC`, not `cone-core`'s embedded-form `achievedPrecision`
+ * (bead `rgl8`). It describes the point this function actually emits.
  */
-function encodeResult(result: SCSResult, t: Translated, n: number, warnings: string[]): Value {
+function encodeResult(
+  result: SCSResult,
+  t: Translated,
+  decoded: DecodedInput,
+  warnings: string[],
+): Value {
   const { mEq, coneRowOfVar } = t;
+  const n = decoded.c.length;
 
   // §C dual `y = −y'_eq` — the equality-block dual, negated.
   const recoverY = (yPrime: Float64Array): number[] => {
@@ -515,30 +611,85 @@ function encodeResult(result: SCSResult, t: Translated, n: number, warnings: str
 
   switch (result.status) {
     case "optimal": {
+      // Recover the §C point, then measure `achieved_precision` *on it*,
+      // in §C wire form — not `cone-core`'s embedded-form residual.
+      const x = Array.from(result.x);
+      const dual = recoverY(result.y);
+      const slack = recoverSlack(result.y);
+      const achievedPrecision = kktResidualC(decoded.A, decoded.b, decoded.c, x, dual, slack);
+
+      // Coherence guard (bead `rgl8`). `cone-core` decided `optimal` from
+      // O'Donoghue 2016's §3.5 termination test — measured on the
+      // *embedded translated* problem in 2-norm, and gap-based (no `xᵀs`
+      // term). That criterion is paper-faithful but looser than the
+      // §C-wire-form residual the tool's `precision` contract is
+      // denominated in: the embedded test can fire while the recovered
+      // §C point's residual still exceeds `precision`. A TS expert wants
+      // `optimal` ⟹ `achieved_precision ≤ precision` with no asterisk —
+      // so when the honest §C residual exceeds the request, the honest
+      // status is `iter-cap`: a best-effort iterate with an honest
+      // achieved_precision worse than requested, exactly the `iter-cap`
+      // contract. (`iterations < max_iter` here — the solver stopped on
+      // its own looser criterion, not the cap; the warning says so. The
+      // deeper fix — a termination test denominated in the consumer-form
+      // residual — is filed separately.)
+      if (achievedPrecision <= decoded.precision) {
+        return record({
+          status: str("optimal"),
+          x: f64List(x),
+          dual: f64List(dual),
+          slack: f64List(slack),
+          objective: float64FromNumber(result.objective),
+          achieved_precision: float64FromNumber(achievedPrecision),
+          iterations: int(BigInt(result.iterations)),
+          method: str(METHOD_TAG),
+          condition_estimate: float64FromNumber(result.conditionEstimate),
+          warnings: list(warnings.map((w) => str(w))),
+        });
+      }
       return record({
-        status: str("optimal"),
-        x: f64List(Array.from(result.x)),
-        dual: f64List(recoverY(result.y)),
-        slack: f64List(recoverSlack(result.y)),
-        objective: float64FromNumber(result.objective),
-        achieved_precision: float64FromNumber(result.achievedPrecision),
+        status: str("iter-cap"),
+        x: f64List(x),
+        dual: f64List(dual),
+        slack: f64List(slack),
+        achieved_precision: float64FromNumber(achievedPrecision),
         iterations: int(BigInt(result.iterations)),
         method: str(METHOD_TAG),
         condition_estimate: float64FromNumber(result.conditionEstimate),
-        warnings: list(warnings.map((w) => str(w))),
+        warnings: list(
+          [
+            ...warnings,
+            `SCS reported convergence at iteration ${result.iterations}, but the §C-wire-form ` +
+              `KKT residual ${achievedPrecision} exceeds the requested precision ${decoded.precision}; ` +
+              `reported as iter-cap with the honest residual (the embedded §3.5 termination test is ` +
+              `looser than the wire-form precision contract — tracked in scientist-workbench-oxuk)`,
+          ].map((s) => str(s)),
+        ),
       });
     }
     case "iter-cap": {
-      // Best-effort iterate if some iterate had u_τ > 0, else empty.
+      // Best-effort iterate if some iterate had u_τ > 0, else empty. When
+      // an iterate exists, `achieved_precision` is the honest §C-form KKT
+      // residual *of that iterate* — emitted as a field (ADR-0030 §D: an
+      // `iter-cap` carries its honest precision), recomputed the same way
+      // as the `optimal` branch so the warning string and the field never
+      // disagree. With no iterate (`result.x` undefined) there is nothing
+      // to measure: the field is absent and the warning says so.
+      const hasIterate = result.x !== undefined && result.y !== undefined;
       const x = result.x === undefined ? [] : Array.from(result.x);
       const dual = result.y === undefined ? [] : recoverY(result.y);
       const slack = result.y === undefined ? [] : recoverSlack(result.y);
+      const achievedPrecision = hasIterate
+        ? kktResidualC(decoded.A, decoded.b, decoded.c, x, dual, slack)
+        : undefined;
       const w = [
         ...warnings,
         `iteration cap (${result.iterations}) reached before convergence; ` +
-          `achieved precision ${result.achievedPrecision} is worse than requested`,
+          (achievedPrecision === undefined
+            ? `no primal–dual iterate was recoverable (τ never positive)`
+            : `achieved precision ${achievedPrecision} is worse than requested`),
       ];
-      return record({
+      const fields: Record<string, Value> = {
         status: str("iter-cap"),
         x: f64List(x),
         dual: f64List(dual),
@@ -547,7 +698,11 @@ function encodeResult(result: SCSResult, t: Translated, n: number, warnings: str
         method: str(METHOD_TAG),
         condition_estimate: float64FromNumber(result.conditionEstimate),
         warnings: list(w.map((s) => str(s))),
-      });
+      };
+      if (achievedPrecision !== undefined) {
+        fields["achieved_precision"] = float64FromNumber(achievedPrecision);
+      }
+      return record(fields);
     }
     case "infeasible": {
       // The primal is infeasible — `dual` carries the Farkas certificate
@@ -628,7 +783,7 @@ function fn(input: RecordValue, _flags: Record<string, never>): Value {
     andersonMemory: DEFAULT_SCS_OPTS.andersonMemory,
   });
 
-  return encodeResult(result, translated, decoded.c.length, []);
+  return encodeResult(result, translated, decoded, []);
 }
 
 // -----------------------------------------------------------------------------
@@ -773,6 +928,52 @@ function smokeTest(): void {
   );
   if (x.length !== 2 || x[0]! < -1e-6 || x[1]! < -1e-6 || Math.abs(x[0]! + x[1]! - 3) > 1e-5) {
     throw new Error(`cone-solve --test: recovered x=${JSON.stringify(x)} is not primal-feasible`);
+  }
+
+  // honest-precision invariant (CLAUDE.md Rule 8): the reported
+  // `achieved_precision` must *be* the §C-wire-form KKT residual of the
+  // *returned* `(x, dual, slack)` — not cone-core's embedded-form residual
+  // (bead `rgl8`). Recompute the three §C residuals here *independently*
+  // — own inline loops, not a `kktResidualC` call — and assert the field
+  // equals their max. The original bug forwarded a 2-norm embedded-form
+  // number that under-claimed the true §C residual by ~3× on `scsd1`;
+  // `bench/cone-solve/profile-lp-netlib.ts` is the at-scale mutation
+  // canary, this is the per-tool one.
+  const apV = out.fields["achieved_precision"];
+  if (apV === undefined || apV.kind !== "float64") {
+    throw new Error("cone-solve --test: optimal result is missing the achieved_precision field");
+  }
+  const achievedPrecision = float64ToNumber(apV);
+  const dual = (out.fields["dual"] as { kind: "list"; items: Value[] }).items.map((v) =>
+    float64ToNumber(v as { kind: "float64"; bits: string }),
+  );
+  const slack = (out.fields["slack"] as { kind: "list"; items: Value[] }).items.map((v) =>
+    float64ToNumber(v as { kind: "float64"; bits: string }),
+  );
+  // §C data of this test problem: min x+2y s.t. [1 1]·x = 3, x ∈ ℝ²₊.
+  const rP = Math.abs(x[0]! + x[1]! - 3) / Math.max(1, 3);
+  const rD =
+    Math.max(Math.abs(dual[0]! + slack[0]! - 1), Math.abs(dual[0]! + slack[1]! - 2)) /
+    Math.max(1, 2);
+  const rC =
+    Math.abs(x[0]! * slack[0]! + x[1]! * slack[1]!) / Math.max(1, Math.abs(x[0]! + 2 * x[1]!));
+  const trueResidual = Math.max(rP, rD, rC);
+  if (!Number.isFinite(achievedPrecision) || achievedPrecision < 0) {
+    throw new Error(
+      `cone-solve --test: achieved_precision ${achievedPrecision} is not a sane residual`,
+    );
+  }
+  if (achievedPrecision < trueResidual - 1e-12) {
+    throw new Error(
+      `cone-solve --test: honest-precision violated — achieved_precision ${achievedPrecision} ` +
+        `under-claims the §C KKT residual ${trueResidual} (CLAUDE.md Rule 8)`,
+    );
+  }
+  if (Math.abs(achievedPrecision - trueResidual) > 1e-9 * Math.max(1, trueResidual)) {
+    throw new Error(
+      `cone-solve --test: achieved_precision ${achievedPrecision} is not the §C KKT residual ` +
+        `${trueResidual} — it must describe the returned (x, dual, slack), not the embedded form`,
+    );
   }
 
   // (2) An unsupported cone must produce the tagged refusal, not a solve.

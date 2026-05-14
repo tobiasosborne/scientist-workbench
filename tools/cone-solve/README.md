@@ -21,7 +21,7 @@ default.
     "cones":    [ <expression>, ... ]   // NonNegCone[idx], ZeroCone[idx], FreeCone[idx]
   },
   "precision?": <float64>,              // default 1e-8
-  "max_iter?":  <integer>               // default 2500
+  "max_iter?":  <integer>               // default 50000 (ADR-0037 §D)
 }
 ```
 
@@ -38,10 +38,10 @@ achieved_precision?, iterations, method, condition_estimate, warnings }`
 
 | status | meaning |
 |---|---|
-| `optimal` | KKT met within `precision`; `objective` / `achieved_precision` present |
+| `optimal` | KKT met within `precision`; `objective` / `achieved_precision` present. `achieved_precision` is the §C-wire-form `max(r_p, r_d, r_c)` of the *returned* `(x, dual, slack)` — the residual the consumer measures, not `cone-core`'s internal embedded-form figure (bead `rgl8`) |
 | `infeasible` | primal infeasible; `dual` is a Farkas certificate (`bᵀy = −1`) |
 | `unbounded` | primal unbounded; `x` is an unbounded ray (`cᵀx = −1`) |
-| `iter-cap` | `max_iter` hit first; best-effort iterate + honest `achieved_precision` |
+| `iter-cap` | did not reach `precision`: either `max_iter` was hit, or SCS's embedded-form termination fired while the §C-wire-form residual still exceeds `precision` (the `rgl8` coherence guard re-labels such a result rather than call it `optimal` — `optimal` always means `achieved_precision ≤ precision`). Best-effort iterate + honest `achieved_precision` |
 | `numerical-breakdown` | non-finite iterate or failed factorisation |
 
 Or a boundary-failure refusal envelope `tagged "cone-solve/<class>"` for
