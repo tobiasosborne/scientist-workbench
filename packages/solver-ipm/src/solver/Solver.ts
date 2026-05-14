@@ -39,10 +39,16 @@ export interface IterLogLine {
 /**
  * Verbose per-iter trace — every diagnostic scalar the solver computed
  * this iteration, in a unified schema across LP and SDP solvers. Fields
- * irrelevant to the current solver kind carry `NaN`. The schema is
- * **stable**: written to JSONL traces, parsed by `scripts/trace-diff.ts`,
- * mirrored from COPT iter logs by `scripts/copt-log-to-jsonl.ts`. Changes
- * to the field set are a breaking change for the diff harness — coordinate.
+ * irrelevant to the current solver kind carry `NaN`. This is the
+ * *in-process* trace type: consumed by the `verbose:` callback and by
+ * `formatVerboseLine` for human-readable console traces.
+ *
+ * The *persisted* JSONL schema is `TraceLine` in `TraceLog.ts` — a
+ * superset that also covers the external-log parser kinds (`"copt"`,
+ * `"mosek"`) and permits `null` for every solver-internal field. A
+ * compile-time assertion in that file proves every `VerboseIterLine` is a
+ * valid `TraceLine`, so a field added here that is not mirrored there is a
+ * build error, not a silently-skewed trace. Add new fields to **both**.
  *
  * The `kind` discriminator tells consumers which solver variant produced
  * the line and which fields are populated:
@@ -63,8 +69,9 @@ export interface IterLogLine {
  * HSDE-only fields (`tau`, `kappa`, `gfeas`, `prstatus`) are NaN for
  * non-HSDE kinds. Per ADR-0033 §"Decision 8": the schema extends
  * additively; the diff harness already treats `null` (JSON-serialised
- * NaN) as "missing"; a future kind extension is wire-compatible. These
- * fields land in Phase 0 so the trace pipeline is ready when the
+ * NaN) as "missing"; a future kind extension is wire-compatible via
+ * `TraceLine`. These fields land in Phase 0 so the trace pipeline is
+ * ready when the
  * HSDE algorithm work begins (HANDOFF §3.8 "instrument before
  * fixing" — the verbose trace was what turned worklog 095's stall
  * diagnosis from a multi-day investigation into a 5-minute read).
@@ -75,7 +82,7 @@ export interface IterLogLine {
  * elsewhere; Tier 1 increments them when refinement actually runs.
  */
 export interface VerboseIterLine extends IterLogLine {
-  kind: "lp" | "sdp-nt" | "sdp-aho" | "sdp-hkm" | "lp-hsde" | "sdp-hsde-nt" | "mosek";
+  kind: "lp" | "sdp-nt" | "sdp-aho" | "sdp-hkm" | "lp-hsde" | "sdp-hsde-nt";
   // Centering / step
   sigma: number;
   sigmaRaw: number;       // (muAff / mu)^3 pre-clip

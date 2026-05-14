@@ -361,24 +361,41 @@ The counters are `0` for HSDE traces until Tier 1 wires the IR helper,
 and `NaN` for non-HSDE traces. They exist before the algorithm change
 so the diagnostic pipeline can prove where refinement fires.
 
-The `kind` discriminator extends:
+**Two trace types, not one** (revised — worklog 107). The
+in-process solver-emitted type stays `VerboseIterLine` with the
+six solver `kind`s:
 
 ```typescript
-kind:
-  | "lp" | "sdp-nt" | "sdp-aho" | "sdp-hkm"
-  | "lp-hsde" | "sdp-hsde-nt"
-  | "mosek";
+kind: "lp" | "sdp-nt" | "sdp-aho" | "sdp-hkm" | "lp-hsde" | "sdp-hsde-nt";
 ```
+
+The *persisted JSONL* schema is a distinct, wider type — `TraceLine`
+in `packages/solver-ipm/src/solver/TraceLog.ts` — which adds the
+external-log-parser kinds `"copt"` and `"mosek"` and makes every
+solver-internal field `number | null`. `VerboseIterLine` is a strict
+subtype of `TraceLine` (stricter field types, narrower `kind`
+union); a compile-time assertion in `TraceLog.ts` proves it, so a
+field added to one but not the other is a build error rather than a
+silently-skewed trace. (Tier 0 originally widened
+`VerboseIterLine.kind` itself with `"mosek"`; that put a value no
+solver emits into the solver-emitted type and was inconsistent with
+`"copt"`, which was never added — bead `ghvl` reconciled both into
+`TraceLine`.)
 
 JSONL stability: NaN-for-inapplicable is preserved (JSON
 serialises as `null`). The diff harness `scripts/trace-diff.ts`
 treats `null` as "missing" and already handles arbitrary fields —
-no harness changes needed. `scripts/copt-log-to-jsonl.ts` (LP
-COPT logs) leaves these fields `null` since COPT is not HSDE.
-`scripts/mosek-log-to-jsonl.ts` parses Mosek's
-`ITE PFEAS DFEAS GFEAS PRSTATUS POBJ DOBJ MU TIME` table into the
-same schema, populating `kind: "mosek"`, `gfeas`, and `prstatus`
-directly while leaving TS-internal fields `null`.
+no harness changes needed. The parsing logic lives in `TraceLog.ts`
+as `parseCoptLog` / `parseMosekLog` (typechecked, unit-tested);
+`scripts/{copt,mosek}-log-to-jsonl.ts` are thin CLI shells over
+them. `parseCoptLog` leaves the HSDE fields `null` since COPT is
+not HSDE. `parseMosekLog` maps Mosek's
+`ITE PFEAS DFEAS GFEAS PRSTATUS POBJ DOBJ MU TIME` table onto the
+schema, populating `kind: "mosek"`, `gfeas`, and `prstatus`
+directly while leaving TS-internal fields `null` — **the Mosek row
+format is not yet verified against a real Mosek log** (bead
+`yyme`); the strict nine-token check fails closed rather than
+emitting garbage.
 
 ### Decision 9 — Determinism tier unchanged: `numerical: true` (ADR-0015)
 

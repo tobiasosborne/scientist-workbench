@@ -25,6 +25,11 @@ export {
   formatIterHeader,
   formatVerboseLine,
 } from "./solver/LogFormat.js";
+export {
+  type TraceLine,
+  parseCoptLog,
+  parseMosekLog,
+} from "./solver/TraceLog.js";
 export { toWireStatus, type WireStatus } from "./solver/Status.js";
 export {
   type HsdeResiduals,
