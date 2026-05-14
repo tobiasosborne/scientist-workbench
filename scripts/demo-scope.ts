@@ -26,7 +26,7 @@
 // if you want a clean provenance store; absent, the demos use the
 // global default (`~/.scientist-workbench/cas-store`).
 
-import { float64FromNumber, float64ToNumber, hash, int, list, parse, rat, record, str, sym, expr, tagged, type Value } from "@workbench/protocol";
+import { float64FromNumber, float64ToNumber, hash, int, list, parse, rat, record, str, sym, expr, tagged, type Value, type Float64Value, type ListValueOf } from "@workbench/protocol";
 import { canonicalize } from "@workbench/protocol";
 import { spawnBun } from "@workbench/contract";
 import { loadWorkbench, typed } from "@workbench/compose";
@@ -1192,7 +1192,10 @@ if (choiResult.kind === "record") {
   if (J?.kind === "list") {
     const eighOut = await wb.linalgEigh({
       kind: "record",
-      fields: { A: J },
+      // `J` is narrowed to `ListValue`; choi-iso's contract guarantees it is
+      // a `list<list<float64>>` Choi matrix — assert the element type the
+      // typed barrel requires.
+      fields: { A: J as ListValueOf<ListValueOf<Float64Value>> },
     });
     if (eighOut.kind === "record") {
       const lams = eighOut.fields["eigenvalues"];
@@ -1246,7 +1249,9 @@ if (ptBell.kind === "record") {
   if (Mpt?.kind === "list") {
     const eighOut = await wb.linalgEigh({
       kind: "record",
-      fields: { A: Mpt },
+      // `Mpt` is narrowed to `ListValue`; partial-transpose's contract
+      // guarantees a `list<list<float64>>` matrix — assert the element type.
+      fields: { A: Mpt as ListValueOf<ListValueOf<Float64Value>> },
     });
     if (eighOut.kind === "record") {
       const lams = eighOut.fields["eigenvalues"];

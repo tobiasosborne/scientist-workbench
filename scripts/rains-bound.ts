@@ -61,6 +61,8 @@ import {
   list,
   record,
   type Value,
+  type Float64Value,
+  type ListValueOf,
 } from "@workbench/protocol";
 import { loadWorkbench, typed } from "@workbench/compose";
 
@@ -259,7 +261,10 @@ async function logNegativity(rho: number[][]): Promise<number> {
   if (pt.kind !== "record") throw new Error("partial-transpose returned non-record");
   const eig = await wb.linalgEigh({
     kind: "record",
-    fields: { A: pt.fields["M_pt"]! },
+    // partial-transpose's contract guarantees `M_pt` is a
+    // `list<list<float64>>` matrix — assert the element type the typed
+    // barrel requires.
+    fields: { A: pt.fields["M_pt"]! as ListValueOf<ListValueOf<Float64Value>> },
   });
   if (eig.kind !== "record") throw new Error("linalg-eigh returned non-record");
   const eigs = (eig.fields["eigenvalues"] as { kind: "list"; items: Value[] })
