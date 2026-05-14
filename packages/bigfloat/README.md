@@ -185,6 +185,42 @@ non-load-bearing, but explicit precision documents intent.
 
 Source: `packages/bigfloat/src/arithmetic.ts:81-155`.
 
+## Near-pole reflection precision (bead `oj5j`)
+
+`clgamma` / `cdigamma` route `Re(z) < ½` through the reflection formulae
+`log Γ(z) = log π − log sin(π z) − log Γ(1 − z)` and
+`ψ(z) = ψ(1 − z) − π cot(π z)`. The original reflection branches formed
+`π·z` at a fixed `work = prec + 32` *before* the `sin` / `cos` argument
+reduction. When `z = m + ζ` sits ε-close to a Γ / ψ pole (a non-positive
+integer `m`), the `π·ζ` information lives `≈ −log₂|ζ|` bits *below* `π·m`
+— so it was truncated away inside the branch, and `sin`'s own reduction
+then re-did the same large subtraction. The net loss was
+`≈ (−log₁₀|ζ| − 9)` digits of the *requested* precision, no matter how
+much precision the input `z` carried.
+
+The fix reduces `z → ζ = z − m` **before** multiplying by π, so the one
+unavoidable cancellation is localised to that single subtraction, and
+`π·ζ` is then formed from a quantity that already has the right
+magnitude. The integer shift is handled by periodicity —
+`sin(π z) = (−1)ᵐ sin(π ζ)`, `cot(π z) = cot(π ζ)` — and the working
+precision is bumped by the measured cancellation depth:
+
+```ts
+const lossBits = Math.max(0, magBits(z) - magBits(zeta0));
+const work = prec + 32 + lossBits;
+```
+
+For `m = 0` (the region `Re(z) ∈ (−½, ½)`) there is no integer to peel
+off: `ζ = z`, `lossBits = 0`, and the computation is byte-identical to
+the pre-`oj5j` code. Only `Re(z) ≤ −½` arguments — where the genuine
+cancellation lives — see new behaviour.
+
+Source: `packages/bigfloat/src/complex.ts` (`clgammaReflect`,
+`cdigammaReflect`); regression tests in `test/complex.test.ts`
+(`describe("clgamma / cdigamma — near-pole reflection precision")`).
+The real-argument reflection paths (`lgammaRealAbs`, `digamma` in
+`special.ts`) carry the same latent cancellation — tracked separately.
+
 ## See also
 
 - `docs/adr/0020-arbitrary-precision-tier.md` — design rationale, the
@@ -196,3 +232,6 @@ Source: `packages/bigfloat/src/arithmetic.ts:81-155`.
 - `docs/worklog/084-bigfloat-div-precision-floor-fix.md` — `div` precision
   floor: diagnosis, fix, and downgrade of the integrand-contract from
   load-bearing invariant to stylistic recommendation.
+- `docs/worklog/117-cgamma-near-pole-reflection-fix.md` — `clgamma` /
+  `cdigamma` near-pole reflection: catastrophic-cancellation diagnosis,
+  the reduce-z-before-π reformulation, adaptive working precision.

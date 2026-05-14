@@ -34,6 +34,7 @@ import {
   abs,
   div,
   type BigComplex,
+  type BigFloat,
 } from "../src/index.js";
 
 const PREC50DPS = decimalToBinaryPrecision(50);
@@ -291,5 +292,104 @@ describe("cdigamma — complex digamma", () => {
     const r = cdigamma(cfromInts(1n, 1n, PREC50DPS), PREC50DPS);
     expect(toFloat64(r.re).value).toBeCloseTo(0.09465032062247695, 13);
     expect(toFloat64(r.im).value).toBeCloseTo(1.0766740474685811, 13);
+  });
+});
+
+describe("clgamma / cdigamma — near-pole reflection precision (bead oj5j)", () => {
+  // Pre-oj5j, clgammaReflect / cdigammaReflect formed π·z at a fixed
+  // work = prec + 32 *before* the trig argument reduction. For a
+  // high-precision z sitting ε-close to a Γ / ψ pole (a non-positive
+  // integer), the π·ζ information — which lives ≈ −log₂|ε| bits below
+  // π·m — was truncated away inside the reflection branch, then the
+  // sin() / cos() reduction re-did the same subtraction. The net effect:
+  // ~(−log₁₀ε − 9) digits of the *requested* precision were silently
+  // lost, regardless of how much precision the input z actually carried.
+  //
+  // The fix reduces z → ζ = z − m before multiplying by π (localising the
+  // one unavoidable cancellation to that single subtraction) and bumps
+  // the working precision by its measured depth `lossBits`.
+  //
+  // Invariant under test: with z carried at a high reference precision,
+  // clgamma(z, p) / cdigamma(z, p) agree with the high-precision
+  // reference to the full p significant digits — the internal loss is
+  // gone. Mutation proof: reverting either *Reflect to the πz-first form
+  // collapses the ε = 1e-69 cases to ~21 / ~41 agreeing digits at the
+  // 30 / 50 dps requests — a hard RED on the assertions below.
+
+  const REF_DPS = 160;
+  const REF = decimalToBinaryPrecision(REF_DPS);
+
+  /** Significant decimal digits to which two BigFloats agree (≤ `cap`). */
+  function sigAgree(a: BigFloat, b: BigFloat, cap: number): number {
+    const sa = toString(a, cap);
+    const sb = toString(b, cap);
+    let n = 0;
+    for (let i = 0; i < Math.min(sa.length, sb.length); i++) {
+      if (sa[i] !== sb[i]) break;
+      if (sa[i] !== "-" && sa[i] !== ".") n++;
+    }
+    return n;
+  }
+
+  // re = m ∓ 10⁻ᵏ as a decimal string; "0" for the imaginary part means
+  // a real argument, eps(k) puts the ε on the imaginary axis instead.
+  const offReal = (m: number, k: number) =>
+    `${m < 0 ? "-" : ""}${Math.abs(m)}.` + "0".repeat(k - 1) + "1";
+  const eps = (k: number) => "0." + "0".repeat(k - 1) + "1";
+
+  const nearPole: Array<{ name: string; re: string; im: string }> = [
+    { name: "z = -1 - 1e-20 (real, pole m=-1)", re: offReal(-1, 20), im: "0" },
+    { name: "z = -1 - 1e-69 (real, pole m=-1)", re: offReal(-1, 69), im: "0" },
+    { name: "z = -3 - 1e-69 (real, pole m=-3)", re: offReal(-3, 69), im: "0" },
+    { name: "z = -1 + 1e-69 i (complex, pole m=-1)", re: "-1", im: eps(69) },
+    {
+      name: "z = -2 - 1e-69 + 1e-69 i (complex, pole m=-2)",
+      re: offReal(-2, 69),
+      im: eps(69),
+    },
+  ];
+
+  for (const c of nearPole) {
+    test(`${c.name}: clgamma holds the requested precision`, () => {
+      const zRef: BigComplex = {
+        re: fromString(c.re, REF),
+        im: fromString(c.im, REF),
+      };
+      const ref = clgamma(zRef, REF);
+      for (const dps of [30, 50]) {
+        const p = decimalToBinaryPrecision(dps);
+        // z carried at REF; only the requested output precision varies.
+        const got = clgamma(zRef, p);
+        expect(sigAgree(got.re, ref.re, dps + 4)).toBeGreaterThanOrEqual(dps);
+        expect(sigAgree(got.im, ref.im, dps + 4)).toBeGreaterThanOrEqual(dps);
+      }
+    });
+
+    test(`${c.name}: cdigamma holds the requested precision`, () => {
+      const zRef: BigComplex = {
+        re: fromString(c.re, REF),
+        im: fromString(c.im, REF),
+      };
+      const ref = cdigamma(zRef, REF);
+      for (const dps of [30, 50]) {
+        const p = decimalToBinaryPrecision(dps);
+        const got = cdigamma(zRef, p);
+        expect(sigAgree(got.re, ref.re, dps + 4)).toBeGreaterThanOrEqual(dps);
+        expect(sigAgree(got.im, ref.im, dps + 4)).toBeGreaterThanOrEqual(dps);
+      }
+    });
+  }
+
+  test("exact pole is still detected (z = -2 exactly throws)", () => {
+    const pole: BigComplex = cfromInts(-2n, 0n, PREC50DPS);
+    expect(() => clgamma(pole, PREC50DPS)).toThrow(/pole/);
+    expect(() => cdigamma(pole, PREC50DPS)).toThrow(/pole/);
+  });
+
+  test("m = 0 region (Re z ∈ (-½, ½)) is unaffected — Γ(-0.25)", () => {
+    // Wolfram: N[Gamma[-1/4], 30] = -4.90166680986071572869121602590
+    const r = cgamma(cfromStrings("-0.25", "0", PREC50DPS), PREC50DPS);
+    expect(toFloat64(r.re).value).toBeCloseTo(-4.901666809860716, 12);
+    expect(toFloat64(abs(r.im)).value).toBeLessThan(1e-30);
   });
 });

@@ -20,7 +20,7 @@
 // the MeijerG hot path forces them.
 
 import { BigFloat, normalise, bitLength } from "./types.js";
-import { abs, neg, sgn, isZero, eq } from "./comparison.js";
+import { abs, neg, sgn, isZero } from "./comparison.js";
 import { add, sub, mul, div, sqrt, powInt } from "./arithmetic.js";
 import { fromInt, fromString, toFloat64 } from "./conversion.js";
 import {
@@ -418,45 +418,108 @@ function bernoulliFloat(r: { num: bigint; den: bigint }, prec: number): BigFloat
  *
  *     log Γ(z) = log π − log sin(π z) − log Γ(1 − z).
  *
- * `csin(π z)` is computed via `cexp(±iπz)`. Throws on non-positive
- * integer real z (poles of Γ).
+ * Γ's poles are the non-positive integers; the reflection formula sees
+ * them through `sin(π z) → 0`. The numerically delicate regime is `z`
+ * ε-close to such a pole — `z = m + ζ` with `m = round(Re z)` an integer
+ * and `|ζ|` tiny — and the naïve `sin(π z)` is *catastrophically* lossy
+ * there (bead oj5j). Two compounding cancellations:
+ *
+ *   1. forming `π·z` at a fixed working precision truncates the `π·ζ`
+ *      information, which lives `≈ −log₂|ζ|` bits *below* `π·m`;
+ *   2. `sin`'s own argument reduction then subtracts the large integer
+ *      multiple of `π/2`, re-doing the same subtraction.
+ *
+ * The cure is to reduce `z → ζ` *before* multiplying by π, so the one
+ * unavoidable cancellation is localised to the single subtraction
+ * `ζ = z − m`, and `π·ζ` is then formed directly from a quantity that
+ * already has the right magnitude. We use
+ *
+ *     sin(π z) = sin(π m + π ζ) = (−1)ᵐ · sin(π ζ),
+ *
+ * and `sin(π ζ)` is computed via `cexp(±iπζ)` — but now on the *reduced*
+ * argument, so the `sin` / `cos` inside `cexp` see a small angle and do
+ * no spurious reduction of their own. The residual cancellation that
+ * survives (e.g. `exp(−x) − exp(x)` for tiny imaginary `ζ`) is bounded
+ * by the same `−log₂|ζ|`, so the working precision is bumped by that
+ * measured `lossBits` — the reduction localises the loss, the bump pays
+ * for it. For `m = 0` (the region `Re(z) ∈ (−½, ½)`) there is no integer
+ * to peel off and the computation is byte-identical to the pre-oj5j
+ * code: `ζ = z`, `lossBits = 0`, `work = prec + 32`.
+ *
+ * Throws on non-positive integer real z (the poles themselves).
  */
 function clgammaReflect(z: BigComplex, prec: number): BigComplex {
-  // Detect non-positive integer real z.
-  if (isZero(z.im)) {
-    const reFloat = toFloat64(z.re).value;
-    if (Number.isFinite(reFloat)) {
-      const rounded = Math.round(reFloat);
-      if (rounded <= 0 && eq(z.re, fromInt(BigInt(rounded), z.re.precision))) {
-        throw new RangeError(
-          `clgamma: argument is a non-positive integer (Γ has a pole)`,
-        );
-      }
-    }
+  const reFloat = toFloat64(z.re).value;
+  if (!Number.isFinite(reFloat)) {
+    throw new RangeError(`clgamma: Re(z) not finite`);
   }
-  const work = prec + 32;
+  // z = m + ζ with m the nearest integer. m ≤ 0 across the whole
+  // reflection region (Re z < ½), but we keep the sign general.
+  const m = Math.round(reFloat);
+  const inPrec = Math.max(z.re.precision, z.im.precision);
+
+  // ζ = z − m, first at the input's own precision: that is the most
+  // information about ζ that physically exists. For m = 0 the integer
+  // shift is a no-op and ζ is z verbatim — this is what keeps the
+  // Re(z) ∈ (−½, ½) region bit-for-bit unchanged.
+  let zeta0: BigComplex;
+  if (m === 0) {
+    zeta0 = z;
+  } else {
+    zeta0 = { re: sub(z.re, fromInt(BigInt(m), inPrec), inPrec), im: z.im };
+  }
+
+  // The pole: z is exactly the non-positive integer m (ζ = 0, z real).
+  if (m <= 0 && isZero(z.im) && isZero(zeta0.re)) {
+    throw new RangeError(
+      `clgamma: argument is a non-positive integer (Γ has a pole)`,
+    );
+  }
+
+  // Cancellation depth of the formula at this z: how many leading bits
+  // the subtraction `z − m` annihilates, equivalently how many bits of
+  // `sin(π ζ)` sit below the noise floor of a naïve evaluation. `|z|` is
+  // O(|m|) ≥ ½ near a pole; `|ζ|` can be arbitrarily small. The working
+  // precision must carry `prec` good bits *below* this loss.
+  const lossBits =
+    m === 0 ? 0 : Math.max(0, magBits(z) - magBits(zeta0));
+  const work = prec + 32 + lossBits;
+
+  // Re-form ζ at the bumped working precision. (For m = 0, zeta is z and
+  // `work` is prec + 32 — the downstream calls reproduce the old code.)
+  const zeta: BigComplex =
+    m === 0
+      ? z
+      : { re: sub(z.re, fromInt(BigInt(m), work), work), im: z.im };
+
   const piW = pi(work);
-  // sin(π z) = (cexp(iπz) − cexp(−iπz)) / (2i).
-  const piTimesZ: BigComplex = {
-    re: mul(piW, z.re, work),
-    im: mul(piW, z.im, work),
+  // sin(π ζ) = (cexp(iπζ) − cexp(−iπζ)) / (2i), with iπζ formed directly
+  // from the reduced ζ — small magnitude, so the trig inside `cexp`
+  // sees a small angle.
+  const piTimesZeta: BigComplex = {
+    re: mul(piW, zeta.re, work),
+    im: mul(piW, zeta.im, work),
   };
-  // i · π z = (−π·z.im, π·z.re).
-  const iPiZ: BigComplex = { re: neg(piTimesZ.im), im: piTimesZ.re };
-  const eIPlus = cexp(iPiZ, work);
-  const eIMinus = cexp(cneg(iPiZ), work);
-  // sin = (e⁺ − e⁻) / (2i) = ((e⁻.im − e⁺.im)/2, (e⁺.re − e⁻.re)/2).
-  // Since (e⁻ = conj(e⁺)) when z is real but not generally; compute from
-  // first principles.
+  const iPiZeta: BigComplex = { re: neg(piTimesZeta.im), im: piTimesZeta.re };
+  const eIPlus = cexp(iPiZeta, work);
+  const eIMinus = cexp(cneg(iPiZeta), work);
   const numer = csub(eIPlus, eIMinus, work);
   // Divide by 2i:  (a + bi) / (2i) = b/2 − (a/2)i.
-  const sinPiZ: BigComplex = {
+  const sinPiZeta: BigComplex = {
     re: div(numer.im, fromInt(2n, work), work),
     im: neg(div(numer.re, fromInt(2n, work), work)),
   };
+  // sin(π z) = (−1)ᵐ · sin(π ζ). `m % 2 === 0` is the parity test that
+  // also holds for negative m (only 0 maps to "even" incorrectly — and
+  // 0 is even).
+  const sinPiZ: BigComplex =
+    m % 2 === 0 ? sinPiZeta : cneg(sinPiZeta);
   if (cisZero(sinPiZ)) {
-    throw new RangeError(`clgamma: pole at z = ${toFloat64(z.re).value}`);
+    throw new RangeError(`clgamma: pole at z = ${reFloat}`);
   }
+
+  // log Γ(1 − z): 1 − z sits far from every pole when z is near one, so
+  // this branch is well-conditioned and is computed from z directly.
   const oneMinusZ: BigComplex = {
     re: sub(fromInt(1n, work), z.re, work),
     im: neg(z.im),
@@ -561,43 +624,81 @@ function cdigammaStirling(z: BigComplex, prec: number): BigComplex {
   };
 }
 
+/**
+ * Reflection branch of `cdigamma` for `Re(z) < 1/2`:
+ *
+ *     ψ(z) = ψ(1 − z) − π · cot(π z).
+ *
+ * `cot(π z)` carries the same near-pole catastrophic cancellation that
+ * `sin(π z)` does in `clgammaReflect` — `cot` has simple poles at the
+ * integers, so an ε-close `z` makes `cot(π z) ≈ 1/(π ζ)` enormous, and a
+ * naïve `cos(π z) / sin(π z)` truncates the `ζ` information when it forms
+ * `π·z`. The cure is identical (bead oj5j): reduce `z → ζ = z − m`
+ * *before* multiplying by π. `cot` is π-periodic, so here the integer
+ * shift drops out entirely —
+ *
+ *     cot(π z) = cot(π m + π ζ) = cot(π ζ)
+ *
+ * — no `(−1)ᵐ` sign to carry. Working precision is bumped by the
+ * measured cancellation depth `lossBits`, and `m = 0` reproduces the
+ * pre-oj5j computation bit-for-bit.
+ */
 function cdigammaReflect(z: BigComplex, prec: number): BigComplex {
-  // ψ(z) = ψ(1 − z) − π · cot(π z).
-  // Detect non-positive integer real z (poles of ψ).
-  if (isZero(z.im)) {
-    const reFloat = toFloat64(z.re).value;
-    if (Number.isFinite(reFloat)) {
-      const rounded = Math.round(reFloat);
-      if (rounded <= 0 && eq(z.re, fromInt(BigInt(rounded), z.re.precision))) {
-        throw new RangeError(
-          `cdigamma: argument is a non-positive integer (ψ has a pole)`,
-        );
-      }
-    }
+  const reFloat = toFloat64(z.re).value;
+  if (!Number.isFinite(reFloat)) {
+    throw new RangeError(`cdigamma: Re(z) not finite`);
   }
-  const work = prec + 32;
+  const m = Math.round(reFloat);
+  const inPrec = Math.max(z.re.precision, z.im.precision);
+
+  // ζ = z − m. For m = 0 the shift is a no-op (ζ is z verbatim), which
+  // is what keeps the Re(z) ∈ (−½, ½) region bit-for-bit unchanged.
+  const zeta0: BigComplex =
+    m === 0
+      ? z
+      : { re: sub(z.re, fromInt(BigInt(m), inPrec), inPrec), im: z.im };
+
+  // The pole: z is exactly the non-positive integer m (ζ = 0, z real).
+  if (m <= 0 && isZero(z.im) && isZero(zeta0.re)) {
+    throw new RangeError(
+      `cdigamma: argument is a non-positive integer (ψ has a pole)`,
+    );
+  }
+
+  // Cancellation depth: how many leading bits `z − m` annihilates.
+  const lossBits =
+    m === 0 ? 0 : Math.max(0, magBits(z) - magBits(zeta0));
+  const work = prec + 32 + lossBits;
+  const zeta: BigComplex =
+    m === 0
+      ? z
+      : { re: sub(z.re, fromInt(BigInt(m), work), work), im: z.im };
+
   const piW = pi(work);
-  const piTimesZ: BigComplex = {
-    re: mul(piW, z.re, work),
-    im: mul(piW, z.im, work),
+  // cot(π z) = cot(π ζ) = cos(π ζ) / sin(π ζ), with iπζ formed directly
+  // from the reduced ζ so the trig inside `cexp` sees a small angle.
+  const piTimesZeta: BigComplex = {
+    re: mul(piW, zeta.re, work),
+    im: mul(piW, zeta.im, work),
   };
-  // cot(πz) = cos(πz)/sin(πz). Compute both via cexp.
-  const iPiZ: BigComplex = { re: neg(piTimesZ.im), im: piTimesZ.re };
-  const ePlus = cexp(iPiZ, work);
-  const eMinus = cexp(cneg(iPiZ), work);
-  const cosPiZ: BigComplex = {
+  const iPiZeta: BigComplex = { re: neg(piTimesZeta.im), im: piTimesZeta.re };
+  const ePlus = cexp(iPiZeta, work);
+  const eMinus = cexp(cneg(iPiZeta), work);
+  const cosPiZeta: BigComplex = {
     re: div(add(ePlus.re, eMinus.re, work), fromInt(2n, work), work),
     im: div(add(ePlus.im, eMinus.im, work), fromInt(2n, work), work),
   };
-  const sinPiZ: BigComplex = {
+  const sinPiZeta: BigComplex = {
     re: div(sub(ePlus.im, eMinus.im, work), fromInt(2n, work), work),
     im: neg(div(sub(ePlus.re, eMinus.re, work), fromInt(2n, work), work)),
   };
-  if (cisZero(sinPiZ)) {
-    throw new RangeError(`cdigamma: pole at z = ${toFloat64(z.re).value}`);
+  if (cisZero(sinPiZeta)) {
+    throw new RangeError(`cdigamma: pole at z = ${reFloat}`);
   }
-  const cotPiZ = cdiv(cosPiZ, sinPiZ, work);
+  const cotPiZ = cdiv(cosPiZeta, sinPiZeta, work);
   const piCot = cmul(cfromReal(piW), cotPiZ, work);
+  // ψ(1 − z): 1 − z is far from every pole when z is near one — computed
+  // from z directly, well-conditioned.
   const oneMinusZ: BigComplex = {
     re: sub(fromInt(1n, work), z.re, work),
     im: neg(z.im),
