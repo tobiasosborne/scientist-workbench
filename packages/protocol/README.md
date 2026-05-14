@@ -60,6 +60,18 @@ canonical decimal), enforce required fields at compile time, and make
 intent visible at the call site. Raw literals are reserved for protocol
 internals (canonicalize, parse, validate).
 
+The container constructors — `list`, `record`, `tagged` — are *generic
+in their contents*: they preserve the structural type of what you pass
+rather than widening to `ListValue` / `RecordValue` / `TaggedValue`. So
+`tagged("foo/bar", int(0n))` has type `{kind:"tagged"; tag:string;
+payload: IntegerValue}`, and a helper that builds tagged values keeps
+that narrow payload type through to its callers — no `as never` cast at
+the call site. The narrowed types are still assignable to the wide
+variants (covariant subtypes), so existing `Value`-typed code is
+unaffected. The schema constructors mirror this: `S.tagged(tag,
+S.kind("integer"))` is a `Schema<TaggedValueOf<IntegerValue>>`, so
+`ValueOf<…>` threads the payload type through (ADR-0004; bead x0lc).
+
 ## Schema annotations (ADR-0002)
 
 When declaring a tool's `schema.input` / `schema.output`, prefer

@@ -137,11 +137,18 @@ export const expr = (head: string, args: readonly Value[]): ExpressionValue => (
   args,
 });
 
-export const tagged = (tag: string, payload: Value): TaggedValue => ({
-  kind: "tagged",
-  tag,
-  payload,
-});
+// `tagged` likewise preserves the structural type of its payload rather
+// than widening to `TaggedValue`. A `tagged("schema/kind", sym("integer"))`
+// keeps `payload: SymbolValue`, so a helper that builds tagged values
+// composes with `Schema<TaggedValueOf<…>>` slots instead of forcing an
+// `as never` cast at every call site (bead x0lc). The result is still
+// assignable to the wide `TaggedValue` (covariant subtype), so existing
+// `TaggedValue`-typed call sites are unaffected — see ADR-0004.
+export const tagged = <P extends Value>(tag: string, payload: P): {
+  readonly kind: "tagged";
+  readonly tag: string;
+  readonly payload: P;
+} => ({ kind: "tagged", tag, payload });
 
 /** The schema-kind annotation tag. See ADR-0002. */
 export const SCHEMA_KIND_TAG = "schema/kind";
