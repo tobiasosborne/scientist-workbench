@@ -13,6 +13,7 @@
 import { describe, expect, test } from "bun:test";
 import { matrixFromRows, get } from "@workbench/linalg-core";
 import {
+  type Candidate,
   type ConeProblem,
   type Tolerances,
   ConeError,
@@ -210,6 +211,93 @@ describe("recoverPrimalDual — optimal", () => {
     expect(r.kind).toBe("inconclusive");
     if (r.kind !== "inconclusive") throw new Error("unreachable");
     expect(r.candidate).toBeUndefined();
+  });
+});
+
+// ── recoverPrimalDual — the convergenceTest hook (bead oxuk) ────────────────
+//
+// When supplied, `convergenceTest` is the sole arbiter of the `optimal`
+// branch — replacing the paper's §3.5 relative-residual test. It governs
+// `optimal` only: `u_τ ≤ 0` still skips branch 1 entirely, and the
+// infeasible / unbounded certificate branches are untouched.
+
+describe("recoverPrimalDual — convergenceTest hook", () => {
+  // Same LP as the "optimal" block: min x s.t. x ≥ 1. u = [1,1,1] is the
+  // exact (zero-residual) solution; u = [5,0,1] has primalResidual 4.
+  const h = buildHSDE({
+    A: matrixFromRows([[-1]]),
+    b: new Float64Array([-1]),
+    c: new Float64Array([1]),
+    cones: [nonNeg(1)],
+  });
+  const exact = new Float64Array([1, 1, 1]);
+  const far = new Float64Array([5, 0, 1]);
+  const zeroV = new Float64Array([0, 0, 0]);
+
+  test("a hook returning false withholds `optimal` even on a zero-residual point", () => {
+    // §3.5 would call `exact` optimal; the hook overrides that decision.
+    const r = recoverPrimalDual(exact, zeroV, h, TOL, undefined, () => false);
+    expect(r.kind).toBe("inconclusive");
+    if (r.kind !== "inconclusive") throw new Error("unreachable");
+    // the candidate is still carried — the iteration needs the read-off
+    expect(r.candidate).toBeDefined();
+    expect(r.candidate!.x[0]).toBeCloseTo(1, 12);
+  });
+
+  test("a hook returning true grants `optimal` on a point §3.5 calls inconclusive", () => {
+    // `far` has primalResidual 4 — §3.5 (TOL 1e-8) would say inconclusive.
+    const r = recoverPrimalDual(far, zeroV, h, TOL, undefined, () => true);
+    expect(r.kind).toBe("optimal");
+    if (r.kind !== "optimal") throw new Error("unreachable");
+    expect(r.x[0]).toBeCloseTo(5, 12);
+  });
+
+  test("the hook receives the recovered Candidate (residuals included)", () => {
+    // A predicate over `candidate.primalResidual`: accepts `exact`
+    // (residual 0 < 0.5), rejects `far` (residual 4). Proves the
+    // candidate — not some stale or empty object — is threaded in.
+    const test = (c: Candidate): boolean => c.primalResidual < 0.5;
+    expect(recoverPrimalDual(exact, zeroV, h, TOL, undefined, test).kind).toBe("optimal");
+    expect(recoverPrimalDual(far, zeroV, h, TOL, undefined, test).kind).toBe("inconclusive");
+  });
+
+  test("the hook is not consulted when u_τ ≤ 0 (branch 1 is skipped)", () => {
+    // u_τ = −1: no primal–dual point can be read off, so the `optimal`
+    // branch — and therefore the hook — must never run.
+    let called = false;
+    const r = recoverPrimalDual(
+      new Float64Array([1, 0, -1]),
+      zeroV,
+      h,
+      TOL,
+      undefined,
+      () => {
+        called = true;
+        return true;
+      },
+    );
+    expect(called).toBe(false);
+    expect(r.kind).toBe("inconclusive");
+  });
+
+  test("the hook governs `optimal` only — certificate branches are untouched", () => {
+    // The primal-infeasible embedding point (u_τ = 0): branch 1 is
+    // skipped, branch 3 fires. A hook that says `true` cannot hijack it.
+    const hInf = buildHSDE({
+      A: matrixFromRows([[-1], [1]]),
+      b: new Float64Array([-1, 0]),
+      c: new Float64Array([1]),
+      cones: [nonNeg(2)],
+    });
+    const r = recoverPrimalDual(
+      new Float64Array([0, 1, 1, 0]),
+      new Float64Array([0, 0, 0, 0]),
+      hInf,
+      TOL,
+      undefined,
+      () => true,
+    );
+    expect(r.kind).toBe("primal-infeasible");
   });
 });
 

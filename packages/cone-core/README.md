@@ -128,6 +128,22 @@ accuracy reach for the specialists (`tools/lp-solve`, `tools/qp-solve`)
 — ADR-0030 §B is explicit that `cone-solve` is the *universal*
 1e-6-ceiling primary and the specialists are the high-accuracy paths.
 
+## Termination: the optional convergence-test hook
+
+`scsSolve` decides the `optimal` status from O'Donoghue 2016's §3.5
+relative-residual test by default. A caller that owns a *consumer-form*
+precision contract — one denominated in a residual of the *recovered*
+point rather than this embedded translated problem — can supply
+`SCSOpts.convergenceTest: (candidate: Candidate) => boolean`. When
+present it is the sole arbiter of `optimal` (the infeasible / unbounded
+certificate branches are untouched), so the iteration is driven to the
+caller's criterion directly. `tools/cone-solve` uses this to terminate
+on the §C-wire-form KKT residual its `precision` flag actually means
+(ADR-0030 addendum, bead `oxuk`). Absent — the default —`scsSolve` is
+the paper-faithful standalone substrate. It is the
+`Array.prototype.sort(comparator)` shape: the substrate owns the
+iteration, the caller owns the stopping criterion.
+
 ## Determinism
 
 `numerical: true` (ADR-0015): the iteration — equilibration,
@@ -145,7 +161,7 @@ is an explicit tolerance derived from the single user-facing
 | `hsde.ts` | `ConeProblem`, `HSDEMatrix`, `Scaling`, `buildHSDE`, `assembleQ`, `recoverPrimalDual` | O'D 2016 §1–§2 (embedding eq 7/8), §3.5 (termination), §5 (scaled criteria) |
 | `scaling.ts` | `equilibrate`, `applyScaling` | O'D 2016 §5 (Ruiz equilibration, ref Ruiz 2001) |
 | `anderson.ts` | `AndersonAccelerator`, `makeAnderson` | Zhang-O'Donoghue-Boyd 2018 / Walker-Ni 2011 (ADR-0036) |
-| `scs.ts` | `SCSOpts`, `SCSResult`, `scsSolve` | O'D 2016 §3.2.3 (iteration eq 17), §3.3 (over-relaxation), §3.4 (init), §4.1 (SMW subspace solve) |
+| `scs.ts` | `SCSOpts`, `SCSResult`, `scsSolve` | O'D 2016 §3.2.3 (iteration eq 17), §3.3 (over-relaxation), §3.4 (init), §4.1 (SMW subspace solve); §3.5 termination + the optional `convergenceTest` hook (ADR-0030 addendum) |
 
 ## See also
 

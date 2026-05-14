@@ -320,6 +320,16 @@ export type Recovered =
  *         ‖Aᵀ y + c‖₂   ≤ ε_dual · (1 + ‖c‖₂)
  *         |cᵀx + bᵀy|    ≤ ε_gap  · (1 + |cᵀx| + |bᵀy|)
  *
+ *     That paper-faithful test is the **default**. When `convergenceTest`
+ *     is supplied it becomes the *sole arbiter of `optimal`* instead — a
+ *     caller that owns a consumer-form precision contract (`tools/cone-
+ *     solve`, whose wire residual is measured on the recovered §C point,
+ *     not on this embedded translated problem — ADR-0030 addendum, bead
+ *     `oxuk`) hands `recoverPrimalDual` a predicate over the `Candidate`,
+ *     and the iteration is then driven to *its* criterion rather than a
+ *     looser embedded proxy. The infeasible / unbounded branches below
+ *     always use the paper's tolerances — the hook governs `optimal` only.
+ *
  *  2. **dual-infeasible** (the original primal is unbounded) — uses the
  *     *raw* `u_x` (no τ division; the certificate is a direction):
  *
@@ -349,6 +359,11 @@ export type Recovered =
  * (unscaled) problem and the raw components are the subarrays as-is.
  *
  * `u` and `v` must both have length `hsde.N`.
+ *
+ * `convergenceTest`, when supplied, replaces the §3.5 relative-residual
+ * test in branch 1 (see above): it receives the recovered `Candidate`
+ * and returns whether that point is "optimal enough" by the caller's own
+ * standard. It never affects the certificate branches.
  */
 export function recoverPrimalDual(
   u: Float64Array,
@@ -356,6 +371,7 @@ export function recoverPrimalDual(
   hsde: HSDEMatrix,
   tol: Tolerances,
   scaling?: Scaling,
+  convergenceTest?: (candidate: Candidate) => boolean,
 ): Recovered {
   const { n, m, N, A, b, c } = hsde;
   if (u.length !== N || v.length !== N) {
@@ -428,10 +444,17 @@ export function recoverPrimalDual(
       gap,
     };
 
-    const primalOk = candidate.primalResidual <= tol.epsPri * (1 + bNorm);
-    const dualOk = candidate.dualResidual <= tol.epsDual * (1 + cNorm);
-    const gapOk = Math.abs(gap) <= tol.epsGap * (1 + Math.abs(cTx) + Math.abs(bTy));
-    if (primalOk && dualOk && gapOk) {
+    // The `optimal` decision. Default: the paper's §3.5 relative-residual
+    // test. When `convergenceTest` is supplied it is the sole arbiter —
+    // the caller's consumer-form criterion drives termination instead of
+    // this embedded proxy (ADR-0030 addendum, bead `oxuk`).
+    const accepted =
+      convergenceTest !== undefined
+        ? convergenceTest(candidate)
+        : candidate.primalResidual <= tol.epsPri * (1 + bNorm) &&
+          candidate.dualResidual <= tol.epsDual * (1 + cNorm) &&
+          Math.abs(gap) <= tol.epsGap * (1 + Math.abs(cTx) + Math.abs(bTy));
+    if (accepted) {
       return { kind: "optimal", ...candidate };
     }
   }

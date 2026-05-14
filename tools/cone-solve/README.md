@@ -41,7 +41,7 @@ achieved_precision?, iterations, method, condition_estimate, warnings }`
 | `optimal` | KKT met within `precision`; `objective` / `achieved_precision` present. `achieved_precision` is the §C-wire-form `max(r_p, r_d, r_c)` of the *returned* `(x, dual, slack)` — the residual the consumer measures, not `cone-core`'s internal embedded-form figure (bead `rgl8`) |
 | `infeasible` | primal infeasible; `dual` is a Farkas certificate (`bᵀy = −1`) |
 | `unbounded` | primal unbounded; `x` is an unbounded ray (`cᵀx = −1`) |
-| `iter-cap` | did not reach `precision`: either `max_iter` was hit, or SCS's embedded-form termination fired while the §C-wire-form residual still exceeds `precision` (the `rgl8` coherence guard re-labels such a result rather than call it `optimal` — `optimal` always means `achieved_precision ≤ precision`). Best-effort iterate + honest `achieved_precision` |
+| `iter-cap` | `max_iter` was hit before the §C-wire-form residual reached `precision`. Best-effort iterate + honest `achieved_precision`. (`optimal` always means `achieved_precision ≤ precision`: the tool hands `cone-core` a `convergenceTest` denominated in exactly the §C-wire-form residual — bead `oxuk` — so `scsSolve` is driven to the wire criterion directly, with no post-hoc `optimal → iter-cap` re-label.) |
 | `numerical-breakdown` | non-finite iterate or failed factorisation |
 
 Or a boundary-failure refusal envelope `tagged "cone-solve/<class>"` for
@@ -70,6 +70,15 @@ SCS-style operator splitting on the homogeneous self-dual embedding
 equilibration (O'Donoghue §5) and Type-II Anderson acceleration
 (ADR-0036) to the iteration.
 
+`cone-core`'s paper-faithful §3.5 termination test is denominated in the
+*embedded translated* problem's residual — looser/tighter than this
+tool's `precision` contract (the §C-wire-form KKT residual of the
+recovered point) by a per-problem 0.59–3.08× factor. So the tool hands
+`scsSolve` an `SCSOpts.convergenceTest` that *is* the §C-wire-form test
+(`kktResidualC ≤ precision`, ADR-0030 addendum, bead `oxuk`): the
+iteration is driven to the wire criterion directly, and an `optimal`
+from this tool means the wire contract holds with no asterisk.
+
 **Accuracy.** SCS is a modest-accuracy first-order method (ADR-0030 §B:
 `cone-solve` ceiling ≈ `1e-6`). It solves the small, well-conditioned
 problems quickly and exactly; on larger or poorly-conditioned problems
@@ -91,6 +100,10 @@ overclaiming. For tight-tolerance LP / QP, reach for the specialists.
 - **strong-duality** — `optimal` ⟹ `cᵀx = bᵀy` within tolerance.
 - **honest-precision** — `achieved_precision` never under-claims the
   true max relative KKT residual.
+- **optimal-precision-coherence** — `optimal` ⟹ `achieved_precision ≤
+  precision`, structurally: the `convergenceTest` handed to `scsSolve`
+  *is* the §C-wire-form test, so the solver never declares `optimal`
+  short of the wire contract (bead `oxuk`).
 - **scope-honest-refusal** — an out-of-scope cone family returns a
   tagged envelope, never a wrong-shaped answer.
 

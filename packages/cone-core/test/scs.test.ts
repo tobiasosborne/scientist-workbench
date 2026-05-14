@@ -12,6 +12,7 @@
 import { describe, expect, test } from "bun:test";
 import { matrixFromRows } from "@workbench/linalg-core";
 import {
+  type Candidate,
   type Cone,
   type ConeProblem,
   type SCSResult,
@@ -298,6 +299,80 @@ describe("scsSolve — guards", () => {
       };
       expect(() => scsSolve(p)).toThrow(/j282/);
     }
+  });
+
+  test("rejects a non-function convergenceTest", () => {
+    expect(() =>
+      scsSolve(p, {
+        ...DEFAULT_SCS_OPTS,
+        convergenceTest: 42 as unknown as (c: Candidate) => boolean,
+      }),
+    ).toThrow(ConeError);
+  });
+});
+
+// ── scsSolve — the convergenceTest hook (bead oxuk) ─────────────────────────
+//
+// `convergenceTest`, when supplied, is the sole arbiter of `optimal`:
+// `scsSolve` is driven to the *caller's* criterion instead of the paper's
+// §3.5 relative-residual test. The motivating consumer is `tools/cone-
+// solve`, whose wire-form precision contract is looser/tighter than §3.5
+// by a per-problem factor — but the hook is generic.
+
+describe("scsSolve — convergenceTest hook", () => {
+  // min x s.t. x ≥ 1 → x = 1. Converges in a modest iteration count.
+  const p: ConeProblem = {
+    A: matrixFromRows([[-1]]),
+    b: new Float64Array([-1]),
+    c: new Float64Array([1]),
+    cones: [nonNeg(1)],
+  };
+
+  test("a hook that never accepts forces `iter-cap` on a solvable problem", () => {
+    // The problem is trivially solvable, but the hook withholds `optimal`
+    // forever — so the only honest outcome is `iter-cap` at the cap.
+    const r = scsSolve(p, { ...DEFAULT_SCS_OPTS, maxIter: 200, convergenceTest: () => false });
+    expect(r.status).toBe("iter-cap");
+  });
+
+  test("a sane residual hook reaches `optimal` with the correct solution", () => {
+    // A hand-rolled §3.5-shaped test: accept once all three residuals are
+    // small. `scsSolve` must drive the iteration to it and read off x ≈ 1.
+    const r = scsSolve(p, {
+      ...DEFAULT_SCS_OPTS,
+      convergenceTest: (c: Candidate) =>
+        c.primalResidual < 1e-7 && c.dualResidual < 1e-7 && Math.abs(c.gap) < 1e-7,
+    });
+    expect(r.status).toBe("optimal");
+    if (r.status !== "optimal") throw new Error("unreachable");
+    expect(r.x[0]).toBeCloseTo(1, 5);
+  });
+
+  test("a looser hook terminates strictly earlier than the §3.5 default", () => {
+    // The hook genuinely *drives* termination: a criterion looser than
+    // the paper's §3.5 test must stop the iteration sooner. Use a 2-var
+    // LP with acceleration off (`andersonMemory: 0`) — the plain SCS
+    // tail is long enough that the loose-vs-tight gap is unambiguous
+    // (≈96 iterations to §3.5, ≈9 to a 1e-1 gap test).
+    const lp2: ConeProblem = {
+      A: matrixFromRows([
+        [-1, -1],
+        [-1, 0],
+        [0, -1],
+      ]),
+      b: new Float64Array([-3, 0, 0]),
+      c: new Float64Array([1, 2]),
+      cones: [nonNeg(3)],
+    };
+    const opts = { ...DEFAULT_SCS_OPTS, andersonMemory: 0 };
+    const dflt = scsSolve(lp2, opts);
+    const loose = scsSolve(lp2, {
+      ...opts,
+      convergenceTest: (c: Candidate) => Math.abs(c.gap) < 1e-1,
+    });
+    expect(dflt.status).toBe("optimal");
+    expect(loose.status).toBe("optimal");
+    expect(loose.iterations).toBeLessThan(dflt.iterations);
   });
 });
 

@@ -46,7 +46,11 @@
 //       whenever a primal–dual iterate was recoverable — it is the
 //       §C-wire-form KKT residual of the *returned* point (`kktResidualC`;
 //       bead `rgl8`), so `optimal` always means `achieved_precision ≤
-//       precision`. The five status classes are
+//       precision`. That coherence is now *structural*: this tool hands
+//       `scsSolve` an `SCSOpts.convergenceTest` denominated in exactly
+//       that §C-wire-form residual (bead `oxuk`), so the iteration is
+//       driven to the wire criterion directly — no post-hoc `optimal →
+//       iter-cap` re-label. The five status classes are
 //       `optimal | infeasible | unbounded | iter-cap | numerical-breakdown`.
 //   | tagged "cone-solve/{non-finite-input,degenerate-shape,malformed-cone,
 //                         unsupported-cone,quadratic-objective}"
@@ -55,11 +59,16 @@
 //
 // v0.1 scope
 // ----------
-// cone-core v0.1 implements the LP-complete cone subset — nonneg / zero /
-// free. So cone-solve v0.1 accepts `NonNegCone`, `ZeroCone`, `FreeCone`
-// and refuses `SOCone` / `PSDCone` / `ExpCone` / `PowCone` with a
-// `cone-solve/unsupported-cone` envelope naming the cone-core sub-bead
-// that tracks it (`0wc7` SOC+PSD, `j282` Exp+Pow). A quadratic objective
+// cone-core projects five of the seven cone families (nonneg / zero /
+// free / soc / psd; bead `0wc7`), but cone-solve v0.1's *wire layer*
+// accepts only `NonNegCone` / `ZeroCone` / `FreeCone`: it refuses
+// `SOCone` / `PSDCone` / `ExpCone` / `PowCone` with a
+// `cone-solve/unsupported-cone` envelope. The SOC / PSD refusal is a
+// tool-layer gap, not a substrate one — the §C wire-form translation
+// for those cones (the `expression "SOCone" / "PSDCone"` heads with
+// their index / size payloads onto cone-core's projectable blocks) is
+// its own bead; the envelope names the cone-core sub-bead for context
+// (`0wc7` SOC+PSD substrate, `j282` Exp+Pow). A quadratic objective
 // (`minimize.Q`) is refused with `cone-solve/quadratic-objective` — the
 // SCS substrate supports `½xᵀQx` natively in principle (ADR-0030
 // open-question 3) but cone-core v0.1's `scsSolve` does not yet. Both
@@ -115,6 +124,7 @@ import {
 } from "@workbench/protocol";
 import { defineTool, runTool } from "@workbench/contract";
 import {
+  type Candidate,
   type Cone,
   type ConeProblem,
   type SCSResult,
@@ -567,6 +577,36 @@ function kktResidualC(
 }
 
 /**
+ * Recover the §C dual variable and dual slack from a translated-problem
+ * dual `y'` (cone-core's `SCSResult.y` / a `Candidate.y`).
+ *
+ *   - §C `dual`  = `−y'_eq`     — the equality-block dual, negated
+ *   - §C `slack` = `y'_cone`    — the cone-block dual, re-indexed from
+ *                                 row order to variable order via
+ *                                 `coneRowOfVar`; a free variable (no
+ *                                 cone row) has slack exactly `0`.
+ *
+ * Shared by `encodeResult` (which encodes the final point) and the
+ * per-iteration `convergenceTest` closure in `fn` (which measures the
+ * §C-wire-form residual of every candidate) so the two never drift —
+ * they recover the §C point the same way, by construction.
+ */
+function recoverDualSlack(
+  yPrime: Float64Array,
+  t: Translated,
+  n: number,
+): { dual: number[]; slack: number[] } {
+  const dual = new Array<number>(t.mEq);
+  for (let i = 0; i < t.mEq; i++) dual[i] = -yPrime[i]!;
+  const slack = new Array<number>(n).fill(0);
+  for (let j = 0; j < n; j++) {
+    const r = t.coneRowOfVar[j]!;
+    if (r >= 0) slack[j] = yPrime[r]!;
+  }
+  return { dual, slack };
+}
+
+/**
  * Encode the `scsSolve` result as the ADR-0030 §D output. `optimal`,
  * `iter-cap`, `infeasible`, `unbounded` and `numerical-breakdown` are all
  * the §D *record* (with the `status` field) — only *malformed input* gets
@@ -589,82 +629,44 @@ function encodeResult(
   decoded: DecodedInput,
   warnings: string[],
 ): Value {
-  const { mEq, coneRowOfVar } = t;
+  const { mEq } = t;
   const n = decoded.c.length;
-
-  // §C dual `y = −y'_eq` — the equality-block dual, negated.
-  const recoverY = (yPrime: Float64Array): number[] => {
-    const y = new Array<number>(mEq);
-    for (let i = 0; i < mEq; i++) y[i] = -yPrime[i]!;
-    return y;
-  };
-  // §C dual slack `s` — the cone-block dual `y'_cone`, re-indexed to
-  // variable order. A free variable (no cone row) has slack exactly 0.
-  const recoverSlack = (yPrime: Float64Array): number[] => {
-    const s = new Array<number>(n).fill(0);
-    for (let j = 0; j < n; j++) {
-      const r = coneRowOfVar[j]!;
-      if (r >= 0) s[j] = yPrime[r]!;
-    }
-    return s;
-  };
 
   switch (result.status) {
     case "optimal": {
-      // Recover the §C point, then measure `achieved_precision` *on it*,
-      // in §C wire form — not `cone-core`'s embedded-form residual.
+      // `cone-core` returned `optimal`. Because this tool hands `scsSolve`
+      // an `SCSOpts.convergenceTest` (built in `fn`) that *is* the
+      // §C-wire-form test `kktResidualC ≤ precision`, that status already
+      // means the recovered §C point meets the wire contract. This is the
+      // deeper fix bead `oxuk` calls for: it retires rgl8's stopgap
+      // coherence guard (which re-labelled `optimal → iter-cap` when the
+      // embedded §3.5 test fired looser than the §C residual). `scsSolve`
+      // is now driven to the consumer criterion directly, so the
+      // embedded/§C gap never leaks into the status — there is no
+      // re-label, `optimal` means `optimal` with no asterisk.
+      //
+      // `achieved_precision` is still recomputed here in §C wire form
+      // from the recovered point — it is the figure the verifier's check
+      // #10 recomputes, and the §D output field must carry it. By
+      // construction it equals what the `convergenceTest` closure
+      // measured: same final iterate (`result.x` / `result.y` is the very
+      // `Candidate` the last hook call accepted), same `recoverDualSlack`,
+      // same `kktResidualC` — so it is `≤ precision`. That identity is an
+      // `--invariants` claim, exercised numerically by `--test`.
       const x = Array.from(result.x);
-      const dual = recoverY(result.y);
-      const slack = recoverSlack(result.y);
+      const { dual, slack } = recoverDualSlack(result.y, t, n);
       const achievedPrecision = kktResidualC(decoded.A, decoded.b, decoded.c, x, dual, slack);
-
-      // Coherence guard (bead `rgl8`). `cone-core` decided `optimal` from
-      // O'Donoghue 2016's §3.5 termination test — measured on the
-      // *embedded translated* problem in 2-norm, and gap-based (no `xᵀs`
-      // term). That criterion is paper-faithful but looser than the
-      // §C-wire-form residual the tool's `precision` contract is
-      // denominated in: the embedded test can fire while the recovered
-      // §C point's residual still exceeds `precision`. A TS expert wants
-      // `optimal` ⟹ `achieved_precision ≤ precision` with no asterisk —
-      // so when the honest §C residual exceeds the request, the honest
-      // status is `iter-cap`: a best-effort iterate with an honest
-      // achieved_precision worse than requested, exactly the `iter-cap`
-      // contract. (`iterations < max_iter` here — the solver stopped on
-      // its own looser criterion, not the cap; the warning says so. The
-      // deeper fix — a termination test denominated in the consumer-form
-      // residual — is filed separately.)
-      if (achievedPrecision <= decoded.precision) {
-        return record({
-          status: str("optimal"),
-          x: f64List(x),
-          dual: f64List(dual),
-          slack: f64List(slack),
-          objective: float64FromNumber(result.objective),
-          achieved_precision: float64FromNumber(achievedPrecision),
-          iterations: int(BigInt(result.iterations)),
-          method: str(METHOD_TAG),
-          condition_estimate: float64FromNumber(result.conditionEstimate),
-          warnings: list(warnings.map((w) => str(w))),
-        });
-      }
       return record({
-        status: str("iter-cap"),
+        status: str("optimal"),
         x: f64List(x),
         dual: f64List(dual),
         slack: f64List(slack),
+        objective: float64FromNumber(result.objective),
         achieved_precision: float64FromNumber(achievedPrecision),
         iterations: int(BigInt(result.iterations)),
         method: str(METHOD_TAG),
         condition_estimate: float64FromNumber(result.conditionEstimate),
-        warnings: list(
-          [
-            ...warnings,
-            `SCS reported convergence at iteration ${result.iterations}, but the §C-wire-form ` +
-              `KKT residual ${achievedPrecision} exceeds the requested precision ${decoded.precision}; ` +
-              `reported as iter-cap with the honest residual (the embedded §3.5 termination test is ` +
-              `looser than the wire-form precision contract — tracked in scientist-workbench-oxuk)`,
-          ].map((s) => str(s)),
-        ),
+        warnings: list(warnings.map((w) => str(w))),
       });
     }
     case "iter-cap": {
@@ -677,8 +679,8 @@ function encodeResult(
       // to measure: the field is absent and the warning says so.
       const hasIterate = result.x !== undefined && result.y !== undefined;
       const x = result.x === undefined ? [] : Array.from(result.x);
-      const dual = result.y === undefined ? [] : recoverY(result.y);
-      const slack = result.y === undefined ? [] : recoverSlack(result.y);
+      const { dual, slack }: { dual: number[]; slack: number[] } =
+        result.y === undefined ? { dual: [], slack: [] } : recoverDualSlack(result.y, t, n);
       const achievedPrecision = hasIterate
         ? kktResidualC(decoded.A, decoded.b, decoded.c, x, dual, slack)
         : undefined;
@@ -776,11 +778,38 @@ function fn(input: RecordValue, _flags: Record<string, never>): Value {
   const translated = translate(decoded, blocks);
   if (isRefusal(translated)) return refusalValue(translated);
 
+  // The §C-wire-form convergence test handed to `scsSolve` (ADR-0030
+  // addendum, bead `oxuk`). cone-core's paper-faithful §3.5 termination
+  // test is denominated in the *embedded translated* problem's 2-norm
+  // residual — looser than this tool's `precision` contract, which is
+  // the §C-wire-form KKT residual of the *recovered* point (the figure
+  // the corpus verifier recomputes). Supplying this predicate makes
+  // `scsSolve` drive the iteration to *that* criterion: it declares
+  // `optimal` exactly when `kktResidualC ≤ precision` on the recovered
+  // §C point — so an `optimal` from this tool means the wire contract
+  // holds, with no post-hoc coherence re-label (rgl8's stopgap, retired
+  // by this bead). Runs once per iteration; `kktResidualC` is O(m·n),
+  // bounded by the iteration's own subspace solve.
+  const n = decoded.c.length;
+  const convergenceTest = (candidate: Candidate): boolean => {
+    const { dual, slack } = recoverDualSlack(candidate.y, translated, n);
+    const residual = kktResidualC(
+      decoded.A,
+      decoded.b,
+      decoded.c,
+      Array.from(candidate.x),
+      dual,
+      slack,
+    );
+    return residual <= decoded.precision;
+  };
+
   const result = scsSolve(translated.problem, {
     precision: decoded.precision,
     maxIter: decoded.maxIter,
     alpha: DEFAULT_SCS_OPTS.alpha,
     andersonMemory: DEFAULT_SCS_OPTS.andersonMemory,
+    convergenceTest,
   });
 
   return encodeResult(result, translated, decoded, []);
@@ -883,6 +912,15 @@ const invariants = [
     machine_checkable: true,
   },
   {
+    name: "optimal-precision-coherence",
+    statement:
+      "`optimal` status implies `achieved_precision ≤ precision`. The tool hands " +
+      "`scsSolve` a `convergenceTest` denominated in the §C-wire-form residual " +
+      "(bead `oxuk`), so the iteration is driven to the wire criterion directly " +
+      "— an `optimal` never carries a residual worse than requested.",
+    machine_checkable: true,
+  },
+  {
     name: "scope-honest-refusal",
     statement:
       "A cone family outside the v0.1 LP-complete subset returns a tagged " +
@@ -973,6 +1011,21 @@ function smokeTest(): void {
     throw new Error(
       `cone-solve --test: achieved_precision ${achievedPrecision} is not the §C KKT residual ` +
         `${trueResidual} — it must describe the returned (x, dual, slack), not the embedded form`,
+    );
+  }
+  // optimal-precision-coherence invariant (bead `oxuk`): an `optimal`
+  // status must mean `achieved_precision ≤ precision` with no asterisk.
+  // This holds *structurally* — `fn` hands `scsSolve` a `convergenceTest`
+  // that is exactly `kktResidualC ≤ precision`, so `scsSolve` declares
+  // `optimal` only once the §C wire contract is met (rgl8's post-hoc
+  // `optimal → iter-cap` re-label is retired). The LP above uses the
+  // default `precision`; assert the contract numerically.
+  if (achievedPrecision > DEFAULT_SCS_OPTS.precision) {
+    throw new Error(
+      `cone-solve --test: optimal-precision-coherence violated — status is "optimal" but ` +
+        `achieved_precision ${achievedPrecision} exceeds the default precision ` +
+        `${DEFAULT_SCS_OPTS.precision} (the convergenceTest hook should make ` +
+        `optimal ⟹ achieved_precision ≤ precision structural — bead oxuk)`,
     );
   }
 

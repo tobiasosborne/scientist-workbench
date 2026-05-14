@@ -95,6 +95,31 @@ export interface SCSOpts {
    * cross-check and for testing the un-accelerated path.
    */
   readonly andersonMemory: number;
+  /**
+   * Optional **consumer-form convergence test** (ADR-0030 addendum, bead
+   * `oxuk`). When supplied, this predicate — not the paper's §3.5
+   * relative-residual test — is the sole arbiter of the `optimal`
+   * status: `scsSolve` declares `optimal` exactly when it accepts the
+   * recovered `Candidate`. The infeasible / unbounded certificate
+   * branches are untouched.
+   *
+   * The motivation is the universal-tier wire contract. `tools/cone-
+   * solve`'s `precision` is denominated in the §C-wire-form KKT residual
+   * of the *recovered §C point* — measured the way the corpus verifier
+   * measures it — which differs from the §3.5 residual of this *embedded
+   * translated* problem by a per-problem factor (0.59–3.08 across the
+   * `lp-netlib` profile). With the §3.5 test the embedded criterion
+   * could fire while the §C residual still exceeded the request; the
+   * tool then had to pessimistically re-label `optimal → iter-cap`. The
+   * hook lets the tool drive the iteration to *its own* criterion
+   * directly, so `optimal` means `optimal` with no asterisk.
+   *
+   * Absent (the default — `DEFAULT_SCS_OPTS` does not set it), `scsSolve`
+   * is the paper-faithful standalone substrate. The hook is the
+   * `Array.prototype.sort(comparator)` move: the substrate owns the
+   * machinery, the caller owns the decision criterion.
+   */
+  readonly convergenceTest?: (candidate: Candidate) => boolean;
 }
 
 /** ADR-0030 + ADR-0036 + ADR-0037 defaults for the SCS-ADMM path. */
@@ -119,7 +144,12 @@ export type SCSStatus =
  * forbids reading an objective off an infeasible result.
  *
  *  - **optimal** — `x, y, s` are a primal–dual solution; `achievedPrecision`
- *    is the honest max relative residual at termination.
+ *    is cone-core's §3.5 embedded max relative residual at termination.
+ *    When an `SCSOpts.convergenceTest` hook decided termination this is
+ *    still cone-core's *own* embedded measurement — not the caller's
+ *    criterion (which cone-core does not see a number for); the caller
+ *    owns its own residual figure (`tools/cone-solve` recomputes the
+ *    §C-wire-form residual for its `achieved_precision` field).
  *  - **infeasible** — the primal is infeasible; `certificate` is a Farkas
  *    `y` (`Aᵀy ≈ 0`, `y ∈ 𝒦*`, `bᵀy = −1`).
  *  - **unbounded** — the primal is unbounded (dual infeasible);
@@ -392,9 +422,11 @@ function maxRelativeResidual(cand: Candidate, bNorm: number, cNorm: number): num
  *
  *  3. **Iterate** (§3.2.3 eq 17 + §3.3 over-relaxation): subspace
  *     projection → over-relaxation → cone projection → dual update.
- *     Every iteration `recoverPrimalDual` runs the §3.5 termination test;
- *     the first of optimal / unbounded / infeasible to fire stops the
- *     loop. A non-finite iterate stops it as `numerical-breakdown`.
+ *     Every iteration `recoverPrimalDual` runs the termination test —
+ *     the paper's §3.5 relative-residual test by default, or
+ *     `opts.convergenceTest` when supplied (see `SCSOpts`); the first of
+ *     optimal / unbounded / infeasible to fire stops the loop. A
+ *     non-finite iterate stops it as `numerical-breakdown`.
  *
  *  4. **Iteration cap.** If `maxIter` passes with no branch firing,
  *     return `iter-cap` carrying the best-effort iterate and its honest
@@ -423,6 +455,11 @@ export function scsSolve(problem: ConeProblem, opts: SCSOpts = DEFAULT_SCS_OPTS)
   if (!Number.isInteger(opts.andersonMemory) || opts.andersonMemory < 0) {
     throw new ConeError(
       `scsSolve: andersonMemory must be a non-negative integer, got ${opts.andersonMemory}`,
+    );
+  }
+  if (opts.convergenceTest !== undefined && typeof opts.convergenceTest !== "function") {
+    throw new ConeError(
+      `scsSolve: convergenceTest must be a function when supplied, got ${typeof opts.convergenceTest}`,
     );
   }
 
@@ -516,7 +553,7 @@ export function scsSolve(problem: ConeProblem, opts: SCSOpts = DEFAULT_SCS_OPTS)
     // the iterate back to the original coordinates before checking §3.5.
     const u = z.subarray(0, N);
     const v = z.subarray(N, 2 * N);
-    const rec = recoverPrimalDual(u, v, origHsde, tol, scaling);
+    const rec = recoverPrimalDual(u, v, origHsde, tol, scaling, opts.convergenceTest);
     switch (rec.kind) {
       case "optimal":
         return {
