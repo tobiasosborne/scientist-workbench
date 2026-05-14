@@ -302,8 +302,8 @@ Parikh & Boyd, *Proximal Algorithms*, Found. Trends Optim. 1(3) 2014,
 the power cone. The paper gives the *cone definitions* (§6.1, p. 1059)
 but not the projection formulas.
 
-`cone-core` v0.1 implements only the projections that are **definitional
-and need no second reference**:
+This file (transcribed from O'Donoghue 2016) covers only the projections
+that are **definitional and need no second reference**:
 
 - **`{0}ⁿ` (Zero cone)** — `Π(z) = 0`. Dual: `ℝⁿ` (Free).
 - **`ℝⁿ` (Free cone)** — `Π(z) = z`. Dual: `{0}ⁿ` (Zero).
@@ -312,11 +312,15 @@ and need no second reference**:
 These three close the **LP** case (LP = NonNeg cone, with equalities
 absorbed into `Ax = b`), which is exactly the v0.1 bench gate.
 
-SOC, PSD, Exp, Pow projections require Parikh-Boyd §6.3 (and Hien 2014
-for Pow) staged in `docs/refs/` first — filed as sub-beads of
-`scientist-workbench-cp9k`. `projectCone` throws a loud `ConeError`
-naming the sub-bead for any not-yet-implemented family — honest scope
-(CLAUDE.md Rule 8), never a silent wrong answer.
+The **second-order (SOC)** and **positive-semidefinite (PSD)**
+projections are transcribed from Parikh-Boyd §6.3 — now staged at
+`docs/refs/parikh-boyd-2014-proximal-algorithms.pdf` — in the companion
+ground-truth file **`docs/ground-truth/convex/cone-projections.md`**
+(bead `scientist-workbench-0wc7`). The **exponential** and **power**
+projections still require Parikh-Boyd §6.3.4 and Khanh Hien 2014; until
+those land (bead `scientist-workbench-j282`), `projectCone` throws a
+loud `ConeError` naming the sub-bead for any not-yet-implemented family
+— honest scope (CLAUDE.md Rule 8), never a silent wrong answer.
 
 ---
 
@@ -332,4 +336,4 @@ naming the sub-bead for any not-yet-implemented family — honest scope
 | §3.5 termination taxonomy | `scsSolve` convergence checks → ADR-0030 status |
 | §4.1 SMW factorisation-caching | the cached `M`-factor + `g`, `denom` in `scsSolve` |
 | §5 scaling | deferred (v0.1 boundary, §5 above) |
-| §6.1 / ref [64] cone projections | `projectCone` (`cones.ts`) — LP subset only in v0.1 |
+| §6.1 / ref [64] cone projections | `projectCone` (`cones.ts`) — zero/free/nonneg here; SOC + PSD in `cone-projections.md`; exp/pow deferred (j282) |

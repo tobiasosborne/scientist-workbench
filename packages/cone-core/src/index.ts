@@ -35,6 +35,8 @@ export {
   nonNeg,
   zero,
   free,
+  soc,
+  psd,
   coneDim,
   projectCone,
   dualCone,

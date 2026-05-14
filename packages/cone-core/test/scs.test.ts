@@ -12,12 +12,16 @@
 import { describe, expect, test } from "bun:test";
 import { matrixFromRows } from "@workbench/linalg-core";
 import {
+  type Cone,
   type ConeProblem,
   type SCSResult,
   ConeError,
   DEFAULT_SCS_OPTS,
+  inCone,
   nonNeg,
+  psd,
   scsSolve,
+  soc,
   zero,
 } from "../src/index.js";
 
@@ -277,17 +281,91 @@ describe("scsSolve — guards", () => {
     expect(() => scsSolve(p, { ...DEFAULT_SCS_OPTS, alpha: 2.5 })).toThrow(ConeError);
   });
 
-  test("rejects a v0.1-unsupported cone at setup, naming the sub-bead", () => {
-    const socP: ConeProblem = {
+  test("rejects an unimplemented cone (exp / pow) at setup, naming the sub-bead", () => {
+    // soc / psd are projectable now (bead 0wc7); exp / pow are still
+    // deferred (bead j282), and `scsSolve` must refuse them *at setup*
+    // rather than mid-iteration.
+    for (const K of [{ kind: "exp" }, { kind: "pow", alpha: 0.5 }] as Cone[]) {
+      const p: ConeProblem = {
+        A: matrixFromRows([
+          [-1, 0, 0],
+          [0, -1, 0],
+          [0, 0, -1],
+        ]),
+        b: new Float64Array([0, 0, 0]),
+        c: new Float64Array([1, 0, 0]),
+        cones: [K],
+      };
+      expect(() => scsSolve(p)).toThrow(/j282/);
+    }
+  });
+});
+
+// ── SOC / PSD: scsSolve end-to-end on the cones bead 0wc7 added ──────────────
+//
+// The SCS iteration is cone-agnostic by construction — `projectProduct`
+// walks `projectCone` block by block — so once `cones.ts` projects soc /
+// psd, `scsSolve` handles them with no further wiring. These tests prove
+// that integration on problems with a hand-derived unique optimum. They
+// are not a convergence *benchmark* (worklog 113 is explicit that plain
+// SCS is not bench-competitive); they prove the projections compose
+// correctly into the solver and that `status: "optimal"` stays honest —
+// the §3.5 termination test still judges the *actual* residuals.
+
+describe("scsSolve — SOC / PSD with a known optimum", () => {
+  test("SOC: min x₀ s.t. (x₀+2, x₁) ∈ soc₂ → apex x = (−2, 0), objective = −2", () => {
+    // A = −I₂, b = (2,0): s = b − Ax = (2 + x₀, x₁), constrained to the
+    // second-order cone {(t, u) : t ≥ |u|}. Minimising x₀ drives the
+    // slack to the cone apex — the unique optimum is x₀ = −2, x₁ = 0.
+    const p: ConeProblem = {
       A: matrixFromRows([
-        [-1, 0, 0],
-        [0, -1, 0],
-        [0, 0, -1],
+        [-1, 0],
+        [0, -1],
       ]),
-      b: new Float64Array([0, 0, 0]),
-      c: new Float64Array([1, 0, 0]),
-      cones: [{ kind: "soc", dim: 3 }],
+      b: new Float64Array([2, 0]),
+      c: new Float64Array([1, 0]),
+      cones: [soc(2)],
     };
-    expect(() => scsSolve(socP)).toThrow(/0wc7/);
+    const r = expectOptimal(scsSolve(p));
+    expect(r.x[0]).toBeCloseTo(-2, 4);
+    expect(r.x[1]).toBeCloseTo(0, 4);
+    expect(r.objective).toBeCloseTo(-2, 4);
+    // independent checks — KKT residuals small, and the slack genuinely
+    // lands in the second-order cone (the solver never self-certifies)
+    const res = kktResiduals(p, r.x, r.y, r.s);
+    expect(res.primal).toBeLessThan(1e-4);
+    expect(res.dual).toBeLessThan(1e-4);
+    expect(Math.abs(res.gap)).toBeLessThan(1e-4);
+    expect(inCone(r.s, soc(2), 1e-4)).toBe(true);
+  });
+
+  test("PSD: max tr(X) s.t. X ⪯ diag(2,3) → X = diag(2,3), objective = −5", () => {
+    // svec coordinates (√2 off-diagonal). A = I₃, b = svec(diag(2,3)) =
+    // (2,0,3): s = b − x is the svec of B − X, constrained PSD, so
+    // X ⪯ B. c = svec(−I₂) = (−1,0,−1) makes cᵀx = −tr(X); minimising it
+    // maximises tr(X), whose unique maximiser under X ⪯ B is X = B
+    // (a PSD matrix of zero trace is zero). Optimum x = (2,0,3),
+    // objective = −tr(B) = −5.
+    const p: ConeProblem = {
+      A: matrixFromRows([
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1],
+      ]),
+      b: new Float64Array([2, 0, 3]),
+      c: new Float64Array([-1, 0, -1]),
+      cones: [psd(2)],
+    };
+    const r = expectOptimal(scsSolve(p));
+    expect(r.x[0]).toBeCloseTo(2, 3);
+    expect(r.x[1]).toBeCloseTo(0, 3);
+    expect(r.x[2]).toBeCloseTo(3, 3);
+    expect(r.objective).toBeCloseTo(-5, 3);
+    const res = kktResiduals(p, r.x, r.y, r.s);
+    expect(res.primal).toBeLessThan(1e-3);
+    expect(res.dual).toBeLessThan(1e-3);
+    expect(Math.abs(res.gap)).toBeLessThan(1e-3);
+    // the slack X recovered from s really is positive-semidefinite
+    expect(inCone(r.s, psd(2), 1e-3)).toBe(true);
   });
 });

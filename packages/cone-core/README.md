@@ -13,16 +13,19 @@ records) lives in the tool layer. Same discipline as
 `@workbench/linalg-core`: the substrate carries no `@workbench/protocol`
 dependency, only `@workbench/linalg-core` for `Matrix` + LU.
 
-Algorithm ground truth: [`docs/ground-truth/convex/scs-algorithm.md`](../../docs/ground-truth/convex/scs-algorithm.md),
-transcribed from `docs/refs/odonoghue-2016-scs.pdf`. Ported **from the
-paper, never from `scs.c`** (CLAUDE.md Law 1 + ADR-0030 §E).
+Algorithm ground truth: [`docs/ground-truth/convex/scs-algorithm.md`](../../docs/ground-truth/convex/scs-algorithm.md)
+(the SCS iteration, transcribed from `docs/refs/odonoghue-2016-scs.pdf`)
+and [`docs/ground-truth/convex/cone-projections.md`](../../docs/ground-truth/convex/cone-projections.md)
+(the SOC + PSD projections, transcribed from
+`docs/refs/parikh-boyd-2014-proximal-algorithms.pdf`). Ported **from the
+papers, never from `scs.c`** (CLAUDE.md Law 1 + ADR-0030 §E).
 
 ## Surface
 
 ```ts
 import {
   // cones.ts — the cone primitive and its Euclidean projection
-  type Cone, nonNeg, zero, free, coneDim,
+  type Cone, nonNeg, zero, free, soc, psd, coneDim,
   projectCone, dualCone, inCone, ConeError,
   // hsde.ts — the homogeneous self-dual embedding
   type ConeProblem, type HSDEMatrix, type Recovered, type Scaling,
@@ -75,27 +78,33 @@ You cannot read an `objective` off an `infeasible` result — the type
 forbids it. There is no mode where the solver returns garbage under a
 happy `optimal` (CLAUDE.md Rule 8).
 
-## v0.1 scope — the LP-complete cone subset
+## Cone scope — five of seven families live
 
-`cone-core` v0.1 implements the three cone families whose projections
-are *definitional* and need no second reference: the **zero** cone, the
-**free** cone, and the **nonnegative orthant**. Those three close the
-**LP** case (LP = nonnegative orthant, equalities folded into `Ax = b`),
-which is exactly the v0.1 bench gate.
+`cone-core` implements five of the seven cone families:
 
-The `SOCone`, `PSDCone`, `ExpCone` and `PowCone` variants are present in
-the `Cone` union — they are the documented substrate surface (ADR-0030
-§H) and a TS expert should see the whole map — but every *operation* on
-them (`projectCone`, `dualCone`, `inCone`, and `scsSolve` at setup)
-throws a loud `ConeError` naming the sub-bead that tracks it:
+- the three **definitional** families — the **zero** cone, the **free**
+  cone, and the **nonnegative orthant** — whose projections need no
+  second reference. These shipped in v0.1 and close the **LP** case (LP
+  = nonnegative orthant, equalities folded into `Ax = b`), the v0.1
+  bench gate.
+- the **second-order** (Lorentz) cone `soc(dim)` — Parikh-Boyd §6.3.2,
+  the standard three-case closed form (already-in / polar-to-apex /
+  boundary projection).
+- the **positive-semidefinite** cone `psd(side)` — Parikh-Boyd §6.3.3:
+  the block is the upper-triangular `svec` of a symmetric matrix with
+  the strict-Mosek **√2 off-diagonal scaling** (ADR-0030 OQ4), and the
+  projection is `smat` → `eigh` → clamp the negative spectrum to zero →
+  `svec`. The √2 is load-bearing — it makes `svec` a Frobenius isometry,
+  which is what makes coordinate-wise Euclidean projection equal the
+  matrix projection. (Bead `scientist-workbench-0wc7`.)
 
-- `SOCone` / `PSDCone` → bead `scientist-workbench-0wc7`
-- `ExpCone` / `PowCone` → bead `scientist-workbench-j282`
-
-Both are blocked on staging Parikh-Boyd *Proximal Algorithms* §6.3 (the
-2016 SCS paper gives the cone *definitions* but defers the projection
-*formulas*). A typed-but-unusable variant is honest; a silent wrong
-projection is not.
+The `ExpCone` and `PowCone` variants are present in the `Cone` union —
+they are the documented substrate surface (ADR-0030 §H) and a TS expert
+should see the whole map — but every *operation* on them (`projectCone`,
+`dualCone`, `inCone`, and `scsSolve` at setup) throws a loud `ConeError`
+naming the sub-bead that tracks them: `scientist-workbench-j282`
+(blocked on Parikh-Boyd §6.3.4 + Khanh Hien 2014 for the power cone). A
+typed-but-unusable variant is honest; a silent wrong projection is not.
 
 ## Convergence: scaling + acceleration
 
@@ -132,7 +141,7 @@ is an explicit tolerance derived from the single user-facing
 
 | module | exports | reference |
 |---|---|---|
-| `cones.ts` | `Cone`, `projectCone`, `dualCone`, `inCone`, `coneDim`, constructors | O'D 2016 §6 (cone definitions; projections deferred to Parikh-Boyd §6.3) |
+| `cones.ts` | `Cone`, `projectCone`, `dualCone`, `inCone`, `coneDim`, constructors | O'D 2016 §6 (cone definitions); Parikh-Boyd §6.3.2/§6.3.3 (SOC + PSD projections) |
 | `hsde.ts` | `ConeProblem`, `HSDEMatrix`, `Scaling`, `buildHSDE`, `assembleQ`, `recoverPrimalDual` | O'D 2016 §1–§2 (embedding eq 7/8), §3.5 (termination), §5 (scaled criteria) |
 | `scaling.ts` | `equilibrate`, `applyScaling` | O'D 2016 §5 (Ruiz equilibration, ref Ruiz 2001) |
 | `anderson.ts` | `AndersonAccelerator`, `makeAnderson` | Zhang-O'Donoghue-Boyd 2018 / Walker-Ni 2011 (ADR-0036) |
@@ -143,6 +152,7 @@ is an explicit tolerance derived from the single user-facing
 - `docs/adr/0030-convex-cone-solver-tier.md` — the tier design.
 - `docs/adr/0036-anderson-acceleration-cone-tier.md` — the AA decision.
 - `docs/ground-truth/convex/scs-algorithm.md` — the SCS algorithm transcription.
+- `docs/ground-truth/convex/cone-projections.md` — the SOC + PSD projection transcription.
 - `docs/ground-truth/convex/anderson-acceleration.md` — the AA transcription.
 - `docs/worklog/112-cone-core-lp-slice.md` — the v0.1 LP-complete slice.
 - `docs/worklog/113-cone-solve-and-acceleration.md` — `cone-solve` + scaling + AA.

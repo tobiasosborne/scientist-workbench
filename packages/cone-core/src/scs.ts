@@ -193,18 +193,20 @@ export function tolerancesFromPrecision(precision: number): Tolerances {
 }
 
 // -----------------------------------------------------------------------------
-// the v0.1 cone-support gate
+// the cone-support gate
 // -----------------------------------------------------------------------------
 
 /**
- * cone-core v0.1 projects only the LP-complete cone families (nonneg /
- * zero / free; see `cones.ts`). Reject any other family *at setup*, with
- * the `ConeError` that `projectCone` would itself raise — so the failure
- * is loud and immediate, not surfaced mid-iteration after wasted work.
+ * cone-core projects five of the seven cone families — the LP-complete
+ * subset (nonneg / zero / free) plus the second-order and semidefinite
+ * cones (soc / psd; see `cones.ts`). Only the exponential and power
+ * cones remain unimplemented. Reject those two *at setup*, with the
+ * `ConeError` that `projectCone` would itself raise — so the failure is
+ * loud and immediate, not surfaced mid-iteration after wasted work.
  */
-function assertV01Projectable(cones: readonly Cone[]): void {
+function assertProjectable(cones: readonly Cone[]): void {
   for (const K of cones) {
-    if (K.kind !== "nonneg" && K.kind !== "zero" && K.kind !== "free") {
+    if (K.kind === "exp" || K.kind === "pow") {
       // Provoke the precise ConeError + bead pointer from cones.ts.
       projectCone(new Float64Array(coneDim(K)), K);
     }
@@ -403,9 +405,9 @@ function maxRelativeResidual(cand: Candidate, bNorm: number, cNorm: number): num
  * given `(problem, opts, platform)`. No comparison uses an implicit-zero
  * gate; every threshold is an explicit tolerance.
  *
- * v0.1 cone support is the LP-complete subset (nonneg / zero / free); a
- * problem carrying an SOC / PSD / EXP / POW cone raises `ConeError` at
- * setup (see `assertV01Projectable`).
+ * Cone support covers five of the seven families (nonneg / zero / free /
+ * soc / psd); a problem carrying an EXP / POW cone raises `ConeError` at
+ * setup (see `assertProjectable`).
  */
 export function scsSolve(problem: ConeProblem, opts: SCSOpts = DEFAULT_SCS_OPTS): SCSResult {
   // Validate options up front — a bad knob is a programming error.
@@ -431,7 +433,7 @@ export function scsSolve(problem: ConeProblem, opts: SCSOpts = DEFAULT_SCS_OPTS)
   // two embeddings: `origHsde` (for `recoverPrimalDual`) and `scaledHsde`
   // (for the subspace cache and the iteration vectors).
   const origHsde = buildHSDE(problem);
-  assertV01Projectable(origHsde.cones);
+  assertProjectable(origHsde.cones);
   const scaling = equilibrate(problem);
   const scaledHsde = buildHSDE(applyScaling(problem, scaling));
   const { n, m, N, A, b, c, cones } = scaledHsde;

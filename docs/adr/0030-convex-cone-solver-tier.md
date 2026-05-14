@@ -420,6 +420,13 @@ or COO) land additively.
    tr(A B) reduces to vec(A)ᵀvec(B) in the vectorised representation).
    Adopt the same. Document explicitly with examples — the off-
    diagonal-√2 trick has bitten every amateur SDP implementer.
+   **Resolved 2026-05-14 (bead 0wc7):** `cone-core`'s `PSDCone` block is
+   the **upper-triangular, row-major** `svec` with the √2 off-diagonal
+   scaling. The convention, the isometry argument that makes it
+   load-bearing, and worked examples are transcribed in
+   `docs/ground-truth/convex/cone-projections.md` §3 and implemented in
+   `packages/cone-core/src/cones.ts` (`smat` + the `psd` case of
+   `projectCone` / `inCone`).
 
 5. **Sparse matrix wire format for v0.2.** CSR (CSC) is the standard;
    COO is the lowest-friction. Decision deferred until v0.2 is filed.

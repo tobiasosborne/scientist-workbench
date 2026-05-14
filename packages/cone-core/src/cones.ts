@@ -17,28 +17,38 @@
 //   inCone(z, K, tol)  — membership test, tolerance-gated (never an
 //                        implicit `x > 0`; ADR-0030 determinism contract)
 //
-// Ground truth: `docs/ground-truth/convex/scs-algorithm.md` §6, transcribed
-// from O'Donoghue et al 2016 (`docs/refs/odonoghue-2016-scs.pdf`). The 2016
-// paper gives the cone *definitions* (§6.1, p. 1059) but defers the
-// projection *formulas* for the second-order, semidefinite, exponential and
-// power cones to Parikh-Boyd *Proximal Algorithms* §6.3 (ref [64]) and, for
-// the power cone, Khanh Hien 2014 (ref [97]).
+// Ground truth: `docs/ground-truth/convex/scs-algorithm.md` §6 (the zero /
+// free / nonneg projections, transcribed from O'Donoghue et al 2016,
+// `docs/refs/odonoghue-2016-scs.pdf`) and `docs/ground-truth/convex/
+// cone-projections.md` (the second-order and semidefinite projections,
+// transcribed from Parikh-Boyd *Proximal Algorithms* §6.3,
+// `docs/refs/parikh-boyd-2014-proximal-algorithms.pdf` — O'Donoghue 2016
+// §6.1 p. 1059 gives only the cone *definitions* and defers the projection
+// *formulas* to that monograph, its ref [64]).
 //
-// v0.1 scope (CLAUDE.md Rule 8 — honest scope). cone-core v0.1 implements
-// the three cones whose projections are *definitional* and need no second
-// reference: the zero cone, the free cone, and the nonnegative orthant.
-// Those three close the **LP** case (LP = nonnegative orthant, with
-// equalities folded into `Ax = b`), which is exactly the v0.1 bench gate
-// (worklog 089: 21/21 lp-netlib + 29/29 lp-small). The `SOCone`, `PSDCone`,
-// `ExpCone` and `PowCone` variants are present in the `Cone` union — they
-// are the documented substrate surface (ADR-0030 §H) and a TS expert should
-// see the whole map — but every *operation* on them throws a loud
+// Scope as of bead 0wc7 (CLAUDE.md Rule 8 — honest scope). cone-core now
+// implements five of the seven cone families:
+//
+//   - the three *definitional* projections (zero / free / nonneg) — they
+//     need no second reference and shipped in v0.1, closing the **LP**
+//     case (worklog 089: 21/21 lp-netlib + 29/29 lp-small);
+//   - the **second-order** (Lorentz) cone — Parikh-Boyd §6.3.2, the
+//     standard 3-case closed form;
+//   - the **positive-semidefinite** cone — Parikh-Boyd §6.3.3, eigenvalue
+//     clamp on the svec'd block (`smat` → `eigh` → clamp → `svec`); the
+//     √2 off-diagonal scaling that makes `svec` a Frobenius isometry is
+//     load-bearing (ADR-0030 OQ4 — the trap that bites amateur SDP code).
+//
+// The `ExpCone` and `PowCone` variants are present in the `Cone` union —
+// they are the documented substrate surface (ADR-0030 §H) and a TS expert
+// should see the whole map — but every *operation* on them throws a loud
 // `ConeError` naming the sub-bead that tracks them. A typed-but-unusable
 // variant is honest; a silent wrong projection is not.
 //
-//   SOCone, PSDCone        → scientist-workbench-0wc7 (needs Parikh-Boyd §6.3)
-//   ExpCone, PowCone       → scientist-workbench-j282 (needs Parikh-Boyd §6.3
-//                            + Khanh Hien 2014 for the power cone)
+//   ExpCone, PowCone       → scientist-workbench-j282 (needs Parikh-Boyd
+//                            §6.3.4 + Khanh Hien 2014 for the power cone)
+
+import { eigh, type Matrix, matrixFromRows } from "@workbench/linalg-core";
 
 /**
  * `ConeError` is a substrate-level programming / scope error: a vector
@@ -81,8 +91,8 @@ export interface FreeCone {
 /**
  * The second-order (Lorentz / "ice-cream") cone
  * `{(t, x) ∈ ℝ × ℝ^{dim−1} : t ≥ ‖x‖₂}`. `dim` is the *total* block
- * dimension including the scalar `t`. Self-dual. Projection deferred —
- * see the v0.1-scope note at the top of this file.
+ * dimension including the scalar apex coordinate `t`, so `dim ≥ 1`.
+ * Self-dual. Projection: Parikh-Boyd §6.3.2 (`projectCone`, `case "soc"`).
  */
 export interface SOCone {
   readonly kind: "soc";
@@ -91,10 +101,14 @@ export interface SOCone {
 
 /**
  * The cone of symmetric positive-semidefinite `side × side` matrices,
- * carried on the wire as the upper-triangular vectorisation with the
- * strict-Mosek √2 off-diagonal scaling (ADR-0030 open-question 4), so
- * that `tr(A B) = svec(A)ᵀ svec(B)`. Block dimension is
- * `side·(side+1)/2`. Self-dual. Projection deferred.
+ * carried on the wire as the upper-triangular vectorisation `svec` with
+ * the strict-Mosek √2 off-diagonal scaling (ADR-0030 open-question 4),
+ * so that `tr(A B) = svec(A)ᵀ svec(B)` — i.e. `svec` is a Frobenius
+ * isometry, which is exactly what makes coordinate-wise Euclidean
+ * projection equal the matrix projection (see `svec` / `smat` below and
+ * `docs/ground-truth/convex/cone-projections.md` §3). Block dimension is
+ * `side·(side+1)/2`. Self-dual. Projection: Parikh-Boyd §6.3.3
+ * (`projectCone`, `case "psd"`).
  */
 export interface PSDCone {
   readonly kind: "psd";
@@ -137,11 +151,12 @@ export type Cone =
 // Smart constructors — for the implemented families
 // -----------------------------------------------------------------------------
 //
-// Constructors are exported only for the cones whose operations are live
-// in v0.1. The `SOCone` / `PSDCone` / `ExpCone` / `PowCone` interfaces are
-// exported (they are the type-level map) and constructible as object
-// literals, but a dedicated constructor would advertise a usable cone the
-// projection cannot yet honour. The constructor lands with the projection.
+// Constructors are exported for the cones whose operations are live: the
+// three definitional families (zero / free / nonneg) plus `soc` and `psd`
+// as of bead 0wc7. The `ExpCone` / `PowCone` interfaces are exported (they
+// are the type-level map) and constructible as object literals, but a
+// dedicated constructor would advertise a usable cone the projection
+// cannot yet honour — the constructor lands with the projection.
 
 function checkDim(dim: number, what: string): void {
   if (!Number.isInteger(dim) || dim < 0) {
@@ -165,6 +180,38 @@ export function zero(dim: number): ZeroCone {
 export function free(dim: number): FreeCone {
   checkDim(dim, "free cone");
   return { kind: "free", dim };
+}
+
+/**
+ * Construct a second-order cone `{(t, x) ∈ ℝ × ℝ^{dim−1} : t ≥ ‖x‖₂}`.
+ * `dim` is the *total* block dimension; it must be `≥ 1`, because the
+ * cone is defined by its scalar apex coordinate `t` and a block with no
+ * `t` is malformed (not just empty — there is nothing to be `≥` a norm).
+ * `dim = 1` is the degenerate-but-valid case: the cone is the
+ * nonnegative half-line `{t : t ≥ 0}`.
+ */
+export function soc(dim: number): SOCone {
+  checkDim(dim, "soc cone");
+  if (dim < 1) {
+    throw new ConeError(
+      `soc cone dimension must be at least 1 (the scalar apex coordinate), got ${dim}`,
+    );
+  }
+  return { kind: "soc", dim };
+}
+
+/**
+ * Construct a positive-semidefinite cone over symmetric `side × side`
+ * matrices. `side` must be `≥ 1`. The block the cone constrains is the
+ * `side·(side+1)/2`-long upper-triangular `svec` vectorisation with the
+ * √2 off-diagonal scaling (see `svec` / `smat`).
+ */
+export function psd(side: number): PSDCone {
+  checkDim(side, "psd cone");
+  if (side < 1) {
+    throw new ConeError(`psd cone side must be at least 1, got ${side}`);
+  }
+  return { kind: "psd", side };
 }
 
 // -----------------------------------------------------------------------------
@@ -196,6 +243,61 @@ export function coneDim(K: Cone): number {
 }
 
 // -----------------------------------------------------------------------------
+// svec / smat — the √2-scaled symmetric-matrix vectorisation
+// -----------------------------------------------------------------------------
+//
+// A `PSDCone` block is carried as a *vector* — the upper-triangular,
+// row-major vectorisation of a symmetric `side × side` matrix, with each
+// off-diagonal entry scaled by √2 (ADR-0030 open-question 4, the strict-
+// Mosek convention). The √2 is not decoration: it is exactly what makes
+// `svec` a linear *isometry* between `(Sⁿ, ⟨·,·⟩_Frobenius)` and
+// `(ℝ^{n(n+1)/2}, ⟨·,·⟩_Euclidean)`, because
+//
+//   ⟨svec A, svec B⟩ = Σᵢ AᵢᵢBᵢᵢ + Σ_{i<j}(√2 Aᵢⱼ)(√2 Bᵢⱼ) = tr(A B).
+//
+// Isometry is the load-bearing fact: it means the Euclidean projection of
+// the *block* equals `svec` of the Frobenius projection of the *matrix*,
+// so `projectCone` can legitimately go `smat → eigh-clamp → svec`. Drop
+// the √2 and that equality breaks — off-diagonal directions would be
+// under-counted — which is the classic amateur-SDP bug ADR-0030 OQ4
+// calls out. Ground truth: `docs/ground-truth/convex/cone-projections.md`
+// §3.
+//
+// `svec` is never materialised as a standalone function here — the PSD
+// projection assembles its result straight into the √2-scaled output
+// vector — but `smat` (its inverse, the un-scaling rebuild) is needed to
+// hand a real symmetric `Matrix` to `linalg-core`'s `eigh`.
+
+const SQRT2 = Math.SQRT2;
+
+/**
+ * `smat(w, side)` — rebuild the symmetric `side × side` matrix from its
+ * √2-scaled upper-triangular vectorisation `w` (the inverse of `svec`).
+ * Diagonal slots are copied verbatim; each off-diagonal slot is un-scaled
+ * by `1/√2` and written to both `(i, j)` and `(j, i)`. `w.length` must be
+ * `side·(side+1)/2`; `side ≥ 1`. The result is a fresh `Matrix` suitable
+ * for `linalg-core`'s `eigh` — it is symmetric by construction.
+ */
+function smat(w: Float64Array, side: number): Matrix {
+  const rows: number[][] = [];
+  for (let i = 0; i < side; i++) rows.push(new Array<number>(side).fill(0));
+  let k = 0;
+  for (let i = 0; i < side; i++) {
+    for (let j = i; j < side; j++) {
+      const wk = w[k++]!;
+      if (i === j) {
+        rows[i]![j] = wk;
+      } else {
+        const v = wk / SQRT2;
+        rows[i]![j] = v;
+        rows[j]![i] = v;
+      }
+    }
+  }
+  return matrixFromRows(rows);
+}
+
+// -----------------------------------------------------------------------------
 // projectCone — the Euclidean projection Π_K
 // -----------------------------------------------------------------------------
 
@@ -219,9 +321,19 @@ export function coneDim(K: Cone): number {
  *  - **nonneg** `ℝⁿ₊`: `Π(z)ᵢ = max(0, zᵢ)`. The orthant is a product
  *    of half-lines `[0, ∞)`; projection is independent per coordinate,
  *    and the projection onto `[0, ∞)` is `max(0, ·)`.
+ *  - **soc** `{(t,x) : t ≥ ‖x‖₂}`: Parikh-Boyd §6.3.2, the standard
+ *    three-case closed form (already-in / polar-to-apex / boundary).
+ *  - **psd** `{V ⪰ 0}` on the √2-svec'd block: Parikh-Boyd §6.3.3 eq
+ *    (6.6) — `smat` the block, `eigh` it, clamp the negative spectrum to
+ *    zero, re-assemble straight into the √2-scaled output.
  *
- * `soc` / `psd` / `exp` / `pow` throw — see the v0.1-scope note at the
- * top of this file.
+ * Non-finiteness is the caller's precondition to honour: the iterate is
+ * finite by construction (the `numerical-breakdown` guard in `scsSolve`
+ * catches non-finiteness upstream), so `smat`'s `linalg-core` path never
+ * sees a `NaN`. A non-finite `psd` block from a misbehaving caller would
+ * surface as a loud `MatrixError`, not a silent wrong answer.
+ *
+ * `exp` / `pow` throw — see the scope note at the top of this file.
  */
 export function projectCone(z: Float64Array, K: Cone): Float64Array {
   const expected = coneDim(K);
@@ -246,17 +358,67 @@ export function projectCone(z: Float64Array, K: Cone): Float64Array {
       }
       return out;
     }
-    case "soc":
-    case "psd":
-      throw new ConeError(
-        `projectCone: the ${K.kind} cone is not implemented in cone-core v0.1 — ` +
-          `tracked in scientist-workbench-0wc7 (needs Parikh-Boyd Proximal Algorithms §6.3)`,
-      );
+    case "soc": {
+      // Parikh-Boyd §6.3.2 — the second-order cone, in cone-core's
+      // scalar-first ordering `z = (t, x)`. Let `ρ = ‖x‖₂`. The branch
+      // order is load-bearing for the `ρ = 0` corner (cone-projections.md
+      // §2): test `ρ ≤ t` *before* `ρ ≤ −t`.
+      if (expected < 1) {
+        throw new ConeError(
+          `projectCone: soc cone needs a scalar apex coordinate — ` +
+            `dimension must be ≥ 1, got ${expected}`,
+        );
+      }
+      const t = z[0]!;
+      let rho = 0;
+      for (let i = 1; i < expected; i++) rho += z[i]! * z[i]!;
+      rho = Math.sqrt(rho);
+      if (rho <= t) {
+        // already inside the cone — the projection is the identity
+        return z.slice();
+      }
+      if (rho <= -t) {
+        // inside the polar cone (the SOC is self-dual) — project to the apex
+        return new Float64Array(expected);
+      }
+      // genuine boundary projection: ½·(1 + t/ρ)·(ρ, x). Reached only
+      // when ρ > |t| ≥ 0, so ρ > 0 strictly — the /(2ρ) is always safe.
+      const out = new Float64Array(expected);
+      const scale = (rho + t) / (2 * rho);
+      out[0] = (rho + t) / 2;
+      for (let i = 1; i < expected; i++) out[i] = scale * z[i]!;
+      return out;
+    }
+    case "psd": {
+      // Parikh-Boyd §6.3.3 eq (6.6) — Π(V) = Σ (λᵢ)₊ uᵢuᵢᵀ. `smat` the
+      // block to the symmetric matrix `V`, `eigh` it, clamp the negative
+      // eigenvalues to zero, and re-assemble V⁺ᵢⱼ = Σₑ max(0,λₑ)·QᵢₑQⱼₑ
+      // straight into the √2-scaled svec output. Valid because the √2
+      // scaling makes svec a Frobenius isometry (see the svec/smat note).
+      const side = K.side;
+      if (side < 1) {
+        throw new ConeError(`projectCone: psd cone side must be ≥ 1, got ${side}`);
+      }
+      const { Q, eigenvalues } = eigh(smat(z, side));
+      const out = new Float64Array(expected);
+      let k = 0;
+      for (let i = 0; i < side; i++) {
+        for (let j = i; j < side; j++) {
+          let acc = 0;
+          for (let e = 0; e < side; e++) {
+            const lam = eigenvalues[e]!;
+            if (lam > 0) acc += lam * Q.data[i * side + e]! * Q.data[j * side + e]!;
+          }
+          out[k++] = i === j ? acc : SQRT2 * acc;
+        }
+      }
+      return out;
+    }
     case "exp":
     case "pow":
       throw new ConeError(
-        `projectCone: the ${K.kind} cone is not implemented in cone-core v0.1 — ` +
-          `tracked in scientist-workbench-j282 (needs Parikh-Boyd §6.3` +
+        `projectCone: the ${K.kind} cone is not implemented in cone-core — ` +
+          `tracked in scientist-workbench-j282 (needs Parikh-Boyd §6.3.4` +
           `${K.kind === "pow" ? " + Khanh Hien 2014" : ""})`,
       );
   }
@@ -319,6 +481,14 @@ export function dualCone(K: Cone): Cone {
  *  - **free**: every `zᵢ` finite (the whole space — but `NaN`/`±∞` are
  *    not points of `ℝⁿ`, and saying "yes" for a poisoned vector would
  *    be the wrong kind of honest).
+ *  - **soc**: `t − ‖x‖₂ ≥ −tol` for `z = (t, x)`.
+ *  - **psd**: `λ_min(smat(z)) ≥ −tol` — `eigh` sorts ascending, so the
+ *    smallest eigenvalue is `eigenvalues[0]`.
+ *
+ * As with `free`, a non-finite entry is never a cone member: `soc`
+ * rejects it because the `NaN` poisons the `≥` comparison, and `psd`
+ * pre-scans the block (a non-finite block cannot be `smat`-rebuilt for
+ * `eigh`) — both return `false`, never throw.
  *
  * `tol` must be finite and non-negative. `z.length` must equal
  * `coneDim(K)`.
@@ -349,16 +519,41 @@ export function inCone(z: Float64Array, K: Cone, tol: number): boolean {
         if (!Number.isFinite(z[i]!)) return false;
       }
       return true;
-    case "soc":
-    case "psd":
-      throw new ConeError(
-        `inCone: the ${K.kind} cone is not implemented in cone-core v0.1 — ` +
-          `tracked in scientist-workbench-0wc7`,
-      );
+    case "soc": {
+      // (t, x) ∈ soc  ⇔  t ≥ ‖x‖₂.  Tolerance-gated: t − ‖x‖₂ ≥ −tol.
+      // A NaN coordinate poisons `rho`, so `t − rho >= −tol` is `false`
+      // — non-finite vectors are correctly rejected.
+      if (expected < 1) {
+        throw new ConeError(
+          `inCone: soc cone needs a scalar apex coordinate — ` +
+            `dimension must be ≥ 1, got ${expected}`,
+        );
+      }
+      const t = z[0]!;
+      let rho = 0;
+      for (let i = 1; i < expected; i++) rho += z[i]! * z[i]!;
+      rho = Math.sqrt(rho);
+      return t - rho >= -tol;
+    }
+    case "psd": {
+      // smat(z) ⪰ 0  ⇔  λ_min ≥ 0.  Tolerance-gated: λ_min ≥ −tol.
+      // A non-finite block is never a cone member (and cannot be
+      // `smat`-rebuilt for `eigh`) — pre-scan and reject as `false`,
+      // matching the `free` cone's NaN handling.
+      const side = K.side;
+      if (side < 1) {
+        throw new ConeError(`inCone: psd cone side must be ≥ 1, got ${side}`);
+      }
+      for (let i = 0; i < expected; i++) {
+        if (!Number.isFinite(z[i]!)) return false;
+      }
+      const { eigenvalues } = eigh(smat(z, side));
+      return eigenvalues[0]! >= -tol;
+    }
     case "exp":
     case "pow":
       throw new ConeError(
-        `inCone: the ${K.kind} cone is not implemented in cone-core v0.1 — ` +
+        `inCone: the ${K.kind} cone is not implemented in cone-core — ` +
           `tracked in scientist-workbench-j282`,
       );
   }
