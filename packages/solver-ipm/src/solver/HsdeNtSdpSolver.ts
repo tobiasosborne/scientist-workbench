@@ -93,7 +93,8 @@
 import type { SdpProblem, SdpBlock } from "../problem/SdpProblem.js";
 import { DEFAULT_PARAMS, type IpmParams } from "./Defaults.js";
 import { eighJacobi, frobInner, matMul, symmetrize } from "../cone/PsdCone.js";
-import { choleskyInPlace, choleskySolveInPlace } from "../linalg/Cholesky.js";
+import { choleskyInPlace } from "../linalg/Cholesky.js";
+import { solveWithIR } from "../linalg/IterativeRefinement.js";
 import type { SolverStatus } from "./Iterate.js";
 import type { IterLogLine, SolveOptions, VerboseIterLine } from "./Solver.js";
 import {
@@ -316,6 +317,15 @@ export function solveHsdeSdpNt(
   const M = new Float64Array(m * m);
   const Lchol = new Float64Array(m * m);
   const rhs = new Float64Array(m);
+  // Iterative-refinement scratch + per-iter accepted-step counts (Phase 5
+  // Tier 1). workE / workCorr are allocated once per solve and reused by
+  // every `solveWithIR` call; nitref{1,2,3} are overwritten each iter and
+  // read at the verbose-trace emission site.
+  const workE = new Float64Array(m);
+  const workCorr = new Float64Array(m);
+  let nitref1 = 0;
+  let nitref2 = 0;
+  let nitref3 = 0;
 
   // Per-block scratch for W·A_k·W cache. Built once per iter (after
   // NT factor build) and reused by both affine and combined back-subs.
@@ -540,8 +550,10 @@ export function solveHsdeSdpNt(
       for (let b = 0; b < nb; b++) s += frobInner(blocks[b]!.A[i]!, WCW[b]!);
       rhs[i] = s;
     }
-    dy1.set(rhs);
-    choleskySolveInPlace(Lchol, m, dy1);
+    // Back-substitution with iterative refinement against the unregularised
+    // Schur M (Phase 5 Tier 1). nitref1 = accepted refinement steps on the
+    // data direction; 0 when the regularised solve was already accurate.
+    nitref1 = solveWithIR(M, m, Lchol, rhs, dy1, workE, workCorr);
     for (let b = 0; b < nb; b++) {
       const n = blocks[b]!.size;
       const ds1 = dS1[b]!;
@@ -580,8 +592,9 @@ export function solveHsdeSdpNt(
       }
       rhs[i] = s;
     }
-    dy2.set(rhs);
-    choleskySolveInPlace(Lchol, m, dy2);
+    // Iterative-refinement back-sub (Phase 5 Tier 1); nitref2 = affine-
+    // direction accepted refinement steps.
+    nitref2 = solveWithIR(M, m, Lchol, rhs, dy2, workE, workCorr);
 
     // Recover dS2_aff, dX2_aff per block
     for (let b = 0; b < nb; b++) {
@@ -725,8 +738,9 @@ export function solveHsdeSdpNt(
       }
       rhs[i] = s;
     }
-    dy2.set(rhs);
-    choleskySolveInPlace(Lchol, m, dy2);
+    // Iterative-refinement back-sub (Phase 5 Tier 1); nitref3 = combined-
+    // direction accepted refinement steps.
+    nitref3 = solveWithIR(M, m, Lchol, rhs, dy2, workE, workCorr);
 
     // Recover dS2_comb, dX2_comb per block
     for (let b = 0; b < nb; b++) {
@@ -849,9 +863,9 @@ export function solveHsdeSdpNt(
         kappa,
         gfeas: gapInf,
         prstatus: term.prstatus,
-        nitref1: 0,
-        nitref2: 0,
-        nitref3: 0,
+        nitref1,
+        nitref2,
+        nitref3,
         tSchurMs,
         tFactorMs,
         tDirectionMs,

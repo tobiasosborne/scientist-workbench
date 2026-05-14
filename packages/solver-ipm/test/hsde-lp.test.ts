@@ -128,9 +128,15 @@ describe("HSDE LP — verbose trace", () => {
       expect(Number.isFinite(l.kappa)).toBe(true);
       expect(Number.isFinite(l.gfeas)).toBe(true);
       expect(Number.isFinite(l.prstatus)).toBe(true);
-      expect(l.nitref1).toBe(0);
-      expect(l.nitref2).toBe(0);
-      expect(l.nitref3).toBe(0);
+      // Phase 5 Tier 1: nitref{1,2,3} are accepted iterative-refinement step
+      // counts — non-negative integers, ≤ the maxIter cap (9). They are no
+      // longer stubbed at 0 (that was the Tier-0 invariant); 0 on a
+      // well-conditioned iter, climbing where the Schur is ill-conditioned.
+      for (const n of [l.nitref1, l.nitref2, l.nitref3]) {
+        expect(Number.isInteger(n)).toBe(true);
+        expect(n).toBeGreaterThanOrEqual(0);
+        expect(n).toBeLessThanOrEqual(9);
+      }
       // Non-HSDE eigMin fields should be NaN
       expect(Number.isNaN(l.eigMinX)).toBe(true);
       expect(Number.isNaN(l.eigMinS)).toBe(true);
