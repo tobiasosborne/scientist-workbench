@@ -205,7 +205,9 @@ function contiguousPrefix(lines: TraceLine[]): TraceLine[] {
 // COPT's printf format is `%4d  %+15.8e  %+15.8e   %8.2e  %10.2e  %8.2e %7s`.
 // We tokenise on whitespace rather than fixed columns — COPT pads with
 // spaces, so split-on-whitespace is robust to small width drift across
-// versions. Verified against probe1.log on COPT 8.0.4 build 20260424.
+// versions. Verified against a real COPT 8.0.4 (build Apr 24 2026)
+// barrier solve of NETLIB `adlittle`, committed as
+// `test/fixtures/copt-8.0.4-adlittle.log` and asserted by `trace-log.test.ts`.
 //
 // COPT's default path is non-HSDE (per the COPT-decomp PD_IPM analysis), so
 // every HSDE field stays `null`; so do `sigma`, `muAff`, the regularisation
@@ -290,12 +292,12 @@ export function parseCoptLog(text: string): TraceLine[] {
 // `tau` / `kappa` are NOT inferred — Mosek does not print them and a derived
 // value would be a guess; they stay `null`, as do all TS-internal fields.
 //
-// !! FORMAT NOT YET VERIFIED against a real Mosek log. The row shape above is
-// the documented Mosek IPM table layout, but the only fixture exercised so
-// far was hand-written to match it. Verification against a real Mosek run is
-// tracked in bead `scientist-workbench-yyme`; the strict nine-token check
-// below at least fails closed (an empty result, surfaced loudly by the CLI)
-// rather than silently emitting garbage.
+// Verified against a real Mosek 11.1.6 interior-point solve of NETLIB
+// `adlittle` (`MSK_IPAR_OPTIMIZER = MSK_OPTIMIZER_INTPNT`), committed as
+// `test/fixtures/mosek-11.1-adlittle.log` and asserted by `trace-log.test.ts`
+// — the row shape, the nine-column count, and every column position match.
+// The strict nine-token check also fails closed (an empty result, surfaced
+// loudly by the CLI) should a future Mosek version drift the format.
 
 // Mosek's time token may or may not carry a trailing `s`.
 const MOSEK_TIME_RE = /^([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)s?$/;

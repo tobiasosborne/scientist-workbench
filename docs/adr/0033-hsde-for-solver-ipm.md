@@ -392,10 +392,13 @@ them. `parseCoptLog` leaves the HSDE fields `null` since COPT is
 not HSDE. `parseMosekLog` maps Mosek's
 `ITE PFEAS DFEAS GFEAS PRSTATUS POBJ DOBJ MU TIME` table onto the
 schema, populating `kind: "mosek"`, `gfeas`, and `prstatus`
-directly while leaving TS-internal fields `null` — **the Mosek row
-format is not yet verified against a real Mosek log** (bead
-`yyme`); the strict nine-token check fails closed rather than
-emitting garbage.
+directly while leaving TS-internal fields `null`. Both parsers'
+row formats are **verified against real solver logs** — Mosek
+11.1.6 and COPT 8.0.4, an interior-point solve of NETLIB
+`adlittle`, committed under `packages/solver-ipm/test/fixtures/`
+and asserted by `trace-log.test.ts` (bead `yyme`). The strict
+token-count checks also fail closed should a future solver
+version drift the format.
 
 ### Decision 9 — Determinism tier unchanged: `numerical: true` (ADR-0015)
 

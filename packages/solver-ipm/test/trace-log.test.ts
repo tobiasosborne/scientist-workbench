@@ -1,16 +1,26 @@
 // Unit tests for the external-solver log parsers in `src/solver/TraceLog.ts`.
 //
-// Scope discipline: these tests assert the *parser's documented behaviour* —
-// column mapping, the contiguous-iteration guard, the empty-input contract,
-// and the `TraceLine` shape it produces. They do NOT claim the COPT / Mosek
-// row formats are correct: that is a ground-truth question about real solver
-// output. The COPT format is verified against a real log (see `TraceLog.ts`);
-// the Mosek format is not yet (bead `scientist-workbench-yyme`). A parser can
-// be behaviourally correct against its spec and still have the wrong spec —
-// these tests cover the former, `yyme` covers the latter.
+// Two layers:
+//
+//  1. *Documented behaviour* on synthetic input — column mapping, the
+//     contiguous-iteration guard, the empty-input contract, the `TraceLine`
+//     shape. Synthetic logs let the edge cases (a non-contiguous stray row,
+//     a banner-only log) be constructed precisely.
+//
+//  2. *Format verification* against real solver logs committed under
+//     `fixtures/` — `mosek-11.1-adlittle.log` (Mosek 11.1.6) and
+//     `copt-8.0.4-adlittle.log` (COPT 8.0.4 build Apr 24 2026), both an
+//     interior-point solve of NETLIB `adlittle`. A parser can be
+//     behaviourally correct against its spec and still have the *wrong
+//     spec*; layer 1 covers the former, layer 2 the latter. This is the
+//     discharge of bead `scientist-workbench-yyme`.
 
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
 import { parseCoptLog, parseMosekLog, type TraceLine } from "../src/index.js";
+
+const fixture = (name: string): string =>
+  readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf-8");
 
 // A representative COPT iter-line section, framed by banner lines that must
 // be skipped. Format per `TraceLog.ts` (verified against COPT 8.0.4).
@@ -73,8 +83,10 @@ describe("parseCoptLog", () => {
   });
 });
 
-// A representative Mosek HSDE IPM iteration table. Format per `TraceLog.ts`
-// (NOT yet verified against a real Mosek log — bead `yyme`).
+// A synthetic Mosek IPM iteration table for the edge-case probes below.
+// The row format is verified against a real Mosek 11.1.6 log in the layer-2
+// `describe` block; this constant exists only to construct the contiguity
+// and empty-input cases precisely.
 const MOSEK_LOG = `Interior-point optimizer started.
 ITE PFEAS DFEAS GFEAS PRSTATUS POBJ DOBJ MU TIME
 0 1.0e+00 2.0e+00 3.0e+00 0.00 -1.0e+00 +0.0e+00 1.0e+00 0.01
@@ -128,5 +140,80 @@ describe("parseMosekLog", () => {
 
   test("returns [] when no iter rows are present", () => {
     expect(parseMosekLog("Interior-point optimizer started.\nterminated.\n")).toEqual([]);
+  });
+});
+
+// ── Layer 2: format verification against real solver logs ────────────────────
+//
+// These read the committed `fixtures/*.log` captures and assert the parser
+// extracts the iteration table, skips the surrounding solver banner, and maps
+// each column to the field the schema documents. The asserted numbers are
+// transcribed directly from the raw log rows, so a parser that mis-aligns a
+// column fails here. Both fixtures are an interior-point solve of NETLIB
+// `adlittle` (objective ≈ 2.254950e+05).
+
+describe("parseCoptLog — real COPT 8.0.4 log", () => {
+  const lines = parseCoptLog(fixture("copt-8.0.4-adlittle.log"));
+
+  test("extracts the full iteration table (iters 0..12), skipping the banner", () => {
+    expect(lines.map((l) => l.iter)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+  });
+
+  test("iter 0 columns map as Iter/Primal.Obj/Dual.Obj/Compl/Primal.Inf/Dual.Inf/Time", () => {
+    // raw: 0  +2.91349562e+06  +2.17822850e+05   2.25e+07   8.58e+02  4.86e+03  0.01s
+    const l = lines[0] as TraceLine;
+    expect(l.kind).toBe("copt");
+    expect(l.primalObj).toBe(2913495.62);
+    expect(l.dualObj).toBe(217822.85);
+    expect(l.compl).toBe(2.25e7);
+    expect(l.primalInf).toBe(858);
+    expect(l.dualInf).toBe(4860);
+    expect(l.timeSec).toBe(0.01);
+  });
+
+  test("final iter is at optimality — primal and dual objectives agree", () => {
+    // raw: 12  +2.25494963e+05  +2.25494963e+05   2.25e-10   3.24e-11  9.09e-13  0.01s
+    const l = lines[lines.length - 1] as TraceLine;
+    expect(l.iter).toBe(12);
+    expect(l.primalObj).toBe(225494.963);
+    expect(l.dualObj).toBe(225494.963);
+    expect(l.compl).toBe(2.25e-10);
+  });
+});
+
+describe("parseMosekLog — real Mosek 11.1.6 log", () => {
+  const lines = parseMosekLog(fixture("mosek-11.1-adlittle.log"));
+
+  test("extracts the full iteration table (iters 0..10), skipping the banner", () => {
+    expect(lines.map((l) => l.iter)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  });
+
+  test("iter 0 columns map as ITE/PFEAS/DFEAS/GFEAS/PRSTATUS/POBJ/DOBJ/MU/TIME", () => {
+    // raw: 0  5.2e+02  3.3e+03  1.2e+03  0.00e+00  -3.992412481e+03  -5.148399339e+03  1.2e+00  0.01
+    const l = lines[0] as TraceLine;
+    expect(l.kind).toBe("mosek");
+    expect(l.primalInf).toBe(5.2e2); // PFEAS
+    expect(l.dualInf).toBe(3.3e3); // DFEAS
+    expect(l.gfeas).toBe(1.2e3); // GFEAS — Mosek exposes it directly
+    expect(l.prstatus).toBe(0); // PRSTATUS 0.00e+00
+    expect(l.primalObj).toBe(-3992.412481); // POBJ
+    expect(l.dualObj).toBe(-5148.399339); // DOBJ
+    expect(l.compl).toBe(1.2); // MU
+    expect(l.timeSec).toBe(0.01); // TIME
+  });
+
+  test("PRSTATUS climbs toward +1 on the optimal branch", () => {
+    // raw last row: 10  3.8e-10 ... 1.00e+00 ...
+    const last = lines[lines.length - 1] as TraceLine;
+    expect(last.iter).toBe(10);
+    expect(last.prstatus).toBe(1);
+    expect(last.compl).toBe(8.6e-13); // MU driven to ~0
+  });
+
+  test("tau/kappa stay null — Mosek does not print them", () => {
+    for (const l of lines) {
+      expect(l.tau).toBeNull();
+      expect(l.kappa).toBeNull();
+    }
   });
 });
