@@ -371,12 +371,12 @@ kind: "lp" | "sdp-nt" | "sdp-aho" | "sdp-hkm" | "lp-hsde" | "sdp-hsde-nt";
 
 The *persisted JSONL* schema is a distinct, wider type — `TraceLine`
 in `packages/solver-ipm/src/solver/TraceLog.ts` — which adds the
-external-log-parser kinds `"copt"` and `"mosek"` and makes every
-solver-internal field `number | null`. `VerboseIterLine` is a strict
-subtype of `TraceLine` (stricter field types, narrower `kind`
-union); a compile-time assertion in `TraceLog.ts` proves it, so a
-field added to one but not the other is a build error rather than a
-silently-skewed trace. (Tier 0 originally widened
+external-log-parser kinds `"copt"`, `"mosek"` and `"gurobi"` and
+makes every solver-internal field `number | null`. `VerboseIterLine`
+is a strict subtype of `TraceLine` (stricter field types, narrower
+`kind` union); a compile-time assertion in `TraceLog.ts` proves it,
+so a field added to one but not the other is a build error rather
+than a silently-skewed trace. (Tier 0 originally widened
 `VerboseIterLine.kind` itself with `"mosek"`; that put a value no
 solver emits into the solver-emitted type and was inconsistent with
 `"copt"`, which was never added — bead `ghvl` reconciled both into
@@ -386,19 +386,24 @@ JSONL stability: NaN-for-inapplicable is preserved (JSON
 serialises as `null`). The diff harness `scripts/trace-diff.ts`
 treats `null` as "missing" and already handles arbitrary fields —
 no harness changes needed. The parsing logic lives in `TraceLog.ts`
-as `parseCoptLog` / `parseMosekLog` (typechecked, unit-tested);
-`scripts/{copt,mosek}-log-to-jsonl.ts` are thin CLI shells over
-them. `parseCoptLog` leaves the HSDE fields `null` since COPT is
-not HSDE. `parseMosekLog` maps Mosek's
+as `parseCoptLog` / `parseMosekLog` / `parseGurobiLog` (typechecked,
+unit-tested); `scripts/{copt,mosek,gurobi}-log-to-jsonl.ts` are thin
+CLI shells over them. `parseCoptLog` leaves the HSDE fields `null`
+since COPT is not HSDE. `parseMosekLog` maps Mosek's
 `ITE PFEAS DFEAS GFEAS PRSTATUS POBJ DOBJ MU TIME` table onto the
 schema, populating `kind: "mosek"`, `gfeas`, and `prstatus`
-directly while leaving TS-internal fields `null`. Both parsers'
-row formats are **verified against real solver logs** — Mosek
-11.1.6 and COPT 8.0.4, an interior-point solve of NETLIB
+directly while leaving TS-internal fields `null`. `parseGurobiLog`
+maps Gurobi's barrier table — seven columns
+`Iter Primal Dual Primal Dual Compl Time` under a two-line header,
+a *different* column order from COPT — onto the schema as a
+non-HSDE trace. All three parsers' row formats are **verified
+against real solver logs** — Mosek 11.1.6, COPT 8.0.4 and Gurobi
+13.0.1, each an interior-point / barrier solve of NETLIB
 `adlittle`, committed under `packages/solver-ipm/test/fixtures/`
-and asserted by `trace-log.test.ts` (bead `yyme`). The strict
-token-count checks also fail closed should a future solver
-version drift the format.
+and asserted by `trace-log.test.ts` (beads `yyme`, `z799`). The
+three independent witnesses let a TS trace be cross-checked against
+two-of-three. The strict token-count checks also fail closed should
+a future solver version drift the format.
 
 ### Decision 9 — Determinism tier unchanged: `numerical: true` (ADR-0015)
 

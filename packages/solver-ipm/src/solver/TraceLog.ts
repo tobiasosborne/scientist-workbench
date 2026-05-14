@@ -67,7 +67,8 @@ export interface TraceLine extends IterLogLine {
     | "lp-hsde"
     | "sdp-hsde-nt"
     | "copt"
-    | "mosek";
+    | "mosek"
+    | "gurobi";
   // Centering / step
   sigma: number | null;
   sigmaRaw: number | null;
@@ -123,7 +124,7 @@ void _verboseIsTraceLine;
  * `null` so `trace-diff.ts` skips it.
  */
 function externalTraceLine(
-  kind: "copt" | "mosek",
+  kind: "copt" | "mosek" | "gurobi",
   core: IterLogLine,
 ): TraceLine {
   return {
@@ -354,6 +355,91 @@ export function parseMosekLog(text: string): TraceLine[] {
   const candidates: TraceLine[] = [];
   for (const line of text.split("\n")) {
     const parsed = tryParseMosekLine(line);
+    if (parsed !== null) candidates.push(parsed);
+  }
+  return contiguousPrefix(candidates);
+}
+
+// =============================================================================
+// Gurobi
+// =============================================================================
+//
+// Gurobi's barrier (interior-point) iteration log. It sits under a *two-line*
+// header — a group header and a column header:
+//
+//                   Objective                Residual
+//   Iter       Primal          Dual         Primal    Dual     Compl     Time
+//      0  -1.53974860e+06  3.05335499e+05  9.95e+02 7.58e+02  3.70e+05     0s
+//
+// Seven whitespace-separated tokens per row — the same count as COPT, but a
+// DIFFERENT column order. Gurobi groups the two objectives, then the two
+// residuals, then `Compl`; COPT puts `Compl` in position 3. So Gurobi needs
+// its own parser, not a COPT alias. Column map:
+//
+//   Primal(obj)   -> primalObj    Dual(obj)     -> dualObj
+//   Primal(resid) -> primalInf    Dual(resid)   -> dualInf
+//   Compl         -> compl        Time          -> timeSec
+//
+// Gurobi's default LP barrier is not a homogeneous self-dual method, so every
+// HSDE field stays `null`, as do all TS-internal fields — `iter`, the two
+// objectives, the two residuals, `compl` and `timeSec` are the shared
+// cross-checks with a TS trace.
+//
+// Verified against a real Gurobi 13.0.1 barrier solve of NETLIB `adlittle`
+// (`Method=2 Crossover=0`), committed as
+// `test/fixtures/gurobi-13.0-adlittle.log` and asserted by `trace-log.test.ts`.
+
+// Gurobi prints the time column as `<n>s` (typically integer seconds). Accept
+// an optional `s` for robustness against a future format with no suffix.
+const GUROBI_TIME_RE = /^([0-9.]+)s?$/;
+
+/** Parse one trimmed Gurobi barrier-log line, or `null` if not an iter row. */
+function tryParseGurobiLine(line: string): TraceLine | null {
+  const trimmed = line.trim();
+  if (trimmed === "") return null;
+  const toks = trimmed.split(/\s+/);
+  if (toks.length !== 7) return null;
+  if (!/^\d+$/.test(toks[0]!)) return null;
+
+  const iter = Number.parseInt(toks[0]!, 10);
+  const primalObj = parseFiniteNumber(toks[1]!);
+  const dualObj = parseFiniteNumber(toks[2]!);
+  const primalInf = parseFiniteNumber(toks[3]!);
+  const dualInf = parseFiniteNumber(toks[4]!);
+  const compl = parseFiniteNumber(toks[5]!);
+  const timeMatch = GUROBI_TIME_RE.exec(toks[6]!);
+  const timeSec = timeMatch === null ? null : Number.parseFloat(timeMatch[1]!);
+
+  if (
+    primalObj === null || dualObj === null || primalInf === null ||
+    dualInf === null || compl === null || timeSec === null ||
+    !Number.isFinite(timeSec)
+  ) {
+    return null;
+  }
+
+  return externalTraceLine("gurobi", {
+    iter,
+    primalObj,
+    dualObj,
+    compl,
+    primalInf,
+    dualInf,
+    timeSec,
+  });
+}
+
+/**
+ * Parse the barrier iteration table of a Gurobi solver log into `TraceLine`s.
+ * The two-line header and all banner / statistics lines fail the row shape and
+ * are skipped; parsing stops at the first non-contiguous iteration index.
+ * Returns `[]` if no iter rows are found — the caller decides whether that is
+ * an error.
+ */
+export function parseGurobiLog(text: string): TraceLine[] {
+  const candidates: TraceLine[] = [];
+  for (const line of text.split("\n")) {
+    const parsed = tryParseGurobiLine(line);
     if (parsed !== null) candidates.push(parsed);
   }
   return contiguousPrefix(candidates);

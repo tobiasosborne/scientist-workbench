@@ -29,6 +29,7 @@ export {
   type TraceLine,
   parseCoptLog,
   parseMosekLog,
+  parseGurobiLog,
 } from "./solver/TraceLog.js";
 export { toWireStatus, type WireStatus } from "./solver/Status.js";
 export {
