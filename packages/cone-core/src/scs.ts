@@ -28,7 +28,16 @@
 //
 // where 𝒞 = ℝⁿ × 𝒦* × ℝ₊ is the cone the embedding's `u` lives in.
 
-import { type Matrix, type LUResult, matZeros, set, lu, luSolve } from "@workbench/linalg-core";
+import {
+  type Matrix,
+  type LUResult,
+  matZeros,
+  set,
+  lu,
+  luSolve,
+  matNorm1,
+  hagerOneNormEstimate,
+} from "@workbench/linalg-core";
 import { type Cone, ConeError, coneDim, dualCone, free, nonNeg, projectCone } from "./cones.js";
 import {
   type ConeProblem,
@@ -36,8 +45,10 @@ import {
   type Tolerances,
   buildHSDE,
   dot,
+  recoverPrimalDual,
 } from "./hsde.js";
-import { recoverPrimalDual } from "./hsde.js";
+import { applyScaling, equilibrate } from "./scaling.js";
+import { makeAnderson } from "./anderson.js";
 
 // -----------------------------------------------------------------------------
 // Options and result
@@ -70,13 +81,23 @@ export interface SCSOpts {
    * convergence, which is the default here.
    */
   readonly alpha: number;
+  /**
+   * Anderson-acceleration memory window (ADR-0036). The accelerator keeps
+   * the last `andersonMemory` residual- and image-differences and
+   * extrapolates through a small least-squares solve, collapsing SCS's
+   * slow linear tail. Default `10`. `0` disables acceleration and
+   * recovers the exact plain-SCS trajectory — kept for the determinism
+   * cross-check and for testing the un-accelerated path.
+   */
+  readonly andersonMemory: number;
 }
 
-/** ADR-0030 defaults for the SCS-ADMM path. */
+/** ADR-0030 + ADR-0036 defaults for the SCS-ADMM path. */
 export const DEFAULT_SCS_OPTS: SCSOpts = {
   precision: 1e-8,
   maxIter: 2500,
   alpha: 1.5,
+  andersonMemory: 10,
 };
 
 /** The five termination classes of ADR-0030 §A.3, as they apply to SCS. */
@@ -114,16 +135,20 @@ export type SCSResult =
       readonly objective: number;
       readonly iterations: number;
       readonly achievedPrecision: number;
+      /** Hager 1-norm condition estimate of the subspace system `M` (§4.1). */
+      readonly conditionEstimate: number;
     }
   | {
       readonly status: "infeasible";
       readonly certificate: Float64Array;
       readonly iterations: number;
+      readonly conditionEstimate: number;
     }
   | {
       readonly status: "unbounded";
       readonly certificate: Float64Array;
       readonly iterations: number;
+      readonly conditionEstimate: number;
     }
   | {
       readonly status: "iter-cap";
@@ -133,6 +158,8 @@ export type SCSResult =
       readonly objective?: number;
       readonly iterations: number;
       readonly achievedPrecision: number;
+      /** Hager 1-norm condition estimate of the subspace system `M` (§4.1). */
+      readonly conditionEstimate: number;
     }
   | {
       readonly status: "numerical-breakdown";
@@ -220,6 +247,13 @@ interface SubspaceCache {
   readonly m: number;
   /** LU factor of `M = [[I, Aᵀ], [−A, I]]`, size `(n+m)²`. */
   readonly luM: LUResult;
+  /**
+   * Hager 1-norm condition estimate of `M` — `‖M‖₁ · ‖M⁻¹‖₁`, the
+   * second factor estimated from the cached LU factor. Computed once
+   * (M is fixed across the solve) and reported in the result so a
+   * caller can read off how well-conditioned the subspace system was.
+   */
+  readonly conditionEstimate: number;
   /** `h = [c; b]`, length `n + m`. */
   readonly h: Float64Array;
   /** `g = M⁻¹ h`, length `n + m`. */
@@ -259,6 +293,10 @@ function buildSubspaceCache(A: Matrix, b: Float64Array, c: Float64Array): Subspa
   const luM = lu(M);
   if (luM === null) return null;
 
+  // M is fixed across the whole solve, so its conditioning is computed
+  // once here: ‖M‖₁ exactly, ‖M⁻¹‖₁ via the Hager estimator on the LU.
+  const conditionEstimate = matNorm1(M) * hagerOneNormEstimate(luM);
+
   // h = [c; b]
   const h = new Float64Array(dim);
   h.set(c, 0);
@@ -269,7 +307,7 @@ function buildSubspaceCache(A: Matrix, b: Float64Array, c: Float64Array): Subspa
   const denom = 1 + dot(h, g);
   if (!Number.isFinite(denom) || Math.abs(denom) < 1e-300) return null;
 
-  return { n, m, luM, h, g, denom, c, b };
+  return { n, m, luM, conditionEstimate, h, g, denom, c, b };
 }
 
 /**
@@ -375,11 +413,23 @@ export function scsSolve(problem: ConeProblem, opts: SCSOpts = DEFAULT_SCS_OPTS)
   if (!(opts.alpha > 0 && opts.alpha < 2)) {
     throw new ConeError(`scsSolve: alpha must lie in the open interval ]0, 2[, got ${opts.alpha}`);
   }
+  if (!Number.isInteger(opts.andersonMemory) || opts.andersonMemory < 0) {
+    throw new ConeError(
+      `scsSolve: andersonMemory must be a non-negative integer, got ${opts.andersonMemory}`,
+    );
+  }
 
   // ── setup ────────────────────────────────────────────────────────────────
-  const hsde = buildHSDE(problem);
-  const { n, m, N, A, b, c, cones } = hsde;
-  assertV01Projectable(cones);
+  // The iteration runs on the *scaled* problem `Â = D A E` (O'Donoghue
+  // §5 — the first-order method stalls on raw NETLIB-grade data); the
+  // §3.5 termination test runs on the *original* residuals. So we build
+  // two embeddings: `origHsde` (for `recoverPrimalDual`) and `scaledHsde`
+  // (for the subspace cache and the iteration vectors).
+  const origHsde = buildHSDE(problem);
+  assertV01Projectable(origHsde.cones);
+  const scaling = equilibrate(problem);
+  const scaledHsde = buildHSDE(applyScaling(problem, scaling));
+  const { n, m, N, A, b, c, cones } = scaledHsde;
 
   const cache = buildSubspaceCache(A, b, c);
   if (cache === null) {
@@ -395,48 +445,58 @@ export function scsSolve(problem: ConeProblem, opts: SCSOpts = DEFAULT_SCS_OPTS)
   const coneC: Cone[] = [free(n), ...cones.map(dualCone), nonNeg(1)];
 
   const tol = tolerancesFromPrecision(opts.precision);
-  const bNorm = Math.sqrt(dot(b, b));
-  const cNorm = Math.sqrt(dot(c, c));
+  // Relative-residual denominators use the *original* b, c — the
+  // candidate `recoverPrimalDual` returns is in original coordinates.
+  const bNorm = Math.sqrt(dot(origHsde.b, origHsde.b));
+  const cNorm = Math.sqrt(dot(origHsde.c, origHsde.c));
   const { alpha } = opts;
 
-  // ── initialise (§3.4) ────────────────────────────────────────────────────
-  // Explicit `Float64Array` annotations: these bindings are reassigned each
-  // iteration from `projectProduct`, and the general element type is the
-  // one we want, not whatever the initial `new Float64Array(N)` narrows to.
-  let u: Float64Array = new Float64Array(N);
-  let v: Float64Array = new Float64Array(N);
-  u[N - 1] = 1; // u_τ = 1
-  v[N - 1] = 1; // v_κ = 1
-
-  let lastCandidate: Candidate | undefined;
-
-  // ── iterate (§3.2.3 + §3.3) ──────────────────────────────────────────────
-  for (let k = 1; k <= opts.maxIter; k++) {
+  // ── the fixed-point map φ ────────────────────────────────────────────────
+  // One full SCS iteration (§3.2.3 eq 17 + §3.3 over-relaxation) as a map
+  // on the embedding pair `z = [u (N); v (N)]`. Extracting it as `φ` lets
+  // the Anderson accelerator (ADR-0036) treat the iteration as a generic
+  // fixed-point map: `Gz = scsStep(z); z = aa.next(z, Gz)`.
+  const scsStep = (z: Float64Array): Float64Array => {
     // w = u + v
     const w = new Float64Array(N);
-    for (let i = 0; i < N; i++) w[i] = u[i]! + v[i]!;
-
+    for (let i = 0; i < N; i++) w[i] = z[i]! + z[N + i]!;
     // ũ = (I + Q)⁻¹ w   (subspace projection, §4.1)
     const uTilde = subspaceProject(cache, w);
-
     // ǔ = α·ũ + (1 − α)·u   (over-relaxation, §3.3)
     const uRelax = new Float64Array(N);
-    for (let i = 0; i < N; i++) uRelax[i] = alpha * uTilde[i]! + (1 - alpha) * u[i]!;
-
+    for (let i = 0; i < N; i++) uRelax[i] = alpha * uTilde[i]! + (1 - alpha) * z[i]!;
     // u⁺ = Π_𝒞(ǔ − v)   (cone projection, §3.2.3)
     const uMinusV = new Float64Array(N);
-    for (let i = 0; i < N; i++) uMinusV[i] = uRelax[i]! - v[i]!;
+    for (let i = 0; i < N; i++) uMinusV[i] = uRelax[i]! - z[N + i]!;
     const uNext = projectProduct(uMinusV, coneC);
+    // pack [u⁺ ; v⁺]   with   v⁺ = v − ǔ + u⁺
+    const out = new Float64Array(2 * N);
+    for (let i = 0; i < N; i++) {
+      out[i] = uNext[i]!;
+      out[N + i] = z[N + i]! - uRelax[i]! + uNext[i]!;
+    }
+    return out;
+  };
 
-    // v⁺ = v − ǔ + u⁺   (dual update, §3.2.3)
-    const vNext = new Float64Array(N);
-    for (let i = 0; i < N; i++) vNext[i] = v[i]! - uRelax[i]! + uNext[i]!;
+  // ── initialise (§3.4) ────────────────────────────────────────────────────
+  // `z = [u ; v]`; the only nonzero entries are `u_τ = 1` (index N−1) and
+  // `v_κ = 1` (index 2N−1) — the zero-avoiding initialisation.
+  let z: Float64Array = new Float64Array(2 * N);
+  z[N - 1] = 1;
+  z[2 * N - 1] = 1;
 
-    u = uNext;
-    v = vNext;
+  const aa = makeAnderson(opts.andersonMemory);
+  let lastCandidate: Candidate | undefined;
 
-    // A non-finite iterate is unrecoverable — ill-conditioning beyond rescue.
-    if (!allFinite(u) || !allFinite(v)) {
+  // ── iterate: φ-step then Anderson-accelerate (ADR-0036) ──────────────────
+  for (let k = 1; k <= opts.maxIter; k++) {
+    const Gz = scsStep(z);
+    z = aa.next(z, Gz);
+
+    // A non-finite iterate is unrecoverable — ill-conditioning beyond
+    // rescue (the accelerator's own safeguard already rejects a
+    // non-finite *extrapolate*; this also catches a non-finite plain step).
+    if (!allFinite(z)) {
       return {
         status: "numerical-breakdown",
         iterations: k,
@@ -444,8 +504,12 @@ export function scsSolve(problem: ConeProblem, opts: SCSOpts = DEFAULT_SCS_OPTS)
       };
     }
 
-    // Termination test (§3.5) — the first branch to fire stops the loop.
-    const rec = recoverPrimalDual(u, v, hsde, tol);
+    // Termination test (§3.5) on the *original* residuals: `recoverPrimalDual`
+    // is given the original embedding plus the `scaling`, so it unscales
+    // the iterate back to the original coordinates before checking §3.5.
+    const u = z.subarray(0, N);
+    const v = z.subarray(N, 2 * N);
+    const rec = recoverPrimalDual(u, v, origHsde, tol, scaling);
     switch (rec.kind) {
       case "optimal":
         return {
@@ -456,11 +520,22 @@ export function scsSolve(problem: ConeProblem, opts: SCSOpts = DEFAULT_SCS_OPTS)
           objective: rec.objective,
           iterations: k,
           achievedPrecision: maxRelativeResidual(rec, bNorm, cNorm),
+          conditionEstimate: cache.conditionEstimate,
         };
       case "primal-infeasible":
-        return { status: "infeasible", certificate: rec.certificate, iterations: k };
+        return {
+          status: "infeasible",
+          certificate: rec.certificate,
+          iterations: k,
+          conditionEstimate: cache.conditionEstimate,
+        };
       case "dual-infeasible":
-        return { status: "unbounded", certificate: rec.certificate, iterations: k };
+        return {
+          status: "unbounded",
+          certificate: rec.certificate,
+          iterations: k,
+          conditionEstimate: cache.conditionEstimate,
+        };
       case "inconclusive":
         if (rec.candidate !== undefined) lastCandidate = rec.candidate;
         break;
@@ -472,7 +547,12 @@ export function scsSolve(problem: ConeProblem, opts: SCSOpts = DEFAULT_SCS_OPTS)
     // No iterate ever had u_τ > 0 — nothing to read off. Honest precision
     // is "unknown / unbounded" — report +∞ so the caller never mistakes
     // it for a converged answer.
-    return { status: "iter-cap", iterations: opts.maxIter, achievedPrecision: Infinity };
+    return {
+      status: "iter-cap",
+      iterations: opts.maxIter,
+      achievedPrecision: Infinity,
+      conditionEstimate: cache.conditionEstimate,
+    };
   }
   return {
     status: "iter-cap",
@@ -482,5 +562,6 @@ export function scsSolve(problem: ConeProblem, opts: SCSOpts = DEFAULT_SCS_OPTS)
     objective: lastCandidate.objective,
     iterations: opts.maxIter,
     achievedPrecision: maxRelativeResidual(lastCandidate, bNorm, cNorm),
+    conditionEstimate: cache.conditionEstimate,
   };
 }

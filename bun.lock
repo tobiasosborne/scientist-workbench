@@ -245,6 +245,16 @@
         "@workbench/qinfo": "workspace:*",
       },
     },
+    "tools/cone-solve": {
+      "name": "@workbench/tool-cone-solve",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/cone-core": "workspace:*",
+        "@workbench/contract": "workspace:*",
+        "@workbench/linalg-core": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+      },
+    },
     "tools/entropy-source": {
       "name": "@workbench/tool-entropy-source",
       "version": "0.1.0",
@@ -739,6 +749,8 @@
     "@workbench/tool-cas-verify": ["@workbench/tool-cas-verify@workspace:tools/cas-verify"],
 
     "@workbench/tool-choi-iso": ["@workbench/tool-choi-iso@workspace:tools/choi-iso"],
+
+    "@workbench/tool-cone-solve": ["@workbench/tool-cone-solve@workspace:tools/cone-solve"],
 
     "@workbench/tool-entropy-source": ["@workbench/tool-entropy-source@workspace:tools/entropy-source"],
 

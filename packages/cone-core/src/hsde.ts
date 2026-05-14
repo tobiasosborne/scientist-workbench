@@ -227,6 +227,24 @@ export function assembleQ(hsde: HSDEMatrix): Matrix {
  * these from the single user-facing `precision` knob; this struct is the
  * derived triple-plus-two that the §3.5 termination test actually reads.
  */
+/**
+ * Diagonal data-scaling for the SCS problem (O'Donoghue 2016 §5). `D`
+ * scales the constraint rows, `E` the variable columns: the scaled
+ * problem is `Â = D A E`, `b̂ = D b`, `ĉ = E c` (the paper's scalar `σ`,
+ * `ρ` folded into `D`, `E`). For the LP-complete cone subset every
+ * positive diagonal `D` preserves cone membership (the nonneg / zero /
+ * free cones are closed under positive componentwise scaling), so `D` is
+ * an unconstrained positive diagonal here. Equilibration computes it
+ * (`scaling.ts`); `recoverPrimalDual` consumes it to map a scaled
+ * embedding iterate back to the *original* problem's coordinates.
+ */
+export interface Scaling {
+  /** Row scaling — length `m` (constraint rows). `y = D ⊙ ŷ`, `s = ŝ ⊘ D`. */
+  readonly D: Float64Array;
+  /** Column scaling — length `n` (variable columns). `x = E ⊙ x̂`. */
+  readonly E: Float64Array;
+}
+
 export interface Tolerances {
   /** Primal-residual tolerance `ε_pri`. */
   readonly epsPri: number;
@@ -319,6 +337,17 @@ export type Recovered =
  * skipped — its right-hand side would divide by zero, and a zero `c`
  * (resp. `b`) cannot produce that kind of certificate anyway.
  *
+ * **Scaling.** When `scaling` is supplied, `(u, v)` are an embedding
+ * iterate of the *scaled* problem `Â = D A E`, but `hsde` is the
+ * *original* problem and the returned `(x, y, s)` / certificates are in
+ * the *original* coordinates: the raw embedding components are unscaled
+ * (`xRaw = E ⊙ u_x`, `yRaw = D ⊙ u_y`, `sRaw = v_s ⊘ D`) before the §3.5
+ * residual test runs against the original data. This is the paper's
+ * "Scaled Termination Criteria" (§5, p. 1058): the iteration runs in the
+ * better-conditioned scaled space, but convergence is judged on the
+ * original residuals. Without `scaling`, `(u, v)` and `hsde` are the same
+ * (unscaled) problem and the raw components are the subarrays as-is.
+ *
  * `u` and `v` must both have length `hsde.N`.
  */
 export function recoverPrimalDual(
@@ -326,6 +355,7 @@ export function recoverPrimalDual(
   v: Float64Array,
   hsde: HSDEMatrix,
   tol: Tolerances,
+  scaling?: Scaling,
 ): Recovered {
   const { n, m, N, A, b, c } = hsde;
   if (u.length !== N || v.length !== N) {
@@ -339,6 +369,27 @@ export function recoverPrimalDual(
   const uTau = u[n + m]!;
   const vS = v.subarray(n, n + m);
 
+  // Unscale the raw (un-τ-divided) embedding components to the original
+  // problem's coordinates. With no scaling these are the subarrays
+  // verbatim; with scaling, `Â = D A E` ⟹ `x = E ⊙ x̂`, `y = D ⊙ ŷ`,
+  // `s = ŝ ⊘ D`. Everything below uses `xRaw / yRaw / sRaw` and the
+  // *original* `A, b, c`, so the §3.5 test is on the original residuals.
+  let xRaw: Float64Array;
+  let yRaw: Float64Array;
+  let sRaw: Float64Array;
+  if (scaling === undefined) {
+    xRaw = uX;
+    yRaw = uY;
+    sRaw = vS;
+  } else {
+    xRaw = new Float64Array(n);
+    for (let j = 0; j < n; j++) xRaw[j] = scaling.E[j]! * uX[j]!;
+    yRaw = new Float64Array(m);
+    for (let i = 0; i < m; i++) yRaw[i] = scaling.D[i]! * uY[i]!;
+    sRaw = new Float64Array(m);
+    for (let i = 0; i < m; i++) sRaw[i] = vS[i]! / scaling.D[i]!;
+  }
+
   const bNorm = norm2(b);
   const cNorm = norm2(c);
 
@@ -348,11 +399,11 @@ export function recoverPrimalDual(
   let candidate: Candidate | undefined;
   if (uTau > 0) {
     const x = new Float64Array(n);
-    for (let i = 0; i < n; i++) x[i] = uX[i]! / uTau;
+    for (let i = 0; i < n; i++) x[i] = xRaw[i]! / uTau;
     const y = new Float64Array(m);
-    for (let i = 0; i < m; i++) y[i] = uY[i]! / uTau;
+    for (let i = 0; i < m; i++) y[i] = yRaw[i]! / uTau;
     const s = new Float64Array(m);
-    for (let i = 0; i < m; i++) s[i] = vS[i]! / uTau;
+    for (let i = 0; i < m; i++) s[i] = sRaw[i]! / uTau;
 
     // primal residual  p = A x + s − b
     const Ax = matVecLocal(A, x);
@@ -386,18 +437,19 @@ export function recoverPrimalDual(
   }
 
   // ── branch 2: dual-infeasible (primal unbounded) ─────────────────────────
-  // Direction certificate, built from the raw u_x (no τ division).
+  // Direction certificate, built from the raw (unscaled) u_x — no τ
+  // division; the certificate is a direction.
   if (cNorm > 0) {
-    const cTuX = dot(c, uX);
-    if (cTuX < 0) {
-      // residual  A u_x + v_s
-      const AuX = matVecLocal(A, uX);
+    const cTxRaw = dot(c, xRaw);
+    if (cTxRaw < 0) {
+      // residual  A xRaw + sRaw  (in the original coordinates)
+      const AxRaw = matVecLocal(A, xRaw);
       const res = new Float64Array(m);
-      for (let i = 0; i < m; i++) res[i] = AuX[i]! + vS[i]!;
-      if (norm2(res) <= (-cTuX / cNorm) * tol.epsUnbdd) {
+      for (let i = 0; i < m; i++) res[i] = AxRaw[i]! + sRaw[i]!;
+      if (norm2(res) <= (-cTxRaw / cNorm) * tol.epsUnbdd) {
         const certificate = new Float64Array(n);
-        const scale = -cTuX; // > 0
-        for (let i = 0; i < n; i++) certificate[i] = uX[i]! / scale;
+        const scale = -cTxRaw; // > 0
+        for (let i = 0; i < n; i++) certificate[i] = xRaw[i]! / scale;
         return { kind: "dual-infeasible", certificate };
       }
     }
@@ -405,13 +457,13 @@ export function recoverPrimalDual(
 
   // ── branch 3: primal-infeasible ──────────────────────────────────────────
   if (bNorm > 0) {
-    const bTuY = dot(b, uY);
-    if (bTuY < 0) {
-      const AtuY = matTransposeVec(A, uY);
-      if (norm2(AtuY) <= (-bTuY / bNorm) * tol.epsInfeas) {
+    const bTyRaw = dot(b, yRaw);
+    if (bTyRaw < 0) {
+      const AtyRaw = matTransposeVec(A, yRaw);
+      if (norm2(AtyRaw) <= (-bTyRaw / bNorm) * tol.epsInfeas) {
         const certificate = new Float64Array(m);
-        const scale = -bTuY; // > 0
-        for (let i = 0; i < m; i++) certificate[i] = uY[i]! / scale;
+        const scale = -bTyRaw; // > 0
+        for (let i = 0; i < m; i++) certificate[i] = yRaw[i]! / scale;
         return { kind: "primal-infeasible", certificate };
       }
     }

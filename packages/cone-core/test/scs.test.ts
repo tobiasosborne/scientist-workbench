@@ -76,6 +76,9 @@ describe("scsSolve — LP with a known optimum", () => {
     const r = expectOptimal(scsSolve(p));
     expect(r.x[0]).toBeCloseTo(1, 5);
     expect(r.objective).toBeCloseTo(1, 5);
+    // the condition estimate of the subspace system is a real number ≥ 1
+    expect(Number.isFinite(r.conditionEstimate)).toBe(true);
+    expect(r.conditionEstimate).toBeGreaterThanOrEqual(1);
     // independent KKT check — the solver's (x, y, s) really is a solution
     const res = kktResiduals(p, r.x, r.y, r.s);
     expect(res.primal).toBeLessThan(1e-5);
@@ -183,11 +186,11 @@ describe("scsSolve — iteration cap", () => {
   };
 
   test("a mid-convergence maxIter stops at `iter-cap`, never an `optimal` lie", () => {
-    // 10 iterations is well short of this LP's ~47-iteration convergence,
-    // but long enough that some iterate has u_τ > 0 — so a best-effort
-    // candidate exists and its honest precision is finite but worse than
-    // the 1e-8 target.
-    const r = scsSolve(p, { precision: 1e-8, maxIter: 10, alpha: 1.5 });
+    // `andersonMemory: 0` pins this to the *plain* SCS trajectory, whose
+    // convergence on this LP is ~47 iterations — 10 is well short of it,
+    // but long enough that some iterate has u_τ > 0, so a best-effort
+    // candidate exists with a finite (sub-target) honest precision.
+    const r = scsSolve(p, { precision: 1e-8, maxIter: 10, alpha: 1.5, andersonMemory: 0 });
     expect(r.status).toBe("iter-cap");
     if (r.status !== "iter-cap") throw new Error("unreachable");
     expect(r.iterations).toBe(10);
@@ -199,8 +202,8 @@ describe("scsSolve — iteration cap", () => {
   test("an iter-cap before any u_τ > 0 reports achievedPrecision = +∞, not a false finite", () => {
     // After only 2 iterations no iterate has had u_τ > 0, so there is no
     // candidate to read off — the honest answer is "+∞ precision", never
-    // a fabricated finite number.
-    const r = scsSolve(p, { precision: 1e-8, maxIter: 2, alpha: 1.5 });
+    // a fabricated finite number. Plain SCS (`andersonMemory: 0`).
+    const r = scsSolve(p, { precision: 1e-8, maxIter: 2, alpha: 1.5, andersonMemory: 0 });
     expect(r.status).toBe("iter-cap");
     if (r.status !== "iter-cap") throw new Error("unreachable");
     expect(r.iterations).toBe(2);
@@ -228,6 +231,7 @@ describe("scsSolve — determinism", () => {
     expect(r1.iterations).toBe(r2.iterations);
     expect(r1.objective).toBe(r2.objective); // exact, not toBeCloseTo
     expect(r1.achievedPrecision).toBe(r2.achievedPrecision);
+    expect(r1.conditionEstimate).toBe(r2.conditionEstimate);
     expect(Array.from(r1.x)).toEqual(Array.from(r2.x));
     expect(Array.from(r1.y)).toEqual(Array.from(r2.y));
     expect(Array.from(r1.s)).toEqual(Array.from(r2.s));
@@ -240,7 +244,10 @@ describe("scsSolve — determinism", () => {
       c: new Float64Array([1]),
       cones: [nonNeg(1)],
     };
-    const r = expectOptimal(scsSolve(p, { precision: 1e-8, maxIter: 5000, alpha: 1 }));
+    // `andersonMemory: 0` isolates the basic (un-accelerated) iteration.
+    const r = expectOptimal(
+      scsSolve(p, { precision: 1e-8, maxIter: 5000, alpha: 1, andersonMemory: 0 }),
+    );
     expect(r.x[0]).toBeCloseTo(1, 5);
   });
 });

@@ -47,12 +47,17 @@ export {
   type Recovered,
   type Candidate,
   type Tolerances,
+  type Scaling,
   buildHSDE,
   assembleQ,
   recoverPrimalDual,
   matTransposeVec,
   dot,
 } from "./hsde.js";
+
+export { equilibrate, applyScaling } from "./scaling.js";
+
+export { type AndersonAccelerator, makeAnderson } from "./anderson.js";
 
 export {
   type SCSOpts,

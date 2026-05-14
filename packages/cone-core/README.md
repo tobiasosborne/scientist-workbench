@@ -25,8 +25,12 @@ import {
   type Cone, nonNeg, zero, free, coneDim,
   projectCone, dualCone, inCone, ConeError,
   // hsde.ts — the homogeneous self-dual embedding
-  type ConeProblem, type HSDEMatrix, type Recovered,
+  type ConeProblem, type HSDEMatrix, type Recovered, type Scaling,
   buildHSDE, recoverPrimalDual, assembleQ,
+  // scaling.ts — Ruiz data equilibration (O'Donoghue §5)
+  equilibrate, applyScaling,
+  // anderson.ts — Type-II Anderson acceleration (ADR-0036)
+  makeAnderson,
   // scs.ts — the operator-splitting iteration
   type SCSOpts, type SCSResult, scsSolve, DEFAULT_SCS_OPTS,
 } from "@workbench/cone-core";
@@ -93,27 +97,53 @@ Both are blocked on staging Parikh-Boyd *Proximal Algorithms* §6.3 (the
 *formulas*). A typed-but-unusable variant is honest; a silent wrong
 projection is not.
 
+## Convergence: scaling + acceleration
+
+The plain SCS iteration is a *modest-accuracy* first-order method with
+slow tail convergence (O'Donoghue 2016 §1). `scsSolve` applies two
+levers from the literature before declaring an answer:
+
+- **Ruiz data equilibration** (`scaling.ts`, O'Donoghue §5) — the
+  iteration runs on the rescaled problem `Â = D A E` whose rows and
+  columns have near-unit norm; the §3.5 termination test runs on the
+  *original* residuals. Necessary on poorly-scaled data; not sufficient
+  alone.
+- **Type-II Anderson acceleration** (`anderson.ts`, ADR-0036) —
+  extrapolates the fixed-point iteration through a windowed
+  least-squares solve, collapsing the slow linear tail. On by default
+  (`SCSOpts.andersonMemory`, default `10`; `0` disables it).
+
+Even so, SCS is not an interior-point method: it reaches modest
+accuracy quickly and high accuracy slowly. For best-in-class LP / QP
+accuracy reach for the specialists (`tools/lp-solve`, `tools/qp-solve`)
+— ADR-0030 §B is explicit that `cone-solve` is the *universal*
+1e-6-ceiling primary and the specialists are the high-accuracy paths.
+
 ## Determinism
 
-`numerical: true` (ADR-0015): the iteration is a fixed sequence of
-IEEE-754 float64 operations in a fixed order — bit-identical given
-`(problem, opts, platform)`. No comparison uses an implicit-zero gate;
-every threshold is an explicit tolerance derived from the single
-user-facing `precision` knob (default `1e-8`). Data scaling (O'Donoghue
-2016 §5) is a separable preprocessing step deferred to a follow-up bead
-— v0.1 runs the iteration unscaled.
+`numerical: true` (ADR-0015): the iteration — equilibration,
+acceleration and all — is a fixed sequence of IEEE-754 float64
+operations in a fixed order, bit-identical given `(problem, opts,
+platform)`. No comparison uses an implicit-zero gate; every threshold
+is an explicit tolerance derived from the single user-facing
+`precision` knob (default `1e-8`).
 
 ## Module map
 
-| module | exports | paper §§ |
+| module | exports | reference |
 |---|---|---|
-| `cones.ts` | `Cone`, `projectCone`, `dualCone`, `inCone`, `coneDim`, constructors | §6 (cone definitions; projections deferred to ref [64]) |
-| `hsde.ts` | `ConeProblem`, `HSDEMatrix`, `buildHSDE`, `assembleQ`, `recoverPrimalDual` | §1–§2 (embedding eq 7/8), §3.5 (termination) |
-| `scs.ts` | `SCSOpts`, `SCSResult`, `scsSolve` | §3.2.3 (iteration eq 17), §3.3 (over-relaxation), §3.4 (init), §4.1 (SMW subspace solve) |
+| `cones.ts` | `Cone`, `projectCone`, `dualCone`, `inCone`, `coneDim`, constructors | O'D 2016 §6 (cone definitions; projections deferred to Parikh-Boyd §6.3) |
+| `hsde.ts` | `ConeProblem`, `HSDEMatrix`, `Scaling`, `buildHSDE`, `assembleQ`, `recoverPrimalDual` | O'D 2016 §1–§2 (embedding eq 7/8), §3.5 (termination), §5 (scaled criteria) |
+| `scaling.ts` | `equilibrate`, `applyScaling` | O'D 2016 §5 (Ruiz equilibration, ref Ruiz 2001) |
+| `anderson.ts` | `AndersonAccelerator`, `makeAnderson` | Zhang-O'Donoghue-Boyd 2018 / Walker-Ni 2011 (ADR-0036) |
+| `scs.ts` | `SCSOpts`, `SCSResult`, `scsSolve` | O'D 2016 §3.2.3 (iteration eq 17), §3.3 (over-relaxation), §3.4 (init), §4.1 (SMW subspace solve) |
 
 ## See also
 
 - `docs/adr/0030-convex-cone-solver-tier.md` — the tier design.
-- `docs/ground-truth/convex/scs-algorithm.md` — the algorithm transcription.
-- `docs/worklog/112-cone-core-lp-slice.md` — the build of this v0.1 slice.
+- `docs/adr/0036-anderson-acceleration-cone-tier.md` — the AA decision.
+- `docs/ground-truth/convex/scs-algorithm.md` — the SCS algorithm transcription.
+- `docs/ground-truth/convex/anderson-acceleration.md` — the AA transcription.
+- `docs/worklog/112-cone-core-lp-slice.md` — the v0.1 LP-complete slice.
+- `docs/worklog/113-cone-solve-and-acceleration.md` — `cone-solve` + scaling + AA.
 - `@workbench/linalg-core` — the `Matrix` + LU substrate this builds on.

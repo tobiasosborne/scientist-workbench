@@ -27,6 +27,7 @@ import { def as casDiffDef } from "../../../../tools/cas-diff/tool.js";
 import { def as casSimplifyDef } from "../../../../tools/cas-simplify/tool.js";
 import { def as casVerifyDef } from "../../../../tools/cas-verify/tool.js";
 import { def as choiIsoDef } from "../../../../tools/choi-iso/tool.js";
+import { def as coneSolveDef } from "../../../../tools/cone-solve/tool.js";
 import { def as entropySourceDef } from "../../../../tools/entropy-source/tool.js";
 import { def as exprParseDef } from "../../../../tools/expr-parse/tool.js";
 import { def as fidelityDef } from "../../../../tools/fidelity/tool.js";
@@ -80,6 +81,7 @@ export interface TypedWorkbench extends Workbench {
   casSimplify(input: InputOf<typeof casSimplifyDef>, flags?: FlagsArgOf<typeof casSimplifyDef>): Promise<OutputOf<typeof casSimplifyDef>>;
   casVerify(input: InputOf<typeof casVerifyDef>, flags?: FlagsArgOf<typeof casVerifyDef>): Promise<OutputOf<typeof casVerifyDef>>;
   choiIso(input: InputOf<typeof choiIsoDef>, flags?: FlagsArgOf<typeof choiIsoDef>): Promise<OutputOf<typeof choiIsoDef>>;
+  coneSolve(input: InputOf<typeof coneSolveDef>, flags?: FlagsArgOf<typeof coneSolveDef>): Promise<OutputOf<typeof coneSolveDef>>;
   entropySource(input: InputOf<typeof entropySourceDef>, flags?: FlagsArgOf<typeof entropySourceDef>): Promise<OutputOf<typeof entropySourceDef>>;
   exprParse(input: InputOf<typeof exprParseDef>, flags?: FlagsArgOf<typeof exprParseDef>): Promise<OutputOf<typeof exprParseDef>>;
   fidelity(input: InputOf<typeof fidelityDef>, flags?: FlagsArgOf<typeof fidelityDef>): Promise<OutputOf<typeof fidelityDef>>;
@@ -153,6 +155,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     },
     choiIso(input, flags) {
       return workbench.run("choi-iso", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof choiIsoDef>>;
+    },
+    coneSolve(input, flags) {
+      return workbench.run("cone-solve", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof coneSolveDef>>;
     },
     entropySource(input, flags) {
       return workbench.run("entropy-source", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof entropySourceDef>>;
@@ -305,6 +310,7 @@ export const defs = {
   casSimplify: casSimplifyDef,
   casVerify: casVerifyDef,
   choiIso: choiIsoDef,
+  coneSolve: coneSolveDef,
   entropySource: entropySourceDef,
   exprParse: exprParseDef,
   fidelity: fidelityDef,
