@@ -135,6 +135,99 @@ describe("gamma — poles", () => {
   });
 });
 
+describe("gamma / lgammaRealAbs — near-pole reflection precision (bead zhrm)", () => {
+  // Sibling of `oj5j`'s complex-path fix (worklog 117 → 119), same bug
+  // shape: the reflection branch formed `π·z` at fixed `work = prec +
+  // 32` *before* `sin`'s argument reduction, so for a real
+  // high-precision `z = m + ζ` with `|ζ|` tiny the `π·ζ` information
+  // (≈ −log₂|ζ| bits below `π·m`) was truncated away, then
+  // `reduceModPiOver2` re-did the same large subtraction. Net loss
+  // ~(−log₁₀|ζ| − 9) digits of requested precision on `lgamma(z)` /
+  // `gamma(z)` for `z < 0` near a non-positive integer; *plus* a
+  // false-positive "pole" `RangeError` from `gamma`'s naïve
+  // `sgn(sin(πz))` sign-detection when `|ζ|` was small enough to
+  // annihilate `sin(πz)` to zero.
+  //
+  // The fix reduces `z → ζ` before multiplying by π and bumps `work`
+  // by the measured cancellation depth. `gamma`'s sign now reads off
+  // the structural identity `sgn(Γ(z)) = (−1)ᵐ · sgn(ζ)` — exact,
+  // sin-free, no near-pole sgn collapse. For `m = 0` (the region
+  // `z ∈ (−½, ½)`) the computation is byte-identical to the pre-fix
+  // code.
+  //
+  // Mutation proof: reverting `lgammaRealAbs` to the `πz`-first form
+  // collapses the `ε = 1e-69` cases to ~20 / ~40 digit agreement at
+  // 30 / 50 dps — a hard RED on every assertion below.
+
+  const REF_DPS = 160;
+  const REF = decimalToBinaryPrecision(REF_DPS);
+
+  function sigAgree(a: BigFloat, b: BigFloat, cap: number): number {
+    const sa = toString(a, cap);
+    const sb = toString(b, cap);
+    let n = 0;
+    for (let i = 0; i < Math.min(sa.length, sb.length); i++) {
+      if (sa[i] !== sb[i]) break;
+      if (sa[i] !== "-" && sa[i] !== ".") n++;
+    }
+    return n;
+  }
+  const offReal = (m: number, k: number) =>
+    `${m < 0 ? "-" : ""}${Math.abs(m)}.` + "0".repeat(k - 1) + "1"; // m − 10⁻ᵏ
+
+  const cases = [
+    { name: "z = -1 − 1e-20 (near pole m = -1)", str: offReal(-1, 20) },
+    { name: "z = -1 − 1e-69 (near pole m = -1, oj5j witness scale)", str: offReal(-1, 69) },
+    { name: "z = -3 − 1e-69 (near pole m = -3)", str: offReal(-3, 69) },
+    { name: "z = -10 − 1e-50 (deeper-shifted near pole m = -10)", str: offReal(-10, 50) },
+  ];
+
+  for (const c of cases) {
+    test(`${c.name}: lgamma(z) holds the requested precision`, () => {
+      const zRef = fromString(c.str, REF);
+      const ref = lgamma(zRef, REF);
+      for (const dps of [30, 50]) {
+        const p = decimalToBinaryPrecision(dps);
+        const got = lgamma(zRef, p);
+        expect(sigAgree(got, ref, dps + 4)).toBeGreaterThanOrEqual(dps);
+      }
+    });
+
+    test(`${c.name}: gamma(z) does not throw spuriously and matches reference`, () => {
+      // The bead's second failure mode: gamma's pre-fix sign detection
+      // was `sgn(sin(πz, work))`. Near a pole, `sin(πz)` got
+      // annihilated to zero, `sgn` returned 0, and gamma threw
+      // `pole at z = ...` even though z was only *close* to a pole.
+      // The algebraic-identity sign fix removes the throw — and the
+      // value is correct.
+      const zRef = fromString(c.str, REF);
+      const ref = gamma(zRef, REF);
+      const got = gamma(zRef, decimalToBinaryPrecision(50));
+      expect(sigAgree(got, ref, 54)).toBeGreaterThanOrEqual(50);
+    });
+  }
+
+  test("control: z = -0.3 (m = 0, the byte-identical region) unaffected", () => {
+    // Cross-check by reflection: Γ(-0.3)·Γ(1.3) = π/sin(-0.3π);
+    // Γ(1.3) ≈ 0.89747; sin(-0.3π) ≈ -0.80902 → Γ(-0.3) ≈ -4.3266;
+    // log|Γ(-0.3)| ≈ 1.46484.  Pin the value rather than byte-equality
+    // so the test catches both wrong values and unintended regressions
+    // to the pre-fix path in the m = 0 region.
+    const z = fromString("-0.3", PREC50DPS);
+    const r = lgamma(z, PREC50DPS);
+    expect(toString(r, 30)).toBe("1.46484005085760250700847863478");
+  });
+
+  test("control: exact pole still throws (Γ(-2) and lgamma(-2) both)", () => {
+    // The reduction `ζ = z − m` puts ζ exactly at zero for integer z;
+    // the explicit isZero check is what catches the pole. Pinning that
+    // the path didn't accidentally route past it.
+    const pole = fromInt(-2n, PREC50DPS);
+    expect(() => gamma(pole, PREC50DPS)).toThrow(/pole/);
+    expect(() => lgamma(pole, PREC50DPS)).toThrow(/pole/);
+  });
+});
+
 describe("lgamma", () => {
   test("log Γ(1) = 0", () => {
     const r = lgamma(fromInt(1n, 100), 100);
