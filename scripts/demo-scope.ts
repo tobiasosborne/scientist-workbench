@@ -30,6 +30,7 @@ import { float64FromNumber, float64ToNumber, hash, int, list, parse, rat, record
 import { canonicalize } from "@workbench/protocol";
 import { spawnBun } from "@workbench/contract";
 import { loadWorkbench, typed } from "@workbench/compose";
+import { matrixToValue, valueToVector } from "@workbench/json-bridge";
 
 // -----------------------------------------------------------------------------
 // Pretty-printer — same shape as `SHORT` in the bash version
@@ -336,21 +337,20 @@ const peiRows = [
   [1, 1, 1, 2, 1],
   [1, 1, 1, 1, 2],
 ];
-const peiInput = list(
-  peiRows.map((row) => list(row.map((x) => float64FromNumber(x)))),
-);
+// Boilerplate-deleted via `@workbench/json-bridge` (bead qiv8). `matrixToValue`
+// returns the narrow `ListValueOf<ListValueOf<Float64Value>>` so the
+// typed-barrel slot takes it cast-free; `valueToVector` is the inverse of
+// the old `.filter(isFloat64).map(float64ToNumber as never)` chain.
 const eighResult = await wb.linalgEigh({
   kind: "record",
-  fields: { A: peiInput },
+  fields: { A: matrixToValue(peiRows) },
 });
 if (eighResult.kind === "record") {
   const lams = eighResult.fields["eigenvalues"];
   const reconErr = eighResult.fields["reconstruction_error"];
   const orthErr = eighResult.fields["orthogonality_error"];
   if (lams?.kind === "list" && reconErr?.kind === "float64" && orthErr?.kind === "float64") {
-    const eigs = lams.items
-      .filter((it): it is { kind: "float64" } & typeof it => it.kind === "float64")
-      .map((it) => float64ToNumber(it as never).toFixed(4));
+    const eigs = valueToVector(lams).map((x) => x.toFixed(4));
     console.log("  eigenvalues:        [" + eigs.join(", ") + "]   (expected [1, 1, 1, 1, 6])");
     console.log("  reconstruction err:", float64ToNumber(reconErr).toExponential(2));
     console.log("  orthogonality err: ", float64ToNumber(orthErr).toExponential(2),
