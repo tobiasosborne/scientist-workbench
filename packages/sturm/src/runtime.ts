@@ -204,21 +204,60 @@ export function captureBody<R>(s: TraceState, body: () => R): { ops: Op[]; resul
 }
 
 /**
+ * Typed exception thrown by `rejectUnderControl` when a non-rotation
+ * op fires inside an active `when` body. ADR-0038 makes this the
+ * source-surface enforcement of the principle "coherent control on
+ * non-unitary ops is not well-defined" (ADR-0006).
+ *
+ * The class exists so the tracer tool (`tools/sturm-trace`) can
+ * `instanceof InvalidWhenBodyError` instead of regex-matching the
+ * message — a clean catch path that builds the
+ * `tagged "sturm-trace/invalid-when-body"` envelope without
+ * stringly-typed parsing. The free-text message is preserved for
+ * humans reading stderr when the tracer is *not* the consumer; the
+ * fields are the machine surface.
+ *
+ * `op` is the primitive that tried to fire (`"observe"`, `"prepare"`,
+ * `"discard"`, `"cases"`, `"oracle"`). `controlWires` is a snapshot
+ * of the active `whenStack` at the moment of refusal — the control-
+ * wire IDs the user wrote in the enclosing `when(q, () => {…})`
+ * calls. Both fields land in the tracer's envelope payload.
+ */
+export class InvalidWhenBodyError extends Error {
+  readonly op: string;
+  readonly controlWires: readonly bigint[];
+
+  constructor(op: string, controlWires: readonly bigint[]) {
+    super(
+      `@workbench/sturm: ${op} cannot appear inside a when(...) body. ` +
+      "Per ADR-0006/0038, controls are admitted only on ry/rz; " +
+      "allocations, measurements, oracles, and classical branches must be unconditional.",
+    );
+    this.name = "InvalidWhenBodyError";
+    this.op = op;
+    // Copy so later whenStack mutation (push/pop on exception unwind)
+    // can't corrupt the error's view of the violation site.
+    this.controlWires = controlWires.slice();
+  }
+}
+
+/**
  * Emit-time well-formedness check: a primitive that allocates a wire
  * (prepare) or a non-rotation op (observe, cases, discard) must NOT
- * fire inside a `when` body. ADR-0006 admits controls only on ry/rz.
+ * fire inside a `when` body. ADR-0006/0038 admit controls only on
+ * ry/rz.
  *
  * Called by `qbool`, `qreg` (which emit prepare ops), `observe`,
  * `cases`, `ptrace`. Not called by `ry`/`rz`/`not` — those are the
  * controlled primitives.
+ *
+ * Throws `InvalidWhenBodyError` (a subclass of `Error`) on violation.
+ * Catching code in `tools/sturm-trace` uses `instanceof` to route the
+ * refusal cleanly into the `sturm-trace/invalid-when-body` envelope.
  */
 export function rejectUnderControl(s: TraceState, op: string): void {
   if (s.whenStack.length > 0) {
-    throw new Error(
-      `@workbench/sturm: ${op} cannot appear inside a when(...) body. ` +
-      "Per ADR-0006, controls are admitted only on ry/rz; allocations, " +
-      "measurements, and classical branches must be unconditional.",
-    );
+    throw new InvalidWhenBodyError(op, s.whenStack);
   }
 }
 

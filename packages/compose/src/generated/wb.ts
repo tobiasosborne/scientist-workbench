@@ -71,6 +71,7 @@ import { def as sturmSampleDef } from "../../../../tools/sturm-sample/tool.js";
 import { def as sturmSimplifyDef } from "../../../../tools/sturm-simplify/tool.js";
 import { def as sturmTensorDef } from "../../../../tools/sturm-tensor/tool.js";
 import { def as sturmThenDef } from "../../../../tools/sturm-then/tool.js";
+import { def as sturmTraceDef } from "../../../../tools/sturm-trace/tool.js";
 import { def as tensorProductDef } from "../../../../tools/tensor-product/tool.js";
 import { def as traceDistanceDef } from "../../../../tools/trace-distance/tool.js";
 import { def as traceNormDef } from "../../../../tools/trace-norm/tool.js";
@@ -125,6 +126,7 @@ export interface TypedWorkbench extends Workbench {
   sturmSimplify(input: InputOf<typeof sturmSimplifyDef>, flags?: FlagsArgOf<typeof sturmSimplifyDef>): Promise<OutputOf<typeof sturmSimplifyDef>>;
   sturmTensor(input: InputOf<typeof sturmTensorDef>, flags?: FlagsArgOf<typeof sturmTensorDef>): Promise<OutputOf<typeof sturmTensorDef>>;
   sturmThen(input: InputOf<typeof sturmThenDef>, flags?: FlagsArgOf<typeof sturmThenDef>): Promise<OutputOf<typeof sturmThenDef>>;
+  sturmTrace(input: InputOf<typeof sturmTraceDef>, flags?: FlagsArgOf<typeof sturmTraceDef>): Promise<OutputOf<typeof sturmTraceDef>>;
   tensorProduct(input: InputOf<typeof tensorProductDef>, flags?: FlagsArgOf<typeof tensorProductDef>): Promise<OutputOf<typeof tensorProductDef>>;
   traceDistance(input: InputOf<typeof traceDistanceDef>, flags?: FlagsArgOf<typeof traceDistanceDef>): Promise<OutputOf<typeof traceDistanceDef>>;
   traceNorm(input: InputOf<typeof traceNormDef>, flags?: FlagsArgOf<typeof traceNormDef>): Promise<OutputOf<typeof traceNormDef>>;
@@ -288,6 +290,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     sturmThen(input, flags) {
       return workbench.run("sturm-then", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof sturmThenDef>>;
     },
+    sturmTrace(input, flags) {
+      return workbench.run("sturm-trace", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof sturmTraceDef>>;
+    },
     tensorProduct(input, flags) {
       return workbench.run("tensor-product", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof tensorProductDef>>;
     },
@@ -354,6 +359,7 @@ export const defs = {
   sturmSimplify: sturmSimplifyDef,
   sturmTensor: sturmTensorDef,
   sturmThen: sturmThenDef,
+  sturmTrace: sturmTraceDef,
   tensorProduct: tensorProductDef,
   traceDistance: traceDistanceDef,
   traceNorm: traceNormDef,

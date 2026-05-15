@@ -14,6 +14,7 @@
 import { describe, expect, it } from "bun:test";
 import {
   Channel,
+  InvalidWhenBodyError,
   execute,
   not,
   observe,
@@ -165,6 +166,56 @@ describe("@workbench/sturm — Bell pair", () => {
 
   it("primitive called outside trace() throws cleanly", () => {
     expect(() => qbool(0)).toThrow(/outside a trace/);
+  });
+
+  it("observe inside when() throws a typed InvalidWhenBodyError (ADR-0038)", () => {
+    // The source-surface enforcement of ADR-0038's principle: coherent
+    // control on non-rotation ops is not well-defined. Pinning the
+    // typed-error class (not just the message) so the tracer tool can
+    // `instanceof`-check it in its catch path.
+    let caught: unknown = null;
+    try {
+      trace<readonly [], readonly []>(() => {
+        const ctrl = qbool(1 / 2);
+        const tgt = qbool(0);
+        when(ctrl, () => {
+          observe(tgt); // non-unitary inside when — refused
+        });
+        return [];
+      });
+    } catch (e) {
+      caught = e;
+    }
+    expect(caught).toBeInstanceOf(InvalidWhenBodyError);
+    if (caught instanceof InvalidWhenBodyError) {
+      // The runtime tags violations with the *source-primitive* name
+      // (with trailing parens) — `tools/sturm-trace` maps this to the
+      // ADR-0038 IR op-head in its envelope construction.
+      expect(caught.op).toBe("observe()");
+      // The control wire is `ctrl`, which was allocated first → wireId 0n.
+      expect(caught.controlWires).toEqual([0n]);
+    }
+  });
+
+  it("prepare (via qbool) inside when() throws InvalidWhenBodyError", () => {
+    // Pins that allocators are also refused — wider than the observe-only
+    // check, this exercises the qbool() path through rejectUnderControl.
+    let caught: unknown = null;
+    try {
+      trace<readonly [], readonly []>(() => {
+        const ctrl = qbool(1 / 2);
+        when(ctrl, () => {
+          qbool(0); // a prepare inside a when body — refused
+        });
+        return [];
+      });
+    } catch (e) {
+      caught = e;
+    }
+    expect(caught).toBeInstanceOf(InvalidWhenBodyError);
+    if (caught instanceof InvalidWhenBodyError) {
+      expect(caught.op).toBe("qbool()");
+    }
   });
 
   it("rz / ry preserve symbolic angles unchanged", () => {

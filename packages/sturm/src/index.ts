@@ -79,6 +79,12 @@ import {
   withTrace,
 } from "./runtime.js";
 
+// Re-export the typed exception so `tools/sturm-trace` can
+// `instanceof`-check it in its catch path (the runner's subprocess
+// sees these as instances thrown by `rejectUnderControl`). ADR-0038
+// names the source-surface refusal envelope.
+export { InvalidWhenBodyError } from "./runtime.js";
+
 // =============================================================================
 // Wires
 // =============================================================================

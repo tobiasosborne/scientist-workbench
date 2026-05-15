@@ -657,6 +657,16 @@
         "@workbench/sturm-ir": "workspace:*",
       },
     },
+    "tools/sturm-trace": {
+      "name": "@workbench/tool-sturm-trace",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/contract": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+        "@workbench/sturm": "workspace:*",
+        "@workbench/sturm-ir": "workspace:*",
+      },
+    },
     "tools/tensor-product": {
       "name": "@workbench/tool-tensor-product",
       "version": "0.1.0",
@@ -837,6 +847,8 @@
     "@workbench/tool-sturm-tensor": ["@workbench/tool-sturm-tensor@workspace:tools/sturm-tensor"],
 
     "@workbench/tool-sturm-then": ["@workbench/tool-sturm-then@workspace:tools/sturm-then"],
+
+    "@workbench/tool-sturm-trace": ["@workbench/tool-sturm-trace@workspace:tools/sturm-trace"],
 
     "@workbench/tool-tensor-product": ["@workbench/tool-tensor-product@workspace:tools/tensor-product"],
 
