@@ -28,6 +28,10 @@ import {
   type PlatformRecord,
 } from "@workbench/contract";
 import { CompositionError, loadWorkbench, typed } from "../src/index.js";
+// Static-type imports for the bead-`0y27` type-level pins below.
+import type { FlagsArgOf } from "@workbench/contract";
+import { def as hypergeometricPfqDef } from "../../../tools/hypergeometric-pfq/tool.js";
+import { def as modPowDef } from "../../../tools/mod-pow/tool.js";
 
 describe("@workbench/compose — scaffold surface", () => {
   test("CompositionError extends ToolError and carries toolName + step", () => {
@@ -555,15 +559,16 @@ describe("@workbench/compose — ADR-0020 --precision flag wiring (rn2)", () => 
       z,
     });
 
-    // The runtime fix: `runWorkbench` accepts the flag for arbprec
-    // tools (rn2). `defineTool` does not preserve the `arbprec: true`
-    // literal in the typed-barrel surface, so we cast the flags
-    // through `as never` at the call site (documented in
-    // `FlagsArgOf`'s doc comment). The loose `wb.run` surface
-    // accepts the flag without the cast.
+    // Bead `0y27` (worklog 118) threaded the `arbprec: true` literal
+    // through `defineTool`'s `const Ar` capture, so `FlagsArgOf<typeof
+    // hypergeometricPfqDef>` now statically lifts `precision?: bigint`
+    // into the typed-barrel flag surface — no cast on the flags arg.
+    // The `input as never` is unrelated (the loose-`Value` builder
+    // doesn't narrow to the tool's input record shape; tracked
+    // separately).
     const out = await wb.hypergeometricPfq(
       input as never,
-      { precision: 30n } as never,
+      { precision: 30n },
     );
 
     // The output is a record carrying achieved_precision; before the
@@ -631,7 +636,8 @@ describe("@workbench/compose — ADR-0020 --precision flag wiring (rn2)", () => 
       bigfloatVal(0n, 0n, 50n),
     );
     const input: Value = record({ a: list([]), b: list([]), z });
-    const inProcess = await wb.hypergeometricPfq(input as never, { precision: 25n } as never);
+    // No `as never` on the flags arg — bead `0y27` lifted the cast.
+    const inProcess = await wb.hypergeometricPfq(input as never, { precision: 25n });
 
     // Same call through the subprocess.
     const sub = await spawnBun(
@@ -648,6 +654,89 @@ describe("@workbench/compose — ADR-0020 --precision flag wiring (rn2)", () => 
     const inProcessAchieved = inProcess.fields["achieved_precision"]!;
     const subAchieved = subOut.fields["achieved_precision"]!;
     expect(canonicalize(inProcessAchieved)).toBe(canonicalize(subAchieved));
+  });
+
+  // ---------------------------------------------------------------------------
+  // Bead `0y27` (worklog 118): type-level lift of `precision?: bigint` into
+  // `FlagsArgOf<typeof <arbprec-def>>`, so the typed barrel accepts the flag
+  // without an `as never` cast. The cast-deletion in `wb.hypergeometricPfq(
+  // input, { precision: 30n })` above proves the call typechecks — but
+  // `{ precision: 30n }` is structurally assignable to the no-flags fallback
+  // `{}` too, so a deleted cast alone wouldn't notice if the lift silently
+  // regressed. The block below pins the contract precisely.
+  // ---------------------------------------------------------------------------
+  describe("typed barrel — arbprec lift (bead 0y27)", () => {
+    test("type-level: FlagsArgOf<hypergeometricPfqDef> includes `precision?: bigint`", () => {
+      // Static assertion: `precision` is in the arbprec tool's flag
+      // surface. The `Required<>` is load-bearing — without it, the
+      // assertion is too loose: `{}` trivially extends `{ precision?:
+      // bigint }` (optional ⇒ absent is fine), so a regression that
+      // returns `{}` would pass an `extends { precision?: bigint }`
+      // check. Demanding `Required<...> extends { precision: bigint }`
+      // forces the slot to actually be present in the type. Verified
+      // mutation-proof: dropping the `{ precision?: bigint }` lift
+      // from `FlagsArgOf`, *or* re-widening the slot to `arbprec?:
+      // boolean` on `ToolDefinition` (instead of `arbprec?: Ar`),
+      // turns `_ArbprecLifts` into `"MISSING ARBPREC LIFT"` and the
+      // const assignment becomes a tsc error.
+      type _ArbprecLifts = Required<FlagsArgOf<typeof hypergeometricPfqDef>> extends {
+        precision: bigint;
+      }
+        ? true
+        : "MISSING ARBPREC LIFT";
+      const _check: _ArbprecLifts = true;
+      void _check;
+      expect(true).toBe(true);
+    });
+
+    test("type-level: a non-arbprec tool's FlagsArgOf does NOT include `precision`", () => {
+      // The negative side of the lift: a symbolic tool's typed-barrel
+      // surface must reject `{ precision: ... }` at compile time. Use
+      // `@ts-expect-error` to *require* the type error: if a future
+      // refactor accidentally lifts `precision` onto every tool, the
+      // annotation would itself become invalid and `tsc` would fail
+      // with "unused @ts-expect-error".
+      // @ts-expect-error — modPowDef is symbolic (no arbprec); precision is not in its FlagsArgOf.
+      const _bad: FlagsArgOf<typeof modPowDef> = { precision: 50n };
+      void _bad;
+      expect(true).toBe(true);
+    });
+
+    test("type-level: typed-barrel call accepts the flag with no cast", async () => {
+      // Cast-free call. This duplicates the end-to-end test above but
+      // pins the *type-level* contract independent of the runtime path:
+      // if the lift regresses, `{ precision: 30n }` falls through to
+      // the `{}` fallback for non-arbprec tools, which still accepts
+      // it structurally — but the type of the flag arg would then be
+      // exactly `{}`, not `{ precision?: bigint }`, and the assignment
+      // below pins the latter via the `extends` check above.
+      const workbench = await loadWorkbench({ store });
+      const wb = typed(workbench);
+      const bigfloatVal = (mantissa: bigint, exponent: bigint, prec: bigint): Value => ({
+        kind: "tagged",
+        tag: "bigfloat",
+        payload: record({
+          mantissa: int(mantissa),
+          exponent: int(exponent),
+          precision: int(prec),
+        }),
+      });
+      const bigcomplexVal = (re: Value, im: Value): Value => ({
+        kind: "tagged",
+        tag: "bigcomplex",
+        payload: record({ re, im }),
+      });
+      const z = bigcomplexVal(
+        bigfloatVal(1n, 0n, 50n),
+        bigfloatVal(0n, 0n, 50n),
+      );
+      const input: Value = record({ a: list([]), b: list([]), z });
+      // Note: no `as never` on the second arg. Pre-`0y27` this required
+      // `{ precision: 30n } as never`.
+      const out = await wb.hypergeometricPfq(input as never, { precision: 30n });
+      if (out.kind !== "record") throw new Error();
+      expect(out.fields["achieved_precision"]).toEqual(int(30n));
+    });
   });
 
   test("loose surface: passing precision to a non-arbprec tool still rejects as unknown flag", async () => {
