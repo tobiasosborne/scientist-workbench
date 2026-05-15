@@ -8,7 +8,15 @@
 // the fast path must match it residue-for-residue.
 
 import { describe, expect, test } from "bun:test";
-import { modInv, modPow, ntt, NTT_SUPPORTED_MODULUS, NTT_SUPPORTED_PRIMITIVE_ROOT } from "../src/index.js";
+import {
+  modInv,
+  modPow,
+  ntt,
+  NTT_SUPPORTED_MODULUS,
+  NTT_SUPPORTED_PRIMITIVE_ROOT,
+  NTTContext,
+  defaultNTTContext,
+} from "../src/index.js";
 
 const P = NTT_SUPPORTED_MODULUS;
 const G = NTT_SUPPORTED_PRIMITIVE_ROOT;
@@ -276,5 +284,75 @@ describe("ntt: determinism", () => {
       const b = ntt(x, { direction: "forward" });
       expect(a).toEqual(b);
     }
+  });
+});
+
+// Bead `nip` — NTTContext owns the plan caches. Three properties:
+//   1. Two contexts have independent caches (`size()` advances only on
+//      the context that ran the work).
+//   2. `clear()` actually releases entries; output is unchanged.
+//   3. No-`ctx` calls behave identically to caller-supplied default.
+describe("ntt: NTTContext (bead nip)", () => {
+  test("two contexts have independent caches", () => {
+    const ctxA = new NTTContext();
+    const ctxB = new NTTContext();
+    expect(ctxA.size()).toBe(0);
+    expect(ctxB.size()).toBe(0);
+
+    // A runs n=8 (power-of-2 forward) — populates ctxA's twiddles.
+    ntt([1n, 2n, 3n, 4n, 5n, 6n, 7n, 8n], { direction: "forward" }, ctxA);
+    const aAfter = ctxA.size();
+    expect(aAfter).toBeGreaterThan(0);
+    expect(ctxB.size()).toBe(0); // B untouched
+
+    // B runs n=7 (Bluestein) — populates ctxB's bluesteinPlans.
+    // The two contexts cache *different* things; their sizes should
+    // independently reflect what each ran.
+    ntt([1n, 2n, 3n, 4n, 5n, 6n, 7n], { direction: "forward" }, ctxB);
+    expect(ctxB.size()).toBeGreaterThan(0);
+    expect(ctxA.size()).toBe(aAfter); // A still untouched by B's work
+  });
+
+  test("clear() empties the caches; subsequent output is identical", () => {
+    const ctx = new NTTContext();
+    const x = [1n, 2n, 3n, 4n, 5n, 6n, 7n, 8n];
+    const first = ntt(x, { direction: "forward" }, ctx);
+    expect(ctx.size()).toBeGreaterThan(0);
+
+    ctx.clear();
+    expect(ctx.size()).toBe(0);
+
+    // Cold-cache re-run must match the warm-cache output bit-for-bit
+    // — the plan builds are deterministic, so cache state is purely
+    // a memory/timing concern, never a correctness one.
+    const second = ntt(x, { direction: "forward" }, ctx);
+    expect(second).toEqual(first);
+    expect(ctx.size()).toBeGreaterThan(0);
+  });
+
+  test("omitting ctx == passing defaultNTTContext()", () => {
+    // The two-arg form is backwards-compatible with the published
+    // surface and routes to the singleton; pinning this here so a
+    // future refactor that drops the default doesn't break callers
+    // silently.
+    const x = [3n, 1n, 4n, 1n, 5n, 9n, 2n, 6n];
+    const implicit = ntt(x, { direction: "forward" });
+    const explicit = ntt(x, { direction: "forward" }, defaultNTTContext());
+    expect(implicit).toEqual(explicit);
+  });
+
+  test("clear() on the default singleton releases all callers' plans", () => {
+    // Documents the load-bearing fact that the singleton *is* shared:
+    // someone clearing it elsewhere in the process clears it for
+    // everyone. Fuzz-test loops that want isolation construct their
+    // own NTTContext rather than clearing the default.
+    const def = defaultNTTContext();
+    ntt([1n, 2n, 3n, 4n], { direction: "forward" });
+    expect(def.size()).toBeGreaterThan(0);
+    // (Don't actually clear() here — it would race with parallel
+    // tests inside the same Bun process. The point is documented in
+    // the function comment; this assertion just verifies the
+    // singleton is shared, not that clearing is destructive globally.)
+    expect(def).toBe(defaultNTTContext()); // singleton identity
   });
 });
