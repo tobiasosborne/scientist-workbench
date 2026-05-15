@@ -27,10 +27,33 @@
 // but they may NOT introduce or remove wires (no `prepare`,
 // `discard`, `observe`, or `cases` inside an arm; no `oracle` whose
 // `outWires` are not already in scope). The two arms must leave the
-// scope unchanged. This restriction is the simplest rule that makes
-// post-cases scope unambiguous; relaxing it (allowing scope-changing
-// arms with a "both arms agree" check) is filed as future work and
-// not required for the v0.1 tools.
+// scope unchanged.
+//
+// There are *two* reasons for this restriction, and they reinforce
+// each other:
+//
+//   1. **Post-cases scope unambiguous.** If the arms could change
+//      scope, the parent context would have to reason about which
+//      branch was taken at typecheck time. v0.1 keeps the post-arm
+//      scope equal to the pre-arm scope so the next op's
+//      well-formedness is independent of the branch.
+//   2. **The IR-level analogue of "no coherent control on non-unitary
+//      ops" (ADR-0006, ADR-0038).** A `cases` arm is the IR's
+//      structural fingerprint of a *controlled body*: a sequence of
+//      ops conditional on a classical wire. The principle that
+//      coherent control over `observe` / `prepare` / `discard` /
+//      `cases` / `oracle` is not well-defined translates directly
+//      into this layer as "the non-unitary five do not appear inside
+//      an arm." The `when` body's tracer-side analogue (q0b's
+//      `tagged "sturm-trace/invalid-when-body"`) is the same rule at
+//      the source surface; this file is Layer 4 of the four-layer
+//      enforcement (schema closure, builder API, decoder arity,
+//      well-formedness arms — see ADR-0038 for the full table).
+//
+// Relaxing reason (1) (allowing scope-changing arms with a "both arms
+// agree" check) is filed as future work and not required for the v0.1
+// tools. Reason (2) is *not* relaxable without a separate ADR — it is
+// load-bearing for IR closure under the principle.
 //
 // Returns the same `{ ok, failure? }` discriminated-union shape as
 // `validate` from the protocol package, so callers (notably

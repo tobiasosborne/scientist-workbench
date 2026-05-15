@@ -140,6 +140,28 @@ A failure surfaces as `{ ok: false, failure: { path, message } }`
 where `path` is a dotted list (e.g., `["body", "3", "trueArm", "0"]`)
 and `message` names the offending wire ID or classical ref.
 
+## Coherent control: where it's allowed, where it's structurally rejected
+
+Only `ry` and `rz` carry a `controls` field at the IR level. Coherent
+control over `prepare` / `observe` / `oracle` / `cases` / `discard` is
+not well-defined (ADR-0006, made explicit in ADR-0038). The IR
+enforces this through **four layers**, each catching the violation at
+a different point:
+
+| # | Layer | Where | Catches |
+|---|-------|-------|---------|
+| 1 | Schema closure | `schema.ts` (`opSchema`) | A Value with extra args on a non-rotation head — e.g., `expr("observe", […, …, controls])` — fails `validate` because the `observe` alternative is declared with arity 2. |
+| 2 | Builder API | `nodes.ts` (typed builders) | `observeOp(0n, "r", [1n])` is a TS compile error — `observeOp` takes only `(wireId, classicalRef)`. Same for `prepareOp`, `oracleOp`, `casesOp`, `discardOp`. |
+| 3 | Decoder arity | `nodes.ts` (`decodeOp`) | A pipe-input Value bypasses schema (e.g., from an adversarial source); `decodeOp` calls `expectArgsLength` and throws `ProtocolError` with a dotted path. |
+| 4 | Cases-arm recursion | `wellformed.ts` (`insideArm`) | A `cases` arm — the IR's structural fingerprint of a *controlled body* — refuses `prepare` / `observe` / `discard` / nested `cases` / scope-changing `oracle`. The same principle the tracer enforces at the source surface, applied recursively in the IR. |
+
+There is no construction path that bypasses all four. The
+`when(q) { … }` source-level frame (which lowers to controls on inner
+ops at trace time) is rejected at the source surface by the tracer
+(`tools/sturm-trace`, bead `q0b`) with envelope
+`tagged "sturm-trace/invalid-when-body"` whenever the body contains a
+non-rotation op. See ADR-0038 for the unified specification.
+
 ## Traversal
 
 ```ts
@@ -177,6 +199,10 @@ that want a flat list of "leaf ops" can filter on `op.head !==
 
 - ADR-0006 — the design and rationale, including worked Bell/GHZ/
   kickback IRs and the closure-of-vocabulary argument.
+- ADR-0038 — coherent-control restrictions: the unified spec for the
+  four-layer enforcement of "controls only on `ry`/`rz`," plus the
+  tracer-side obligation (`tagged "sturm-trace/invalid-when-body"`)
+  for q0b.
 - `docs/sturm-ts/principles.md` — P1, P3, P5 in particular; this
   package is the structural realisation of all three at the
   workbench layer.

@@ -130,9 +130,11 @@ export function channel(
 //     scope) and prepares it in `√(1−p)|0⟩ + √p|1⟩`. `p` is a Value —
 //     a rational, a float64, or a symbolic expression. The op carries
 //     it opaquely; the simulator decides what to do with non-rational
-//     `p`. Per ADR-0006, `prepare` carries no controls — controlled
-//     preparation is expressed as a `prepare` followed by controlled
-//     `ry`/`rz`.
+//     `p`. Per ADR-0006 / ADR-0038, `prepare` carries no `controls`
+//     field: coherent control on a fresh-wire preparation is not
+//     well-defined at the IR level. The TS-source tracer (q0b) refuses
+//     a `prepare` inside a `when` body with envelope
+//     `tagged "sturm-trace/invalid-when-body"`.
 //
 //   ry(wireId, delta, controls)
 //   rz(wireId, delta, controls)
@@ -142,32 +144,53 @@ export function channel(
 //     a non-empty list is a multi-controlled rotation (semantics: the
 //     rotation fires iff every control wire is `|1⟩`, by convention).
 //     Controls only ever name *quantum* wires — wellformed enforces
-//     this. ry and rz are the unitary primitives; everything else
-//     unitary in the language is composed from them.
+//     this. ry and rz are the only ops that carry a `controls` field;
+//     they are the unitary primitives of the language, and the
+//     `whenStack` lowered from a source-level `when(q) { … }` block
+//     materialises as their `controls` argument. Every other op-head
+//     is uncontrolled at the IR level (ADR-0038).
 //
 //   observe(wireId, classicalRef)
 //     The qc channel — projects `wireId` and binds the outcome to
 //     `classicalRef`, a string ID scoped to the enclosing channel.
 //     After this op, references to `wireId` are out of scope, and
 //     references to `classicalRef` are in scope until the channel
-//     terminates.
+//     terminates. No `controls` field — coherent control on a
+//     measurement is not well-defined (ADR-0006 / ADR-0038).
 //
 //   oracle(circuit, inWires, outWires)
 //     A reversible classical oracle. `circuit` is itself a channel
 //     Value (typically produced by `sturm-bennett-oracle`); the IR
 //     carries it as an opaque payload that downstream tools can
 //     re-decode. `inWires` and `outWires` are wire IDs in the
-//     enclosing channel that the oracle reads / writes.
+//     enclosing channel that the oracle reads / writes. No `controls`
+//     field: the principled way to control an oracle is to lift the
+//     `when` into the oracle's source and re-trace, which the IR
+//     layer cannot do automatically. Refused at trace time
+//     (ADR-0038).
 //
 //   cases(classicalRef, trueArm, falseArm)
 //     A classical branch. `classicalRef` must already be bound by an
 //     earlier `observe`. The two arms are themselves op-lists; ops
 //     inside an arm see the same wire scope as the parent (no fresh
-//     local scope is introduced by the branch).
+//     local scope is introduced by the branch). No `controls` field
+//     on the cases op itself: coherent control over a classical
+//     branch is ill-defined (ADR-0006 / ADR-0038). Inside an arm,
+//     the same principle restricts which ops may appear — see
+//     `wellformed.ts`.
 //
 //   discard(wireId)
 //     The qq → terminal channel — partial trace on `wireId`. After
-//     this op, `wireId` is out of scope.
+//     this op, `wireId` is out of scope. No `controls` field — a
+//     coherently-controlled partial trace is ill-defined (ADR-0006 /
+//     ADR-0038).
+//
+// The fact that only `ry` and `rz` admit a `controls` field is one of
+// the four enforcement layers ADR-0038 documents (the "builder API"
+// layer): TS rejects `observeOp(0n, "r", [1n])` at compile time. The
+// other three layers are the schema closure (`schema.ts`), the
+// decoder arity check (`decodeOp` below), and the well-formedness
+// recursive analogue (`wellformed.ts` cases-arm restrictions).
 //
 // The interfaces are `readonly` throughout because Values are
 // immutable in the protocol; we mirror that here so a tool body that

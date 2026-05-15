@@ -110,6 +110,53 @@ describe("opSchema", () => {
   });
 });
 
+// -----------------------------------------------------------------------------
+// Coherent-control closure (ADR-0038, Layer 1)
+// -----------------------------------------------------------------------------
+//
+// Only `ry` and `rz` declare a `controls` arg. The other five op-heads
+// — `prepare`, `observe`, `oracle`, `cases`, `discard` — have shorter
+// arg tuples; an extra trailing `list<integer>` representing smuggled
+// control wires fails schema validation as wrong-arity. These tests pin
+// that structural fact; ADR-0038 names this as Layer 1 of the four-
+// layer enforcement that "coherent control on non-unitary ops is not
+// well-defined" (ADR-0006).
+
+describe("coherent-control closure: only ry/rz admit controls (ADR-0038, Layer 1)", () => {
+  test("prepare with smuggled controls arg fails schema", () => {
+    // The legal form is `prepare(p, wireId)`. Tacking a controls list
+    // onto the end is the most-natural shape an agent constructing IR
+    // by hand might try.
+    const bad = expr("prepare", [rat(1n, 2n), int(0n), list([int(1n)])]);
+    expect(validate(bad, opSchema).ok).toBe(false);
+  });
+
+  test("observe with smuggled controls arg fails schema", () => {
+    const bad = expr("observe", [int(0n), str("ref"), list([int(1n)])]);
+    expect(validate(bad, opSchema).ok).toBe(false);
+  });
+
+  test("oracle with smuggled controls arg fails schema", () => {
+    const bad = expr("oracle", [
+      sym("circuit"),
+      list([int(0n)]),
+      list([int(1n)]),
+      list([int(2n)]), // extra controls trailing — refused
+    ]);
+    expect(validate(bad, opSchema).ok).toBe(false);
+  });
+
+  test("cases with smuggled controls arg fails schema", () => {
+    const bad = expr("cases", [str("ref"), list([]), list([]), list([int(1n)])]);
+    expect(validate(bad, opSchema).ok).toBe(false);
+  });
+
+  test("discard with smuggled controls arg fails schema", () => {
+    const bad = expr("discard", [int(0n), list([int(1n)])]);
+    expect(validate(bad, opSchema).ok).toBe(false);
+  });
+});
+
 describe("channelSchema", () => {
   function bellChannelValue(): Value {
     return encodeChannel(
