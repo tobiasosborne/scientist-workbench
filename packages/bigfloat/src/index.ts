@@ -107,6 +107,11 @@ export {
   clgamma,
   cgamma,
   cdigamma,
+  bigW,
+  bigCErf,
+  bigCErfc,
+  bigCErfcx,
+  bigCErfi,
 } from "./complex.js";
 
 export {
@@ -119,6 +124,8 @@ export {
 
 export {
   bigErf,
+  bigErfc,
+  bigErfcx,
 } from "./special-funcs/erf.js";
 
 export {

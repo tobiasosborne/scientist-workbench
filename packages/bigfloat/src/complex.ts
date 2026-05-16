@@ -38,6 +38,11 @@ import {
   lgamma,
   digamma,
 } from "./special.js";
+import {
+  bigErf,
+  bigErfc,
+  bigErfcx,
+} from "./special-funcs/erf.js";
 
 export interface BigComplex {
   readonly re: BigFloat;
@@ -708,4 +713,669 @@ function cdigammaReflect(z: BigComplex, prec: number): BigComplex {
     re: normalise(result.re.mantissa, result.re.exponent, prec),
     im: normalise(result.im.mantissa, result.im.exponent, prec),
   };
+}
+
+// =============================================================================
+// Erf family for complex argument — Karbach-Weideman Faddeeva (ADR-0040 / R2)
+// =============================================================================
+//
+// `bigW(z, prec)` is the complex-arb-prec Faddeeva primitive
+//
+//     w(z) := e^(-z²) · erfc(-i z)              (Karbach 2014 eq. 1)
+//
+// from which the four entry points `bigCErf`, `bigCErfc`, `bigCErfcx`,
+// `bigCErfi` derive algebraically via DLMF §7.4 / Karbach §2 — each is a
+// ~5-10 LOC closed-form composition.
+//
+// Algorithm pick (per `docs/refs/erf-research/R2-arbprec-algorithms.md`
+// §"Faddeeva pick — justification" and the I3 impl plan): **Karbach 2014's
+// Weideman-Fourier scheme**. The justification stack:
+//
+//   1. **Closed-form prec-scaling.** Karbach is the only Faddeeva algorithm
+//      whose truncation parameters `(τ_m, N)` have closed-form
+//      precision-dependence. Poppe-Wijers + Algorithm 916 (which Stephen
+//      Johnson's float64 `Faddeeva.cc` uses) have empirically-fitted `nu`
+//      formulae that hold only at double precision; re-deriving them at
+//      arb-prec would be a research project of its own. Karbach scales
+//      analytically: `τ_m(p) = √(4(p·ln 2 − ln 4))`, `N(p) = ⌈(τ_m/π) ·
+//      √(p·ln 2)⌉`.
+//   2. **Single algorithm, all `z`.** No region-by-region dispatch with
+//      awkward seams. The truncated Fourier sum (Karbach 2014 eq. 37) gives
+//      the same convergence rate everywhere in the first quadrant after
+//      symmetry reduction.
+//   3. **O(p) complex Horner steps per evaluation.** At p = 196 bits
+//      (≈ 50 dp), N ≈ 87; at p = 1024 (≈ 300 dp), N ≈ 480. Comparable
+//      cost to `cgamma` at the same precision.
+//   4. **Mirror symmetry reduces to first quadrant** before the main sum
+//      runs, mirroring `clgamma`'s `Re(z) < ½` reflection — a familiar
+//      pattern in this module.
+//
+// Identity table (Karbach §2 / DLMF §7.4):
+//
+//     erfcx(z) = w(iz)
+//     erf(z)   = 1 - e^(-z²) · w(iz)                 for Re(z) ≥ 0
+//     erf(z)   = e^(-z²) · w(-iz) - 1                for Re(z) < 0
+//     erfc(z)  = e^(-z²) · w(iz)                     for Re(z) ≥ 0
+//     erfc(z)  = 2 - e^(-z²) · w(-iz)                for Re(z) < 0
+//     erfi(z)  = -i · erf(i z)
+//
+// The half-plane sign split keeps every derived call away from cancellation
+// — for `Re(z) ≥ 0`, `w(iz)` is well-defined and bounded; for `Re(z) < 0`
+// the analogous bound holds for `w(-iz)`. The wrong-sign branch would lead
+// `exp(-z²) · w(iz)` to grow without bound as `Re(z) → -∞`, which is
+// representable in BigFloat (exponent is unbounded) but adds avoidable bit
+// loss in the algebra.
+//
+// Restriction-to-real-axis (load-bearing cross-check)
+// ---------------------------------------------------
+//
+// For `z = x + 0i` with `x ≥ 0` (real, non-negative), `bigCErf(z, prec)`
+// must agree *byte-for-byte* with `bigErf(x, prec)` in `.re` and emit
+// exactly `0` in `.im`. The naïve path (Karbach formula on `iz = ix` with
+// `Re(iz) = 0`, then peel off `1 - exp(-z²)·w(iz)`) would produce a
+// numerically-correct answer that *isn't* bit-identical to the real lane:
+// different intermediate rounding paths. The cure is to special-case
+// `isZero(z.im)` and defer to the I1 / I2 real substrate, mirroring how
+// `cgamma` defers to `gamma` for `z = x + 0i, x > 0`. This is the
+// load-bearing tie between the I1 and I3 lanes; it surfaces in the
+// `bigCErf(complex(x, 0)).re ≡ bigErf(x)` property test.
+//
+// Stokes-line singularities (Karbach §5.1)
+// ----------------------------------------
+//
+// The Karbach formula eq. 37 has removable singularities at `z_n = ±nπ/τ_m`
+// for `n = 0, 1, …, N` (the numerator and denominator both vanish; the
+// limit exists but the formula goes 0/0). Within a small disc around each
+// `z_n`, Karbach §5.1 prescribes a 5-term Taylor expansion. R2 §5.5 noted
+// that "the singularity discs are rare events" at our scales and that a
+// flagged refusal is acceptable for v0.1. We follow the literature:
+// **detect the disc, throw `RangeError` with `suggestion:` line** naming
+// the singular `z_n` and the v0.2 Taylor-disc work. The disc radius at
+// double precision is `r ≈ 3e-3`; at arb-prec it scales to `2^(-prec/3)`.
+// Following Karbach we keep a fixed-radius `1e-3` (in the BigFloat
+// `magBits` sense, ~10 bits) as the loud trigger; any caller landing
+// inside gets a clean refusal naming the singularity, not silent garbage.
+//
+// Coefficient caching (mirrors `_piCache` / `_ln2Cache`)
+// ------------------------------------------------------
+//
+// The Karbach coefficients `a_n = (2√π / τ_m) · exp(-n²π²/τ_m²)` for
+// `n = 0, …, N` depend on `prec` (via `τ_m(prec)` and `N(prec)`) but not
+// on `z`. They are precomputed at first call per `prec` and cached in a
+// `Map<number, KarbachEntry>` — the same pattern as the `_piCache` /
+// `_ln2Cache` in `transcendental.ts:41-43`. At `prec = 1024` the cache
+// entry is ~60 KB; at `prec = 3322` (~1000 dp), ~480 KB. Negligible.
+//
+// References (all in repo)
+// ------------------------
+//   - docs/adr/0040-per-head-special-function-substrate-and-meijer-g-bridge.md
+//     §"Decision 3"
+//   - docs/refs/erf-research/R2-arbprec-algorithms.md §4.4-§5.5
+//   - docs/refs/erf-research/PHASE2-impl-plans.md §"I3"
+//   - packages/bigfloat/src/special-funcs/erf.ts (I1 real-axis substrate)
+//   - DLMF §7.2 (Faddeeva), §7.4 (identity table), §7.10 (derivatives)
+
+/**
+ * Karbach-Weideman truncation parameters, derived from `prec` (in bits).
+ *
+ *   τ_m(p) = √(4·(p·ln 2 − ln 4))    integration cutoff
+ *   N(p)   = ⌈(τ_m/π) · √(p·ln 2 + log(2√π/τ_m))⌉ + 1   Fourier term count
+ *
+ * Derivation (R2 §4.4): `a_N < 2^-p ⟹ N²π² / τ_m² > p·ln 2 + log(2√π/τ_m)`.
+ *
+ * The `+ 1` on N is a safety bump (Karbach paper's published numbers
+ * match for `(p=53) → (12, 23)`; the `+1` keeps us comfortably in the
+ * "headroom" regime that the Karbach truncation-error bound assumes).
+ *
+ * Returns `Number`-valued parameters. `τ_m` here is the **float64
+ * approximation** used to size the loop (the N computation) and as a
+ * sanity reference; the **actual** τ_m consumed by `karbachCoeffs` is
+ * recomputed at full BigFloat working precision (see the body of
+ * `karbachCoeffs`). The float64 value is correct to ~16 dp; that is
+ * fine for choosing N (any over- or under-count of one or two terms is
+ * harmless), but `a_n` and `(τ_m z)` need full precision because they
+ * feed every iteration. Bit-determinism is preserved because the
+ * coefficient table is generated from the BigFloat τ_m deterministically
+ * and cached.
+ */
+function karbachParams(prec: number): { tau_m: number; N: number } {
+  const eps = Math.pow(2, -prec);
+  const tau_m = Math.sqrt(-4 * Math.log(eps / 4));
+  const N_real = (tau_m / Math.PI) *
+    Math.sqrt(prec * Math.LN2 + Math.log(2 * Math.sqrt(Math.PI) / tau_m));
+  return { tau_m, N: Math.ceil(N_real) + 1 };
+}
+
+interface KarbachEntry {
+  readonly prec: number;
+  readonly tau_m: BigFloat;
+  readonly N: number;
+  readonly a: readonly BigFloat[];    // length N + 1; a[n] = (2√π / τ_m) · exp(-n²π²/τ_m²)
+  readonly piOverTau: BigFloat;       // π / τ_m, used by the singularity check
+  // Pre-emitted (nπ) values at working precision — the main loop hits each one.
+  readonly nPi: readonly BigFloat[];  // length N + 1; nPi[n] = n · π
+  readonly nPiSq: readonly BigFloat[]; // length N + 1; nPiSq[n] = (n·π)²
+}
+
+/**
+ * Per-precision Karbach coefficient cache. Keyed on the `prec` argument
+ * passed to `bigW`; first call at a given prec generates the table,
+ * subsequent calls reuse the cached entry byte-identically. Mirrors the
+ * `_piCache` / `_ln2Cache` / `_eCache` pattern in `transcendental.ts`.
+ *
+ * Note: the cache is keyed on `prec` literally — *not* on the input z's
+ * precision or magnitude. The same Karbach table serves every `z` at a
+ * given `prec`; this is the load-bearing reason the per-`prec` precompute
+ * is admissible. R2 §4.5 has the memory-cost analysis (~60 KB at p=1024).
+ */
+const _karbachCache = new Map<number, KarbachEntry>();
+
+function karbachCoeffs(prec: number): KarbachEntry {
+  const cached = _karbachCache.get(prec);
+  if (cached) return cached;
+  // Working precision: a generous `prec + 64` margin. τ_m enters every
+  // coefficient via the `a_n = (2√π/τ_m) · exp(-(nπ/τ_m)²)` formula, so
+  // its precision directly determines the accuracy of every `a_n`. The
+  // load-bearing detail: τ_m is computed in **BigFloat** (not float64)
+  // for `prec ≥ 80` — a float64 τ_m has relative error ~2^-52, which
+  // propagates to each `a_n` as `2(nπ/τ_m)² · δτ_m/τ_m`, peaking at
+  // `2·p·ln2 · 2^-52 ≈ 2p · 1.1e-16` at n=N. At prec=400 that's a
+  // ~9e-14 floor in every `a_n` — gives only ~13 dp of accuracy. The
+  // BigFloat τ_m path delivers full prec-precision throughout.
+  const work = prec + 64;
+  const { N } = karbachParams(prec);
+  const piW = pi(work);
+  // Compute τ_m at working precision in BigFloat.
+  //   τ_m(p) = √(4·(p·ln 2 - ln 4)) = 2·√(p·ln 2 - 2·ln 2) = 2·√((p-2)·ln 2)
+  // (since ln 4 = 2 ln 2).
+  const ln2W = ln2(work);
+  const pMinus2 = fromInt(BigInt(prec - 2), work);
+  const insideSqrt = mul(pMinus2, ln2W, work);
+  const halfTau = sqrt(insideSqrt, work);
+  const tau_mWork = mul(fromInt(2n, work), halfTau, work);
+  // Build the coefficient table using the BigFloat τ_m.
+  const sqrtPiW = sqrt(piW, work);
+  const twoSqrtPi = mul(fromInt(2n, work), sqrtPiW, work);
+  const twoSqrtPiOverTau = div(twoSqrtPi, tau_mWork, work);
+  const piOverTau = div(piW, tau_mWork, work);
+  // a_n = (2√π / τ_m) · exp(-n²π²/τ_m²). Compute (nπ/τ_m)² once and reuse.
+  const a: BigFloat[] = new Array(N + 1);
+  const nPi: BigFloat[] = new Array(N + 1);
+  const nPiSq: BigFloat[] = new Array(N + 1);
+  for (let n = 0; n <= N; n++) {
+    const nPiW = mul(fromInt(BigInt(n), work), piW, work);
+    const nPiOverTau = div(nPiW, tau_mWork, work);
+    const sq = mul(nPiOverTau, nPiOverTau, work);
+    const expTerm = exp(neg(sq), work);
+    a[n] = mul(twoSqrtPiOverTau, expTerm, work);
+    nPi[n] = nPiW;
+    nPiSq[n] = mul(nPiW, nPiW, work);
+  }
+  const entry: KarbachEntry = { prec, tau_m: tau_mWork, N, a, piOverTau, nPi, nPiSq };
+  _karbachCache.set(prec, entry);
+  return entry;
+}
+
+/**
+ * `magBits(z)` for a BigFloat — the integer log₂ of |z|, used by the
+ * singularity-disc check inside `bigW`. Returns `-Infinity` for exact
+ * zero. Local copy (the existing `magBits` in this module operates on
+ * `BigComplex`); kept inline so the Faddeeva block reads top-down without
+ * cross-section helper hunting.
+ */
+function bfMagBits(x: BigFloat): number {
+  if (x.mantissa === 0n) return -Infinity;
+  const m = x.mantissa < 0n ? -x.mantissa : x.mantissa;
+  return x.exponent + bitLength(m);
+}
+
+/**
+ * Faddeeva `w(z)` at arbitrary precision via the Karbach-Weideman
+ * Fourier expansion.
+ *
+ *   w(z) := e^(-z²) · erfc(-i z)                          (definition)
+ *         = (i / π) · ∫_{-∞}^∞  e^(-t²) / (z - t) dt       (Voigt form)
+ *
+ * The Karbach 2014 eq. 37 truncated Fourier expansion (in the form
+ * actually implemented here, after algebraic simplification of the
+ * pole-paired sum — R2 §5.2):
+ *
+ *     w(z) ≈ (i / (2√π)) · [
+ *              − a_0 · (1 − e^(iτ_m z)) / z
+ *              + Σ_{n=1}^N  a_n · τ_m · (1 − (−1)^n · e^(iτ_m z)) · 2nπ
+ *                                       / ((nπ)² − (τ_m z)²)
+ *            ]
+ *
+ * for `z` in the first quadrant (after symmetry reduction). The
+ * coefficients `a_n` and `τ_m` are precomputed per `prec` in
+ * `karbachCoeffs`.
+ *
+ * **Symmetry reductions** (Faddeeva.cc-style; folded here):
+ *
+ *   - `Re(z) < 0`:  w(z) = conj(w(-conj(z)))     (real-axis mirror)
+ *   - `Im(z) < 0`:  w(z) = 2·exp(-z²) − w(-conj(z))    (lower-half-plane)
+ *
+ * These reduce every input to `Re(z) ≥ 0, Im(z) ≥ 0` (first quadrant)
+ * before the main sum runs. The two reductions compose; their inverses
+ * are applied to the post-sum result.
+ *
+ * **Singularity discs:** the Karbach formula has removable singularities
+ * at `z_n = ±n·π/τ_m` for `n = 0, …, N`. Within a small disc around any
+ * such `z_n` the formula evaluates 0/0. We detect the disc and throw
+ * `RangeError` with a `suggestion:` line naming the v0.2 5-term Taylor
+ * fix (Karbach §5.1). The disc radius is fixed at `~10` bits below `z`
+ * magnitude, mirroring the Karbach published `3e-3` constant at double
+ * precision.
+ *
+ * **Domain constraint:** the Fourier series accuracy assumes
+ * `|Im z| < τ_m` after first-quadrant reduction. For `Im z > τ_m`, the
+ * series still converges (the `e^(iτ_m z) = e^(-τ_m Im z) e^(iτ_m Re z)`
+ * factor underflows gracefully through the BigFloat exponent), but the
+ * truncation error bound `a_N < 2^-prec` is no longer guaranteed. In
+ * practice, the I3 acceptance regime covers `|Im z| ≤ τ_m(prec)` —
+ * caller is responsible for choosing prec high enough that the input's
+ * `|Im z|` is below the table's `τ_m`. At `prec = 200` bits (~60 dps),
+ * `τ_m ≈ 23.19`; at `prec = 400` bits (~120 dps), `τ_m ≈ 33.22`. For
+ * inputs with very large `|Im z|`, the caller bumps `prec`.
+ *
+ * @throws RangeError on Stokes-line singularity (proximity to z_n).
+ */
+export function bigW(z: BigComplex, prec: number): BigComplex {
+  if (prec < 1 || !Number.isInteger(prec)) {
+    throw new RangeError(
+      `bigW: prec must be a positive integer; got ${prec}. ` +
+        `suggestion: use decimalToBinaryPrecision(<digits>) for a decimal target.`,
+    );
+  }
+  // Symmetry reduction to first quadrant — per Faddeeva.cc / Karbach §2.
+  //
+  // Two canonical identities (DLMF §7.4 + W. Gautschi 1969):
+  //
+  //   (A)  w(-z)      = 2·exp(-z²) − w(z)
+  //   (B)  w(conj z)  = conj(w(-z))
+  //
+  // From these, the reduction to the first quadrant (Re ≥ 0, Im ≥ 0) by
+  // input quadrant:
+  //
+  //   Q1 (Re ≥ 0, Im ≥ 0):   no reduction.
+  //   Q2 (Re < 0, Im ≥ 0):   apply (B) backwards — z = -conj(z'), z' = -conj(z)
+  //                          = (|Re|, Im). Then w(z) = conj(w(z')). Set
+  //                          flipReal = true; zNorm = (|Re|, Im).
+  //   Q3 (Re < 0, Im < 0):   apply (A) with z = -z'. z' = -z = (|Re|, |Im|).
+  //                          Then w(z) = 2·exp(-z²) − w(z'). Set flipNegZ
+  //                          (negate-both) = true; zNorm = (|Re|, |Im|).
+  //   Q4 (Re ≥ 0, Im < 0):   apply (A) ∘ (B). z' = (|Re|, |Im|) (first quad).
+  //                          w(z) = 2·exp(-z²) − conj(w(z')). Set flipNegZ
+  //                          AND flipReal (conj on the inner).
+  //
+  // Unified scheme: track `flipReal` (apply conj at end of inner) and
+  // `flipNegZ` (apply the 2·exp(-z²)−... identity at end). Three input
+  // quadrants set flipNegZ; two set flipReal; the combination gives the
+  // four cases correctly.
+  const work = prec + 32;
+  let zNorm = z;
+  let flipReal = false;
+  let flipNegZ = false;
+  let z2Saved: BigComplex | null = null;
+  if (sgn(z.im) < 0) {
+    // Im(z) < 0: Q3 or Q4. Use identity (A): w(z) = 2·exp(-z²) − w(-z).
+    // Capture exp(-z²) at the *original* z; then continue with z' = -z.
+    z2Saved = cmul(z, z, work);
+    flipNegZ = true;
+    zNorm = { re: neg(zNorm.re), im: neg(zNorm.im) };
+    // Now zNorm has Im(zNorm) > 0. If Re(zNorm) < 0 (was Q3 originally),
+    // it's still in Q2 now; the flipReal below will catch it.
+  }
+  if (sgn(zNorm.re) < 0) {
+    // Re < 0 at this point: apply identity (B): w(zNorm) = conj(w(-conj(zNorm)))
+    // = conj(w(|Re|, Im)). Set flipReal = true.
+    flipReal = true;
+    zNorm = { re: neg(zNorm.re), im: zNorm.im };
+  }
+  // zNorm is now in the first quadrant: Re ≥ 0, Im ≥ 0.
+  //
+  // Exact-zero short-circuit: w(0) = 1 by definition (DLMF §7.2.3 with
+  // `erfc(0) = 1` and `e^0 = 1`). The Karbach formula's n=0 term is
+  // `-a_0 · (1 − e^(0))/0 = -a_0 · 0/0` — a removable singularity whose
+  // limit is `i a_0 τ_m`, matching `w(0) = 1` after the i/(2√π)
+  // prefactor. Easier (and bit-cleaner) to short-circuit than to peek
+  // inside the loop.
+  if (cisZero(zNorm)) {
+    let result: BigComplex = cfromReal(fromInt(1n, prec));
+    if (flipReal) result = cconj(result);
+    if (flipNegZ) {
+      const twoExpMZ2 = cmul(cfromReal(fromInt(2n, work)),
+                              cexp(cneg(z2Saved!), work), work);
+      result = csub(twoExpMZ2, result, work);
+      result = {
+        re: normalise(result.re.mantissa, result.re.exponent, prec),
+        im: normalise(result.im.mantissa, result.im.exponent, prec),
+      };
+    }
+    return result;
+  }
+  //
+  // Singularity check: for each n = 1..N, the formula has a removable
+  // singularity at z_n = (n·π/τ_m, 0) on the real axis (n=0 is the z=0
+  // case handled above). Detect proximity
+  // (|zNorm.re - n·π/τ_m| + |zNorm.im|) below a fixed radius; refuse
+  // with a clean error if hit. The radius scales as `2^(-prec/3)` per
+  // Karbach §5.1 — small enough that random inputs almost never trigger,
+  // large enough that genuinely-on-the-pole calls are caught before the
+  // 0/0 emerges.
+  const cache = karbachCoeffs(prec);
+  // Distance check: |zNorm.re - n·π/τ_m| + |zNorm.im| < radius. The L¹
+  // approximation suffices for disc detection (it's an over-bound for L²
+  // distance, so any input the L¹ test rejects is genuinely close).
+  const singularityRadiusMagBits = -Math.floor(prec / 3);
+  for (let n = 1; n <= cache.N; n++) {
+    const nPiOverTau = mul(fromInt(BigInt(n), work), cache.piOverTau, work);
+    const reDiff = sub(zNorm.re, nPiOverTau, work);
+    const distApprox = add(abs(reDiff), abs(zNorm.im), work);
+    if (isZero(distApprox)) {
+      throw new RangeError(
+        `bigW: argument z = (${toFloat64(z.re).value}, ${toFloat64(z.im).value}) ` +
+          `lies exactly on Karbach singularity z_${n} = ${n}·π/τ_m ≈ ${toFloat64(nPiOverTau).value}. ` +
+          `suggestion: Karbach §5.1 5-term Taylor-disc evaluation is deferred ` +
+          `to v0.2; perturb the input by 2^-${Math.floor(prec / 2)} or pass a ` +
+          `nearby non-singular argument.`,
+      );
+    }
+    const distMag = bfMagBits(distApprox);
+    if (distMag < singularityRadiusMagBits) {
+      throw new RangeError(
+        `bigW: argument z = (${toFloat64(z.re).value}, ${toFloat64(z.im).value}) ` +
+          `lies within 2^${singularityRadiusMagBits} of Karbach singularity ` +
+          `z_${n} = ${n}·π/τ_m ≈ ${toFloat64(nPiOverTau).value}. ` +
+          `suggestion: Karbach §5.1 5-term Taylor-disc evaluation is deferred ` +
+          `to v0.2; perturb the input or work at higher prec.`,
+      );
+    }
+  }
+  // Main Karbach sum at first-quadrant zNorm.
+  //   τ_m z is the load-bearing recurrence input; compute once.
+  //   e^(i τ_m z) is the per-pair sign multiplier.
+  const tauZ: BigComplex = {
+    re: mul(cache.tau_m, zNorm.re, work),
+    im: mul(cache.tau_m, zNorm.im, work),
+  };
+  // i·(tauZ) = (-tauZ.im, tauZ.re); then exp.
+  const iTauZ: BigComplex = { re: neg(tauZ.im), im: tauZ.re };
+  const expITauZ = cexp(iTauZ, work);
+  // (τ_m z)² for the denominator (n·π)² − (τ_m z)².
+  const tauZSq = cmul(tauZ, tauZ, work);
+  // The n = 0 "outer correction" of Karbach eq. 37 is `- a_0·(1 - e^(iτz))/z`.
+  // Inside the main Σ, the n = 0 term contributes `+ 2 a_0·(1 - e^(iτz))/z`
+  // (the `(T1 - T2)` bracket evaluates to `2(1-exp)/(τz)`; multiplied by
+  // `a_0·τ_m` becomes `2 a_0 (1-exp)/z` since `τz = τ_m·z`). The two combine:
+  //     net n=0 = 2 a_0 (1-exp)/z − a_0 (1-exp)/z = + a_0 (1-exp)/z.
+  // Verification: as z → 0, (1 - e^(iτz))/z → -iτ_m by Taylor, so the n=0
+  // contribution tends to -i·a_0·τ_m. After the i/(2√π) prefactor:
+  // (i/(2√π))·(-i·a_0·τ_m) = a_0·τ_m/(2√π) = 1 with a_0 = 2√π/τ_m. This
+  // matches w(0) = 1 exactly — the algebra check pinning the sign convention.
+  // (zNorm cannot be zero here — the cisZero(zNorm) short-circuit above
+  // returned for that case.)
+  const oneW = fromInt(1n, work);
+  const oneC = cfromReal(oneW);
+  const oneMinusExp = csub(oneC, expITauZ, work);
+  const a0Term = cdiv(cmul(cfromReal(cache.a[0]!), oneMinusExp, work), zNorm, work);
+  let sum: BigComplex = a0Term;
+  // n = 1..N: per-term Karbach eq. 37, with the algebraic simplification of
+  // the (T1 - T2) bracket:
+  //     T1 - T2 = (1 - s_n) · [1/(nπ + τz) - 1/(nπ - τz)]
+  //             = (1 - s_n) · (-2·τz) / ((nπ)² - (τz)²)
+  // where s_n = (-1)^n · e^(iτz), so the contribution to add to `sum` is
+  //     a_n · τ_m · (T1 - T2) = -2 · a_n · τ_m · τz · (1 - s_n) / denom.
+  // (Note: τz here is the complex `τ_m · z`, not the real τ_m. The factor
+  // `τ_m · τz = τ_m² · z` is what we accumulate.)
+  for (let n = 1; n <= cache.N; n++) {
+    const sn = (n % 2 === 0) ? expITauZ : cneg(expITauZ);
+    const oneMinusSn = csub(oneC, sn, work);
+    // Denominator: (nπ)² − (τ_m z)². Subtract complex tauZSq from real nπSq.
+    const denom: BigComplex = {
+      re: sub(cache.nPiSq[n]!, tauZSq.re, work),
+      im: neg(tauZSq.im),
+    };
+    // Numerator: a_n · (-2) · τ_m · τz · (1 - s_n).
+    //   = a_n · (-2 τ_m) scalar times τz · (1 - s_n) complex.
+    const minusTwoAnTauM = mul(neg(fromInt(2n, work)),
+                                mul(cache.a[n]!, cache.tau_m, work), work);
+    const numer = cmul(cfromReal(minusTwoAnTauM),
+                        cmul(tauZ, oneMinusSn, work), work);
+    const term = cdiv(numer, denom, work);
+    sum = cadd(sum, term, work);
+  }
+  // Prefactor: i / (2√π). Multiply sum by i/(2√π).
+  const piW = pi(work);
+  const sqrtPiW = sqrt(piW, work);
+  const twoSqrtPiW = mul(fromInt(2n, work), sqrtPiW, work);
+  // (sum)·i / (2√π) = (-sum.im + i·sum.re) / (2√π).
+  let result: BigComplex = {
+    re: neg(div(sum.im, twoSqrtPiW, work)),
+    im: div(sum.re, twoSqrtPiW, work),
+  };
+  // Undo symmetry reductions in reverse order: flipReal undoes inner, then
+  // flipNegZ undoes outer.
+  if (flipReal) {
+    // Identity (B): w(z_2nd_quad) = conj(w(z_1st_quad)).
+    result = cconj(result);
+  }
+  if (flipNegZ) {
+    // Identity (A): w(z_orig) = 2·exp(-z_orig²) − w(-z_orig).
+    // `z2Saved` is z_orig² captured before the flip.
+    const twoExpMZ2 = cmul(cfromReal(fromInt(2n, work)),
+                            cexp(cneg(z2Saved!), work), work);
+    result = csub(twoExpMZ2, result, work);
+  }
+  return {
+    re: normalise(result.re.mantissa, result.re.exponent, prec),
+    im: normalise(result.im.mantissa, result.im.exponent, prec),
+  };
+}
+
+/**
+ * Multiply a BigComplex by `i`: `(a + bi)·i = -b + ai`. Inlined helper —
+ * the few call sites in this section emit it explicitly so the algebra
+ * stays readable, but the helper here documents the convention.
+ *
+ * (Not exported. The four Erf-family entry points below are the public
+ * surface; `bigW` is exported as the substrate primitive for testing and
+ * for future tools that want the Faddeeva primitive directly.)
+ */
+function ciMul(z: BigComplex): BigComplex {
+  return { re: neg(z.im), im: z.re };
+}
+
+/**
+ * `erfcx(z) = w(i·z)` for complex `z` at arbitrary precision.
+ *
+ * Identity: DLMF §7.2.7 / Karbach §2.3. The scaled complementary error
+ * function is *exactly* the Faddeeva primitive evaluated at `i·z` — no
+ * algebra needed. For real `z ≥ 0` this matches I2's `bigErfcx` on the
+ * real axis; we short-circuit to it for byte-equality with the real lane.
+ */
+export function bigCErfcx(z: BigComplex, prec: number): BigComplex {
+  // Real-axis short-circuit: byte-equality with I2's bigErfcx (load-bearing
+  // for the restriction-to-real-axis property test).
+  if (isZero(z.im) && sgn(z.re) >= 0) {
+    return cfromReal(bigErfcx(z.re, prec));
+  }
+  // General complex path: erfcx(z) = w(iz).
+  return bigW(ciMul(z), prec);
+}
+
+/**
+ * `erf(z)` for complex `z` at arbitrary precision via the Karbach-Weideman
+ * Faddeeva primitive.
+ *
+ * Identity table (DLMF §7.4 / Karbach §2.4):
+ *
+ *     erf(z) = 1 - e^(-z²) · w(iz)         for Re(z) ≥ 0
+ *     erf(z) = e^(-z²) · w(-iz) - 1        for Re(z) < 0
+ *
+ * The half-plane split keeps `w(±iz)` away from the regime where its
+ * exponential factors would blow up — for `Re(z) ≥ 0`, `iz` lies in the
+ * upper half-plane and `w(iz)` decays as `exp(-z²)` grows, so the product
+ * is bounded by `|erf(z) - 1| ≤ 1`. For `Re(z) < 0`, the mirror identity
+ * with `w(-iz)` keeps the same boundedness.
+ *
+ * **Real-axis restriction:** for `z = x + 0i` with `x ≥ 0`, the result
+ * is `cfromReal(bigErf(x, prec))` byte-identically; for `x < 0`, it is
+ * `cfromReal(-bigErf(-x, prec))` (using the real-lane parity). Defers
+ * to the I1 substrate to maintain byte-equality.
+ *
+ * @throws RangeError on Stokes-line singularity (proximity to a Karbach
+ * pole z_n via `bigW`).
+ */
+export function bigCErf(z: BigComplex, prec: number): BigComplex {
+  // Real-axis short-circuit: byte-identical with I1's bigErf(x, prec).
+  if (isZero(z.im)) {
+    return cfromReal(bigErf(z.re, prec));
+  }
+  // Cancellation-driven precision retry (mirrors `clgammaReflect`, bead
+  // oj5j / worklog 117). The Karbach identity expresses erf(z) as
+  // `1 ± exp(-z²)·w(±iz)`, where the subtraction can lose leading bits
+  // when `|product − 1| ≪ 1` (i.e. when `erf(z)` is close to ±1).
+  // Concrete example (T5-erfi-040 in the bench corpus): z = -6.56+11.81i,
+  // erfi(z).re ≈ 5e-44 — the subtraction discards ~140 bits of leading
+  // information. The retry pattern: measure `lossBits = magBits(operand)
+  // − magBits(result)` post-subtraction, redo at `work = prec + 32 +
+  // lossBits` if positive. Two retries suffice in practice (the second
+  // pays for the residual error introduced by the bumped precision
+  // arithmetic itself).
+  return bigCErfWithRetry(z, prec, 0);
+}
+
+function bigCErfWithRetry(z: BigComplex, prec: number, extraBits: number): BigComplex {
+  const work = prec + 32 + extraBits;
+  const nz2 = cneg(cmul(z, z, work));
+  const expNz2 = cexp(nz2, work);
+  let product: BigComplex;
+  let result: BigComplex;
+  let operand: BigComplex;
+  if (sgn(z.re) >= 0) {
+    // Re(z) ≥ 0: erf(z) = 1 - exp(-z²) · w(iz).
+    const wiz = bigW(ciMul(z), work);
+    product = cmul(expNz2, wiz, work);
+    operand = product;
+    const one = cfromReal(fromInt(1n, work));
+    result = csub(one, product, work);
+  } else {
+    // Re(z) < 0: erf(z) = exp(-z²) · w(-iz) - 1.
+    const negIz: BigComplex = { re: z.im, im: neg(z.re) };
+    const wMinusIz = bigW(negIz, work);
+    product = cmul(expNz2, wMinusIz, work);
+    operand = product;
+    const one = cfromReal(fromInt(1n, work));
+    result = csub(product, one, work);
+  }
+  // Cancellation check: how many bits did the subtraction discard?
+  const opMag = magBits(operand);
+  const resMag = magBits(result);
+  // If operand magnitude is ≪ 1, no cancellation possible (subtraction
+  // with 1 doesn't lose bits when the operand is tiny).
+  // If result magnitude is comparable to operand magnitude, no cancellation.
+  // Loss is `max(0, opMag - resMag - (small headroom))`.
+  // We only retry once — the bumped recomputation should be definitive.
+  if (extraBits === 0 && opMag !== -Infinity && resMag !== -Infinity) {
+    const lossBits = Math.max(0, opMag - resMag - 8);
+    if (lossBits > 16) {
+      // Bound the bump — extreme cancellation past 4·prec is treated as
+      // pathological; the result honestly carries reduced precision.
+      const bumpedExtra = Math.min(lossBits + 16, prec * 4);
+      return bigCErfWithRetry(z, prec, bumpedExtra);
+    }
+  }
+  return {
+    re: normalise(result.re.mantissa, result.re.exponent, prec),
+    im: normalise(result.im.mantissa, result.im.exponent, prec),
+  };
+}
+
+/**
+ * `erfc(z)` for complex `z` at arbitrary precision.
+ *
+ * Identity table (DLMF §7.4 / Karbach §2.4):
+ *
+ *     erfc(z) = e^(-z²) · w(iz)            for Re(z) ≥ 0
+ *     erfc(z) = 2 - e^(-z²) · w(-iz)       for Re(z) < 0
+ *
+ * For `Re(z) ≥ 0` the formula is cancellation-free (both factors small
+ * for large `|z|`). For `Re(z) < 0` the `2 - tiny` subtraction is also
+ * cancellation-free (the second term is exponentially small at large
+ * `|Re z|`).
+ *
+ * **Real-axis restriction:** for `z = x + 0i`, defers to I2's
+ * `bigErfc(x, prec)` byte-identically.
+ *
+ * @throws RangeError on Stokes-line singularity (via `bigW`).
+ */
+export function bigCErfc(z: BigComplex, prec: number): BigComplex {
+  // Real-axis short-circuit: byte-identical with I2's bigErfc(x, prec).
+  if (isZero(z.im)) {
+    return cfromReal(bigErfc(z.re, prec));
+  }
+  return bigCErfcWithRetry(z, prec, 0);
+}
+
+function bigCErfcWithRetry(z: BigComplex, prec: number, extraBits: number): BigComplex {
+  const work = prec + 32 + extraBits;
+  const nz2 = cneg(cmul(z, z, work));
+  const expNz2 = cexp(nz2, work);
+  if (sgn(z.re) >= 0) {
+    // Re(z) ≥ 0: erfc(z) = exp(-z²) · w(iz). No subtraction — no
+    // cancellation. Direct return; no retry path.
+    const wiz = bigW(ciMul(z), work);
+    const product = cmul(expNz2, wiz, work);
+    return {
+      re: normalise(product.re.mantissa, product.re.exponent, prec),
+      im: normalise(product.im.mantissa, product.im.exponent, prec),
+    };
+  }
+  // Re(z) < 0: erfc(z) = 2 - exp(-z²) · w(-iz). The `2 - product`
+  // subtraction loses bits when the product is close to 2 (which
+  // corresponds to erfc near the negative-real-axis saturation).
+  const negIz: BigComplex = { re: z.im, im: neg(z.re) };
+  const wMinusIz = bigW(negIz, work);
+  const product = cmul(expNz2, wMinusIz, work);
+  const two = cfromReal(fromInt(2n, work));
+  const result = csub(two, product, work);
+  // Cancellation retry, same shape as bigCErfWithRetry.
+  const opMag = magBits(product);
+  const resMag = magBits(result);
+  if (extraBits === 0 && opMag !== -Infinity && resMag !== -Infinity) {
+    const lossBits = Math.max(0, opMag - resMag - 8);
+    if (lossBits > 16) {
+      const bumpedExtra = Math.min(lossBits + 16, prec * 4);
+      return bigCErfcWithRetry(z, prec, bumpedExtra);
+    }
+  }
+  return {
+    re: normalise(result.re.mantissa, result.re.exponent, prec),
+    im: normalise(result.im.mantissa, result.im.exponent, prec),
+  };
+}
+
+/**
+ * `erfi(z)` (imaginary error function) for complex `z` at arbitrary precision.
+ *
+ * Identity (DLMF §7.5.2): `erfi(z) = -i · erf(i·z)`.
+ *
+ * For real `z`, this maps to the SymPy/Mathematica `Erfi` convention:
+ * `erfi(x) = (2/√π) ∫₀ˣ e^(t²) dt`. The complex extension is the natural
+ * analytic continuation.
+ *
+ * Defers to `bigCErf` and reuses its real-axis short-circuit indirectly
+ * (the inner call `bigCErf(i·z)` with `z` real gives a pure-imaginary
+ * intermediate result, which then becomes pure-real after the `-i·` undo).
+ *
+ * @throws RangeError on Stokes-line singularity (via `bigW`).
+ */
+export function bigCErfi(z: BigComplex, prec: number): BigComplex {
+  // erfi(z) = -i · erf(i·z).
+  // i·z = (-z.im, z.re).
+  const iz: BigComplex = { re: neg(z.im), im: z.re };
+  const erfIz = bigCErf(iz, prec);
+  // -i · (a + bi) = b - ai.
+  return { re: erfIz.im, im: neg(erfIz.re) };
 }

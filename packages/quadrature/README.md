@@ -312,12 +312,16 @@ Per-head implementations live in
 - **Real `erfi`** — derived via the complex `w(z)` machinery as
   `erfi(x) = Im(erf(i·x))`. Single body of code; inherits the bulk's
   accuracy.
-- **Complex `w`/`erf`/`erfc`/`erfcx`/`erfi`** — port of Stephen G.
-  Johnson's Faddeeva library (MIT, 2012): Poppe-Wijers 1990
-  continued fraction for large `|z|`, Zaghloul-Ali Algorithm 916 for
-  the bulk, 5-term Taylor for small `|z|` to avoid cancellation.
-  License: MIT notice carried verbatim. Target ≤ 1.3e-13 relative
-  error across all of ℂ.
+- **Complex `w`/`erf`/`erfc`/`erfcx`/`erfi`** — v0.1 port of Stephen
+  G. Johnson's Faddeeva library (MIT, 2012): the unified continued-
+  fraction form (Poppe-Wijers 1990 / Faddeeva.cc lines 745-780) is
+  used for *all* complex inputs, plus a 5-term Taylor for small `|z|`
+  in `erfComplexFloat64` to avoid cancellation. License: MIT notice
+  carried verbatim. **Accuracy contract**: bit-exact (≤ 1 ULP) at
+  large `|z|` (the CF's natural regime); degraded to ~1e-3 relative
+  in the small-`|z|` bulk (where Faddeeva.cc normally uses Algorithm
+  916 + the y100 Chebyshev panels — both deferred to v0.2 as a
+  surgical refinement when a consumer demands tighter accuracy).
 - **`erfinv`/`erfcinv`** — Blair, Edwards & Johnson 1976 rational
   approximants (Tables 17/37/57 for erfinv, Tables 57/80 for
   erfcinv) plus one Newton-Raphson refinement step (≤ 8 ULP vs

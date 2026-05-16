@@ -2,10 +2,14 @@
 // @workbench/bigfloat — real-axis error function `erf` (arb-prec)
 // =============================================================================
 //
-// This module ships the arb-prec entry point of the Erf family: the real-axis
-// `bigErf(x: BigFloat, prec: number): BigFloat`, plus the three substrate
-// primitives that the rest of the family (`bigErfc`, `bigErfcx`, complex
-// extensions) will hoist on top of:
+// This module ships the arb-prec real-axis entry points of the Erf family:
+//
+//   bigErf(x, prec)    — error function
+//   bigErfc(x, prec)   — complementary error function (DIRECT, not `1 - bigErf`)
+//   bigErfcx(x, prec)  — scaled complementary (DIRECT, not `exp(x²)·bigErfc(x)`)
+//
+// plus the three substrate primitives those entry points (and the complex
+// extensions in I3) hoist on top of:
 //
 //   bigErfSeries               — DLMF 7.6.2 Borel form (all-positive terms).
 //   bigErfcAsymptotic          — DLMF 7.12.1 asymptotic with optimal truncation.
@@ -14,6 +18,63 @@
 // ADR-0040 §"Decision 3" pins the per-head signature and the algorithm
 // dispatch; ADR-0020 pins the determinism contract this substrate must
 // honour (bit-identical across runtimes forever, given fixed `prec` bits).
+//
+// Direct-path discipline (THE load-bearing R2 risk-mitigation)
+// -------------------------------------------------------------
+//
+//   bigErfc is NOT 1 - bigErf for |x| > x_c — catastrophic cancellation
+//   costs x²·log₂e bits.  At x = 20 (prec = 200), that's ~580 bits
+//   destroyed; a 50-dps answer becomes garbage.
+//
+//   bigErfcx is NOT exp(x²)·bigErfc(x) for |x| > ~3 — the round-trip
+//   through a quantity that grows as exp(x²) (e.g. exp(400) ≈ 5.2e173
+//   at x = 20) is *representable* in BigFloat but is a strict waste of
+//   limbs, and on the float64 path it would simply overflow.  The Julia
+//   SpecialFunctions.jl `_erfcx(::BigFloat)` references this directly
+//   (lines 27-40); we adopt the same direct rational-form asymptotic.
+//
+// Each function carries its OWN algorithm path on its OWN input range:
+//
+//   bigErfc dispatch:
+//     |x| ≤ x_c  → small/moderate-x lane: 1 - bigErf(x) with
+//                  cancellation-retry (loss ≤ ~x²·log₂e ≤ ~prec bits;
+//                  the budget is *bounded* by the algorithm's structure
+//                  because x_c² = prec·ln2, so x_c²·log₂e = prec exactly).
+//     x > x_c    → direct asymptotic: bigErfcAsymptotic(x).
+//     x < -x_c   → erfc(-|x|) = 2 - erfc(|x|) where erfc(|x|) ≈ 2^-prec
+//                  by construction (we're past the asymptotic crossover);
+//                  `2 - tiny` loses no bits.
+//
+//   bigErfcx dispatch:
+//     |x| ≤ x_c  → small-x lane: exp(x²) · bigErfc(x).  Both factors
+//                  finite and well-conditioned in this regime;
+//                  exp(x_c²) = exp(prec·ln2) = 2^prec is large but
+//                  *representable* in BigFloat with int32 exponent
+//                  (BigFloat exponent range vastly exceeds float64's).
+//                  Crucially, the *direct asymptotic does not converge
+//                  to prec bits* until |x| > x_c — its optimal-truncation
+//                  remainder is bounded by `e^(-x²) · √(π/(2x²))`, which
+//                  is precisely `2^-prec` at the same x_c the erfc
+//                  dispatch uses.  R2 §1.8 pins this: the bigErfcx
+//                  threshold *is* the bigErfc asymptotic threshold.
+//                  (An impl-plan stand-in of "|x| < 3" looked plausible
+//                  but does not converge at moderate x — at x = 4 the
+//                  asymptotic diverges at the 7th digit; verified by
+//                  experiment before this code shipped.)
+//     |x| > x_c  → direct asymptotic series with the same (2m-1)!! / (2x²)^m
+//                  coefficient ring as bigErfcAsymptotic, but WITHOUT the
+//                  e^(-x²) prefactor.  Optimal-truncation idiom identical
+//                  to bigErfcAsymptotic.  For negative x in this regime,
+//                  use erfcx(-|x|) = 2·exp(x²) - erfcx(|x|) — note 2·exp(x²)
+//                  IS the answer up to a tiny correction; no cancellation.
+//
+// The bigErfc small-x lane is the only place in this module where the
+// cancellation-retry pattern (mirroring clgammaReflect, worklog 117) is
+// actually exercised: bigErf's small lane uses Borel series (zero
+// cancellation), and bigErf's large lane uses asymptotic-via-1-minus
+// where the subtracted quantity is < 2^-prec by construction.  I1's
+// retry slot was wired but did not trigger; I2 is the first bead to fire
+// it on the path where it matters.
 //
 // Algorithm narrative
 // -------------------
@@ -139,6 +200,19 @@
 // *becomes* below 2^-prec), so `1 - tiny` is harmless — no lossBits
 // accumulate.  The retry slot is wired up anyway, so I2's `bigErfc` can
 // hoist on top of it without re-plumbing.
+//
+// The pattern *does* fire on `bigErfc(x)`'s small/moderate-x lane
+// (`|x| ≤ x_c`).  There, `erf(x)` is close to 1 — at x = x_c, the
+// difference is exactly 2^-prec by the crossover derivation — and
+// `1 - erf(x)` loses up to `x²·log₂e` bits, which is at most `prec` bits
+// at the boundary.  The retry computes `loss = magBits(erfX) -
+// magBits(diff)` after a first-pass at `prec + 64`, then re-runs at
+// `prec + 64 + loss` if `loss > 0`.  The margin is *bounded by the
+// algorithm's structure*, not by an empirical heuristic: at x = x_c we
+// pay ~prec bits, at smaller x we pay less, and we never enter this lane
+// for x > x_c (the direct asymptotic takes over).  The retry is therefore
+// guaranteed to terminate after at most one bump — a structural
+// property, not a wait-and-pray loop.
 //
 // References (all in repo)
 // ------------------------
@@ -602,4 +676,301 @@ export function bigErf(x: BigFloat, prec: number): BigFloat {
   // Re-attach the sign of x. For x > 0, return erfAbs; for x < 0, negate.
   const signed = sgn(x) < 0 ? neg(erfAbs) : erfAbs;
   return normalise(signed.mantissa, signed.exponent, prec);
+}
+
+// =============================================================================
+// bigErfcxAsymptotic — direct asymptotic for `erfcx(x)` at large x
+// =============================================================================
+
+/**
+ * Direct asymptotic evaluator for `erfcx(x) = e^(x²) · erfc(x)` at large
+ * positive `x`, via the rational form of the DLMF 7.12.1 asymptotic with
+ * the `e^(-x²)` prefactor *removed analytically* (NOT divided through
+ * after the fact):
+ *
+ *   erfcx(x) ∼ (1 / (√π · x)) · Σ_{m=0}^∞  (-1)^m · (2m-1)!! / (2x²)^m
+ *
+ * Same coefficient ring as `bigErfcAsymptotic`, same `T_{m+1} =
+ * T_m · -(2m + 1) / (2x²)` recurrence, same optimal-truncation rule.  The
+ * crossover is identical: `|x| > x_c(prec)` ⇒ asymptotic gives `prec` bits.
+ *
+ * Why this exists as a peer of `bigErfcAsymptotic`, not a wrapper:
+ *
+ *   - For large x, `bigErfcAsymptotic` returns a value of magnitude
+ *     `e^(-x²) / (x √π)` — exponentially small.  Then `exp(x²) · erfc`
+ *     re-multiplies by `e^(x²)`.  Both `e^(-x²)` and `e^(x²)` are computed
+ *     to `prec` bits *relative*, so the product is correct — but it wastes
+ *     two transcendental calls, two prec+ bit BigInt limbs, and two
+ *     mul-by-large-exponent rounds.  The direct asymptotic skips all of it.
+ *   - More importantly, the *narrative* is wrong if we compute via
+ *     `bigErfcAsymptotic`: the answer `erfcx(20) ≈ 0.028` does not in
+ *     fact require any computation of a quantity near `2^(-577)` and
+ *     a re-amplification by `e^400 ≈ 2^576`.  It requires a six-term
+ *     asymptotic sum on a `1/x` scale.  The direct path is the honest one.
+ *
+ * Mirrors SpecialFunctions.jl `_erfcx(::BigFloat)` lines 27-40 (cited in
+ * R2 §"Risk 3").  Caller is responsible for `x > 0`; throws otherwise.
+ */
+export function bigErfcxAsymptotic(x: BigFloat, prec: number): BigFloat {
+  requireFiniteErfInput(x, "bigErfcxAsymptotic");
+  if (sgn(x) <= 0) {
+    throw new RangeError(
+      `bigErfcxAsymptotic: argument must be positive; got sign ${sgn(x)}. ` +
+        `suggestion: for negative x use the identity ` +
+        `erfcx(-x) = 2·exp(x²) - erfcx(x); for x ≤ 0 the asymptotic ` +
+        `regime does not apply.`,
+    );
+  }
+  const work = prec + 32;
+  // Prefactor: 1 / (√π · x). The `exp(-x²)` of bigErfcAsymptotic is gone —
+  // analytically cancelled by the `exp(x²)` in `erfcx = exp(x²) · erfc`.
+  const sqrtPi = sqrt(pi(work), work);
+  const sqrtPiX = mul(sqrtPi, x, work);
+  const one = fromInt(1n, work);
+  const prefactor = div(one, sqrtPiX, work);
+  // Series sum. T_0 = 1.
+  const xSquared = mul(x, x, work);
+  const twoXSquared = mul(xSquared, fromInt(2n, work), work);
+  let sum = fromInt(1n, work);
+  let term = fromInt(1n, work);
+  let prevTermMag = Infinity;
+  // Same maxTerms cap as bigErfcAsymptotic — optimal truncation is reached
+  // well before this in any sane regime.
+  const maxTerms = Math.max(64, work * 2);
+  for (let m = 0; m < maxTerms; m++) {
+    // T_{m+1} = T_m · -(2m + 1) / (2x²).
+    const numerCoeff = fromInt(BigInt(-(2 * m + 1)), work);
+    term = div(mul(term, numerCoeff, work), twoXSquared, work);
+    const termMag = magBits(term);
+    if (termMag === -Infinity) break;
+    // Optimal-truncation rule: if this term is larger than the previous,
+    // the series is diverging — STOP without adding.
+    if (termMag > prevTermMag) break;
+    sum = add(sum, term, work);
+    prevTermMag = termMag;
+    if (termMag < -prec - 8) break;
+  }
+  const result = mul(prefactor, sum, work);
+  return normalise(result.mantissa, result.exponent, prec);
+}
+
+// =============================================================================
+// bigErfc — the entry point (DIRECT asymptotic for large x)
+// =============================================================================
+
+/**
+ * Complementary error function at user-controlled precision.
+ *
+ *   erfc(x) = 1 - erf(x) = (2/√π) · ∫_x^∞ e^(-t²) dt
+ *
+ * Algorithm split (R2 §2.1, §"Top-3 risks", Risk 1):
+ *
+ *   x = 0            → exactly 1.
+ *   |x| ≤ x_c(prec)  → 1 - bigErf(x) with cancellation-driven retry
+ *                      (loss budget bounded by x²·log₂e ≤ prec at the
+ *                      crossover boundary — *not* a wait-and-pray loop).
+ *   x >  x_c(prec)   → bigErfcAsymptotic(x) — DIRECT, never `1 - bigErf`.
+ *   x < -x_c(prec)   → 2 - bigErfcAsymptotic(|x|), where `erfc(|x|)` is
+ *                      `≤ 2^-prec` by the crossover construction so the
+ *                      `2 - tiny` subtraction is cancellation-free.
+ *
+ * Direct-path discipline:
+ *
+ *   The implementation MUST NOT delegate the large-x branch to
+ *   `sub(one, bigErf(x), work)`, even with a huge `work` budget.
+ *   At x = 20 (prec = 200), that would discard ~580 bits to
+ *   cancellation; even at `work = prec + 1000` the answer would carry
+ *   only ~420 effective bits of precision while presenting itself as
+ *   200-bit-clean.  The substrate's contract is byte-deterministic
+ *   high-precision output; lying about precision is inadmissible
+ *   (CLAUDE.md Rule 8).  R2 §"Risk 1" pins the mitigation;
+ *   Mutation 2 in worklog 135 documents the test that catches the
+ *   regression.
+ *
+ * Determinism: every operation is BigInt + bounded-integer-exponent
+ * arithmetic; BigInt is bit-identical across runtimes by language
+ * specification.  Inherits the `arbprec: true` contract of ADR-0020.
+ *
+ * @throws RangeError on non-finite input (malformed BigFloat shape, or
+ * magnitude > 2^1024 — the cliff is shared with `bigErf`).
+ */
+export function bigErfc(x: BigFloat, prec: number): BigFloat {
+  requireFiniteErfInput(x, "bigErfc");
+  if (prec < 1 || !Number.isInteger(prec)) {
+    throw new RangeError(
+      `bigErfc: prec must be a positive integer; got ${prec}. ` +
+        `suggestion: use decimalToBinaryPrecision(<digits>) for a decimal target.`,
+    );
+  }
+  // erfc(0) = 1 exactly. Hot path.
+  if (isZero(x)) {
+    return normalise(1n, 0, prec);
+  }
+  const absX = abs(x);
+  const xc = crossoverXc(prec);
+  const xFloat = toFloat64(absX).value;
+  const isLarge = !Number.isFinite(xFloat) || xFloat > xc;
+
+  if (!isLarge) {
+    // Small/moderate-x lane: erfc(x) = 1 - erf(x).
+    //
+    // Cancellation-driven precision retry (mirrors `clgammaReflect`,
+    // worklog 117, bead `oj5j`):
+    //
+    //   1. Compute at work0 = prec + 64 bits.
+    //   2. Measure loss = magBits(erfX) - magBits(diff).
+    //   3. If loss > 0, retry at work = prec + 64 + loss bits.
+    //
+    // The loss is bounded *structurally* by x²·log₂e ≤ prec at x = x_c,
+    // so the retry terminates after at most one bump.  We do not loop —
+    // the retry is a one-shot recompute, not a wait-and-pray iteration.
+    const work0 = prec + 64;
+    const erfX0 = bigErf(x, work0);
+    const one0 = fromInt(1n, work0);
+    const diff0 = sub(one0, erfX0, work0);
+    const lossBits = Math.max(0, magBits(erfX0) - magBits(diff0));
+    if (lossBits === 0 || isZero(diff0)) {
+      return normalise(diff0.mantissa, diff0.exponent, prec);
+    }
+    // Retry at the bumped precision. The +8 above the measured loss is
+    // headroom against the rounding of the retry's own sub() — the
+    // measurement uses a finite-precision diff0, so the true loss could
+    // be off by ~1 ulp in the magnitude.
+    const work = prec + 64 + lossBits + 8;
+    const erfX = bigErf(x, work);
+    const one = fromInt(1n, work);
+    const diff = sub(one, erfX, work);
+    return normalise(diff.mantissa, diff.exponent, prec);
+  }
+
+  // Large-|x| lane: DIRECT asymptotic. No subtraction-from-one anywhere.
+  if (sgn(x) > 0) {
+    // Direct path. The asymptotic returns erfc(x) at the requested prec
+    // bits with no cancellation loss anywhere on the path.
+    return bigErfcAsymptotic(absX, prec);
+  }
+  // Large negative x: erfc(-|x|) = 2 - erfc(|x|).  Since |x| > x_c implies
+  // erfc(|x|) ≤ 2^-prec by construction, the `2 - tiny` subtraction loses
+  // at most one bit (and usually zero — `tiny` doesn't even reach the
+  // bottom of the working mantissa once it's below 2^-prec).  A 32-bit
+  // working margin is generous.
+  const work = prec + 32;
+  const erfcAbs = bigErfcAsymptotic(absX, work);
+  const two = fromInt(2n, work);
+  const result = sub(two, erfcAbs, work);
+  return normalise(result.mantissa, result.exponent, prec);
+}
+
+// =============================================================================
+// bigErfcx — the entry point (DIRECT asymptotic for large x)
+// =============================================================================
+
+/**
+ * Scaled complementary error function at user-controlled precision.
+ *
+ *   erfcx(x) = e^(x²) · erfc(x)
+ *
+ * Motivation: for large positive `x`, `erfc(x) ~ e^(-x²)/(x √π)` underflows
+ * any fixed-exponent float, while `erfcx(x) ~ 1/(x √π)` is gracefully `O(1/x)`.
+ * The Voigt profile, Berry-smoothed Stokes coefficients, and the Faddeeva
+ * `w(z)` family all hold their answers in `erfcx`-shaped quantities; the
+ * substrate exposes this directly to avoid the overflow/underflow round-trip
+ * through `erfc`.
+ *
+ * Algorithm split (same crossover as `bigErfc`, per R2 §1.8):
+ *
+ *   |x| ≤ x_c(prec)  → small-x lane: exp(x²) · bigErfc(x).
+ *                      At x = x_c, exp(x²) = 2^prec — representable in
+ *                      BigFloat (int32 exponent range vastly exceeds
+ *                      float64's), and bigErfc(x) is well within its
+ *                      own small-x lane.
+ *                      At x = 0, erfcx(0) = 1 exactly.
+ *   |x| > x_c(prec)  → direct asymptotic (bigErfcxAsymptotic):
+ *                      erfcx(x) ~ (1/(x √π)) · Σ (-1)^m (2m-1)!! / (2x²)^m
+ *                      NOT exp(x²) · erfc(x) via the underlying asymptotic —
+ *                      the e^(±x²) round-trip is wasted work *and* lies
+ *                      about the algorithmic narrative.  See R2 §"Risk 3"
+ *                      and the SpecialFunctions.jl `_erfcx(::BigFloat)`
+ *                      reference.
+ *
+ *   For negative x in the large-|x| lane, we use the identity
+ *
+ *     erfcx(-|x|) = exp(x²) · erfc(-|x|) = exp(x²) · (2 - erfc(|x|))
+ *                 = 2·exp(x²) - erfcx(|x|)
+ *
+ *   For large positive |x|, `2·exp(x²)` is astronomically larger than
+ *   `erfcx(|x|) ≈ 1/(|x|√π)`, so the subtraction loses no bits — the
+ *   answer is dominated by `2·exp(x²)`.  This is the correct large-negative
+ *   behaviour: `erfcx(-x)` grows like `2·exp(x²)`.
+ *
+ * Threshold choice (x_c, NOT a fixed constant like 3):
+ *
+ *   The direct asymptotic's optimal-truncation remainder is bounded by
+ *   `e^(-x²) · √(π/(2x²))`.  For that to be below `2^-prec` we need
+ *   `x² · log₂e > prec - ½log₂(π/(2x²))`, i.e. `x > x_c(prec)` to leading
+ *   order.  Below x_c, the asymptotic diverges *before* reaching prec-bit
+ *   accuracy — at x = 4 and prec = 200, it disagrees with the true value
+ *   by the 7th digit (verified by experiment before this code shipped).
+ *   So the threshold MUST be x_c; a fixed value like "|x| < 3" looks
+ *   plausible but fails silently for the moderate-x band.
+ *
+ * Determinism: arbprec: true (ADR-0020).  @throws RangeError on
+ * malformed input.
+ */
+export function bigErfcx(x: BigFloat, prec: number): BigFloat {
+  requireFiniteErfInput(x, "bigErfcx");
+  if (prec < 1 || !Number.isInteger(prec)) {
+    throw new RangeError(
+      `bigErfcx: prec must be a positive integer; got ${prec}. ` +
+        `suggestion: use decimalToBinaryPrecision(<digits>) for a decimal target.`,
+    );
+  }
+  // erfcx(0) = exp(0) · erfc(0) = 1 · 1 = 1 exactly. Hot path.
+  if (isZero(x)) {
+    return normalise(1n, 0, prec);
+  }
+  const absX = abs(x);
+  const xc = crossoverXc(prec);
+  const xFloat = toFloat64(absX).value;
+  // Small-x threshold = x_c(prec), NOT a fixed constant. At |x| ≤ x_c,
+  // the composition `exp(x²) · bigErfc(x)` is numerically clean: bigErfc(x)
+  // is well within its small-x lane, exp(x²) is computed to prec bits
+  // relative, and the product preserves prec bits relative. The direct
+  // asymptotic does not reach prec-bit accuracy until |x| > x_c (its
+  // optimal-truncation remainder is bounded by e^(-x²) · √(π/(2x²)),
+  // which crosses 2^-prec at x = x_c by the same derivation as bigErfc's
+  // crossover). See R2 §1.8.
+  const useSmallLane = Number.isFinite(xFloat) && xFloat <= xc;
+  if (useSmallLane) {
+    const work = prec + 32;
+    const xSquared = mul(x, x, work);
+    const expXSquared = exp(xSquared, work);
+    const erfcX = bigErfc(x, work);
+    const result = mul(expXSquared, erfcX, work);
+    return normalise(result.mantissa, result.exponent, prec);
+  }
+  // Large-|x| lane: direct asymptotic. For negative x, use the parity
+  // identity AFTER computing on |x|.
+  if (sgn(x) > 0) {
+    return bigErfcxAsymptotic(absX, prec);
+  }
+  // Large negative x: erfcx(-|x|) = 2·exp(x²) - erfcx(|x|).
+  //
+  // For |x| ≥ 3, `2·exp(x²)` is at least `2·exp(9) ≈ 16200` and grows
+  // doubly-exponentially with |x|; `erfcx(|x|) ≈ 1/(|x|√π)` stays below 1.
+  // The subtraction is `huge - small` — *zero* cancellation, the result
+  // is dominated by `2·exp(x²)` to many digits.  This is the correct
+  // large-negative behaviour of erfcx: the function blows up as
+  // `2·exp(x²)` for x → -∞.
+  //
+  // Working precision: 32 bits of headroom for the final subtraction
+  // is sufficient because magBits(2·exp(x²)) ≫ magBits(erfcx(|x|))
+  // (no cancellation between the two operands).
+  const work = prec + 32;
+  const xSquared = mul(x, x, work);
+  const expXSquared = exp(xSquared, work);
+  const twoExpXSquared = mul(fromInt(2n, work), expXSquared, work);
+  const erfcxAbs = bigErfcxAsymptotic(absX, work);
+  const result = sub(twoExpXSquared, erfcxAbs, work);
+  return normalise(result.mantissa, result.exponent, prec);
 }

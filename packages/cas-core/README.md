@@ -64,6 +64,38 @@ honestly via `CasDiffOutOfScopeError` — same boundary tag foreign
 heads take. See `tools/cas-diff/README.md` for the per-head DLMF-cited
 rule table.
 
+## Erf-family identity table (bead `bfwt`, worklog 134)
+
+`packages/cas-core/src/special-funcs/erf-identities.ts` is the symbolic
+identity table for the five Erf-family heads — `Erf`, `Erfc`, `Erfi`,
+`InverseErf`, `InverseErfc`. It ports R1's 38-rule catalogue
+(`docs/refs/erf-research/R1-symbolic-identities.md`) to the cas-core
+AST and ships the v0.1-shippable subset (19 distinct rules covering
+the 22 R1 §11 rule slots — special values, parity / odd symmetry, and
+the Erfi → Erf canonicaliser per A3 / SymPy:erfi).
+
+`tryErfSimplify(head, args)` is the per-head dispatcher. The companion
+`collapseErfComplementPairs(summands)` runs as a sum-walker inside
+`casSimplify` to collapse the cross-head identity `Erfc(z) + Erf(z) →
+1` — the load-bearing end-to-end behaviour the dispatcher must
+support (R1 §3 A1). The integration hook lives in
+`packages/cas-core/src/simplify.ts`'s `applyErfRewrites` walker, which
+runs bottom-up before the RatFn fold so the rewritten output composes
+cleanly with the existing rational-function canonicalisation pipeline.
+
+Encoding conventions worth knowing about (the file's top-of-module
+narrative is the source of truth):
+- `√π` is `mkPower(sym("pi"), rat(1n, 2n))` per ADR-0040 §"Decision 6"
+  (matches `ruleErfi`; the older `ruleErf` uses `expr("sqrt", [sym("pi")])`
+  — the unification is filed as a separate cas-core bead).
+- The imaginary unit `i` is `sym("I")` — a bare distinguished symbol.
+  cas-core has no `complex` head, no `Q[i]` value-level encoding, and
+  no first-class `i` in the elementary vocab; the bare-symbol choice
+  is the cheapest viable encoding for v0.1 and is documented in the
+  module's top narrative.
+- `+∞` is `sym("infinity")`, `−∞` is `mkNeg(sym("infinity"))` (R1 §11.1
+  literal-of-record).
+
 ## Public surface (selected)
 
 ```ts
