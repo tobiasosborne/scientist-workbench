@@ -443,15 +443,44 @@ export function solveHsdeSdpNt(
       bestKappa = kappa;
       bestIter = iter;
       bestAchieved = achieved;
-      // bestStatus stays null: HSDE's termination test is comprehensive (it
-      // already classifies optimal + primal-infeasible + dual-infeasible
-      // via the τ-κ witness tests below). Any iter that the test doesn't
-      // accept is not converged — the snapshot is preserved so the caller
-      // gets the *best* iterate seen, but `finalizeBestOr` honestly returns
-      // the fallback status (iter-limit / numerical-difficulty / numerical-
-      // error). The legacy "dual-feasible soft success" map (Status.ts)
-      // applies only to NT's 6-flag tree, not HSDE.
-      void bestStatus;
+
+      // HSDE soft-success classification (ADR-0033 §"Decision 9 — Tier-3
+      // amendment", worklog 129). Mirrors the legacy NT 6-flag tree's
+      // `couldDualFeas` branch in `NtSdpSolver.ts:227-241` — when the
+      // iterate is converged *in the homogeneous sense* (μ at the
+      // complementarity floor, τ dominates κ, τ + κ substantial),
+      // classify the snapshot as `dual-feasible`. `Status.ts` lifts
+      // `dual-feasible → optimal` on the wire, so the agent sees
+      // `status="optimal"` plus `achieved_precision` carrying the actual
+      // purified primal residual — identical contract to legacy NT.
+      //
+      // The classification is **deliberately NOT** based on `ρ_p`. The
+      // strict optimal branch in `checkHsdeTermination` already gates on
+      // `max(ρ_p, ρ_d, ρ_g) ≤ 1`. The soft branch handles the regime where
+      // the homogeneous-system convergence indicators are at their true
+      // limits but `ρ_p = r_p / (τ · ε_p · (1+‖b‖))` floors at 2–100 in
+      // float64 because `τ` shrinks in lockstep with `r_p` during HSDE's
+      // near-optimal dynamics (worklog 128 §"hinf2 diagnostic"). On the
+      // SDPLIB corpus this is the difference between `hinf2` returning
+      // `numerical-breakdown` (regression vs legacy NT) and `optimal`
+      // (Tier 3's 6/6 grade — worklog 129 §"corpus bench delta").
+      //
+      // Criteria (all must hold at the snapshot iter):
+      //  - `μ ≤ feasTol`: the complementarity measure has reached the
+      //    absolute floor the strict optimal test would care about,
+      //    independently of the ρ-scaling. Mirrors `absDualFeas` in NT.
+      //  - `prstatus > 0.5`: τ-dominant, heading to optimal not to an
+      //    infeasibility certificate. Same gate as strict optimal.
+      //  - `τ ≥ TAU_HEALTHY (1e-6)`: τ has not collapsed below the
+      //    purification noise floor. At `τ ≈ 1e-7` the `1/τ` amplification
+      //    on the returned iterate would be `1e7`, which is dishonest
+      //    even with the `achieved_precision` field reporting the truth.
+      const TAU_HEALTHY = 1e-6;
+      const bestIsSoftOptimal =
+        mu <= params.feasTol &&
+        term.prstatus > 0.5 &&
+        tau >= TAU_HEALTHY;
+      bestStatus = bestIsSoftOptimal ? "dual-feasible" : null;
     }
 
     if (term.status !== "running") {

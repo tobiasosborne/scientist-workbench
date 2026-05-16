@@ -826,14 +826,21 @@ function pickSolver(
 } {
   switch (method) {
     case "auto":
+    case "hsde-nt":
+      // `auto` routes to HSDE+IR (ADR-0033 + Phase 5 Tiers 1–3). On the
+      // SDPLIB corpus's six-case panel HSDE+IR cleanly lifts control2 to
+      // strict optimal (legacy NT returned `dual-feasible` via the
+      // 6-flag soft-success branch) and matches legacy NT on the other
+      // five cases at the corpus verifier's tolerance — see worklog 129
+      // for the bench grade comparison. Legacy `nt` remains reachable
+      // via `--method=nt` for A/B and trace-diff workflows.
+      return { tag: METHOD_TAG_HSDE_NT, solve: solveHsdeSdpNt };
     case "nt":
       return { tag: METHOD_TAG_NT, solve: solveSdpNt };
     case "aho":
       return { tag: METHOD_TAG_AHO, solve: solveSdpAho };
     case "hkm-debug":
       return { tag: METHOD_TAG_HKM, solve: solveSdpHkm };
-    case "hsde-nt":
-      return { tag: METHOD_TAG_HSDE_NT, solve: solveHsdeSdpNt };
   }
 }
 
@@ -1095,8 +1102,8 @@ const example1Output = record({
   x: list([float64FromNumber(5)]),
   dual: list([float64FromNumber(1)]),
   slack: list([float64FromNumber(0)]),
-  iterations: int(3n),
-  method: str(METHOD_TAG_NT),
+  iterations: int(4n),
+  method: str(METHOD_TAG_HSDE_NT),
   condition_estimate: float64FromNumber(0),
   warnings: list([]),
   objective: float64FromNumber(5),
@@ -1116,8 +1123,8 @@ const example2Output = record({
     float64FromNumber(0),
     float64FromNumber(0),
   ]),
-  iterations: int(3n),
-  method: str(METHOD_TAG_NT),
+  iterations: int(4n),
+  method: str(METHOD_TAG_HSDE_NT),
   condition_estimate: float64FromNumber(0),
   warnings: list([]),
   objective: float64FromNumber(-4),
@@ -1249,7 +1256,7 @@ export const def = defineTool({
   flags: {
     method: F.enum(
       ["auto", "nt", "aho", "hkm-debug", "hsde-nt"] as const,
-      "search direction. nt (default): legacy NT; aho: AHO for A/B; hkm-debug: HKM diagnostic; hsde-nt: HSDE-NT (Phase 2 port per docs/HANDOFF_solver_ipm_hsde_part2.md — A/B-grade today, pending Phase 5 iterative refinement for tighter tol on hinf2-class problems)",
+      "search direction. auto (default): hsde-nt (HSDE + iterative refinement, ADR-0033; Phase 5 Tiers 1-3); nt: legacy primal-dual NT (kept for A/B + trace-diff); aho: AHO direction for A/B; hkm-debug: HKM, asymmetric, debug-only; hsde-nt: explicit HSDE selection (identical to auto today)",
       { default: "auto" },
     ),
   },

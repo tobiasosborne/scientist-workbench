@@ -455,6 +455,60 @@ ArbprecHSDE solver ships, not before. The companion ceiling tests
 *are* green and lock in the post-IR precision so a future regression
 is caught.
 
+#### Tier-3 amendment (2026-05-16, bead `lniy`, worklog 129)
+
+Tier 3 ships the `tools/sdp-solve --method=auto → hsde-nt` default
+switch, the soft-success classification that makes HSDE compatible with
+the `sdp-sdplib` corpus's status-consistency expectations, and the
+regenerated success goldens for the new method tag.
+
+**HSDE soft-success classification.** The strict optimal test in
+`checkHsdeTermination` requires `max(ρ_p, ρ_d, ρ_g) ≤ 1` — at the
+float64 floor of `hinf2`/`control3` this never fires, so the trajectory
+returns `numerical-difficulty` (wire `numerical-breakdown`) even though
+the homogeneous-system convergence indicators (μ at the complementarity
+floor, τ-dominant, τ + κ substantial) are at their true limits. Without
+a soft-success branch, the corpus's `status_consistency` check rejects
+both cases — a 1-case regression vs the legacy NT solver (which has
+the COPT-aligned `couldDualFeas` branch in `NtSdpSolver.ts:227-241`).
+
+The HSDE analog, added to the snapshot logic in `HsdeNtSdpSolver.ts`,
+matches legacy NT's shape: classify as `dual-feasible` (a `SolverStatus`
+the existing wire mapping in `Status.ts` already lifts to `optimal`)
+when at the snapshot iter `μ ≤ feasTol AND prstatus > 0.5 AND τ ≥ 1e-6`
+— the same three convergence indicators legacy NT checks. The agent
+sees the same wire contract as for the strict-optimal case: `status =
+"optimal"` plus `achieved_precision` carrying the actual purified ρ-max
+(so the agent who needs `pInf ≤ feasTol` strictly can detect the soft
+case via `achieved_precision > 1`). Deliberately NOT a `ρ_p`-bound
+check: the floor is in `r_p / τ` purification, not in the
+back-substitution residual, so any `ρ_p`-bound K is arbitrary; the
+absolute μ-test is the principled inheritance from legacy NT.
+
+**Corpus bench grade after Tier 3:** 5/6 cases, 64/66 invariants —
+up from the pre-Tier-3 baseline of 5/6, 63/66 (legacy NT default;
+worklog 095). The Tier 3 default-switch lifts `control3` from
+legacy NT's soft-success branch onto HSDE's, and improves `hinf2`
+from failing 3 invariants (`primal_feasibility,
+complementary_slackness, optimality_gap`) to failing 2 (`primal_feas,
+complementary_slackness`). The case-count target of 6/6 remains an
+ArbprecHSDE (Phase 6) gate — `hinf2` purified `pInf ≈ 2e-6` on the
+corpus's svec-scaled wire encoding exceeds the verifier's
+`1e-7 · max(1, ‖b‖_∞)` tolerance regardless of termination
+classification.
+
+**Tool-side surface.** `tools/sdp-solve --method=auto` returns
+`method=solver-ipm-hsde-nt` (verified). `--method=nt` still returns
+`method=solver-ipm-nt` (back-compat). The 6 PSD-success goldens
+regenerate with the new method tag + iter count + ULP-level iterate
+drift (the algorithm differs from legacy NT; the optimum is the same
+within float64). The 8 refusal goldens are byte-identical (refusal
+envelopes are method-independent). `--test` smoke hook passes
+across all three method tags.
+
+Bead `y3qd` (Phase 3 tool wiring, half-shipped in commit `e164046`)
+is superseded by Tier 3's default-switch.
+
 ## Consequences
 
 ### What stays (from the existing solver)
