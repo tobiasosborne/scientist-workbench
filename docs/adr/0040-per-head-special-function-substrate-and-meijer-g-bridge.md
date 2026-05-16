@@ -1,6 +1,6 @@
 # ADR-0040 — Per-head special-function substrate + bidirectional Meijer-G bridge, prototyped via Erf
 
-**Status:** Proposed — 2026-05-16
+**Status:** Implemented — 2026-05-17 (see worklog 142). Originally proposed 2026-05-16.
 **Beads:** `scientist-workbench-43hw` (epic — World-class Erf). Phase 0
 research children all closed: `kvfu` (R1 symbolic identities), `9jpm`
 (R2 arb-prec algorithms), `1i5z` (R3 float64 algorithms), `lnux` (R4
