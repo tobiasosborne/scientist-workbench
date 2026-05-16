@@ -30,6 +30,7 @@ import {
 
   // special functions (real)
   gamma, lgamma, digamma, polygamma,
+  bigErf,                              // real-axis error function (ADR-0040)
 
   // BigComplex API
   cfromReal, cfromInts, cfromStrings, cre, cim, cconj, cisZero,
@@ -220,6 +221,37 @@ Source: `packages/bigfloat/src/complex.ts` (`clgammaReflect`,
 (`describe("clgamma / cdigamma — near-pole reflection precision")`).
 The real-argument reflection paths (`lgammaRealAbs`, `digamma` in
 `special.ts`) carry the same latent cancellation — tracked separately.
+
+## Erf family substrate (ADR-0040)
+
+ADR-0040 pins a per-head special-function substrate architecture; Erf is
+the v0.1 reference implementation. The real-axis arb-prec evaluator
+`bigErf(x: BigFloat, prec: number): BigFloat` is the entry point and
+lives in `src/special-funcs/erf.ts` alongside three package-internal
+substrate primitives:
+
+- `bigErfSeries`             — DLMF 7.6.2 Borel form (all-positive terms).
+  The textbook Maclaurin (DLMF 7.6.1) is *not* used: its alternating
+  signs discard `x² · log₂ e` bits to cancellation when `|x|² > p`. The
+  Borel form has zero alternation and the same convergence rate.
+- `bigErfcAsymptotic`        — DLMF 7.12.1 Poincaré asymptotic with the
+  optimal-truncation idiom (mirrors `lgammaStirling` in `special.ts`).
+- `bigErfcContinuedFraction` — DLMF 7.9.1 Laplace CF via modified Lentz.
+
+The dispatch in `bigErf` is precision-aware: `|x| ≤ x_c(prec) := √(prec ·
+ln 2)` routes to the Borel series; `|x| > x_c` routes to
+`1 − bigErfcAsymptotic(|x|)` (the subtraction is cancellation-free
+because by construction `erfcAsymptotic` is below `2^-prec` past the
+crossover). At prec = 200 bits (≈ 60 dps), `x_c ≈ 11.78`.
+
+The two `bigErfc*` primitives are exported from `erf.ts` but **not**
+re-exported from the package's public surface — they are substrate
+intended for I2's `bigErfc` / `bigErfcx` implementation to hoist on top
+of.
+
+Source: `packages/bigfloat/src/special-funcs/erf.ts`. Tests:
+`packages/bigfloat/test/erf.test.ts` (golden masters vs Wolfram + mpmath
+at 50, 100, 200 dp on the full T1/T2 real-Erf corpus subset).
 
 ## See also
 

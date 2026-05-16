@@ -118,6 +118,10 @@ export {
 } from "./special.js";
 
 export {
+  bigErf,
+} from "./special-funcs/erf.js";
+
+export {
   ln2,
   pi,
   e,
