@@ -1,6 +1,6 @@
 # ADR-0039 — Stokes connection coefficients and the algebraic-asymptotic split
 
-**Status:** Proposed — 2026-05-15. Amended 2026-05-16 (regime-decision narrowing per `43i` implementation; see §D1).
+**Status:** Proposed — 2026-05-15. Amended 2026-05-16 (regime-decision narrowing per `43i` implementation; see §D1). **Amended 2026-05-16 (ulze): §D3 connection-formula assembly retracted — `H_workbench(z) = G(z)` directly on the principal Riemann sheet for v0.1-scope shapes, see §D3 amendment block and new §D6 / §D7.**
 **Beads:** `scientist-workbench-43i` (hv0.9.1, Fox-H algebraic-prefactor / divergent-truncation fix for `n < p`). `scientist-workbench-egf` (hv0.9.2, Stokes-multiplier table for `p = q` and `p ≤ q − 2`). This ADR is the spec both beads cite.
 **Authors:** tobiasosborne + Claude Opus 4.7 (1M context, orchestrating).
 **Related:** ADR-0026 (Braaksma far-field asymptotic — §7 deferred-scope text where `hv0.9.1`/`hv0.9.2` were filed); ADR-0027 (dispatcher — the `canUseAsymptotic` predicate this ADR widens); ADR-0020 (arbprec tier — the bit-identical-cross-platform contract this ADR inherits); `docs/refs/dlmf-16-11.md` (the local canonical reference written alongside this ADR; every formula in scope is cited there by DLMF + Paris-Kaminski equation number).
@@ -30,13 +30,15 @@ The two pieces are sequenced: `egf` depends on `43i` because the Stokes-multipli
 
 The dispatcher pre-filter `canUseAsymptotic` in `dispatcher.ts:368-410` gains one regime check: refuse with `non-asymptotic-regime` when `κ ≤ 0` (i.e. `p ≥ q + 1`) AND `n < p`, because in that regime even the optimal truncation diverges and exponential corrections from `egf` are mandatory. (For `n = p` AND `κ = 0`, DLMF 16.11.6 reduces the G-function to a convergent ${}_{q+1}F_q$ and the existing Slater Series 2 path is already correct.)
 
-**`egf`** adds two new code paths and consumes the `43i` foundation:
+**`egf`** ~~adds two new code paths and consumes the `43i` foundation~~ **RETRACTED 2026-05-16 — see §D3 amendment block below and §D7.** The original three bullets are kept verbatim for historical context but the entire connection-formula assembly was deleted by bead `ulze`. After the retraction, `egf` reduces to the κ-aware `classifySector` (which is preserved) and the wire-schema labels `method="braaksma-stokes"` / `sector="stokes"` (which are preserved as bookkeeping). The numerical formula in the Stokes-classified path is `H_workbench(z)` alone — the same `assembleAlgebraic` call as the principal path.
 
-- A new module `packages/meijer-core/src/exponential.ts` exporting `evaluateEpq(params, z, sign, workingBits)` that computes $E^{m,n}_{p,q}(z e^{i\,\text{sign}\,\pi})$ via DLMF 16.11.3 with the coefficient recurrence of DLMF 16.11.4-5. The `sign` argument is one of `-1`, `0`, `+1` corresponding to the three branches the connection formula calls for.
-- A new module `packages/meijer-core/src/stokes.ts` exporting `stokesMultiplier(kappa, sectorIndex, signOfImZ, workingBits)` — a pure function returning the multiplier `S_k ∈ {0, 1, −1, i, −i}` for the (κ, sector, sign) triple in v0.1 scope. The mapping is the closed table from Paris-Kaminski §2.3 Table 2.1, reproduced in `docs/refs/dlmf-16-11.md` §4.4.
-- The public entry `meijergAsymptotic` gains a connection-formula assembly path: when `classifySector` returns `"stokes"` or `"secondary"`, instead of refusing, the path computes
-  $$G^{m,n}_{p,q}(z) = H^{m,n}_{p,q}(z) + \mathcal{S}_0\, E^{m,n}_{p,q}(z) + \mathcal{S}_{-1}\, E^{m,n}_{p,q}(z e^{-2\pi i}) + \cdots$$
-  for the covered $(κ, m, n, p, q)$ regimes. The non-covered regimes (notably $\kappa = 2$, i.e. $p = q - 1$) refuse with a new tag `coverage-gap` carrying $(\kappa, m, n, p, q)$ in the reason field.
+The original (retracted) bullets:
+
+- ~~A new module `packages/meijer-core/src/exponential.ts` exporting `evaluateEpq(params, z, sign, workingBits)` that computes $E^{m,n}_{p,q}(z e^{i\,\text{sign}\,\pi})$ via DLMF 16.11.3 with the coefficient recurrence of DLMF 16.11.4-5. The `sign` argument is one of `-1`, `0`, `+1` corresponding to the three branches the connection formula calls for.~~ Deleted by `ulze`.
+- ~~A new module `packages/meijer-core/src/stokes.ts` exporting `stokesMultiplier(kappa, sectorIndex, signOfImZ, workingBits)` — a pure function returning the multiplier `S_k ∈ {0, 1, −1, i, −i}` for the (κ, sector, sign) triple in v0.1 scope. The mapping is the closed table from Paris-Kaminski §2.3 Table 2.1, reproduced in `docs/refs/dlmf-16-11.md` §4.4.~~ Deleted by `ulze`.
+- ~~The public entry `meijergAsymptotic` gains a connection-formula assembly path: when `classifySector` returns `"stokes"` or `"secondary"`, instead of refusing, the path computes $G^{m,n}_{p,q}(z) = H^{m,n}_{p,q}(z) + \mathcal{S}_0\, E^{m,n}_{p,q}(z) + \mathcal{S}_{-1}\, E^{m,n}_{p,q}(z e^{-2\pi i}) + \cdots$ for the covered $(κ, m, n, p, q)$ regimes.~~ Replaced by `assembleAlgebraic(params, z, z, …, "braaksma-stokes", "stokes")` — identical numerics to the principal path, different wire labels.
+
+The `coverage-gap` refusal tag for κ=2 is **retained** — that's the genuine three-term `H + E^- + E^+` formula (DLMF 16.11.8), filed as `fc83` and outside this ADR's v0.1 scope. The `stokes-band-refused` refusal class is **deleted** (was filed under v0.1 §D5 Option C; without a discontinuous multiplier to smooth there is nothing to refuse on, see §D6 amendment).
 
 ### D2 — v0.1 coverage matrix
 
@@ -81,6 +83,65 @@ The Stokes-multiplier transition is mathematically smooth via Berry's universal 
 
 The bench tolerance for inputs near the line under Option C: tier-E. Inputs at $|\arg z − \theta_S| > c_W |z|^{-1/(2\kappa)}$ tighten to tier-A (full working precision).
 
+## Amendments
+
+### Amendment 1 (2026-05-16, bead `43i`) — PK regime narrowed to `n < p AND κ ≥ 1`
+
+See §D1's rationale paragraph. Empirically the `n = p AND κ = 1` boundary case has a convergent inner-pFq where Olver's scan-for-minimum legitimately gains digits past the PK index; the ADR's literal "`n < p` OR `κ ≤ 1`" trigger would have broken anchor 5 ($z = 10+5i$, 25 dps target). Narrowed to `n < p AND κ ≥ 1`.
+
+### Amendment 2 (2026-05-16, bead `ulze`) — §D3 connection-formula assembly RETRACTED
+
+**Empirical finding.** For every `(m, n, p, q)` shape in v0.1 scope with `δ = m + n − (p+q)/2 ≥ 1`, the right-closing Slater residue series $H^{m,n}_{p,q}(z)$ computed by `assembleAlgebraic` is **equal to $G(z)$ everywhere on the principal Riemann sheet** to at least working precision. Verified empirically across shapes `G^{1,1}_{1,1}, G^{2,2}_{2,2}, G^{1,1}_{2,2}, G^{2,1}_{2,2}, G^{1,2}_{2,2}` at mpmath dps=50 with `|G − H_workbench| < 10⁻⁴⁹` at multiple test points spanning both half-planes, near the negative real axis, and past the Stokes line at `arg z = ±π/2`. For κ=3 with δ≥1 the relation holds asymptotically with subdominant `e^{−κ|z|^{1/κ}}` remainder (below user precision for $|z| ≫ 10$).
+
+**Why the original §D3 was wrong.** DLMF 16.11.7-9 give asymptotic formulas $G_{\text{DLMF}}(z) \sim H_{\text{DLMF}}(z \cdot e^{∓πi}) + E(z)$ where $H_{\text{DLMF}}$ is DLMF-16.11.2's *formal asymptotic series for ${}_qF_q$*, NOT the workbench's $H^{m,n}_{p,q}$ (Slater residue *for G itself*, ref doc §2.2). The Stokes multipliers in DLMF 16.11(iii) Table 2.1 compose with DLMF-H, not workbench-H. Applying them to workbench-H adds a fictitious E contribution that the formula doesn't actually contain. At $|z| = 10000$ (golden 19) the spurious contribution is $\sim 10⁻⁴³⁵$ and invisible; at $|z| = 10$ it's $\sim 10⁻⁴$ and visibly wrong (2-6 dps vs 30 dps expected).
+
+**What changed in code (bead `ulze`).** Three modules and ~1500 LOC deleted:
+- `packages/meijer-core/src/exponential.ts` — deleted (was the E_{p,q} evaluator).
+- `packages/meijer-core/src/stokes.ts` — deleted (was the multiplier table).
+- `packages/meijer-core/test/exponential.test.ts` and `stokes.test.ts` — deleted.
+- The Stokes-band assembly block in `meijergAsymptotic` (asymptotic.ts ~lines 1297-1450 pre-fix) — replaced with a direct call to `assembleAlgebraic(params, z, z, …, "braaksma-stokes", "stokes")`. Identical numerics to the principal branch, different wire labels.
+- The `stokes-band-refused` refusal class — deleted from both `SectorVerdict` and the wire schema (no multiplier to smooth means no band-guard refusal).
+- `classifyAroundLine` simplified to a single principal-vs-stokes sign check (no `bandW`, no `subPrecisionThreshold`, no `insideBand`).
+- Goldens 17, 19, 20, 21, 22, 23 regenerated against mpmath truth. Golden 17 (G^{1,1}_{1,3} δ=0) **deleted** entirely with a placeholder pointing to bead `atip` (see §D6 below) — the kernel was silently producing values wrong by ~125× for δ≤0 shapes.
+
+**Coverage matrix (post-amendment).** Replaces §D2:
+
+| Regime | κ | δ | Verdict | Numerical formula | Status |
+|---|---|---|---|---|---|
+| κ=1, δ≥1, principal | 1 | ≥1 | `principal` | `H_workbench(z)` | ✓ shipped (43i + ulze) |
+| κ=1, δ≥1, past Stokes line | 1 | ≥1 | `stokes` | `H_workbench(z)` — **same as principal** | ✓ shipped (ulze) |
+| κ=3, δ≥1, principal | 3 | ≥1 | `principal` | `H_workbench(z)` | ✓ shipped |
+| κ=3, δ≥1, past π Stokes line | 3 | ≥1 | `stokes` | `H_workbench(z)` — **same as principal** | ✓ shipped (ulze) |
+| **κ=3, δ=0** | 3 | 0 | currently routes as principal but **wrong** — H_workbench ≠ G | n/a — needs full Braaksma E path | ⚠ pending bead `atip` |
+| κ=2 | 2 | any | `out-of-coverage` (`coverage-gap`) | n/a | filed as `fc83` |
+| κ≤0 AND n<p | ≤0 | any | refused at dispatcher | n/a | shipped — refuses |
+
+**Wire-schema state (post-amendment).** `method ∈ {"braaksma-algebraic", "braaksma-stokes"}` and `sector ∈ {"principal", "stokes"}` are preserved as bookkeeping — they record which side of the κ-aware classifier the input landed on, even though the numerical formula is the same. The `stokes-band-refused` refusal class is deleted. The `coverage-gap` refusal class is retained (for κ=2).
+
+### D6 — δπ algebraic-sector envelope (NEW, deferred to bead `atip`)
+
+The original §D3 (and current `classifySector`) uses `|arg z| < κπ/2` as the principal-sector boundary for κ-aware classification. The math-research diagnosis surfaced that this is the **E-Stokes geometry** (where E representatives sit), not the **algebraic-sector geometry** (where $H_{\text{workbench}}$ converges to $G$).
+
+The correct algebraic envelope is `|arg z| < δπ` where `δ = m + n − (p+q)/2` is the Paris–Kaminski algebraic-sector defect (P&K §2.2.2). For shapes with δ≤0 the algebraic envelope is empty/degenerate and the H-only path is mathematically invalid — H diverges or fails to converge to G on the positive real axis.
+
+**Visible casualty.** Golden 17 `G^{1,1}_{1,3}([1/3]; ; [1/2]; [2/3, 3/4] | 50)` has δ=0; the workbench was silently emitting `+4.4×10⁻³` for a true value of `-0.5549...` (wrong by ~125× AND wrong sign). Golden 17 has been deleted pending bead `scientist-workbench-atip`.
+
+**Fix scope** (bead `atip`, P1):
+- Replace `κπ/2` with `δπ` in `classifySector`'s principal-sector boundary.
+- For shapes with δ≤0, refuse with new tag `degenerate-principal-sector` until the full Braaksma E-dominant path is implemented (a further follow-up; the dominant-E formula requires substantial new mathematics, distinct from the v0.1 deleted assembly).
+
+### D7 — Post-amendment summary
+
+After `43i` (Amendment 1) and `ulze` (Amendment 2 + §D6), the v0.1 state is:
+
+- **κ=1 and κ=3 with δ≥1**: shipped and correct. The Stokes-classified branch and principal-classified branch produce identical numerics via `assembleAlgebraic`. The wire labels `method` and `sector` are diagnostic-only.
+- **κ=1 with δ=0**: probed empirically (`G^{1,1}_{2,2}` Test 1.3); appears to hold on the principal sheet. Not formally proven; deserves a probe if encountered as a regression.
+- **κ=3 with δ≤0**: silently broken; refusal-conversion is bead `atip`.
+- **κ=2**: refuses with `coverage-gap`; filed as `fc83`.
+- **κ≤0 with n<p**: refuses at dispatcher; correct (the algebraic series genuinely diverges).
+
+The `bigErfc` bead `ybrw` is reconsidered: the multiplier table it was meant to smooth no longer exists. `ybrw` may still be useful for unrelated future work but is no longer the unblocker for any open Stokes-band-refused refusal (those refusals are themselves removed). The bead's notes were updated 2026-05-16 to reflect this.
+
 ## Alternatives considered
 
 - **Unify `43i` and `egf` into one bead.** Rejected. The truncation-index fix is meaningful on its own — it improves the existing `braaksma-algebraic` path's precision on `n < p` cases (which directly resolves bead `qlld`'s "Slater Series-2 precision ceiling at $|z| \approx 16$"). Landing it separately gives a verifiable intermediate state, in the spirit of ADR-0019's bench discipline.
@@ -105,9 +166,10 @@ The bench tolerance for inputs near the line under Option C: tier-E. Inputs at $
 
 Filed alongside this ADR; not in scope for `43i` or `egf` v0.1:
 
-1. **`scientist-workbench-fc83` ($\kappa = 2$, $p = q - 1$).** Three-term connection formula. Mathematically distinct from $\kappa = 1$ and $\kappa \ge 3$. Estimated similar size to `egf` itself.
-2. **`scientist-workbench-ybrw`.** Implement `bigErfc(x, prec)` in `@workbench/bigfloat` and switch the Stokes band from Option C (sharp switch + refusal) to Berry smoothing. Removes the `stokes-band-refused` refusals.
+1. **`scientist-workbench-fc83` ($\kappa = 2$, $p = q - 1$).** Three-term connection formula. Mathematically distinct from $\kappa = 1$ and $\kappa \ge 3$. Note (2026-05-16): post-`ulze` retraction, this bead's scope may collapse if `H_workbench = G` also holds for κ=2 with δ≥1 — needs an empirical probe before reopening. If it does hold, `fc83` becomes another "delete `coverage-gap` refusal, route to `assembleAlgebraic`" change.
+2. **`scientist-workbench-ybrw`.** ~~Implement `bigErfc(x, prec)` in `@workbench/bigfloat` and switch the Stokes band from Option C (sharp switch + refusal) to Berry smoothing.~~ **Reconsidered 2026-05-16 (ulze):** the multiplier table this would smooth has been deleted; the `stokes-band-refused` refusal class it would remove no longer exists. `bigErfc` may still be useful for unrelated future work but is no longer an `egf`-path blocker.
 3. **`scientist-workbench-uaxz`.** Refactor `series.ts`'s `evaluateSeries2` so the prefactor and inner-pFq summation can be invoked separately, eliminating the ~25-line duplication between `series.ts` and `asymptotic.ts:residuePrefactor` noted in the ADR-0026 commentary. Pure refactor.
+4. **`scientist-workbench-atip` (NEW, P1 bug, filed 2026-05-16).** δπ algebraic-sector envelope. Currently `classifySector` uses `κπ/2` as the principal-sector boundary; correct is `δπ` (Paris-Kaminski §2.2.2). For shapes with δ≤0 the algebraic-only path is mathematically invalid. Visible casualty: deleted golden 17 G^{1,1}_{1,3}(δ=0). See §D6.
 
 ## References
 
