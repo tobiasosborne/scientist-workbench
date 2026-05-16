@@ -64,6 +64,7 @@ import { def as registryListDef } from "../../../../tools/registry-list/tool.js"
 import { def as registrySearchDef } from "../../../../tools/registry-search/tool.js";
 import { def as sdpSolveDef } from "../../../../tools/sdp-solve/tool.js";
 import { def as solveDef } from "../../../../tools/solve/tool.js";
+import { def as specialEvalDef } from "../../../../tools/special-eval/tool.js";
 import { def as sturmControlledDef } from "../../../../tools/sturm-controlled/tool.js";
 import { def as sturmEquivalentDef } from "../../../../tools/sturm-equivalent/tool.js";
 import { def as sturmExecuteDef } from "../../../../tools/sturm-execute/tool.js";
@@ -120,6 +121,7 @@ export interface TypedWorkbench extends Workbench {
   registrySearch(input: InputOf<typeof registrySearchDef>, flags?: FlagsArgOf<typeof registrySearchDef>): Promise<OutputOf<typeof registrySearchDef>>;
   sdpSolve(input: InputOf<typeof sdpSolveDef>, flags?: FlagsArgOf<typeof sdpSolveDef>): Promise<OutputOf<typeof sdpSolveDef>>;
   solve(input: InputOf<typeof solveDef>, flags?: FlagsArgOf<typeof solveDef>): Promise<OutputOf<typeof solveDef>>;
+  specialEval(input: InputOf<typeof specialEvalDef>, flags?: FlagsArgOf<typeof specialEvalDef>): Promise<OutputOf<typeof specialEvalDef>>;
   sturmControlled(input: InputOf<typeof sturmControlledDef>, flags?: FlagsArgOf<typeof sturmControlledDef>): Promise<OutputOf<typeof sturmControlledDef>>;
   sturmEquivalent(input: InputOf<typeof sturmEquivalentDef>, flags?: FlagsArgOf<typeof sturmEquivalentDef>): Promise<OutputOf<typeof sturmEquivalentDef>>;
   sturmExecute(input: InputOf<typeof sturmExecuteDef>, flags?: FlagsArgOf<typeof sturmExecuteDef>): Promise<OutputOf<typeof sturmExecuteDef>>;
@@ -271,6 +273,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     solve(input, flags) {
       return workbench.run("solve", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof solveDef>>;
     },
+    specialEval(input, flags) {
+      return workbench.run("special-eval", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof specialEvalDef>>;
+    },
     sturmControlled(input, flags) {
       return workbench.run("sturm-controlled", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof sturmControlledDef>>;
     },
@@ -357,6 +362,7 @@ export const defs = {
   registrySearch: registrySearchDef,
   sdpSolve: sdpSolveDef,
   solve: solveDef,
+  specialEval: specialEvalDef,
   sturmControlled: sturmControlledDef,
   sturmEquivalent: sturmEquivalentDef,
   sturmExecute: sturmExecuteDef,

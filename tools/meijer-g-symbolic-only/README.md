@@ -126,6 +126,43 @@ produces a wrong value (sign error, factor of 2, wrong exponent) is
 caught immediately at the unit-test level, not just in the bench. This
 keeps the rule table honest under refactoring.
 
+## Closure validation (Erf-family bridge round-trip)
+
+`erf-closure.test.ts` (bead `scientist-workbench-el7c`, ADR-0040 Phase 3
+Tier 4) is a complementary structural-layer test: for every dispatch
+rule in `dispatch-rules/` that emits an Erf-family named head (`Erf`,
+`Erfc`, `Erfi`), the test runs the dispatcher, extracts the emitted
+head + args from the AST (peeling off `cas-simplify/out-of-scope`
+wrappers), feeds those back through I6's `headToMeijerG` forward bridge
+in `packages/meijer-core/src/bridges/erf.ts`, and asserts the bridge
+emits the canonical R4 §1 G-form for the recovered head. This closes the
+loop: dispatcher → named head → bridge → G-form, all four rules round-
+trip cleanly today (4/4 closure, 0 findings).
+
+Notable structural nuances the test pins as invariants:
+
+- **Form A / Form B coexistence (R4 §1.a) is by design, not a finding.**
+  The `dlmf-16-18-erf` rule emits Form B's `√π · Erf(√z)`; the bridge
+  re-emits Form A's G-form for the recovered `Erf(√z)`. The two are
+  related by the slot-shift identity `z^{1/2}·G_FormA = G_FormB` but
+  encode *distinct* Meijer G-functions on the wire. Tested as an
+  explicit coexistence assertion (the bridge's slot tuple is Form A's,
+  not Form B's).
+- **The Erfi rule's dispatcher output canonicalises to Erf via the I4
+  identity A3** (`Erfi(z) → −i · Erf(iz)`, worklog 134). The closure
+  thus runs `headToMeijerG("Erf", [I · √u])`, NOT `headToMeijerG("Erfi",
+  ...)`. The bridge passes the `I`-bearing args through verbatim —
+  closure remains intact.
+- **The frozen `RULE_PROBES` inventory** at the top of `erf-closure.test.ts`
+  enumerates every Erf-emitting rule. Adding a new rule without adding a
+  probe row fails the inventory test — coverage discipline by
+  construction. This is the extension point when future PBM Vol 3 §8.4
+  or Wolfram Functions Site Erf shards land.
+
+The closure test layer is in addition to (not a replacement for) the
+mpmath numerical re-validation and the per-bridge structural tests in
+`bridges-erf.test.ts`.
+
 ## Standard flags
 
 `--schema --examples --invariants --version --help --provenance-of <hash> --test`

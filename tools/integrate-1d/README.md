@@ -31,11 +31,18 @@ const r = gaussKronrodAdaptive(Math.sin, 0, Math.PI);
 ```
 
 The integrand `f` is a `Value` tree over the closed vocabulary admitted
-by `@workbench/quadrature`'s `evalNumericExpr`:
+by `@workbench/quadrature`'s `evalNumericExprWithSpecial` (the
+Erf-aware sibling of the elementary evaluator — ADR-0040 §"Decision
+4", bead `scientist-workbench-3ynw` / I5 `xiry`, worklog 133 + 138):
 
-- **Heads:** `+`, `-`, `*`, `/`, `^`, `neg`, `exp`, `sin`, `cos`,
-  `tan`, `log`, `sqrt`, `abs`, `asin`, `acos`, `atan`, `sinh`, `cosh`,
-  `tanh`, `asinh`, `acosh`, `atanh`, `log2`, `log10`.
+- **Elementary heads:** `+`, `-`, `*`, `/`, `^`, `neg`, `exp`, `sin`,
+  `cos`, `tan`, `log`, `sqrt`, `abs`, `asin`, `acos`, `atan`, `sinh`,
+  `cosh`, `tanh`, `asinh`, `acosh`, `atanh`, `log2`, `log10`.
+- **Erf-family heads** (ADR-0040 §"Decision 4"; substrate
+  `packages/quadrature/src/special-funcs/erf-float64.ts`): `Erf`,
+  `Erfc`, `Erfcx`, `Erfi`, `InverseErf`, `InverseErfc`. All unary;
+  argument may be any closed-vocabulary subexpression (so
+  `Erf(sin(x))`, `Erf(x)·exp(-x²)`, and `sin(Erf(x))` are all valid).
 - **Constants:** `pi`, `e`.
 - **Numeric leaves:** `integer`, `rational`, `float64`.
 - **Variable:** any `symbol` matching the `var` field; other symbols
@@ -133,8 +140,10 @@ Ch. 5).
 - Vector-valued or complex integrands.
 - Higher-dimensional integration (cubature).
 - Symbolic anti-derivatives.
-- Integrand vocabulary beyond the admitted heads / constants —
-  extension is additive when motivated.
+- Integrand vocabulary beyond the elementary heads ∪ Erf-family
+  ∪ constants — extension is additive when motivated (per ADR-0040
+  §"Decision 4", future per-head ADRs extend the dispatcher's
+  `SPECIAL_HEADS` list).
 - Cross-platform bit-identity guarantee. ADR-0015's `numerical: true`
   applies: the tool's output bytes are bit-identical *given the
   platform fingerprint* `{arch, os, runtime}`. The fingerprint is

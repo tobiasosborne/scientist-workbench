@@ -8,7 +8,14 @@
 // the precedent; ADR-0015 is the determinism contract this tool opts
 // into). Computes `∫_a^b f(x) dx` for a finite real interval and a
 // closed-vocabulary integrand expression. Wire wrapper around
-// `@workbench/quadrature`'s `gaussKronrodAdaptive` + `evalNumericExpr`.
+// `@workbench/quadrature`'s `gaussKronrodAdaptive` +
+// `evalNumericExprWithSpecial` (the Erf-aware sibling of the
+// elementary evaluator — ADR-0040 §"Decision 4", bead 3ynw / I5
+// `xiry`, worklog 133). The Erf-family heads (`Erf`, `Erfc`, `Erfcx`,
+// `Erfi`, `InverseErf`, `InverseErfc`) are admitted in the integrand
+// in addition to the elementary vocabulary; nothing else about the
+// tool's shape changes — same Gauss-Kronrod driver, same output
+// record, same boundary-tag classes.
 //
 // What makes this tool agent-honest (the load-bearing design choice):
 // the output is *not* just `value`. It is a record carrying everything
@@ -63,8 +70,13 @@
 //   * Vector-valued or complex integrands.
 //   * Higher-dimensional integration (cubature).
 //   * Symbolic anti-derivatives.
-//   * Integrand vocabulary beyond + - * / ^ neg exp sin cos tan log
-//     sqrt abs and constants pi, e — extension would be additive.
+//   * Integrand vocabulary beyond the elementary heads (+ - * / ^ neg
+//     exp sin cos tan log sqrt abs asin acos atan sinh cosh tanh asinh
+//     acosh atanh log2 log10) ∪ Erf-family (Erf Erfc Erfcx Erfi
+//     InverseErf InverseErfc) and constants pi, e — extension is
+//     additive per ADR-0040 §"Decision 4" (further per-head ADRs
+//     extend `SPECIAL_HEADS` without re-touching the integrand
+//     evaluator's shape).
 //
 // Algorithm
 // ---------
@@ -92,9 +104,9 @@ import {
 } from "@workbench/protocol";
 import { defineTool, runTool } from "@workbench/contract";
 import {
-  ADMITTED_HEADS,
   ADMITTED_CONSTANTS,
-  evalNumericExpr,
+  ADMITTED_HEADS_WITH_SPECIAL as ADMITTED_HEADS,
+  evalNumericExprWithSpecial as evalNumericExpr,
   gaussKronrodAdaptive,
   QuadratureNonFiniteError,
   UnknownVocabularyError,
@@ -110,9 +122,11 @@ const VERSION = "0.1.0";
 //
 // The integrand `f` is declared `S.any()` because a closed-form
 // vocabulary check inside a recursive schema would be redundant with
-// the per-node check in `evalNumericExpr`. The semantic check is
-// done on first evaluation: an unknown head produces a `ToolError`
-// with the admitted-vocabulary suggestion baked in.
+// the per-node check in `evalNumericExprWithSpecial`. The semantic
+// check is done on first evaluation: an unknown head produces a
+// `ToolError` with the admitted-vocabulary suggestion baked in (the
+// suggestion lists the elementary heads plus the Erf-family heads
+// from ADR-0040 §"Decision 4").
 
 const inputSchema = S.record({
   f: S.any(),
@@ -242,6 +256,26 @@ export const def = defineTool({
       ),
       output: encodeSuccess(
         gaussKronrodAdaptive((x: number) => Math.exp(-100 * (x - 0.5) ** 2), 0, 1),
+      ),
+    },
+    {
+      description: "∫_0^1 Erf(x) dx = Erf(1) + (e^{-1} - 1)/√π ≈ 0.486065 (closed form: DLMF §7.7.9; vocabulary extension per ADR-0040 §\"Decision 4\")",
+      input: inp(expr("Erf", [sym("x")]), "x", 0, 1),
+      output: encodeSuccess(
+        gaussKronrodAdaptive(
+          (x: number) => {
+            // erfFloat64 inlined via @workbench/quadrature's special
+            // dispatcher is what the tool actually invokes at runtime;
+            // for the example oracle we forward through the same
+            // dispatcher to keep the example output byte-identical to
+            // the tool's own output (otherwise `bun run check`'s
+            // examples-vs-fn equality phase would surface a mismatch).
+            const env = new Map<string, number>([["x", x]]);
+            return evalNumericExpr(expr("Erf", [sym("x")]), env);
+          },
+          0,
+          1,
+        ),
       ),
     },
     {
