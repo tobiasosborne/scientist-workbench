@@ -24,7 +24,7 @@
 // `tools/integrate-1d`'s import graph minimal and makes the
 // special-function dispatch a separately-versioned surface.
 //
-// Phase 3 status (bead 3ynw / T1, worklog 138)
+// Phase 3 status (bead 3ynw / T1, worklog 140)
 // --------------------------------------------
 // `tools/integrate-1d` now consumes THIS dispatcher (re-exported as
 // `evalNumericExprWithSpecial` from the package barrel) so that

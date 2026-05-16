@@ -33,7 +33,7 @@ const r = gaussKronrodAdaptive(Math.sin, 0, Math.PI);
 The integrand `f` is a `Value` tree over the closed vocabulary admitted
 by `@workbench/quadrature`'s `evalNumericExprWithSpecial` (the
 Erf-aware sibling of the elementary evaluator — ADR-0040 §"Decision
-4", bead `scientist-workbench-3ynw` / I5 `xiry`, worklog 133 + 138):
+4", bead `scientist-workbench-3ynw` / I5 `xiry`, worklog 133 + 140):
 
 - **Elementary heads:** `+`, `-`, `*`, `/`, `^`, `neg`, `exp`, `sin`,
   `cos`, `tan`, `log`, `sqrt`, `abs`, `asin`, `acos`, `atan`, `sinh`,
