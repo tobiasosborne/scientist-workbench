@@ -8,5 +8,9 @@
     "@workbench/contract": "workspace:*",
     "@workbench/bigfloat": "workspace:*",
     "@workbench/quadrature": "workspace:*"
+  },
+  "devDependencies": {
+    "@workbench/cas-core": "workspace:*",
+    "@workbench/meijer-core": "workspace:*"
   }
 }
