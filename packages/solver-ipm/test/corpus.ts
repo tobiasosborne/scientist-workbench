@@ -14,6 +14,11 @@
 // The corpus suites used here:
 //   - `benchmarks/lp-netlib/golden/{inputs,expected}.json`
 //   - `benchmarks/lp-small/golden/{inputs,expected}.json`
+//   - `data/sdp-sdplib/raw/<case>.dat-s` (loaded via `loadSdplibCase`)
+//     — the SDPLIB SDPA-sparse fixtures used by the HSDE precision
+//     tests; lives under `data/`, not `benchmarks/`, because the
+//     corpus repo treats it as raw source rather than a gold-graded
+//     suite (the grading pass lives in the corpus's own CLI).
 
 import { existsSync, readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
@@ -55,4 +60,18 @@ export function loadSuite<TInput>(
   const expByCase: Record<string, { status: string; objective?: number; tol_rel?: number }> = {};
   for (const c of expected.cases) expByCase[c.id] = c.expected;
   return { cases: inputs.cases, expByCase };
+}
+
+/** Read an SDPLIB `.dat-s` fixture from the sibling corpus by case id
+ *  (e.g. `"hinf2"`, `"control3"`). Returns the raw SDPA-sparse text, or
+ *  `null` if the corpus checkout (or that specific case) is missing —
+ *  same skip-not-fail discipline as `loadSuite`. Parsing into
+ *  `SdpProblem` is the caller's job (one line via `parseSdpaSparse` +
+ *  `convertSdpaToSdp`) so the helper stays I/O-only. */
+export function loadSdplibRaw(caseId: string): string | null {
+  const corpus = resolveCorpusPath();
+  if (corpus === null) return null;
+  const path = resolve(corpus, "data", "sdp-sdplib", "raw", `${caseId}.dat-s`);
+  if (!existsSync(path)) return null;
+  return readFileSync(path, "utf-8");
 }

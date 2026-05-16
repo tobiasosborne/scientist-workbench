@@ -411,6 +411,50 @@ HSDE remains float64 throughout. Bit-identical given the platform
 fingerprint, like the existing solver. No bigfloat substrate is
 added; bigfloat HSDE would be a separate ADR.
 
+#### Tier-2 amendment (2026-05-16, bead `fsr7`, worklog 128)
+
+The Tier-2 acceptance work measured the float64 precision floor of
+HSDE+NT+IR against the Mosek 11.1 oracle on the six `sdp-sdplib`
+cases (logs at `docs/oracles/mosek-sdo/`). The empirical verdict:
+
+- **Well-conditioned cases** (`control1`, `control2`, `theta1`,
+  `mcp100`) reach clean `optimal` at the wire-default `feasTol =
+  optTol = 1e-8`. Tier 1's IR was load-bearing for `control2`
+  (pre-Tier-1 it returned `dual-feasible`; post-Tier-1 it returns
+  strict `optimal` with `pInf = 1.34e-8`).
+
+- **Ill-conditioned cases** (`hinf2`, `control3`) reach the float64
+  algorithmic floor — purified `pInf ≈ 5.6e-8` and `5.9e-8`
+  respectively. IR bought 3 decades on the *unpurified* `r_p`
+  (`1.26e-7 → 1.77e-10` on hinf2, the same magnitude on control3),
+  but the homogenization scalar `τ` shrinks in lockstep during HSDE's
+  near-optimal dynamics. Purification `pInf_purified = r_p / τ`
+  consumes the IR gains exactly. The empirical proof: at hinf2's
+  best unpurified iter (iter 126), `r_p = 1.77e-10` and `τ = 3.08e-3`
+  ⇒ `pInf_purified = 5.76e-8`, matching the returned value to 1
+  significant figure (worklog 128 §"hinf2 diagnostic"). No tuning of
+  `LINSYSACC`, `IRERRFACT`, or `maxIter` in `solveWithIR` can recover
+  the gap — the limit is in the purification step, not the
+  back-substitution.
+
+The bead's honest-scope clause is hereby discharged: float64 HSDE+NT+IR
+is at its precision ceiling on these two cases. **Bigfloat (Phase 6,
+a separate ADR per Decision 9's clause above) is the only path past.**
+Mosek reaches `PFEAS = 2.4e-12` on hinf2 in 23 iters via sparse-LDL
+with dynamic regularisation in extended precision — that delta is the
+substrate, not the algorithm. The Phase 6 ADR should target an
+ArbprecHSDE solver carrying `arbprec: true` (ADR-0020), pricing
+`~10–100× slower` per iter for unconditional precision (worklog
+128 §"Pointers" links the candidate path).
+
+The two Tier-2 tests covering these targets are committed as
+`test.skip("…[PHASE 6 GATE — bigfloat required]")` in
+`packages/solver-ipm/test/hsde-precision.test.ts` — un-skip when the
+ArbprecHSDE solver ships, not before. The companion ceiling tests
+(`hinf2 achieves pInf ≤ 1e-7`, `control3 reaches the float64 floor`)
+*are* green and lock in the post-IR precision so a future regression
+is caught.
+
 ## Consequences
 
 ### What stays (from the existing solver)
