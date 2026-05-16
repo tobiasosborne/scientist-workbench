@@ -63,7 +63,9 @@ Public API:
 | `selectSeries`        | The (p, q, m, n, |z|) selection rule alone.                              |
 | `detectCoalescence`   | Integer-spaced-pair detection across the parameter sub-tuples.           |
 | `perturbParameters`   | The deterministic odd-coefficient perturbation.                          |
-| Type exports          | `MeijerGParameters`, `MeijerGSlaterOptions`, `MeijerGContourOptions`, `MeijerGAsymptoticOptions`, `MeijerGSymbolicParams`, `DispatchResult`, `ReductionRule`, `PatternSpec`, all result discriminants. |
+| `headToMeijerG`       | **Forward bridge** (ADR-0040 §"Decision 5"). Given a head + args, returns the canonical `MeijerGForm` + prefactor `wrap` + `zInverse` closure for byte-identical round-trip; or `null` for honestly-refused heads (`InverseErf`, `InverseErfc`). v0.1: Erf, Erfc, Erfi. |
+| `meijerGToHead`       | **Standalone backward bridge** (ADR-0040 §"Decision 5"). Pattern-matches a `MeijerGForm` against the canonical Erf-family shapes; emits `{head, args}` or `null`. The Erf/Erfi disambiguation rides on the z-slot sign. |
+| Type exports          | `MeijerGParameters`, `MeijerGSlaterOptions`, `MeijerGContourOptions`, `MeijerGAsymptoticOptions`, `MeijerGSymbolicParams`, `DispatchResult`, `ReductionRule`, `PatternSpec`, `MeijerGForm`, `ForwardBridge`, all result discriminants. |
 
 ## Dispatch layer (Layer 4)
 
@@ -99,6 +101,63 @@ the shipping shard.
 The `no-known-reduction` envelope (per ADR-0003 boundary-failure
 contract) lets callers route to the numerical paths
 (`meijergSlater` / `meijergContour`) without ambiguity.
+
+## Bridge layer (head ↔ Meijer-G, per-head, ADR-0040 §"Decision 5")
+
+Per-head bidirectional bridges live under `src/bridges/<head>.ts`,
+sibling to `src/dispatch-rules/`. Each bridge ships a forward direction
+(`headToMeijerG(head, args)`) emitting the canonical G-form per the
+literature-pinned table, and a standalone backward direction
+(`meijerGToHead(form)`) pattern-matching G-forms back to heads. The
+forward bridge returns a `ForwardBridge` record carrying the G-form, a
+prefactor `wrap` closure, and the load-bearing `zInverse` closure that
+recovers the head's original arguments byte-identically — sidestepping
+the multi-valued `√(z²)` problem inherent in the naive backward path
+(see R4 §3.b in `docs/refs/erf-research/R4-meijer-g-bridge.md`).
+
+The Erf family (`Erf`, `Erfc`, `Erfi`) ships as v0.1 (bead `tc2c`,
+worklog 137). The inverse-erf heads (`InverseErf`, `InverseErfc`) are
+**honestly refused on both directions** — no Meijer-G representation
+exists in the literature per DLMF §7.17.
+
+```ts
+import { headToMeijerG, meijerGToHead } from "@workbench/meijer-core";
+import { sym } from "@workbench/protocol";
+
+const z = sym("z");
+const fwd = headToMeijerG("Erf", [z]);
+// fwd = {
+//   gForm: { an: [1/2], ap: [], bm: [0], bq: [-1/2], z: z² },
+//   wrap: g => (z / √π) · g,
+//   zInverse: () => [z],
+// }
+
+// Round-trip via the forward closure (byte-identical):
+const args = fwd!.zInverse();    // [z], byte-identical to the input
+
+// Standalone backward path on an arbitrary G-form:
+const bwd = meijerGToHead({
+  an: [{ kind: "rational", num: "1", den: "2" }],
+  ap: [],
+  bm: [{ kind: "integer", value: "0" }],
+  bq: [{ kind: "rational", num: "-1", den: "2" }],
+  z: sym("u"),
+});
+// bwd = { head: "Erf", args: [√u] }
+```
+
+Erf and Erfi share an identical Meijer-G parameter tuple — the z-sub
+sign (`z²` vs `−z²`) is the only discriminator. The dispatcher honours
+this via the additive `PatternSpec.zMatch?` predicate (a minimal
+extension that defaults absent → "match every z", so every legacy rule
+fires exactly as before).
+
+The bridge's three new dispatch rules (`erf-bridge-form-a`,
+`erfc-bridge`, `erfi-bridge`) sit alongside the existing
+`dlmf-16-18-erf` (Form B Erf reduction). Form A and Form B are *distinct*
+Meijer G-functions; both backward paths coexist. ADR-0040 §"Decision 5"
+and R4 §1.a pin the choice of Form A (SymPy / diofant / PBM canonical)
+as the forward bridge's canonical output.
 
 ## Asymptotic layer (Layer 6, v0.1)
 

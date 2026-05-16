@@ -132,12 +132,24 @@ keeps the rule table honest under refactoring.
 
 ## Coverage
 
-v0.1 ships ≥30 reduction rules across two files:
+v0.1 ships ≥30 reduction rules across five files:
 
 | File | Source | Rule count (v0.1) |
 |---|---|---|
 | `dispatch-rules/bateman-5-6.ts` | Bateman §5.6 pp. 215–222 | 27 |
 | `dispatch-rules/dlmf-16-18.ts` | DLMF §16.17–§16.18 | 6 |
+| `dispatch-rules/erf-forward-form-a.ts` | R4 §1 (PBM / SymPy / diofant canonical Erf Form A) | 1 |
+| `dispatch-rules/erfc-forward.ts` | R4 §1.c (PBM / SymPy / diofant canonical Erfc) | 1 |
+| `dispatch-rules/erfi-forward.ts` | R4 §1.b + §2.5.1 (SymPy / diofant canonical Erfi) | 1 |
+
+The Erf-family bridge rules (bead `tc2c` / worklog 137) ship as part
+of ADR-0040's per-head substrate prototype, paired with the forward
+bridge in `packages/meijer-core/src/bridges/erf.ts`. Form A.Erf coexists
+with the older Form B (`dlmf-16-18-erf`) — both are valid backward
+reductions of distinct Meijer G-functions per R4 §1.a. The Erfi rule
+uses the additive `PatternSpec.zMatch?` extension to disambiguate
+against Erf at the dispatcher level (Erf and Erfi share identical
+parameter tuples; only the z-substitution sign distinguishes them).
 
 The full Bateman §5.6 has ~50 entries; PBM Vol 3 §8.4 has ~600;
 Wolfram Functions Site has 1363 across 14 categories. The remainder

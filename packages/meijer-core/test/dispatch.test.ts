@@ -416,11 +416,18 @@ describe("dispatch — every rule has a citation", () => {
     for (const rule of ALL_RULES) {
       expect(rule.id.length).toBeGreaterThan(0);
       expect(rule.source.length).toBeGreaterThan(0);
-      // Source must contain either "Bateman" or "DLMF" — the two
-      // primary-literature anchors present in v0.1.
+      // Source must contain one of the recognised primary-literature
+      // anchors. v0.1 started with Bateman + DLMF; the Erf-family
+      // bridge (bead `tc2c` / worklog 137) adds PBM (Prudnikov-
+      // Brychkov-Marichev Vol 3 §8.4 — the canonical Meijer-G integral
+      // table for the Erf-family G-forms that DLMF §16.18 Examples
+      // doesn't cover) and R4 (the local literature-cited research
+      // artefact `docs/refs/erf-research/R4-meijer-g-bridge.md`).
       const isBateman = rule.source.includes("Bateman");
       const isDlmf = rule.source.includes("DLMF");
-      expect(isBateman || isDlmf).toBe(true);
+      const isPbm = rule.source.includes("PBM");
+      const isR4 = rule.source.includes("R4");
+      expect(isBateman || isDlmf || isPbm || isR4).toBe(true);
     }
   });
 
