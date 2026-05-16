@@ -168,16 +168,18 @@ export const goldens: GoldenSpec[] = [
       [1, 0, -1, 0, -6],
     ]) },
 
-  // ── boundary categories ──────────────────────────────────────────────────
-  // Non-Hermitian: im is symmetric (should be antisymmetric).
-  { description: "non-Hermitian via symmetric im tagged non-hermitian-input",
+  // ── non-Hermitian → SVD-path success (post-jao0 / ADR-0035 phase 2) ─────
+  // These cases previously refused with tagged "trace-norm/non-hermitian-input";
+  // they now route through svdComplex and produce numerical successes with
+  // method="general-via-svd-complex" and singular_values populated.
+  { description: "non-Hermitian symmetric-im case routes via SVD (was non-hermitian-refusal pre-jao0)",
     input: inp([[0, 1], [1, 0]], [[0, 1], [1, 0]]) },
-  // Non-Hermitian: diagonal has nonzero imaginary.
-  { description: "non-Hermitian via nonzero diagonal imaginary tagged non-hermitian-input",
+  { description: "non-Hermitian nonzero-diagonal-imaginary case routes via SVD",
     input: inp([[1, 0], [0, 0]], [[1, 0], [0, 0]]) },
-  // Non-Hermitian: re asymmetric.
-  { description: "non-Hermitian via re-asymmetric tagged non-hermitian-input",
+  { description: "non-Hermitian real-asymmetric M=[[1,2],[3,4]] routes via SVD",
     input: inp([[1, 2], [3, 4]], [[0, 0], [0, 0]]) },
+
+  // ── boundary categories (remaining tagged refusals) ──────────────────────
   // Non-finite re.
   { description: "non-finite re NaN at re[1][1] tagged non-finite-input",
     input: inp([[1, 2], [2, NaN]], [[0, 0], [0, 0]]) },

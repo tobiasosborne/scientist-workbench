@@ -27,10 +27,24 @@
 //     distinguishable two density operators are" routes through this
 //     scalar.
 //
-// v0.1 ships the **Hermitian-only path** via `eighComplex`; the
-// general (non-Hermitian) case requires `linalg-svd-complex` —
-// ADR-0035 phase 2, filed under `ov4j`. For density operators (the
-// dogfood-named workload) Hermitian is the universe.
+// **Two-path dispatch** (post-`jao0`, worklog 127):
+//   * Hermitian inputs → `eighComplex` (the cheap path; `Σ|λ_k|` is
+//     `O(n)` after the `O(n³)` eigh). The eigenvalues are emitted in
+//     the success record's `eigenvalues` field for downstream planners
+//     that may want to gate on the spectrum signs.
+//   * Non-Hermitian (square) inputs → `svdComplex` (ADR-0035 phase 2,
+//     bead `jao0`). The singular values themselves are the absolute
+//     values needed for the trace norm; `value = Σ S[k]` directly.
+//     They are emitted in the success record's `singular_values` field.
+//
+// The dispatch is internal: the tool's wire shape stays
+// `record{M: record{re, im}}` and the success record stays consistent.
+// The `method` field discriminates which substrate ran.
+//
+// For density operators (the dogfood-named workload) Hermitian is the
+// universe and the cheap path runs. The SVD path lifts the v0.1
+// `trace-norm/non-hermitian-input` refusal — a non-Hermitian square
+// complex matrix is now an admissible input.
 //
 // Input shape
 // -----------
@@ -57,21 +71,30 @@
 // if max eigenvalue ≈ 1).
 //
 // Boundary tags (ADR-0003):
-//   * `trace-norm/non-hermitian-input` — `max|M − M†| > 100·EPS·max|M|`.
-//     v0.1 refuses; v0.2 will dispatch to `linalg-svd-complex` (filed)
-//     and emit the SVD path through the same wire. The boundary tag
-//     payload reads `(row, col, violation, max_violation)` — same
-//     shape as `linalg-eigh-complex`'s tag.
 //   * `trace-norm/non-finite-input` — same shape and trigger as
 //     `linalg-eigh-complex`'s tag.
 //   * `trace-norm/degenerate-shape` — n = 0.
 //
+// The legacy `trace-norm/non-hermitian-input` refusal class was
+// retired in `jao0` (worklog 127): non-Hermitian square complex inputs
+// now route through `svdComplex` and produce a numerical success. The
+// schema retains backward-compatible shape (the union no longer
+// includes the tag class, but additive removal of a refusal class is
+// schema-additive — any caller pattern-matching on the tag is gated by
+// a runtime check that simply never fires).
+//
 // `ToolError` (exit 1) for malformed input:
 //   * shape mismatch between `re` and `im`
-//   * non-square (m ≠ n) — suggestion points at the v0.2 SVD path
+//   * non-square (m ≠ n) — the trace norm is well-defined for
+//     rectangular matrices via the SVD, but trace-norm v0.1 keeps the
+//     square-only wire contract; rectangular support is a separate
+//     decision tied to the qinfo dogfood scope. Route to
+//     `linalg-svd-complex` for non-square inputs and sum the singular
+//     values yourself.
 //   * ragged rows in `re` or `im`
-//   * OOM on the 2n × 2n embedded buffer (via `linalg-eigh-complex`'s
-//     own OOM guard)
+//   * OOM on the 2n × 2n embedded buffer (Hermitian path) or the
+//     n² complex working buffers (SVD path) — both substrates guard
+//     and re-throw with the attempted byte count.
 //
 // Algorithm
 // ---------
@@ -119,6 +142,7 @@ import { defineTool, runTool } from "@workbench/contract";
 import {
   type ComplexMatrix,
   eighComplex,
+  svdComplex,
 } from "@workbench/linalg-core";
 
 const NAME = "trace-norm";
@@ -146,22 +170,22 @@ const complexMatrixSchema = S.record({
 
 const inputSchema = S.record({ M: complexMatrixSchema });
 
-const successOutputSchema = S.record({
-  value: S.kind("float64"),
-  eigenvalues: S.list(S.kind("float64")),
-  condition_number: S.kind("float64"),
-  method: S.kind("string"),
-  warnings: S.list(S.kind("string")),
-});
-
-const nonHermitianOutputSchema = S.tagged(
-  `${NAME}/non-hermitian-input`,
-  S.record({
-    row: S.kind("integer"),
-    col: S.kind("integer"),
-    violation: S.kind("string"),
-    max_violation: S.kind("string"),
-  }),
+// `eigenvalues` and `singular_values` are mutually exclusive in
+// practice — the Hermitian path populates `eigenvalues` (real spectrum,
+// sign-preserving), the SVD path populates `singular_values` (real,
+// non-negative, descending). Both are declared optional so the wire
+// schema is honest about the discriminated union; the active field is
+// selected by the `method` string.
+const successOutputSchema = S.record(
+  {
+    value: S.kind("float64"),
+    eigenvalues: S.list(S.kind("float64")),
+    singular_values: S.list(S.kind("float64")),
+    condition_number: S.kind("float64"),
+    method: S.kind("string"),
+    warnings: S.list(S.kind("string")),
+  },
+  { optional: ["eigenvalues", "singular_values"] as const },
 );
 
 const nonFiniteOutputSchema = S.tagged(
@@ -184,7 +208,6 @@ const degenerateOutputSchema = S.tagged(
 
 const outputSchema = S.union([
   successOutputSchema,
-  nonHermitianOutputSchema,
   nonFiniteOutputSchema,
   degenerateOutputSchema,
 ]);
@@ -439,20 +462,18 @@ export const def = defineTool({
         3,
       ),
     },
-    // -- boundary refusals ------------------------------------------------
+    // -- happy path: non-Hermitian via SVD (post-jao0 lift) -------------
     {
-      description: "non-Hermitian (im not antisymmetric) → tagged 'trace-norm/non-hermitian-input'",
-      input: complexInput([[0, 1], [1, 0]], [[0, 1], [1, 0]]),
-      output: tagged(
-        `${NAME}/non-hermitian-input`,
-        record({
-          row: int(0n),
-          col: int(1n),
-          violation: str("2"),
-          max_violation: str("2"),
-        }),
-      ),
+      description: "||M||_1 via SVD for non-Hermitian M=[[0,1],[1+i,0]] (was non-Hermitian-refusal pre-jao0)",
+      input: complexInput([[0, 1], [1, 0]], [[0, 0], [1, 0]]),
+      output: traceNormSvdSuccessFromExample([0, 1, 1, 0], [0, 0, 1, 0], 2),
     },
+    {
+      description: "||M||_1 via SVD for asymmetric real M=[[1,2],[3,4]] (singular values from SVD)",
+      input: complexInput([[1, 2], [3, 4]], [[0, 0], [0, 0]]),
+      output: traceNormSvdSuccessFromExample([1, 2, 3, 4], [0, 0, 0, 0], 2),
+    },
+    // -- boundary refusals ------------------------------------------------
     {
       description: "non-finite re → tagged 'trace-norm/non-finite-input'",
       input: complexInput([[1, 2], [2, NaN]], [[0, 0], [0, 0]]),
@@ -517,8 +538,13 @@ export const def = defineTool({
       machine_checkable: true,
     },
     {
-      name: "non-hermitian-tagged",
-      statement: `any M with max|M − M†| > 100·EPS·max|M| → tagged "${NAME}/non-hermitian-input" with the offending coordinate and violation magnitude — never silently Hermitian-symmetrised; never silently routed to SVD (the SVD path is phase 2, filed under ov4j)`,
+      name: "non-hermitian-routes-via-svd",
+      statement: `any non-Hermitian (max|M − M†| > 100·EPS·max|M|) square M routes to svdComplex; the success record reports method="general-via-svd-complex" and surfaces the singular values in the singular_values field. The pre-jao0 trace-norm/non-hermitian-input refusal class is retired.`,
+      machine_checkable: true,
+    },
+    {
+      name: "method-discriminates-spectrum-field",
+      statement: `method="hermitian-via-eigh-complex" ⇒ success record carries the eigenvalues field (real spectrum); method="general-via-svd-complex" ⇒ success record carries the singular_values field (non-negative, descending). The two fields are mutually exclusive in any given success record.`,
       machine_checkable: true,
     },
     {
@@ -538,7 +564,7 @@ export const def = defineTool({
     },
     {
       name: "non-square-rejected",
-      statement: `non-square M (m ≠ n) → ToolError with a suggestion to use linalg-svd-complex (filed) when it ships`,
+      statement: `non-square M (m ≠ n) → ToolError. The trace norm is well-defined for rectangular M via the SVD, but trace-norm keeps the square-only wire contract; rectangular callers should invoke linalg-svd-complex and sum the singular values themselves.`,
       machine_checkable: true,
     },
     {
@@ -566,52 +592,89 @@ export const def = defineTool({
     const { M: H, maxAbs } = decoded;
     const n = H.rows;
 
-    // ── Hermiticity gate ────────────────────────────────────────────────
+    // ── Path selection: Hermitian → eigh, non-Hermitian → SVD ──────────
+    // The Hermiticity check at tolerance `100·EPS·max|M|` mirrors the
+    // `linalg-eigh-complex` boundary; passing matrices route to the
+    // cheap eigh path (`Σ |λ_k|`), failing matrices route to the
+    // general SVD path (`Σ S_k`). Both are admissible — the SVD path
+    // is what `jao0` (ADR-0035 phase 2) shipped to lift the v0.1
+    // Hermitian-only refusal.
+    let isHermitian = true;
     if (maxAbs > 0) {
       const tol = HERMITIAN_TOL_FACTOR * maxAbs;
       const worst = findWorstHermitianViolation(H.re, H.im, n, tol);
-      if (worst !== null) {
-        return tagged(
-          `${NAME}/non-hermitian-input`,
-          record({
-            row: int(BigInt(worst.row)),
-            col: int(BigInt(worst.col)),
-            violation: str(String(worst.violation)),
-            max_violation: str(String(worst.violation)),
-          }),
+      isHermitian = worst === null;
+    }
+
+    if (isHermitian) {
+      // ── Hermitian path: eighComplex, value = Σ |λ_k|. ───────────────
+      const result = eighComplex(H);
+      let value = 0;
+      for (let k = 0; k < n; k++) value += Math.abs(result.eigenvalues[k]!);
+
+      const warnings: string[] = [];
+      if (result.reconstructionError > RECONSTRUCTION_WARNING) {
+        warnings.push(
+          `eigh reconstruction error ${result.reconstructionError.toExponential(2)} exceeds soft floor ${RECONSTRUCTION_WARNING.toExponential(0)}`,
         );
       }
+      if (result.orthogonalityError > ORTHOGONALITY_WARNING) {
+        warnings.push(
+          `eigh orthogonality error ${result.orthogonalityError.toExponential(2)} exceeds soft floor ${ORTHOGONALITY_WARNING.toExponential(0)}`,
+        );
+      }
+      if (result.conditionNumber > CONDITION_WARNING) {
+        warnings.push(
+          `condition number ${result.conditionNumber.toExponential(2)} near machine precision; trace norm may have lost relative accuracy on small eigenvalues`,
+        );
+      }
+
+      return record({
+        value: float64FromNumber(value),
+        eigenvalues: listOfFloat64(result.eigenvalues),
+        condition_number: float64FromNumber(result.conditionNumber),
+        method: str("hermitian-via-eigh-complex"),
+        warnings: list(warnings.map((w) => str(w))),
+      });
     }
 
-    // ── Substrate call (eighComplex carries its own scale + OOM guards). ──
-    const result = eighComplex(H);
-
-    // ── Trace norm = Σ |λ_k|. -------------------------------------------
+    // ── Non-Hermitian path: svdComplex, value = Σ S_k. ──────────────────
+    // The singular values are already non-negative and descending; the
+    // trace norm reads as their sum. We pass the SVD diagnostics
+    // (reconstruction error, orthogonality of U and V, condition
+    // number) through the warning surface using the same thresholds as
+    // the Hermitian path for consistency across compositions.
+    const svdResult = svdComplex(H, "reduced");
     let value = 0;
-    for (let k = 0; k < n; k++) value += Math.abs(result.eigenvalues[k]!);
+    for (let k = 0; k < svdResult.S.length; k++) value += svdResult.S[k]!;
 
     const warnings: string[] = [];
-    if (result.reconstructionError > RECONSTRUCTION_WARNING) {
+    if (svdResult.reconstructionError > RECONSTRUCTION_WARNING) {
       warnings.push(
-        `eigh reconstruction error ${result.reconstructionError.toExponential(2)} exceeds soft floor ${RECONSTRUCTION_WARNING.toExponential(0)}`,
+        `svd reconstruction error ${svdResult.reconstructionError.toExponential(2)} exceeds soft floor ${RECONSTRUCTION_WARNING.toExponential(0)}`,
       );
     }
-    if (result.orthogonalityError > ORTHOGONALITY_WARNING) {
+    if (svdResult.orthogonalityErrorU > ORTHOGONALITY_WARNING) {
       warnings.push(
-        `eigh orthogonality error ${result.orthogonalityError.toExponential(2)} exceeds soft floor ${ORTHOGONALITY_WARNING.toExponential(0)}`,
+        `svd orthogonality error U ${svdResult.orthogonalityErrorU.toExponential(2)} exceeds soft floor ${ORTHOGONALITY_WARNING.toExponential(0)}`,
       );
     }
-    if (result.conditionNumber > CONDITION_WARNING) {
+    if (svdResult.orthogonalityErrorV > ORTHOGONALITY_WARNING) {
       warnings.push(
-        `condition number ${result.conditionNumber.toExponential(2)} near machine precision; trace norm may have lost relative accuracy on small eigenvalues`,
+        `svd orthogonality error V ${svdResult.orthogonalityErrorV.toExponential(2)} exceeds soft floor ${ORTHOGONALITY_WARNING.toExponential(0)}`,
+      );
+    }
+    if (svdResult.conditionNumber > CONDITION_WARNING) {
+      warnings.push(
+        `condition number ${svdResult.conditionNumber.toExponential(2)} near machine precision; trace norm may have lost relative accuracy on small singular values`,
       );
     }
 
     return record({
       value: float64FromNumber(value),
-      eigenvalues: listOfFloat64(result.eigenvalues),
-      condition_number: float64FromNumber(result.conditionNumber),
-      method: str("hermitian-via-eigh-complex"),
+      singular_values: listOfFloat64(svdResult.S),
+      condition_number: float64FromNumber(svdResult.conditionNumber),
+      method: str("general-via-svd-complex"),
       warnings: list(warnings.map((w) => str(w))),
     });
   },
@@ -677,6 +740,49 @@ export const def = defineTool({
 // `fn` from inside the examples table — `defineTool` reads the table
 // before the runner is wired up — so we re-derive the wire output
 // directly from `eighComplex` on flat re/im buffers.
+
+function traceNormSvdSuccessFromExample(
+  reArr: readonly number[],
+  imArr: readonly number[],
+  n: number,
+) {
+  const r = svdComplex(
+    { rows: n, cols: n, re: new Float64Array(reArr), im: new Float64Array(imArr) },
+    "reduced",
+  );
+  let v = 0;
+  for (let k = 0; k < r.S.length; k++) v += r.S[k]!;
+
+  const warnings: string[] = [];
+  if (r.reconstructionError > RECONSTRUCTION_WARNING) {
+    warnings.push(
+      `svd reconstruction error ${r.reconstructionError.toExponential(2)} exceeds soft floor ${RECONSTRUCTION_WARNING.toExponential(0)}`,
+    );
+  }
+  if (r.orthogonalityErrorU > ORTHOGONALITY_WARNING) {
+    warnings.push(
+      `svd orthogonality error U ${r.orthogonalityErrorU.toExponential(2)} exceeds soft floor ${ORTHOGONALITY_WARNING.toExponential(0)}`,
+    );
+  }
+  if (r.orthogonalityErrorV > ORTHOGONALITY_WARNING) {
+    warnings.push(
+      `svd orthogonality error V ${r.orthogonalityErrorV.toExponential(2)} exceeds soft floor ${ORTHOGONALITY_WARNING.toExponential(0)}`,
+    );
+  }
+  if (r.conditionNumber > CONDITION_WARNING) {
+    warnings.push(
+      `condition number ${r.conditionNumber.toExponential(2)} near machine precision; trace norm may have lost relative accuracy on small singular values`,
+    );
+  }
+
+  return record({
+    value: float64FromNumber(v),
+    singular_values: listOfFloat64(r.S),
+    condition_number: float64FromNumber(r.conditionNumber),
+    method: str("general-via-svd-complex"),
+    warnings: list(warnings.map((w) => str(w))),
+  });
+}
 
 function traceNormSuccessFromExample(reArr: readonly number[], imArr: readonly number[], n: number) {
   const r = eighComplex({

@@ -42,6 +42,7 @@ import { def as linalgEighComplexDef } from "../../../../tools/linalg-eigh-compl
 import { def as linalgQrDef } from "../../../../tools/linalg-qr/tool.js";
 import { def as linalgSolveDef } from "../../../../tools/linalg-solve/tool.js";
 import { def as linalgSvdDef } from "../../../../tools/linalg-svd/tool.js";
+import { def as linalgSvdComplexDef } from "../../../../tools/linalg-svd-complex/tool.js";
 import { def as linsolveQDef } from "../../../../tools/linsolve-q/tool.js";
 import { def as lpSolveDef } from "../../../../tools/lp-solve/tool.js";
 import { def as meijerGDef } from "../../../../tools/meijer-g/tool.js";
@@ -97,6 +98,7 @@ export interface TypedWorkbench extends Workbench {
   linalgQr(input: InputOf<typeof linalgQrDef>, flags?: FlagsArgOf<typeof linalgQrDef>): Promise<OutputOf<typeof linalgQrDef>>;
   linalgSolve(input: InputOf<typeof linalgSolveDef>, flags?: FlagsArgOf<typeof linalgSolveDef>): Promise<OutputOf<typeof linalgSolveDef>>;
   linalgSvd(input: InputOf<typeof linalgSvdDef>, flags?: FlagsArgOf<typeof linalgSvdDef>): Promise<OutputOf<typeof linalgSvdDef>>;
+  linalgSvdComplex(input: InputOf<typeof linalgSvdComplexDef>, flags?: FlagsArgOf<typeof linalgSvdComplexDef>): Promise<OutputOf<typeof linalgSvdComplexDef>>;
   linsolveQ(input: InputOf<typeof linsolveQDef>, flags?: FlagsArgOf<typeof linsolveQDef>): Promise<OutputOf<typeof linsolveQDef>>;
   lpSolve(input: InputOf<typeof lpSolveDef>, flags?: FlagsArgOf<typeof lpSolveDef>): Promise<OutputOf<typeof lpSolveDef>>;
   meijerG(input: InputOf<typeof meijerGDef>, flags?: FlagsArgOf<typeof meijerGDef>): Promise<OutputOf<typeof meijerGDef>>;
@@ -202,6 +204,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     },
     linalgSvd(input, flags) {
       return workbench.run("linalg-svd", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof linalgSvdDef>>;
+    },
+    linalgSvdComplex(input, flags) {
+      return workbench.run("linalg-svd-complex", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof linalgSvdComplexDef>>;
     },
     linsolveQ(input, flags) {
       return workbench.run("linsolve-q", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof linsolveQDef>>;
@@ -330,6 +335,7 @@ export const defs = {
   linalgQr: linalgQrDef,
   linalgSolve: linalgSolveDef,
   linalgSvd: linalgSvdDef,
+  linalgSvdComplex: linalgSvdComplexDef,
   linsolveQ: linsolveQDef,
   lpSolve: lpSolveDef,
   meijerG: meijerGDef,
