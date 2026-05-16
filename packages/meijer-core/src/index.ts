@@ -106,11 +106,34 @@ export {
   type MeijerGAsymptoticResult,
   type MeijerGAsymptoticSuccess,
   type MeijerGAsymptoticRefusal,
+  type SectorVerdict,
   asymptoticTerms,
   classifySector,
   findOptimalTruncation,
   meijergAsymptotic,
 } from "./asymptotic.js";
+
+// -----------------------------------------------------------------------------
+// Layer 6 — Stokes-line connection coefficients (ADR-0039, bead egf)
+// -----------------------------------------------------------------------------
+//
+// Pure-math modules for the v0.1 connection-formula scope. Part 2 of
+// bead `egf` (hv0.9.2) wires these into `meijergAsymptotic` and the
+// dispatcher; they ship here as standalone so the math is independently
+// testable. See `docs/refs/dlmf-16-11.md` §§3, 4 for the specification.
+
+export {
+  type EpqResult,
+  type EpqSuccess,
+  type EpqRefusal,
+  evaluateEpq,
+} from "./exponential.js";
+
+export {
+  type StokesMultiplier,
+  stokesMultiplier,
+  principalSectorBound,
+} from "./stokes.js";
 
 // -----------------------------------------------------------------------------
 // Layer 4 — symbolic dispatch (Adamchik–Marichev + Roach)

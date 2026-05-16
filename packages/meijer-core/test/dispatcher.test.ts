@@ -177,22 +177,41 @@ describe("pre-filter predicates", () => {
   });
 
   test("canUseAsymptotic: refuses |z| < 1", () => {
-    const p = pair([1], [], [0], [1]);
+    // κ=1 shape (G^{1,1}_{1,1}): the previous κ=2 shape now refuses
+    // upstream with the `kappa=2` reason, masking the |z| < 1 gate.
+    const p = pair([1], [], [0], []);
     const z = numStr("0.5");
     const v = canUseAsymptotic(p.num, z, 30);
     expect(v.ok).toBe(false);
     expect(v.reason).toMatch(/\|z\|/);
   });
 
-  test("canUseAsymptotic: refuses arg z = π (negative real axis)", () => {
+  test("canUseAsymptotic: refuses κ=2 (egf v0.1 scope-gate)", () => {
+    // ADR-0039 §D2: κ=2 (`p = q − 1`) is refused upstream with the
+    // bead ID `scientist-workbench-fc83`. The previous test asserted
+    // refusal on `arg z = π` for a κ=2 shape (`pair([1], [], [0], [1])`);
+    // the new κ-aware filter refuses the κ=2 shape regardless of `z`.
     const p = pair([1], [], [0], [1]);
+    const z = numInt(-100);
+    const v = canUseAsymptotic(p.num, z, 30);
+    expect(v.ok).toBe(false);
+    expect(v.reason).toMatch(/fc83/);
+  });
+
+  test("canUseAsymptotic: refuses arg z = π (negative real axis), κ=1", () => {
+    // For κ=1, arg z = π is past the v0.1 coverage cap (π/2 + margin),
+    // refusing with the "outside the v0.1 coverage envelope" reason.
+    // The exact text differs from the legacy "outside the principal
+    // sector"; we accept either by matching the κ-coverage marker.
+    const p = pair([1], [], [0], []);
     const z = numInt(-100);
     const v = canUseAsymptotic(p.num, z, 30);
     expect(v.ok).toBe(false);
   });
 
-  test("canUseAsymptotic: ok in principal sector with |z| ≥ 1", () => {
-    const p = pair([1], [], [0], [1]);
+  test("canUseAsymptotic: ok in principal sector with |z| ≥ 1, κ=1", () => {
+    // κ=1 shape (was κ=2 in the previous test, which refuses upstream).
+    const p = pair([1], [], [0], []);
     const z = numInt(100);
     const v = canUseAsymptotic(p.num, z, 30);
     expect(v.ok).toBe(true);

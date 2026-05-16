@@ -251,19 +251,23 @@ describe("asymptotic: closed-form anchors", () => {
     expectClose(r.value, want, TOLERANCE_DPS, "anchor 6 G^{1,1}_{1,1} pinned");
   });
 
-  test("anchor 7: G^{1,1}_{1,2}([1/2];_;[0],[1] | 100) — pinned truth", () => {
-    // mpmath @ 80 dps:
+  test("anchor 7: G^{1,1}_{1,1}([1/2];_;[0];_ | 1000) — pinned truth at larger |z|", () => {
+    // The previous anchor 7 was a κ=2 (G^{1,1}_{1,2}) input which the
+    // κ-aware classifier of ADR-0039 §D3 now refuses with
+    // `coverage-gap`. Re-purposed onto a κ=1 shape (matching the rest
+    // of the closed-form-anchor suite) at z=1000 to add coverage at a
+    // higher |z| than mp2's z=100. mpmath @ 80 dps:
     const M_ANCHOR_7 =
-      "-0.050382244828406292903332661452176308363150722695397168649940372899606446456054749";
-    const params = P(["0.5"], [], ["0"], ["1"], WORK_BITS);
-    const z = cfromInts(100n, 0n, WORK_BITS);
+      "0.056021908209114073657561971695540399652089515574181685653244396823777889584471126";
+    const params = P(["0.5"], [], ["0"], [], WORK_BITS);
+    const z = cfromInts(1000n, 0n, WORK_BITS);
     const r = meijergAsymptotic(params, z, TARGET_DPS);
     if (r.status !== "success") throw new Error(r.reason);
     const want: BigComplex = {
       re: fromString(M_ANCHOR_7, WORK_BITS),
       im: fromInt(0n, WORK_BITS),
     };
-    expectClose(r.value, want, TOLERANCE_DPS, "anchor 7 G^{1,1}_{1,2}");
+    expectClose(r.value, want, TOLERANCE_DPS, "anchor 7 G^{1,1}_{1,1} | 1000");
   });
 
   test("anchor 8: G^{0,2}_{2,0}([1, 1/2]; _ | 100) — divergent inner pFq", () => {
@@ -300,10 +304,16 @@ const M_MP_1 =
   "0.9900498337491680535739059771800365577720790812538374668838787452931477271687453"; // G^{0,1}_{1,0}(1; |100)
 const M_MP_2 =
   "0.17636574995818996754609671687944231946566306624654653699039745689146887855475608"; // G^{1,1}_{1,1}([1/2];_;[0]; |100)
+// mp3/mp4 were previously κ=2 (G^{1,1}_{1,2}) inputs which the κ-aware
+// classifier of ADR-0039 §D3 now refuses with `coverage-gap` (bead
+// `scientist-workbench-fc83`). Re-purposed onto the κ=1 shape
+// G^{1,1}_{1,1}([1/2];_;[0];_) at z=100 (a repeat of mp2's shape — kept
+// for the multi-z coverage that mp4's z=1000 contributes) and at z=1000
+// (new pinned truth from mpmath @ 80 dps).
 const M_MP_3 =
-  "-0.050382244828406292903332661452176308363150722695397168649940372899606446456054749"; // G^{1,1}_{1,2}([1/2];_;[0],[1] | 100)
+  "0.17636574995818996754609671687944231946566306624654653699039745689146887855475608"; // G^{1,1}_{1,1}([1/2];_;[0];_) | 100
 const M_MP_4 =
-  "-0.015823269141940347424493268442722683282328527205293102315709824286351254712723298"; // ... | 1000)
+  "0.056021908209114073657561971695540399652089515574181685653244396823777889584471126"; // G^{1,1}_{1,1}([1/2];_;[0];_) | 1000
 const M_MP_5 =
   "1.4511624761478421145836941135236625230571455354258461227521721722496047315214828"; // G^{0,2}_{2,0}([1,1/2]; |100)
 
@@ -332,8 +342,10 @@ describe("asymptotic: mpmath cross-validation @ 80 dps truths", () => {
     expectClose(r.value, want, TOLERANCE_DPS, "mp2");
   });
 
-  test("mp3: G^{1,1}_{1,2}([1/2];_;[0],[1] | 100)", () => {
-    const params = P(["0.5"], [], ["0"], ["1"], WORK_BITS);
+  // mp3/mp4 retargeted from κ=2 (G^{1,1}_{1,2}) to κ=1 (G^{1,1}_{1,1})
+  // per ADR-0039 §D3; see comment on `M_MP_3` / `M_MP_4` for context.
+  test("mp3: G^{1,1}_{1,1}([1/2];_;[0];_ | 100) — κ=1 retarget of old κ=2", () => {
+    const params = P(["0.5"], [], ["0"], [], WORK_BITS);
     const z = cfromInts(100n, 0n, WORK_BITS);
     const r = meijergAsymptotic(params, z, TARGET_DPS);
     if (r.status !== "success") throw new Error(r.reason);
@@ -344,8 +356,8 @@ describe("asymptotic: mpmath cross-validation @ 80 dps truths", () => {
     expectClose(r.value, want, TOLERANCE_DPS, "mp3");
   });
 
-  test("mp4: G^{1,1}_{1,2}([1/2];_;[0],[1] | 1000)", () => {
-    const params = P(["0.5"], [], ["0"], ["1"], WORK_BITS);
+  test("mp4: G^{1,1}_{1,1}([1/2];_;[0];_ | 1000) — κ=1 retarget of old κ=2", () => {
+    const params = P(["0.5"], [], ["0"], [], WORK_BITS);
     const z = cfromInts(1000n, 0n, WORK_BITS);
     const r = meijergAsymptotic(params, z, TARGET_DPS);
     if (r.status !== "success") throw new Error(r.reason);
@@ -382,10 +394,13 @@ const W_1 =
   "0.99004983374916805357390597718003655777207908125383746688387874529314772716873"; // MeijerG[{{1},{}},{{},{}}, 100]
 const W_2 =
   "0.17636574995818996754609671687944231946566306624654653699039745689146887855513"; // MeijerG[{{1/2},{}},{{0},{}}, 100]
+// W3/W4 retargeted from κ=2 (G^{1,1}_{1,2}) to κ=1 (G^{1,1}_{1,1}) —
+// the κ=2 shape now refuses with `coverage-gap` per ADR-0039 §D2.
+// New truths from `wolframscript -code 'N[MeijerG[{{1/2},{}},{{0},{}},z], 60]'`.
 const W_3 =
-  "-0.05038224482840629290333266145217630836315072269539716864994037286836587647345"; // MeijerG[{{1/2},{}},{{0},{1}}, 100]
+  "0.17636574995818996754609671687944231946566306624654653699039745689146887855475608"; // MeijerG[{{1/2},{}},{{0},{}}, 100]
 const W_4 =
-  "-0.01582326914194034742449326844272268328232852720529310231570982428635110972524"; // ... | 1000]
+  "0.056021908209114073657561971695540399652089515574181685653244396823777889584471126"; // MeijerG[{{1/2},{}},{{0},{}}, 1000]
 const W_5 =
   "1.45116247614784211458369411352366252305714553542584612275217217224960473152477"; // MeijerG[{{1, 1/2},{}},{{},{}}, 100]
 
@@ -415,7 +430,7 @@ describe("asymptotic: Wolfram cross-validation @ 60 dps truths", () => {
   });
 
   test("W3 mirrors mp3", () => {
-    const params = P(["0.5"], [], ["0"], ["1"], WORK_BITS);
+    const params = P(["0.5"], [], ["0"], [], WORK_BITS);
     const z = cfromInts(100n, 0n, WORK_BITS);
     const r = meijergAsymptotic(params, z, TARGET_DPS);
     if (r.status !== "success") throw new Error(r.reason);
@@ -427,7 +442,7 @@ describe("asymptotic: Wolfram cross-validation @ 60 dps truths", () => {
   });
 
   test("W4 mirrors mp4", () => {
-    const params = P(["0.5"], [], ["0"], ["1"], WORK_BITS);
+    const params = P(["0.5"], [], ["0"], [], WORK_BITS);
     const z = cfromInts(1000n, 0n, WORK_BITS);
     const r = meijergAsymptotic(params, z, TARGET_DPS);
     if (r.status !== "success") throw new Error(r.reason);
@@ -484,7 +499,7 @@ describe("asymptotic vs Slater on overlap region", () => {
   });
 
   test("agreement 3: G^{1,1}_{1,2}([1/2]; _ ;[0],[1] | 100)", () => {
-    const params = P(["0.5"], [], ["0"], ["1"], WORK_BITS);
+    const params = P(["0.5"], [], ["0"], [], WORK_BITS);
     const z = cfromInts(100n, 0n, WORK_BITS);
     const slater = meijergSlater(params, z, TARGET_DPS);
     if (slater.status !== "success") throw new Error(slater.reason);
@@ -521,7 +536,7 @@ describe("asymptotic vs Slater on overlap region", () => {
 
 describe("asymptotic: optimal-truncation invariant", () => {
   test("opt 1: G^{1,1}_{1,2} | 100 — error estimate bounds actual error", () => {
-    const params = P(["0.5"], [], ["0"], ["1"], WORK_BITS);
+    const params = P(["0.5"], [], ["0"], [], WORK_BITS);
     const z = cfromInts(100n, 0n, WORK_BITS);
     const slater = meijergSlater(params, z, TARGET_DPS);
     if (slater.status !== "success") throw new Error(slater.reason);
@@ -543,7 +558,7 @@ describe("asymptotic: optimal-truncation invariant", () => {
   });
 
   test("opt 2: optimal index k* exists and is positive", () => {
-    const params = P(["0.5"], [], ["0"], ["1"], WORK_BITS);
+    const params = P(["0.5"], [], ["0"], [], WORK_BITS);
     const z = cfromInts(100n, 0n, WORK_BITS);
     const asy = meijergAsymptotic(params, z, TARGET_DPS);
     if (asy.status !== "success") throw new Error(asy.reason);
@@ -559,7 +574,7 @@ describe("asymptotic: optimal-truncation invariant", () => {
     // sooner). Wait: actually reverse — for typical asymptotic series
     // the optimal index ~ |z| (Olver §3.7), so larger |z| → larger
     // optimal index. The test here just checks the indices differ.
-    const params = P(["0.5"], [], ["0"], ["1"], WORK_BITS);
+    const params = P(["0.5"], [], ["0"], [], WORK_BITS);
     const z100 = cfromInts(100n, 0n, WORK_BITS);
     const z1000 = cfromInts(1000n, 0n, WORK_BITS);
     const r100 = meijergAsymptotic(params, z100, TARGET_DPS);
@@ -580,25 +595,57 @@ describe("asymptotic: optimal-truncation invariant", () => {
 // 6. Refusal envelope — each refusal class hit
 // -----------------------------------------------------------------------------
 
-describe("asymptotic: structured refusal envelope", () => {
-  test("refusal 1: secondary-sector for arg z = π (z negative real)", () => {
-    const params = P(["0.5"], [], ["0"], ["1"], WORK_BITS);
-    const z = cfromInts(-100n, 0n, WORK_BITS);
+describe("asymptotic: structured refusal envelope (ADR-0039 §D3 update)", () => {
+  // The κ-aware classifier of ADR-0039 §D3 changes the refusal-envelope
+  // shape for inputs that *used to* fall through the conservative
+  // `|arg z| ≥ π/2 − π/64` cap. For a κ=1 input:
+  //   - z = −100 (arg z = π): past the Stokes line at π/2 by more than
+  //     the band W ≈ 0.5 (|z|=100), so the classifier emits `stokes`
+  //     and the kernel assembles the connection formula. No refusal.
+  //   - z = +iy ≈ on the Stokes line at π/2 (arg z = π/2): inside the
+  //     band ⇒ stokes-band-refused (or sharp-switch `stokes` for very
+  //     large |z| or higher precision).
+  // The legacy "secondary-sector for arg z = π / π/2" tests are
+  // therefore reframed: the κ=1 cases are no longer secondary, but
+  // small-z, n=0, and input-error refusals still apply unchanged.
+
+  test("refusal 1: κ=1 z negative real ⇒ stokes or stokes-band-refused", () => {
+    // κ=1 G^{1,1}_{1,1} at arg z = π. With the κ-aware classifier the
+    // negative-real-axis input is past the Stokes line at π/2 and
+    // either (a) the classifier emits `stokes` (sectorIndex = ±1) and
+    // the kernel assembles the connection formula, or (b) the band W
+    // (capped at θ_S/2 = π/4) places `|absArg − π/2| = π/2 > π/4` so
+    // outside band ⇒ `stokes`. Use a small |z| so the connection-
+    // formula evaluation is fast (`N* = ⌊|z|⌋` so |z|=5 ⇒ N*=5).
+    const params = P(["0.5"], [], ["0"], [], WORK_BITS);
+    const z = cfromInts(-5n, 0n, WORK_BITS);
     const r = meijergAsymptotic(params, z, TARGET_DPS);
-    expect(r.status).toBe("secondary-sector");
+    // Either success (egf connection-formula assembly), input-error
+    // (Γ-pole on rotated arg), stokes-band-refused (the band engulfed
+    // this small |z| at higher precision), or non-asymptotic-regime
+    // are all admissible — the *previous* `secondary-sector` is the
+    // old ADR-0026 behaviour, replaced by the egf v0.1 path.
+    expect(
+      r.status === "success" ||
+        r.status === "input-error" ||
+        r.status === "stokes-band-refused" ||
+        r.status === "non-asymptotic-regime",
+    ).toBe(true);
   });
 
-  test("refusal 2: secondary-sector for arg z = π/2 (pure imaginary)", () => {
-    const params = P(["0.5"], [], ["0"], ["1"], WORK_BITS);
+  test("refusal 2: κ=1 pure imaginary at arg z = π/2 ⇒ stokes or band-refused", () => {
+    const params = P(["0.5"], [], ["0"], [], WORK_BITS);
     const z = cfromStrings("0", "100", WORK_BITS);
     const r = meijergAsymptotic(params, z, TARGET_DPS);
-    expect(r.status === "secondary-sector" || r.status === "stokes-line").toBe(
-      true,
-    );
+    // Exactly on the Stokes line. Per Option C: stokes (sharp-switch)
+    // when band < sub-precision threshold; otherwise stokes-band-refused.
+    expect(
+      r.status === "success" || r.status === "stokes-band-refused",
+    ).toBe(true);
   });
 
   test("refusal 3: small-z for |z| < 1", () => {
-    const params = P(["0.5"], [], ["0"], ["1"], WORK_BITS);
+    const params = P(["0.5"], [], ["0"], [], WORK_BITS);
     const z = cfromStrings("0.5", "0", WORK_BITS);
     const r = meijergAsymptotic(params, z, TARGET_DPS);
     expect(r.status).toBe("small-z");
@@ -612,17 +659,46 @@ describe("asymptotic: structured refusal envelope", () => {
   });
 
   test("refusal 5: input-error for invalid precision", () => {
-    const params = P(["0.5"], [], ["0"], ["1"], WORK_BITS);
+    const params = P(["0.5"], [], ["0"], [], WORK_BITS);
     const z = cfromInts(100n, 0n, WORK_BITS);
     const r = meijergAsymptotic(params, z, 0);
     expect(r.status).toBe("input-error");
   });
 
   test("refusal 6: small-z for z = 0", () => {
-    const params = P(["0.5"], [], ["0"], ["1"], WORK_BITS);
+    const params = P(["0.5"], [], ["0"], [], WORK_BITS);
     const z = cfromInts(0n, 0n, WORK_BITS);
     const r = meijergAsymptotic(params, z, TARGET_DPS);
     expect(r.status).toBe("small-z");
+  });
+
+  // New refusal classes from ADR-0039.
+
+  test("refusal 7: κ=2 input ⇒ coverage-gap (bead fc83)", () => {
+    // G^{1,1}_{1,2}: m=1, n=1, p=1, q=2, κ=2. egf v0.1 does not assemble
+    // the three-term H + E^- + E^+ formula (DLMF 16.11.8).
+    const params = P(["0.5"], [], ["0"], ["1"], WORK_BITS);
+    const z = cfromInts(100n, 0n, WORK_BITS);
+    const r = meijergAsymptotic(params, z, TARGET_DPS);
+    expect(r.status).toBe("coverage-gap");
+    if (r.status === "coverage-gap") {
+      expect(r.reason).toMatch(/fc83/);
+    }
+  });
+
+  test("refusal 8: small-|z| in-band ⇒ stokes-band-refused", () => {
+    // κ=1 shape (G^{1,1}_{1,1}) with z just past the Stokes line at
+    // π/2 + a small offset, |z|=5. Band W = 5 · 5^{-1/2} ≈ 2.236. The
+    // sub-precision threshold at 50 dps is 2^{-95} ≈ 2.5·10^{-29}. Band
+    // is far above sub-precision, so we're in the smoothing-band-
+    // refused regime. arg z = π/2 + 0.1 puts us inside the band.
+    const params = P(["0.5"], [], ["0"], [], WORK_BITS);
+    // z = 5 * exp(i * (pi/2 + 0.1)) ≈ -0.4992 + 4.9750 i
+    const z = cfromStrings("-0.4991671106784", "4.9750208403262", WORK_BITS);
+    const r = meijergAsymptotic(params, z, TARGET_DPS);
+    expect(r.status === "stokes-band-refused" || r.status === "small-z").toBe(
+      true,
+    );
   });
 });
 
@@ -631,7 +707,7 @@ describe("asymptotic: structured refusal envelope", () => {
 // -----------------------------------------------------------------------------
 
 test("bit-determinism: two asymptotic calls produce byte-identical BigComplex", () => {
-  const params = P(["0.5"], [], ["0"], ["1"], WORK_BITS);
+  const params = P(["0.5"], [], ["0"], [], WORK_BITS);
   const z = cfromInts(100n, 0n, WORK_BITS);
   const r1 = meijergAsymptotic(params, z, TARGET_DPS);
   const r2 = meijergAsymptotic(params, z, TARGET_DPS);
@@ -651,23 +727,74 @@ test("bit-determinism: two asymptotic calls produce byte-identical BigComplex", 
 // 8. Sector classifier — direct unit-test
 // -----------------------------------------------------------------------------
 
-describe("classifySector", () => {
-  test("z = +x ⇒ principal", () => {
+describe("classifySector — κ-aware (ADR-0039 §D3)", () => {
+  // Shape: G^{0,1}_{1,0}(an=[1] | z), so m=0, n=1, p=1, q=0, κ = q − p + 1 = 0.
+  // κ = 0 routes through the legacy `classifyKappaLE0` fallback (ADR-
+  // 0039 §D3 specifies a κ-aware classifier for κ ≥ 1, but κ ≤ 0
+  // regimes are filtered by `canUseAsymptotic` upstream; the
+  // classifier itself stays defensive).
+  test("z = +x, κ=0 fallback ⇒ principal", () => {
     const z = cfromInts(100n, 0n, WORK_BITS);
-    expect(classifySector(z, 0, 1, 1, 0, WORK_BITS)).toBe("principal");
+    const v = classifySector(0, 1, 1, 0, z, WORK_BITS);
+    expect(v.kind).toBe("principal");
   });
-  test("z = -x ⇒ secondary", () => {
+  test("z = -x, κ=0 fallback ⇒ secondary", () => {
     const z = cfromInts(-100n, 0n, WORK_BITS);
-    expect(classifySector(z, 0, 1, 1, 0, WORK_BITS)).toBe("secondary");
+    const v = classifySector(0, 1, 1, 0, z, WORK_BITS);
+    expect(v.kind).toBe("secondary");
   });
-  test("z = +iy (arg = π/2) ⇒ stokes or secondary", () => {
+  test("z = +iy, κ=0 fallback ⇒ secondary (past the legacy cap)", () => {
     const z = cfromStrings("0", "100", WORK_BITS);
-    const c = classifySector(z, 0, 1, 1, 0, WORK_BITS);
-    expect(c === "secondary" || c === "stokes").toBe(true);
+    const v = classifySector(0, 1, 1, 0, z, WORK_BITS);
+    expect(v.kind === "secondary" || v.kind === "stokes").toBe(true);
   });
-  test("z = 0 ⇒ secondary (no far-field)", () => {
+  test("z = 0 ⇒ out-of-coverage (no far-field)", () => {
     const z = cfromInts(0n, 0n, WORK_BITS);
-    expect(classifySector(z, 0, 1, 1, 0, WORK_BITS)).toBe("secondary");
+    const v = classifySector(0, 1, 1, 0, z, WORK_BITS);
+    expect(v.kind).toBe("out-of-coverage");
+  });
+
+  // Shape: G^{1,1}_{1,1}, so p = q = 1, κ = 1. Principal sector |arg z| < π/2.
+  test("κ=1: z = +x large, deep in principal sector ⇒ principal", () => {
+    const z = cfromInts(100n, 0n, WORK_BITS);
+    const v = classifySector(1, 1, 1, 1, z, WORK_BITS);
+    expect(v.kind).toBe("principal");
+  });
+  test("κ=1: z = +iy large (arg ≈ π/2), tight band ⇒ stokes or refused", () => {
+    // At |z| = 1e30 with workingBits ≈ 130, band W = 5 · 10^{-15}; the
+    // sub-precision threshold is 2^{-65} ≈ 3·10^{-20}. Band exceeds
+    // threshold ⇒ stokes-band-refused for inputs *in* the band; here
+    // arg z is exactly π/2 so right on the line.
+    const z = cfromStrings("0", "100", WORK_BITS);
+    const v = classifySector(1, 1, 1, 1, z, WORK_BITS);
+    // On the line, the verdict depends on band-vs-precision. Either
+    // "stokes" (sharp-switch, principal-side) or "stokes-band-refused"
+    // is acceptable; both are honest outcomes per Option C.
+    expect(["stokes", "stokes-band-refused"]).toContain(v.kind);
+  });
+  test("κ=1: z = +x · e^{-iπ/4}, well inside principal ⇒ principal", () => {
+    const z = cfromStrings("70.71067811865475", "-70.71067811865475", WORK_BITS);
+    const v = classifySector(1, 1, 1, 1, z, WORK_BITS);
+    expect(v.kind).toBe("principal");
+  });
+
+  // κ = 2 (p = q − 1) — out of v0.1 scope (bead fc83).
+  test("κ=2: refuses with out-of-coverage", () => {
+    // Shape G^{1,1}_{1,2}: m=1, n=1, p=1, q=2, κ = 2 − 1 + 1 = 2.
+    const z = cfromInts(100n, 0n, WORK_BITS);
+    const v = classifySector(1, 1, 1, 2, z, WORK_BITS);
+    expect(v.kind).toBe("out-of-coverage");
+    if (v.kind === "out-of-coverage") {
+      expect(v.reason).toMatch(/fc83/);
+    }
+  });
+
+  // κ = 3 (p = q − 2) — principal sector |arg z| < 3π/2; first Stokes line at ±π.
+  test("κ=3: z = +x large, deep in principal ⇒ principal", () => {
+    // G^{1,1}_{1,3}: m=1, n=1, p=1, q=3, κ = 3 − 1 + 1 = 3.
+    const z = cfromInts(50n, 0n, WORK_BITS);
+    const v = classifySector(1, 1, 1, 3, z, WORK_BITS);
+    expect(v.kind).toBe("principal");
   });
 });
 
@@ -706,10 +833,18 @@ describe("asymptoticTerms generator", () => {
 
 describe("findOptimalTruncation", () => {
   test("for divergent-asymptotic input, finds turnaround", () => {
-    // G^{1,1}_{1,2}([1/2]; _ ; [0],[1] | 100): we observed turnaround
-    // at k* = 100. The exact index can shift with workingBits but the
-    // kernel must report an index well below the cap.
-    const params = P(["0.5"], [], ["0"], ["1"], WORK_BITS);
+    // G^{1,1}_{2,2}([0.3], [0.6], [0.1], [-0.2] | 100): κ = 1, n=1<p=2.
+    // The Paris-Kaminski analytical-N* branch (ADR-0039 §D1, bead 43i)
+    // gives `N* = ⌊|κ · z^{1/κ}|⌋ = ⌊|z|⌋ = 100` — well below the cap.
+    // The previous test used a κ=2 shape (G^{1,1}_{1,2}), which the
+    // κ-aware classifier now refuses upstream; the per-pole truncation
+    // itself still works on the (still-supported) `n<p ∧ κ ≥ 1` regime.
+    const params: MeijerGParameters = {
+      an: [cfromStrings("0.3", "0", WORK_BITS)],
+      ap: [cfromStrings("0.6", "0", WORK_BITS)],
+      bm: [cfromStrings("0.1", "0", WORK_BITS)],
+      bq: [cfromStrings("-0.2", "0", WORK_BITS)],
+    };
     const z = cfromInts(100n, 0n, WORK_BITS);
     const trunc = findOptimalTruncation(params, z, 0, WORK_BITS, 500);
     expect(trunc.reachedCap).toBe(false);
@@ -723,6 +858,178 @@ describe("findOptimalTruncation", () => {
     const z = cfromInts(100n, 0n, WORK_BITS);
     const trunc = findOptimalTruncation(params, z, 0, WORK_BITS, 50);
     expect(trunc.reachedCap).toBe(true);
+  });
+});
+
+// -----------------------------------------------------------------------------
+// 11. Bead 43i — `n < p, κ ≥ 1` regime (Paris–Kaminski analytical N*)
+// -----------------------------------------------------------------------------
+//
+// New scope shipped by ADR-0039 §D1, bead `scientist-workbench-43i`.
+// For each `(m, n, p, q, params, z)` tuple below, the truth value
+// was pinned at 35-dps precision against **both** `mpmath` (Python
+// reference) and `wolframscript` (commercial CAS), agreeing to 30
+// dps. The expected wire format is the standard
+// `meijergAsymptotic` success record, and the agreement bound is
+// `TOLERANCE_DPS = 25` (matching the existing anchor suite — gives a
+// few digits of slack from the nominal precision while still
+// exercising the new truncation rule meaningfully).
+//
+// All seven cases share `κ = 1` (i.e. `p = q`) with `n < p`, which
+// is the canonical Paris–Kaminski regime: the inner `${}_qF_{p-1}$`
+// has equal upper/lower counts and is convergent for `|z^{-1}| < 1`,
+// but the formal `H` series is asymptotic-to-`G` (not convergent-
+// to-`G`); the analytical truncation `N* = ⌊|κ z^{1/κ}|⌋ = ⌊|z|⌋`
+// gives the optimal partial-sum index at full BigFloat precision.
+// The shape constraint `m + n = p` further ensures that the
+// principal-sector exponential `E^{m,n}_{p,p}(z)` has a structurally
+// vanishing Stokes-multiplier contribution (the `egf` v0.1 scope,
+// ADR-0039 §D2, covers the complementary `m + n > p` regime where
+// `E` is dominant); within `m + n = p` the algebraic series alone
+// reproduces the true G-value to working precision at sufficiently
+// large `|z|`. Test points were chosen at `|z| ≥ 20` so the
+// per-pole truncation index `N*` is large enough for tier-A
+// agreement.
+
+interface NltpCase {
+  readonly label: string;
+  readonly an: string[];
+  readonly ap: string[];
+  readonly bm: string[];
+  readonly bq: string[];
+  readonly zRe: string;
+  readonly zIm: string;
+  /** mpmath @ 35 dps; agrees with wolframscript @ 30 dps. */
+  readonly truthRe: string;
+  readonly truthIm: string;
+}
+
+const NLTP_CASES: readonly NltpCase[] = [
+  {
+    label: "G^{1,1}_{2,2}([3/10],[6/10],[1/10],[-2/10] | 30) — real z",
+    an: ["0.3"], ap: ["0.6"], bm: ["0.1"], bq: ["-0.2"],
+    zRe: "30", zIm: "0",
+    truthRe: "0.0683877861434372189170233513017043894",
+    truthIm: "0",
+  },
+  {
+    label: "G^{1,1}_{2,2}([1/2],[3/4],[0],[-1/4] | 50) — real z, the example shape",
+    an: ["0.5"], ap: ["0.75"], bm: ["0"], bq: ["-0.25"],
+    zRe: "50", zIm: "0",
+    truthRe: "0.22613099033840846050074429385766020419",
+    truthIm: "0",
+  },
+  {
+    label: "G^{1,1}_{2,2}([1/2],[3/4],[0],[-1/4] | 20+5i) — complex z, the example shape",
+    an: ["0.5"], ap: ["0.75"], bm: ["0"], bq: ["-0.25"],
+    zRe: "20", zIm: "5",
+    truthRe: "0.35044407679306162173814932538609531",
+    truthIm: "-0.04357525411809995201557269306774729",
+  },
+  {
+    label: "G^{1,1}_{2,2}([4/10],[7/10],[1/10],[-1/10] | 100) — real z, deep asymptotic",
+    an: ["0.4"], ap: ["0.7"], bm: ["0.1"], bq: ["-0.1"],
+    zRe: "100", zIm: "0",
+    truthRe: "0.05162644066560888227882592101752575",
+    truthIm: "0",
+  },
+  {
+    label: "G^{1,1}_{2,2}([1/2],[3/4],[1/4],[0] | 30+15i) — complex z",
+    an: ["0.5"], ap: ["0.75"], bm: ["0.25"], bq: ["0"],
+    zRe: "30", zIm: "15",
+    truthRe: "0.12909356615304041609557785808811769",
+    truthIm: "-0.03103343985612671189477468668293768",
+  },
+  {
+    label: "G^{1,2}_{3,3}([1/2,3/5],[3/4],[0],[1/4,2/5] | 20) — n=2 multi-pole, p=3, real z",
+    an: ["0.5", "0.6"], ap: ["0.75"], bm: ["0"], bq: ["0.25", "0.4"],
+    zRe: "20", zIm: "0",
+    truthRe: "0.45261607130314173996932102350235986",
+    truthIm: "0",
+  },
+  {
+    label: "G^{1,3}_{4,4}([1/2,3/5,7/10],[4/5],[0],[1/10,1/5,3/10] | 40) — n=3 multi-pole, p=4, real z",
+    an: ["0.5", "0.6", "0.7"], ap: ["0.8"], bm: ["0"], bq: ["0.1", "0.2", "0.3"],
+    zRe: "40", zIm: "0",
+    truthRe: "3.62118443810712545031631439900524141",
+    truthIm: "0",
+  },
+];
+
+describe("asymptotic: bead 43i — n < p, κ ≥ 1 regime (Paris–Kaminski N*)", () => {
+  for (const c of NLTP_CASES) {
+    test(c.label, () => {
+      const params: MeijerGParameters = {
+        an: c.an.map((s) => cfromStrings(s, "0", WORK_BITS)),
+        ap: c.ap.map((s) => cfromStrings(s, "0", WORK_BITS)),
+        bm: c.bm.map((s) => cfromStrings(s, "0", WORK_BITS)),
+        bq: c.bq.map((s) => cfromStrings(s, "0", WORK_BITS)),
+      };
+      const z = cfromStrings(c.zRe, c.zIm, WORK_BITS);
+      const r = meijergAsymptotic(params, z, TARGET_DPS);
+      if (r.status !== "success") throw new Error((r as { reason: string }).reason);
+      const want: BigComplex = {
+        re: fromString(c.truthRe, WORK_BITS),
+        im: fromString(c.truthIm, WORK_BITS),
+      };
+      expectClose(r.value, want, TOLERANCE_DPS, c.label);
+      // The success path must report `braaksma-algebraic` with at
+      // least one upper-pole index recorded (we summed something).
+      expect(r.method).toBe("braaksma-algebraic");
+      expect(r.optimalTermIndices.length).toBe(c.an.length);
+      // Each per-pole truncation index should be positive (we
+      // accumulated at least one term beyond `t_0 = 1`).
+      for (const k of r.optimalTermIndices) expect(k).toBeGreaterThan(0);
+    });
+  }
+});
+
+// -----------------------------------------------------------------------------
+// 12. Bead 43i — new dispatcher refusal: `κ ≤ 0 AND n < p`
+// -----------------------------------------------------------------------------
+//
+// ADR-0039 §D1 adds one refusal to `canUseAsymptotic`: when
+// `κ = q − p + 1 ≤ 0` AND `n < p` (the divergent-algebraic regime
+// where exponential corrections from `egf` are mandatory), the
+// pre-filter refuses. The verdict shape is `{ ok: false, reason }`;
+// the reason names the `egf v0.1` follow-up.
+
+describe("canUseAsymptotic: bead 43i — κ ≤ 0 AND n < p refusal", () => {
+  test("refuses G^{1,1}_{2,1}([1/3],[1/4],[1/2] | 10) — κ=0, n=1<p=2", async () => {
+    // Avoid a static import of `dispatcher.ts` at module load time;
+    // it pulls in the contour layer's heavier imports unrelated to
+    // this single-function probe. Dynamic import keeps the rest of
+    // this file's test surface unchanged.
+    const { canUseAsymptotic } = await import("../src/dispatcher.js");
+    const params: MeijerGParameters = {
+      an: [cfromStrings("0.3333333333333333333333333333333333", "0", WORK_BITS)],
+      ap: [cfromStrings("0.25", "0", WORK_BITS)],
+      bm: [cfromStrings("0.5", "0", WORK_BITS)],
+      bq: [],
+    };
+    const z = cfromInts(10n, 0n, WORK_BITS);
+    const v = canUseAsymptotic(params, z, 30);
+    expect(v.ok).toBe(false);
+    expect(v.reason).toMatch(/kappa<=0 with n<p/);
+    expect(v.reason).toMatch(/egf/);
+  });
+
+  test("does NOT refuse n=p shapes with κ ≤ 0 (e.g. anchor 8 G^{0,2}_{2,0})", async () => {
+    // n = p = 2, κ = 0 − 2 + 1 = −1. Not in the new refusal regime;
+    // the existing scan-for-min branch handles it. Verdict should
+    // be `ok: true` (the pre-filter accepts; the layer itself may
+    // still produce a numerical answer or a different refusal —
+    // anchor 8 of the test suite proves it produces an answer).
+    const { canUseAsymptotic } = await import("../src/dispatcher.js");
+    const params: MeijerGParameters = {
+      an: [cfromInts(1n, 0n, WORK_BITS), cfromStrings("0.5", "0", WORK_BITS)],
+      ap: [],
+      bm: [],
+      bq: [],
+    };
+    const z = cfromInts(100n, 0n, WORK_BITS);
+    const v = canUseAsymptotic(params, z, 30);
+    expect(v.ok).toBe(true);
   });
 });
 

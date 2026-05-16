@@ -56,15 +56,21 @@
 import {
   type BigComplex,
   type BigFloat,
+  abs as absBF,
+  add as addBF,
   cabs,
+  carg,
   cconj,
   cmp,
   csub,
   decimalToBinaryPrecision,
   div,
+  div as divBF,
   fromInt,
   isZero,
   mul,
+  pi,
+  sgn,
   toFloat64,
 } from "@workbench/bigfloat";
 import type { Value } from "@workbench/protocol";
@@ -103,7 +109,8 @@ export type DispatchMethod =
   | "slater-series-1"
   | "slater-series-2"
   | "mellin-barnes"
-  | "braaksma-algebraic";
+  | "braaksma-algebraic"
+  | "braaksma-stokes";
 
 /**
  * Forced-method override. `undefined` (the default) runs the full
@@ -355,15 +362,28 @@ export function canUseContour(
 }
 
 /**
- * Pre-filter for the asymptotic layer. Refuses when:
- *   * `n = 0` (no upper poles to close on the right);
- *   * `|z| < 1` (asymptotic does not apply at small |z|);
- *   * `|arg z| ≥ π/2 − π/64` (outside the v0.1 principal sector).
+ * Pre-filter for the asymptotic layer. ADR-0039 §D4 widens the v0.1
+ * principal-sector check to be κ-aware, and replaces the `Math.atan2`
+ * float64 sector test with a BigFloat-precision `carg` comparison so
+ * the `arbprec: true` contract holds end-to-end.
  *
- * The `precision` parameter is forwarded so the layer's own
- * Stokes-band margin (which scales with working precision) can be
- * pre-checked. We use float64 |arg z| here — the band is
- * `2^{−workingBits/4}` wide, well above float64's angular precision.
+ * Refuses when:
+ *   * `n = 0` (no upper poles to close on the right);
+ *   * `|z| = 0` (the origin is not in any far-field sector);
+ *   * `κ ≤ 0 ∧ n < p` (the divergent-algebraic regime that
+ *     mandates exponential corrections; ADR-0039 §D1, bead `43i`);
+ *   * `κ = 2` (the three-term `H + E^- + E^+` connection formula is
+ *     out of v0.1 scope; filed as bead `scientist-workbench-fc83`);
+ *   * `|z| < 1` (asymptotic does not apply at small |z|);
+ *   * `|arg z| ≥ angle_cap + margin` where `angle_cap` is the κ-aware
+ *     boundary: `π/2` for κ=1 and `κπ/2` for κ≥3 (capped at the v0.1
+ *     coverage limit of `π` for κ≥3).
+ *
+ * Inputs in the Stokes-band `[angle - margin, angle + margin]` are
+ * **let through**; the layer's own `classifySector` makes the
+ * stokes-vs-stokes-band-refused decision at BigFloat precision (ADR-
+ * 0039 §D3-D4). The pre-filter is now a coarse early-out; the detailed
+ * verdict lives inside `meijergAsymptotic`.
  */
 export function canUseAsymptotic(
   params: MeijerGParameters,
@@ -384,6 +404,40 @@ export function canUseAsymptotic(
       reason: "z = 0: |z| → ∞ asymptotic does not apply at the origin",
     };
   }
+  const p = n + params.ap.length;
+  const q = params.bm.length + params.bq.length;
+  const kappa = q - p + 1;
+
+  // Regime check (ADR-0039 §D1, bead 43i): κ ≤ 0 ∧ n < p needs
+  // exponential corrections that the egf v0.1 layer does not assemble
+  // in this regime. Refuse upstream so the integrated dispatcher
+  // surfaces a clean `non-asymptotic-regime` rather than wasting a
+  // call into the layer.
+  if (kappa <= 0 && n < p) {
+    return {
+      ok: false,
+      reason:
+        `kappa<=0 with n<p — algebraic series diverges, ` +
+        `exponential corrections required (egf v0.1)`,
+    };
+  }
+
+  // κ = 2 (`p = q − 1`) is out of egf v0.1 scope (ADR-0039 §D2). The
+  // three-term `H + E^- + E^+` formula is structurally different and
+  // is filed as bead `scientist-workbench-fc83`. Refuse upstream with
+  // the bead ID so the caller's planner can route or surface.
+  if (kappa === 2) {
+    return {
+      ok: false,
+      reason:
+        `kappa=2 (p=q-1) — three-term H + E^- + E^+ connection formula ` +
+        `is out of egf v0.1 scope; filed as scientist-workbench-fc83`,
+    };
+  }
+
+  // |z| sanity at BigFloat precision (consistent with the layer's own
+  // |z| ≥ 1 gate). The float64 hypot is sufficient here because the
+  // `|z| < 1` band is wide; the layer re-checks at full precision.
   const reF = toFloat64(z.re).value;
   const imF = toFloat64(z.im).value;
   const zMag = Math.hypot(reF, imF);
@@ -393,19 +447,76 @@ export function canUseAsymptotic(
       reason: `|z| = ${zMag.toExponential(3)} < 1: not in the |z| → ∞ regime`,
     };
   }
-  const absArg = Math.abs(Math.atan2(imF, reF));
-  const angle = opts?.principalSectorAngle ?? Math.PI / 2 - Math.PI / 64;
-  // Use the float64 working-bit estimate; matches the layer's own.
+
+  // BigFloat-precision sector check (ADR-0039 §D4). Replaces the
+  // float64 `Math.atan2` with `carg(z, workingBits)`, then compares
+  // BigFloat `|arg z|` against the κ-aware cap with the BigFloat
+  // working-precision margin. Sign-of-Im(z) is *also* derived from
+  // the BigFloat `carg` value, not from `Number(z.im) > 0`, because
+  // the sign decision drives an exponentially-divergent connection-
+  // formula branch when the layer assembles past the line (CLAUDE.md
+  // hallucination-risk callout: "no `Number(z.im) > 0` for sign-of-
+  // Im in the Stokes path").
   const workingBits = decimalToBinaryPrecision(precision, 30);
-  const margin = Math.pow(2, -workingBits / 4);
-  if (absArg >= angle - margin) {
+  const argZ = carg(z, workingBits);
+  void sgn(argZ); // The sign is informational here; the layer
+  // re-derives signOfImZ inside classifySector. We compute carg once
+  // anyway because the angle-cap comparison below uses |argZ|.
+  const absArgBF = absBF(argZ);
+
+  // κ-aware principal-sector half-width. κ=1 ⇒ π/2; κ≥3 ⇒ κπ/2 capped
+  // at π (the v0.1 coverage limit — sectorIndex ∈ {−1, 0, +1}).
+  // The legacy `principalSectorAngle` opt remains as an override for
+  // κ=1 only (it is silently ignored for κ ≥ 3 and κ = 2).
+  const piBF = pi(workingBits);
+  let angleCap: BigFloat;
+  if (kappa === 1) {
+    angleCap = divBF(piBF, fromInt(2n, workingBits), workingBits);
+    // Legacy float64 override (ADR-0026 era). Honoured for κ=1 only.
+    if (opts?.principalSectorAngle !== undefined) {
+      // The override is a float64; we round it into BigFloat via the
+      // mantissa-of-string route would be overkill — the override is a
+      // tuning knob, not a determinism-critical input. Replicate the
+      // float64 → BigFloat conversion the layer uses internally.
+      angleCap = fromInt(
+        BigInt(Math.round(opts.principalSectorAngle * 2 ** 53)),
+        workingBits,
+      );
+      // Divide by 2^53 to recover the original double value.
+      const denom = fromInt(2n ** 53n, workingBits);
+      angleCap = divBF(angleCap, denom, workingBits);
+    }
+  } else {
+    // κ ≥ 3 path. The first interior Stokes line is at `arg z = ±π`;
+    // sectorIndex ∈ {−1, 0, +1} covers up through `|arg z| < π + W`.
+    // v0.1 caps the pre-filter at `π` (with margin); the band itself
+    // sits inside the layer's responsibility.
+    angleCap = piBF;
+  }
+
+  // Margin: 2^{-workingBits/4} (legacy v0.1 margin, matched by the
+  // layer's `classifySector`). The Stokes band `c_W · |z|^{-1/(2κ)}`
+  // is wider than this for `|z| < 10^{workingBits/(2κ)}` — inputs in
+  // the band fall through this pre-filter and the layer's classifier
+  // decides.
+  const margin: BigFloat = {
+    mantissa: 1n,
+    exponent: -Math.floor(workingBits / 4),
+    precision: workingBits,
+  };
+  const upperCap = addBF(angleCap, margin, workingBits);
+  if (cmp(absArgBF, upperCap) >= 0) {
+    // Past the κ-aware cap; outside the v0.1 coverage envelope. The
+    // layer would refuse with `secondary-sector` or `coverage-gap`;
+    // surface the pre-filter refusal as a clean reason string.
     return {
       ok: false,
       reason:
-        `|arg z| = ${absArg.toFixed(6)} ≥ ${(angle - margin).toFixed(6)}: ` +
-        `outside the principal sector`,
+        `|arg z| beyond the κ=${kappa} v0.1 coverage cap ` +
+        `(approximately ${kappa === 1 ? "π/2" : "π"} + margin)`,
     };
   }
+
   return { ok: true, reason: "" };
 }
 
@@ -1052,6 +1163,7 @@ function finaliseNumerical(
     "slater-series-2": "slater",
     "mellin-barnes": "contour",
     "braaksma-algebraic": "asymptotic",
+    "braaksma-stokes": "asymptotic",
   };
   const force = forceMap[result.method];
   if (force === undefined) return result;

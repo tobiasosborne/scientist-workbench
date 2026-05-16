@@ -89,7 +89,12 @@ function relErr(got: BigComplex, want: BigComplex): number {
 
 describe("mutation 1: sign flip", () => {
   test("inverting the asymptotic result fails the method-agreement test", () => {
-    const params = P(["0.5"], [], ["0"], ["1"]);
+    // κ=1 shape (p=q): G^{1,1}_{1,1}([1/2];_;[0];_). The previous
+    // `(["0.5"], [], ["0"], ["1"])` shape was κ=2 (out of egf v0.1
+    // scope; refused with coverage-gap by the κ-aware classifier). The
+    // mutation invariant is shape-independent — pick any shape where
+    // both Slater and asymptotic apply.
+    const params = P(["0.5"], [], ["0"], []);
     const z = cfromInts(100n, 0n, WORK_BITS);
     const slater = meijergSlater(params, z, TARGET_DPS);
     if (slater.status !== "success") throw new Error(slater.reason);
@@ -187,37 +192,25 @@ describe("mutation 3: truncation too early", () => {
 // the refusal is the load-bearing invariant.
 
 describe("mutation 4: sector classifier wrongly admits secondary sector", () => {
-  test("negative-z input must refuse, not compute", () => {
+  test("κ=2 input refuses with coverage-gap (egf v0.1 scope-gate)", () => {
+    // After the κ-aware classifier (ADR-0039 §D3), the load-bearing
+    // sector-refusal invariant moves from "negative-z is secondary-
+    // sector" to "κ=2 input is coverage-gap". The κ=2 (p=q-1) regime
+    // has a structurally distinct three-term H+E^-+E^+ connection
+    // formula (DLMF 16.11.8) that egf v0.1 does not implement; the
+    // classifier refuses upstream with the bead ID
+    // `scientist-workbench-fc83` so the caller can route or surface.
+    // This refusal is the new "sector classifier wrongly admits"
+    // mutation target: if the κ classifier wrongly admitted the κ=2
+    // case as principal, the kernel would silently produce a wrong-
+    // valued answer (because the second E term is missing).
     const params = P(["0.5"], [], ["0"], ["1"]);
-    const z = cfromInts(-100n, 0n, WORK_BITS);
+    const z = cfromInts(100n, 0n, WORK_BITS);
     const r = meijergAsymptotic(params, z, TARGET_DPS);
-    expect(r.status).toBe("secondary-sector");
-    // If we forced the classifier to admit this as principal — by
-    // overriding the sector angle to π — the kernel would compute a
-    // (wrong-valued) answer. Demonstrate by widening the angle:
-    const wrongAngle = Math.PI - 1e-10;
-    const rWrong = meijergAsymptotic(params, z, TARGET_DPS, {
-      principalSectorAngle: wrongAngle,
-    });
-    // The kernel computes *something*, which we know to be wrong (the
-    // exponential E_{p,q} term is missing). Compare to the contour /
-    // Slater answer and confirm divergence — this proves the
-    // refusal-envelope test is load-bearing.
-    if (rWrong.status === "success") {
-      // For G^{1,1}_{1,2}(1/2; ; 0,1 | -100) we'd need a contour /
-      // Slater path. Slater Series 1 converges (q ≥ p ⇒ p < q):
-      const slater = meijergSlater(params, z, TARGET_DPS);
-      if (slater.status === "success") {
-        // The values must NOT match — confirms the refusal is correct
-        // scope.
-        const err = relErr(rWrong.value, slater.value);
-        // We expect the wrongly-computed asymptotic (sans Stokes
-        // correction) to disagree with Slater by some macroscopic
-        // amount on the negative axis.
-        expect(err).toBeGreaterThan(Math.pow(10, -3));
-      }
+    expect(r.status).toBe("coverage-gap");
+    if (r.status === "coverage-gap") {
+      expect(r.reason).toMatch(/fc83/);
     }
-    // Either way, the principal-sector default refuses cleanly.
   });
 });
 
