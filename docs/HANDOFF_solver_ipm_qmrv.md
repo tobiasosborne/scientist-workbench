@@ -1,6 +1,22 @@
 # Handoff — solver-ipm SDP convergence: final 1/6 (hinf2) via Ruiz equilibration (bead `qmrv`)
 
-> **State at commit `9172b16`:** `sdp-sdplib` corpus bench is **5/6**.
+> **SUPERSEDED — 2026-05-16.** The "Ruiz equilibration as the hinf2 fix"
+> diagnosis below was **wrong** — it didn't address the actual cause
+> (boundary-clamp `αP → 0` in the non-HSDE primal-dual iterate space).
+> The correct path was HSDE (Andersen-Roos-Terlaky 2003), documented
+> in `docs/HANDOFF_solver_ipm_hsde.md` (also superseded) and shipped
+> across Phases 0-2 + Phase 5 Tiers 0-4 (worklogs 106 / 110 / 128 / 129).
+> Final outcome: 5/6 cases, 64/66 invariants — `hinf2 optimality_gap`
+> flips to pass via Tier 1 IR; the remaining 2 hinf2 invariants
+> (`primal_feasibility`, `complementary_slackness`) are a Phase 6
+> (bigfloat) gate per worklog 128's τ-shrinkage diagnosis. The Ruiz
+> handoff is preserved below as a CLAUDE.md Rule 2 ("all bugs are deep")
+> cautionary tale: a fix that addresses a symptom (large `|y|`) without
+> investigating the cause produces 200 LOC that doesn't help.
+>
+> ---
+>
+> **Original state (at commit `9172b16`):** `sdp-sdplib` corpus bench is **5/6**.
 > control1, control2, control3, theta1, mcp100 all pass; hinf2 is the
 > remaining holdout. Bench was 3/6 before the work in worklog
 > 095 (verbose iter-trace + COPT-aligned termination + best-iterate

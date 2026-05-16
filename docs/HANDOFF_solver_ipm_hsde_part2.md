@@ -1,6 +1,48 @@
 # Handoff — HSDE port: phase 2 done, precision floor on hinf2
 
-> **STATUS — 2026-05-12 evening (worklog 096).** Phase 3 tool
+> **SUPERSEDED — 2026-05-16 (worklogs 106 + 110 + 128 + 129).** HSDE
+> Phase 5 has fully landed across four tiers:
+>
+> - Tier 0 (`fuur`, worklog 106): diagnostic infrastructure + ground-
+>   truth ref read. `nitref1/2/3` slots in `VerboseIterLine`;
+>   `parseMosekLog` + `parseCoptLog`.
+> - Tier 1 (`vajd`, worklog 110): `solveWithIR` core + wiring into
+>   `HsdeLpSolver` + `HsdeNtSdpSolver` (3 back-sub sites each). 113 tests
+>   green; IR demonstrably broke the unpurified `r_p` floor by 3 decades
+>   on hinf2 (`1.26e-7 → 1.77e-10`).
+> - Tier 2 (`fsr7`, worklog 128): Mosek 11.1 oracle for the six SDPLIB
+>   cases under `docs/oracles/mosek-sdo/`; end-to-end precision tests in
+>   `hsde-precision.test.ts`; **verdict — the 2-decade purified-pInf gap
+>   from the 1e-9 target on hinf2 + control3 is entirely τ-shrinkage in
+>   HSDE's near-optimal dynamics, not back-substitution residual.** No
+>   tuning of `LINSYSACC`/`IRERRFACT`/`maxIter` in `solveWithIR` can
+>   recover it; **Phase 6 (bigfloat HSDE, separate ADR per ADR-0033
+>   Decision 9) is the only path past the float64 floor on those two
+>   cases.**
+> - Tier 3 (`lniy`, worklog 129): `tools/sdp-solve --method=auto` default
+>   switch to `hsde-nt`; HSDE soft-success branch (`μ ≤ feasTol AND
+>   prstatus > 0.5 AND τ ≥ 1e-6` → `dual-feasible` → wire `optimal` per
+>   `Status.ts`), mirroring legacy NT's `couldDualFeas`. 6 PSD-success
+>   goldens regenerated; oracle 14/14. Corpus bench: 5/6 cases, 64/66
+>   invariants (up from baseline 5/6, 63/66; `hinf2 optimality_gap`
+>   flips to pass).
+>
+> The 6/6 case-count remains a **Phase 6 gate**. Mosek reaches `PFEAS =
+> 2.4e-12` on hinf2 algorithmically; the substrate (sparse-LDL with
+> dynamic regularisation in extended precision) is the difference, not
+> the algorithm choice. ADR-0033 §"Decision 9 — Tier-2 amendment" and
+> §"Decision 9 — Tier-3 amendment" record the per-case verdict and the
+> bigfloat path forward.
+>
+> The §0–§13 below is preserved as historical context (the Phase 5
+> playbook that produced the four worklogs above). Read it for the
+> "why the τ-κ tracking is load-bearing" reasoning; reach for worklogs
+> 106 / 110 / 128 / 129 for the actual implementation history and
+> per-tier acceptance evidence.
+>
+> ---
+>
+> **Original status (2026-05-12 evening, worklog 096).** Phase 3 tool
 > wiring (§6 of this document) has **shipped** in commit `e164046`:
 > `tools/sdp-solve --method=hsde-nt` and `tools/lp-solve
 > --method=hsde-lp` are agent-callable today. Defaults unchanged

@@ -1,6 +1,20 @@
 # Handoff — HSDE port for `solver-ipm` (next phase of bead `qmrv`)
 
-> **TL;DR.** The 5/6 → 6/6 path on `sdp-sdplib` is now well-scoped. Mosek
+> **SUPERSEDED — 2026-05-16.** The HSDE port shipped across Phases 0-2
+> (this handoff's playbook) + Phase 5 Tiers 0-4 (the precision-floor
+> close-out under bead `qmrv`). See `docs/HANDOFF_solver_ipm_hsde_part2.md`
+> for the part-2 handoff (also superseded; its header points at the
+> per-tier worklogs 106 / 110 / 128 / 129). The TL;DR below is preserved
+> as the historical diagnosis that motivated the port; the Phase 5
+> precision verdict (worklog 128) refines it: the αP-collapse on hinf2
+> *is* structurally resolved by HSDE, but the remaining 1-case gap (6/6)
+> is the float64 representation of `r_p / τ` purification, not the
+> boundary-clamp the original handoff diagnosed — `Phase 6 (bigfloat
+> HSDE)` is the path past it.
+>
+> ---
+>
+> **Original TL;DR.** The 5/6 → 6/6 path on `sdp-sdplib` is now well-scoped. Mosek
 > reaches `pres = 5.4e-13` on hinf2 in 84 iters; we stall at `pres = 3.8e-7`
 > with `αP → 0` because our IPM does **not** use the Homogeneous Self-Dual
 > Embedding (HSDE). Mosek does — `~/Dropbox/.../MOSEK-decomp/analysis/VERDICT.md`
