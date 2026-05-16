@@ -28,10 +28,10 @@
 //        constraint, ≥ 100 dp);
 //      - `bigCErfi(z) ≈ -i · bigCErf(i·z)` (defining identity, ≥ 100 dp).
 //
-// Mutation-proving discipline (per CLAUDE.md Rule 6 / shard 134):
+// Mutation-proving discipline (per CLAUDE.md Rule 6 / shard 136):
 // the substrate's algorithm-pin sensitivity is demonstrated in three
 // disconnected perturbations of `complex.ts`, each causing the suite to
-// fail RED — documented in `docs/worklog/134-erf-bigfloat-complex.md` and
+// fail RED — documented in `docs/worklog/136-erf-bigfloat-complex.md` and
 // reproducible by reverting any one of them.
 
 import { describe, test, expect } from "bun:test";
