@@ -1,6 +1,6 @@
 # ADR-0039 — Stokes connection coefficients and the algebraic-asymptotic split
 
-**Status:** Proposed — 2026-05-15. Amended 2026-05-16 (regime-decision narrowing per `43i` implementation; see §D1). **Amended 2026-05-16 (ulze): §D3 connection-formula assembly retracted — `H_workbench(z) = G(z)` directly on the principal Riemann sheet for v0.1-scope shapes, see §D3 amendment block and new §D6 / §D7.**
+**Status:** Proposed — 2026-05-15. Amended 2026-05-16 (regime-decision narrowing per `43i` implementation; see §D1). **Amended 2026-05-16 (ulze): §D3 connection-formula assembly retracted — `H_workbench(z) = G(z)` directly on the principal Riemann sheet for v0.1-scope shapes, see §D3 amendment block and new §D6 / §D7.** **Amended 2026-05-16 (atip): §D6 implemented — `degenerate-principal-sector` refusal for κ ≥ 3 ∧ δ ≤ 0; κ=1 path unchanged (Slater 1966 §5.5 makes H = G as a convergent formula regardless of δ). See §D6 amendment 1 and §D7 update.**
 **Beads:** `scientist-workbench-43i` (hv0.9.1, Fox-H algebraic-prefactor / divergent-truncation fix for `n < p`). `scientist-workbench-egf` (hv0.9.2, Stokes-multiplier table for `p = q` and `p ≤ q − 2`). This ADR is the spec both beads cite.
 **Authors:** tobiasosborne + Claude Opus 4.7 (1M context, orchestrating).
 **Related:** ADR-0026 (Braaksma far-field asymptotic — §7 deferred-scope text where `hv0.9.1`/`hv0.9.2` were filed); ADR-0027 (dispatcher — the `canUseAsymptotic` predicate this ADR widens); ADR-0020 (arbprec tier — the bit-identical-cross-platform contract this ADR inherits); `docs/refs/dlmf-16-11.md` (the local canonical reference written alongside this ADR; every formula in scope is cited there by DLMF + Paris-Kaminski equation number).
@@ -118,27 +118,54 @@ See §D1's rationale paragraph. Empirically the `n = p AND κ = 1` boundary case
 
 **Wire-schema state (post-amendment).** `method ∈ {"braaksma-algebraic", "braaksma-stokes"}` and `sector ∈ {"principal", "stokes"}` are preserved as bookkeeping — they record which side of the κ-aware classifier the input landed on, even though the numerical formula is the same. The `stokes-band-refused` refusal class is deleted. The `coverage-gap` refusal class is retained (for κ=2).
 
-### D6 — δπ algebraic-sector envelope (NEW, deferred to bead `atip`)
+### D6 — δπ algebraic-sector envelope (bead `atip`, implemented 2026-05-16)
 
-The original §D3 (and current `classifySector`) uses `|arg z| < κπ/2` as the principal-sector boundary for κ-aware classification. The math-research diagnosis surfaced that this is the **E-Stokes geometry** (where E representatives sit), not the **algebraic-sector geometry** (where $H_{\text{workbench}}$ converges to $G$).
+The original §D3 (and pre-`atip` `classifySector`) used `|arg z| < κπ/2` as the principal-sector boundary for κ-aware classification. The math-research diagnosis (worklog 125) surfaced that this is the **E-Stokes geometry** (where E representatives sit), not the **algebraic-sector geometry** (where $H_{\text{workbench}}$ converges to $G$).
 
-The correct algebraic envelope is `|arg z| < δπ` where `δ = m + n − (p+q)/2` is the Paris–Kaminski algebraic-sector defect (P&K §2.2.2). For shapes with δ≤0 the algebraic envelope is empty/degenerate and the H-only path is mathematically invalid — H diverges or fails to converge to G on the positive real axis.
+The Paris–Kaminski algebraic-sector defect is
 
-**Visible casualty.** Golden 17 `G^{1,1}_{1,3}([1/3]; ; [1/2]; [2/3, 3/4] | 50)` has δ=0; the workbench was silently emitting `+4.4×10⁻³` for a true value of `-0.5549...` (wrong by ~125× AND wrong sign). Golden 17 has been deleted pending bead `scientist-workbench-atip`.
+$$
+\delta = m + n - \tfrac{1}{2}(p + q),
+$$
 
-**Fix scope** (bead `atip`, P1):
-- Replace `κπ/2` with `δπ` in `classifySector`'s principal-sector boundary.
-- For shapes with δ≤0, refuse with new tag `degenerate-principal-sector` until the full Braaksma E-dominant path is implemented (a further follow-up; the dominant-E formula requires substantial new mathematics, distinct from the v0.1 deleted assembly).
+and the algebraic envelope is `|arg z| < δπ` (P&K §2.2.2; reproduced in `docs/refs/dlmf-16-11.md` §2.4). For shapes with δ≤0 the envelope is empty/degenerate and the H-only path is mathematically invalid — H diverges or fails to converge to G.
+
+**Visible casualty (pre-fix).** Golden 17 `G^{1,1}_{1,3}([1/3]; ; [1/2]; [2/3, 3/4] | 50)` has δ=0 and κ=3; the workbench was silently emitting `+4.4×10⁻³` for a true value of `-0.5549...` (wrong by ~125× AND wrong sign). Golden 17 was deleted by `ulze` pending this bead.
+
+#### D6 amendment 1 (`atip` implementation, 2026-05-16)
+
+Implementation **narrowed the refusal to κ ≥ 3** rather than the blanket "refuse all δ≤0" the bead description originally specified. The narrowing follows from the math story for the inner pFq in Slater Series 2:
+
+- **κ = 1** (p = q). The inner is `pFp-1(1/z)` with radius of convergence 1 (DLMF §16.2). For the asymptotic-regime gate `|z| > 1` the inner converges as a normal power series, and Slater 1966 §5.5's q≥p convergence theorem makes the right-closing residue series equal G exactly — δ has no role in the formula's validity. The κ=1 δ=0 shapes (bead 43i's `G^{1,1}_{2,2}`, `G^{1,2}_{3,3}`, `G^{1,3}_{4,4}` family) are **mpmath-verified to 30+ dps** in the shipped test suite; refusing them would deprecate working behaviour for no mathematical reason. Per §D7's empirical observation, these cases hold honestly.
+
+- **κ ≥ 3** (p ≤ q − 2). The inner is `qFp-1(1/z)` with q ≥ p+2 upper > p−1 lower — formally divergent for any z. The algebraic series is asymptotic-to-G inside the envelope `|arg z| < δπ` and breaks down outside it. With δ ≤ 0 the envelope is empty and the asymptotic has no valid sector → refuse with `degenerate-principal-sector`.
+
+- **κ = 2** is already out-of-coverage (`fc83`) and not affected.
+
+For κ ≥ 3 with δ ≥ 1 the algebraic envelope `δπ ≥ π` straddles or exceeds the principal-Riemann-sheet boundary (the branch cut at `|arg z| = π`), so the effective principal-vs-stokes boundary is `min(δπ, π)`. For the common case δ = 1 (e.g. `G^{2,1}_{1,3}`, `G^{3,0}_{1,3}`, the Bessel-K-style reductions) this matches the pre-`atip` `θ_S = π` code byte-for-byte. For higher κ with half-integer δ (κ = 4, 6, …) δπ may be less than π and becomes the active boundary; v0.1 doesn't anchor these with tests.
+
+**Implementation locations:**
+- `packages/meijer-core/src/asymptotic.ts:classifySector` — adds `degenerate-principal-sector` verdict (κ≥3 path only) and uses `min(δπ, π)` as the κ≥3 principal/stokes boundary.
+- `packages/meijer-core/src/asymptotic.ts:meijergAsymptotic` — plumbs the verdict to a new `MeijerGAsymptoticRefusal.status === "degenerate-principal-sector"`.
+- `packages/meijer-core/src/dispatcher.ts:canUseAsymptotic` — adds the same δ≤0 ∧ κ≥3 check upstream so the integrated dispatcher surfaces the refusal without invoking the layer.
+- `tools/meijer-g-asymptotic-only/tool.ts` — adds the refusal class to the output schema union and the header comment.
+- `tools/meijer-g-asymptotic-only/goldens/17-3-0-…-degenerate-principal-.golden.json` — refusal golden at the exact deleted-golden-17 input.
+- `packages/meijer-core/test/asymptotic.test.ts` — adds 5 new tests: classifier κ=3 δ=0, classifier κ=3 δ<0 (half-integer), classifier κ=1 δ=0 admission, layer refusal at the deleted-golden-17 input, layer refusal at κ=4 δ=-1/2.
+- `packages/meijer-core/test/asymptotic-mutations.test.ts` — mutation 4b: degenerate principal sector → refuse, not silently emit.
+
+**Out of scope:** the dominant-E Braaksma formula that would lift the refusal for κ≥3 δ≤0 shapes. That is substantial new mathematics — dominant exponential representatives in the algebraic-sector-degenerate regime, distinct from the multiplier-table assembly `ulze` retracted — and remains deferred.
 
 ### D7 — Post-amendment summary
 
-After `43i` (Amendment 1) and `ulze` (Amendment 2 + §D6), the v0.1 state is:
+After `43i` (Amendment 1), `ulze` (Amendment 2 + §D6), and `atip` (§D6 Amendment 1), the v0.1 state is:
 
-- **κ=1 and κ=3 with δ≥1**: shipped and correct. The Stokes-classified branch and principal-classified branch produce identical numerics via `assembleAlgebraic`. The wire labels `method` and `sector` are diagnostic-only.
-- **κ=1 with δ=0**: probed empirically (`G^{1,1}_{2,2}` Test 1.3); appears to hold on the principal sheet. Not formally proven; deserves a probe if encountered as a regression.
-- **κ=3 with δ≤0**: silently broken; refusal-conversion is bead `atip`.
+- **κ=1 with δ≥1**: shipped and correct. Inner pFq converges for |z|>1; H = G as a convergent formula. The Stokes-classified branch and principal-classified branch produce identical numerics via `assembleAlgebraic`. The wire labels `method` and `sector` are diagnostic-only (encoding which side of the E-Stokes line at ±π/2 the input landed on).
+- **κ=1 with δ=0**: shipped and correct (bead 43i `G^{1,1}_{2,2}`/`G^{1,2}_{3,3}`/`G^{1,3}_{4,4}` tests at 30+ dps mpmath-verified). Promoted from "appears empirically" to "shipped and tested" via the bead-43i mpmath corpus. The math: same as δ≥1 — Slater 1966 §5.5's q≥p convergence theorem makes H = G as a convergent formula irrespective of δ.
+- **κ=3 with δ≥1**: shipped and correct. `H_workbench(z) = G(z) + O(e^{−κ|z|^{1/κ}})` with no Stokes-line crossings inside the principal Riemann sheet.
+- **κ=3 with δ≤0**: refuses with `degenerate-principal-sector` (bead `atip`, 2026-05-16). Was silently broken pre-`atip`. Lifting the refusal requires the deferred dominant-E Braaksma path.
 - **κ=2**: refuses with `coverage-gap`; filed as `fc83`.
-- **κ≤0 with n<p**: refuses at dispatcher; correct (the algebraic series genuinely diverges).
+- **κ≤0 with n<p**: refuses at dispatcher with `non-asymptotic-regime`; correct (the algebraic series genuinely diverges).
+- **κ≥4 (and ≠ 2)**: untested coverage. Half-integer δ is possible; the κ≥3 codepath handles them defensively (`min(δπ, π)` as the boundary, `degenerate-principal-sector` refusal for δ≤0). No anchors exist yet.
 
 The `bigErfc` bead `ybrw` is reconsidered: the multiplier table it was meant to smooth no longer exists. `ybrw` may still be useful for unrelated future work but is no longer the unblocker for any open Stokes-band-refused refusal (those refusals are themselves removed). The bead's notes were updated 2026-05-16 to reflect this.
 
@@ -169,7 +196,7 @@ Filed alongside this ADR; not in scope for `43i` or `egf` v0.1:
 1. **`scientist-workbench-fc83` ($\kappa = 2$, $p = q - 1$).** Three-term connection formula. Mathematically distinct from $\kappa = 1$ and $\kappa \ge 3$. Note (2026-05-16): post-`ulze` retraction, this bead's scope may collapse if `H_workbench = G` also holds for κ=2 with δ≥1 — needs an empirical probe before reopening. If it does hold, `fc83` becomes another "delete `coverage-gap` refusal, route to `assembleAlgebraic`" change.
 2. **`scientist-workbench-ybrw`.** ~~Implement `bigErfc(x, prec)` in `@workbench/bigfloat` and switch the Stokes band from Option C (sharp switch + refusal) to Berry smoothing.~~ **Reconsidered 2026-05-16 (ulze):** the multiplier table this would smooth has been deleted; the `stokes-band-refused` refusal class it would remove no longer exists. `bigErfc` may still be useful for unrelated future work but is no longer an `egf`-path blocker.
 3. **`scientist-workbench-uaxz`.** Refactor `series.ts`'s `evaluateSeries2` so the prefactor and inner-pFq summation can be invoked separately, eliminating the ~25-line duplication between `series.ts` and `asymptotic.ts:residuePrefactor` noted in the ADR-0026 commentary. Pure refactor.
-4. **`scientist-workbench-atip` (NEW, P1 bug, filed 2026-05-16).** δπ algebraic-sector envelope. Currently `classifySector` uses `κπ/2` as the principal-sector boundary; correct is `δπ` (Paris-Kaminski §2.2.2). For shapes with δ≤0 the algebraic-only path is mathematically invalid. Visible casualty: deleted golden 17 G^{1,1}_{1,3}(δ=0). See §D6.
+4. **`scientist-workbench-atip` (P1 bug, filed 2026-05-16, ~~implemented 2026-05-16~~).** δπ algebraic-sector envelope. ~~Currently `classifySector` uses `κπ/2` as the principal-sector boundary; correct is `δπ` (Paris-Kaminski §2.2.2).~~ **Implemented as `degenerate-principal-sector` refusal for κ ≥ 3 ∧ δ ≤ 0 (the narrowed scope — see §D6 amendment 1 for the math story underwriting the κ=1 carve-out).** Lifting the refusal for κ≥3 δ≤0 requires the dominant-E Braaksma path and remains deferred. See §D6.
 
 ## References
 

@@ -286,17 +286,51 @@ export const goldens: GoldenSpec[] = [
     input: gParams([cHalf], [], [cZero], [cOne], c50),
   },
 
-  // Golden 17 (κ=3 G^{1,1}_{1,3}([1/3]; _ ; [1/2]; [2/3], [3/4] | 50),
-  // δ = m + n − (p+q)/2 = 1 + 1 − (1+3)/2 = 0) deleted 2026-05-16 pending
-  // bead `scientist-workbench-atip`. The κ-aware classifier currently
-  // treats δ=0 shapes as principal-sector inputs but the workbench's
-  // `H^{m,n}_{p,q}(z)` (right-closing Slater residue series) does NOT
-  // converge to `G(z)` for δ=0 — the kernel silently emits a wrong-by-
-  // ~125× answer (oracle truth ≈ −0.5549; kernel ≈ +4.4e-3). The
-  // empirical verification that grounds the egf retraction (worklog 125)
-  // explicitly carves δ=0 out of scope; a replacement golden, or a
-  // `degenerate-principal-sector` refusal golden, will land with atip's
-  // resolution.
+  // Golden 17 — `degenerate-principal-sector` refusal (ADR-0039 §D6,
+  // bead `atip`, 2026-05-16). Same shape as the deleted pre-`atip`
+  // golden 17: κ=3 `G^{1,1}_{1,3}([1/3]; _ ; [1/2]; [2/3], [3/4] | 50)`
+  // with `δ = m + n − (p+q)/2 = 1 + 1 − (1+3)/2 = 0`. The κ ≥ 3 inner
+  // pFq is formally divergent (q > p−1 lower); with δ ≤ 0 the
+  // Paris-Kaminski algebraic envelope `|arg z| < δπ` is empty and the
+  // right-closing Slater residue series does not converge to G.
+  //
+  // Pre-`atip` the kernel routed this input through `assembleAlgebraic`
+  // and emitted `+4.4×10⁻³` at 50 dps — wrong by ~125× AND wrong sign
+  // vs the mpmath truth `−0.5549…` (math-research probe, worklog 125).
+  // Post-`atip` the kernel refuses with the new tag rather than emit a
+  // silent wrong value. The dominant-E Braaksma formula that would
+  // lift the refusal is substantial new mathematics (distinct from the
+  // multiplier-table assembly `ulze` retracted) and deferred. Callers
+  // wanting a numerical answer in this regime should route to
+  // `meijergContour`.
+  {
+    description:
+      "κ=3 δ=0 G^{1,1}_{1,3}([1/3]; _ ; [1/2]; [2/3], [3/4] | z=2+0.1i) ⇒ degenerate-principal-sector (bead atip)",
+    input: gParams(
+      [
+        bigcomplexToValue(
+          cfromStrings(
+            "0.333333333333333333333333333333333333333333333333333",
+            "0",
+            PREC,
+          ),
+        ),
+      ],
+      [],
+      [bigcomplexToValue(cfromStrings("0.5", "0", PREC))],
+      [
+        bigcomplexToValue(
+          cfromStrings(
+            "0.666666666666666666666666666666666666666666666666667",
+            "0",
+            PREC,
+          ),
+        ),
+        bigcomplexToValue(cfromStrings("0.75", "0", PREC)),
+      ],
+      bigcomplexToValue(cfromStrings("2", "0.1", PREC)),
+    ),
+  },
 
   // κ=1 small-|z| input just past the Stokes line at π/2 (arg z ≈
   // π/2 + 0.1, |z|=5). Post-worklog-125 retraction the Stokes-band

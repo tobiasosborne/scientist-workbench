@@ -435,6 +435,36 @@ export function canUseAsymptotic(
     };
   }
 
+  // ADR-0039 §D6 (bead `atip`): for κ ≥ 3 the algebraic-sector defect
+  // `δ = m + n − (p+q)/2 ≤ 0` makes the algebraic envelope
+  // `|arg z| < δπ` empty (δ=0) or negative (δ<0); the inner pFq is
+  // formally divergent (`qF(p−1)` with q ≥ p+1) and the asymptotic
+  // series breaks down outside the envelope, so refusal is the honest
+  // path. Casualty: golden 17 `G^{1,1}_{1,3}` (κ=3, δ=0) silently
+  // emitted answers wrong by ~125× before this refusal landed.
+  //
+  // For κ = 1 the inner pFq is `pFp-1(1/z)` with radius of convergence
+  // 1; the asymptotic-regime gate `|z| > 1` puts the inner in its
+  // convergent disk and Slater 1966 §5.5 makes H equal G as a
+  // convergent formula, so δ has no role and the κ=1 δ=0 cases (e.g.
+  // bead 43i's `G^{1,1}_{2,2}` family) are not refused. `m` is the
+  // length of `bm`; `n` is already in scope as `params.an.length`.
+  if (kappa >= 3) {
+    const m = params.bm.length;
+    const twoDelta = 2 * (m + n) - (p + q);
+    if (twoDelta <= 0) {
+      const deltaStr = twoDelta % 2 === 0 ? `${twoDelta / 2}` : `${twoDelta}/2`;
+      return {
+        ok: false,
+        reason:
+          `delta = m + n - (p+q)/2 = ${deltaStr} <= 0 with kappa = ${kappa} >= 3 — ` +
+          `algebraic sector |arg z| < delta*pi is empty and the inner pFq is ` +
+          `formally divergent; H_workbench does not converge to G. ` +
+          `Tracked as scientist-workbench-atip.`,
+      };
+    }
+  }
+
   // |z| sanity at BigFloat precision (consistent with the layer's own
   // |z| ≥ 1 gate). The float64 hypot is sufficient here because the
   // `|z| < 1` band is wide; the layer re-checks at full precision.

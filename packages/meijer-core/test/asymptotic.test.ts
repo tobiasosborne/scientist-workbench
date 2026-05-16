@@ -682,6 +682,52 @@ describe("asymptotic: structured refusal envelope (post-egf retraction)", () => 
     }
   });
 
+  test("refusal 9: κ=3, δ=0 (G^{1,1}_{1,3}, deleted golden 17) ⇒ degenerate-principal-sector (bead atip)", () => {
+    // The exact deleted-golden-17 shape and parameters:
+    // G^{1,1}_{1,3}([1/3]; _ ; [1/2]; [2/3], [3/4] | precision=50, z=2+0.1i).
+    // Pre-`atip` the kernel routed this through the algebraic per-pole
+    // path and emitted +4.4×10⁻³ at 50 dps — wrong by ~125× AND wrong
+    // sign vs mpmath truth −0.5549… The refusal is the honest-scope
+    // alternative to a silent wrong answer.
+    const params: MeijerGParameters = {
+      an: [cfromStrings("0.333333333333333333333333333333333333333333333333333", "0", WORK_BITS)],
+      ap: [],
+      bm: [cfromStrings("0.5", "0", WORK_BITS)],
+      bq: [
+        cfromStrings("0.666666666666666666666666666666666666666666666666667", "0", WORK_BITS),
+        cfromStrings("0.75", "0", WORK_BITS),
+      ],
+    };
+    const z = cfromStrings("2", "0.1", WORK_BITS);
+    const r = meijergAsymptotic(params, z, 50);
+    expect(r.status).toBe("degenerate-principal-sector");
+    if (r.status === "degenerate-principal-sector") {
+      expect(r.reason).toMatch(/atip/);
+      expect(r.reason).toMatch(/Paris-Kaminski/);
+    }
+  });
+
+  test("refusal 10: κ=4, δ=-1/2 (half-integer) ⇒ degenerate-principal-sector", () => {
+    // G^{1,1}_{1,4}: m=1, n=1, p=1, q=4, κ=4. 2δ = -1, so δ=-1/2.
+    // The reason string surfaces the half-integer in `n/2` form.
+    const params: MeijerGParameters = {
+      an: [cfromStrings("0.5", "0", WORK_BITS)],
+      ap: [],
+      bm: [cfromStrings("0", "0", WORK_BITS)],
+      bq: [
+        cfromStrings("0.25", "0", WORK_BITS),
+        cfromStrings("0.5", "0", WORK_BITS),
+        cfromStrings("0.75", "0", WORK_BITS),
+      ],
+    };
+    const z = cfromInts(100n, 0n, WORK_BITS);
+    const r = meijergAsymptotic(params, z, TARGET_DPS);
+    expect(r.status).toBe("degenerate-principal-sector");
+    if (r.status === "degenerate-principal-sector") {
+      expect(r.reason).toMatch(/-1\/2/);
+    }
+  });
+
   test("refusal 8: small-|z| just past π/2 ⇒ success (stokes-tagged) post-egf-retraction", () => {
     // κ=1 shape (G^{1,1}_{1,1}) with z just past the Stokes line at
     // π/2 + a small offset, |z|=5. Pre-worklog-125 this refused as
@@ -787,11 +833,50 @@ describe("classifySector — κ-aware (ADR-0039 §D3)", () => {
     }
   });
 
-  // κ = 3 (p = q − 2) — principal sector |arg z| < 3π/2; first Stokes line at ±π.
-  test("κ=3: z = +x large, deep in principal ⇒ principal", () => {
-    // G^{1,1}_{1,3}: m=1, n=1, p=1, q=3, κ = 3 − 1 + 1 = 3.
+  // κ = 3 (p = q − 2). The algebraic-sector envelope is `|arg z| < δπ`
+  // (ADR-0039 §D6, bead `atip`); shapes with `δ = m + n − (p+q)/2 ≤ 0`
+  // are refused as `degenerate-principal-sector` because the inner pFq
+  // is formally divergent and the envelope is empty.
+  test("κ=3, δ=1: z = +x large, inside algebraic envelope ⇒ principal", () => {
+    // G^{2,1}_{1,3}: m=2, n=1, p=1, q=3, κ = 3, δ = 3 − 2 = 1.
+    // Envelope `|arg z| < π`; positive real axis is well inside.
+    const z = cfromInts(50n, 0n, WORK_BITS);
+    const v = classifySector(2, 1, 1, 3, z, WORK_BITS);
+    expect(v.kind).toBe("principal");
+  });
+
+  test("κ=3, δ=0: G^{1,1}_{1,3} ⇒ degenerate-principal-sector (bead atip)", () => {
+    // The deleted golden 17 shape. Pre-`atip` the classifier emitted
+    // `principal` and the kernel silently produced answers wrong by
+    // ~125× (kernel +4.4×10⁻³ vs mpmath truth −0.5549…). Post-`atip`
+    // the classifier refuses with the new verdict.
     const z = cfromInts(50n, 0n, WORK_BITS);
     const v = classifySector(1, 1, 1, 3, z, WORK_BITS);
+    expect(v.kind).toBe("degenerate-principal-sector");
+    if (v.kind === "degenerate-principal-sector") {
+      expect(v.twoDelta).toBe(0);
+    }
+  });
+
+  test("κ=3, δ<0: G^{1,1}_{1,4} (half-integer) ⇒ degenerate-principal-sector", () => {
+    // m=1, n=1, p=1, q=4, κ = 4. 2δ = 2(1+1) − (1+4) = -1 (i.e. δ=-1/2).
+    // Algebraic envelope `|arg z| < -π/2` is empty; the classifier refuses.
+    const z = cfromInts(50n, 0n, WORK_BITS);
+    const v = classifySector(1, 1, 1, 4, z, WORK_BITS);
+    expect(v.kind).toBe("degenerate-principal-sector");
+    if (v.kind === "degenerate-principal-sector") {
+      expect(v.twoDelta).toBe(-1);
+    }
+  });
+
+  test("κ=1, δ=0: G^{1,1}_{2,2} ⇒ principal (bead 43i; inner pFq convergent)", () => {
+    // For κ=1 the inner pFq is `pFp-1(1/z)` with radius 1; for |z|>1
+    // it converges and H_workbench = G as a convergent formula (Slater
+    // 1966 §5.5), so δ has no role and δ=0 is NOT refused. This is the
+    // bead 43i `n<p ∧ κ=1` regime; the kernel values are mpmath-
+    // verified to 30+ dps for these shapes.
+    const z = cfromInts(50n, 0n, WORK_BITS);
+    const v = classifySector(1, 1, 2, 2, z, WORK_BITS);
     expect(v.kind).toBe("principal");
   });
 });

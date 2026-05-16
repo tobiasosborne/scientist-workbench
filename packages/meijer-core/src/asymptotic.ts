@@ -206,7 +206,8 @@ export interface MeijerGAsymptoticRefusal {
     | "small-z"
     | "non-asymptotic-regime"
     | "no-pole-residues"
-    | "input-error";
+    | "input-error"
+    | "degenerate-principal-sector";
   readonly reason: string;
 }
 
@@ -268,6 +269,30 @@ export type MeijerGAsymptoticResult =
  * path would produce on the same input (no compound-asymptotic
  * correction is added).
  *
+ * `"degenerate-principal-sector"` (ADR-0039 §D6, bead `atip`) — for
+ * `κ ≥ 3` the Paris–Kaminski algebraic-sector defect `δ = m + n −
+ * (p+q)/2 ≤ 0`, so the algebraic envelope `|arg z| < δπ` is empty
+ * (δ=0) or negative (δ<0). The inner pFq is `qFp-1(1/z)` which is
+ * formally divergent for κ ≥ 3 (q ≥ p+2 upper > p−1 lower), so the
+ * algebraic series has no valid asymptotic sector when the envelope
+ * is empty. The kernel was previously silently emitting wrong-by-
+ * ~125× answers for κ=3, δ=0 (deleted golden 17, `G^{1,1}_{1,3}`,
+ * verified against mpmath: kernel +4.4×10⁻³ vs truth −0.5549…). The
+ * Braaksma E-dominant path that would lift the refusal is substantial
+ * new mathematics (dominant exponential representatives, not merely
+ * the multiplier-table assembly that `ulze` retracted) and deferred.
+ *
+ * The κ = 1 path does *not* emit this verdict regardless of δ: the
+ * inner pFq for κ=1 is `pFp-1(1/z)` with radius of convergence 1, and
+ * the asymptotic-regime gate `|z| > 1` puts the inner in its
+ * convergent disk; Slater 1966 §5.5 makes H equal G as a convergent
+ * formula and the κ=1 δ=0 cases (bead 43i's `G^{1,1}_{2,2}` family,
+ * mpmath-verified to 30+ dps) are honestly correct.
+ *
+ * `twoDelta = 2(m+n) − (p+q)` is reported as an integer (avoiding the
+ * half-integer issue when `p+q` is odd — i.e. for κ=2, 4, 6, …). The
+ * algebraic envelope is empty exactly when `twoDelta ≤ 0`.
+ *
  * `"secondary"` — `|arg z|` is past the v0.1-covered cap for κ ≤ 0
  * shapes (the legacy ADR-0026 conservative cap). Retained for the
  * `classifyKappaLE0` fallback.
@@ -282,6 +307,7 @@ export type SectorVerdict =
   | { kind: "principal"; sectorIndex: 0 }
   | { kind: "stokes"; sectorIndex: -1 | 0 | 1; signOfImZ: -1 | 0 | 1 }
   | { kind: "secondary"; sectorIndex: number }
+  | { kind: "degenerate-principal-sector"; twoDelta: number }
   | { kind: "out-of-coverage"; reason: string };
 
 /**
@@ -305,8 +331,6 @@ export function classifySector(
   z: BigComplex,
   workingBits: number,
 ): SectorVerdict {
-  void m;
-  void n;
   const kappa = q - p + 1;
 
   // z = 0 is not in any far-field sector; the asymptotic does not apply.
@@ -343,8 +367,8 @@ export function classifySector(
   }
 
   // BigFloat |arg z| — never float64. ADR-0039 §D4: the sign of Im(z)
-  // drives an exponentially-divergent multiplier branch, and the
-  // BigFloat `carg` is bit-identical cross-platform forever.
+  // drives the (now-vestigial; ADR §D3 retraction) Stokes branch label,
+  // and the BigFloat `carg` is bit-identical cross-platform forever.
   const argZ = carg(z, workingBits);
   const signOfArg = sgn(argZ);
   // signOfImZ: derived from sign of arg z. arg z ∈ (−π, π], so
@@ -355,13 +379,25 @@ export function classifySector(
   const signOfImZ: -1 | 0 | 1 = signOfArg;
   const absArg = absBF(argZ);
 
-  // Stokes lines for the regime. For κ = 1: ±π/2. For κ ≥ 3: ±π, ±2π,
-  // …, with the principal-sector boundary at ±κπ/2. v0.1 covers the
-  // principal sector and the two adjacent (±π for κ ≥ 3, ±π/2 for κ=1).
   const piBF = pi(workingBits);
 
   if (kappa === 1) {
-    // Principal sector boundary: π/2. Stokes line at π/2 itself.
+    // κ=1 path. The inner pFq in Slater Series 2 has q upper, p−1 lower
+    // parameters and argument 1/z; with κ=1 we have p=q, so the inner
+    // is `pFp-1(1/z)` with radius of convergence 1 (DLMF §16.2). For
+    // the asymptotic regime gate `|z| > 1` the inner converges as a
+    // normal power series, Slater 1966 §5.5 proves the right-closing
+    // residue series equals G exactly (q ≥ p convergence condition),
+    // and δ has no role in the formula's validity. The classifier
+    // keeps π/2 as the principal-vs-stokes boundary as a *diagnostic*
+    // for the E-Stokes line `arg z = ±π/2` (where the dominant
+    // exponential representative switches in the connection-formula
+    // picture — even though for δ ≥ 1 the H_workbench series is
+    // numerically exact regardless). The κ=1 δ=0 shapes (e.g.
+    // G^{1,1}_{2,2}, the bead 43i `n<p ∧ κ=1` regime) ride this path
+    // and produce mpmath-verified correct numerics; refusing them
+    // would deprecate working, shipped behaviour for no mathematical
+    // reason. See ADR-0039 §D6 amendment 1 (bead `atip`, 2026-05-16).
     const halfPi = divBF(piBF, fromInt(2n, workingBits), workingBits);
     return classifyAroundLine(
       absArg,
@@ -373,41 +409,66 @@ export function classifySector(
     );
   }
 
-  // κ ≥ 3 — the principal-sector boundary is κπ/2. The first interior
-  // Stokes lines are at ±π. v0.1 covers `|arg z| < π + W` (immediately
-  // past the ±π lines, sectorIndex = ±1) and refuses everything wider.
-  // For very high κ (5, 7, …) additional interior Stokes lines exist
-  // at multiples of π; v0.1 caps at the first crossing.
-  const kappaPiOver2 = divBF(
-    mulBF(piBF, fromInt(BigInt(kappa), workingBits), workingBits),
+  // κ ≥ 3 path — the algebraic-sector envelope `|arg z| < δπ` (ADR-0039
+  // §D6, bead `atip`). The inner pFq for κ ≥ 3 is `qFp-1(1/z)` with
+  // q ≥ p+2 upper > p−1 lower; this is formally divergent for any z
+  // and the algebraic series is asymptotic-to-G inside the envelope and
+  // breaks down outside it. The original §D3 used `κπ/2` here (the
+  // E-Stokes geometry, where exponential representatives sit); worklog
+  // 125 surfaced that this is the wrong geometry — golden 17
+  // `G^{1,1}_{1,3}` (δ = m + n − (p+q)/2 = 0, κ=3) was being routed
+  // through the algebraic path and silently emitting answers wrong by
+  // ~125× (kernel +4.4×10⁻³ vs mpmath truth −0.5549…).
+  //
+  // For δ ≤ 0 the envelope is empty (δ=0) or negative (δ<0); the
+  // algebraic series has no valid sector and refusing is the honest
+  // path. The full Braaksma E-dominant formula that would handle the
+  // regime is substantial new mathematics (distinct from the
+  // multiplier-table assembly that `ulze` retracted) and deferred.
+  //
+  // We compute `2δ = 2(m+n) − (p+q)` as an integer to dodge half-
+  // integer representation; the sign comparison `2δ ≤ 0` is exact.
+  const twoDelta = 2 * (m + n) - (p + q);
+  if (twoDelta <= 0) {
+    return { kind: "degenerate-principal-sector", twoDelta };
+  }
+
+  // Algebraic-sector envelope δπ as a BigFloat: `(2δ · π) / 2`.
+  const deltaPi = divBF(
+    mulBF(piBF, fromInt(BigInt(twoDelta), workingBits), workingBits),
     fromInt(2n, workingBits),
     workingBits,
   );
-  // The first interior Stokes line. We classify around ±π.
+
+  // The principal Riemann sheet caps at `|arg z| ≤ π` (the branch
+  // cut); for δ ≥ 1 (the common κ ≥ 3 case — G^{2,1}_{1,3},
+  // G^{3,0}_{1,3}, Bessel-K-style reductions) the algebraic envelope
+  // δπ ≥ π straddles or exceeds the sheet boundary, so the effective
+  // principal-vs-stokes boundary is `min(δπ, π)` and behaviour matches
+  // the pre-`atip` `θ_S = π` code byte-for-byte. For half-integer δ
+  // at higher even κ (κ=4, 6, …; v0.1 doesn't anchor these with
+  // tests), δπ < π becomes the active boundary. The `secondary`
+  // verdict from `classifyAroundLine` re-tags to `out-of-coverage`
+  // for κ≥3 because multi-Stokes-sheet refinement is a follow-on bead.
+  const boundary = cmp(deltaPi, piBF) < 0 ? deltaPi : piBF;
   const verdict = classifyAroundLine(
     absArg,
-    piBF,
+    boundary,
     signOfImZ,
     kappa,
     z,
     workingBits,
   );
   if (verdict.kind === "principal" || verdict.kind === "stokes") {
-    // Both cases live within `|arg z| < π + W`; verify against the
-    // algebraic-sector boundary κπ/2 for completeness.
-    void kappaPiOver2;
     return verdict;
   }
-  // `secondary` from classifyAroundLine means `|arg z| ≥ π + W`. For
-  // κ ≥ 3 we treat that as `out-of-coverage` (multi-Stokes refinement
-  // is a follow-on bead) rather than the legacy ADR-0026 `secondary`.
   if (verdict.kind === "secondary") {
     return {
       kind: "out-of-coverage",
       reason:
-        `|arg z| past the first interior Stokes line (arg z = ±π) for κ = ` +
-        `${kappa}; v0.1 covers sectorIndex ∈ {−1, 0, +1} only. ` +
-        `Multi-Stokes refinement is a follow-on bead.`,
+        `|arg z| past the algebraic-sector envelope min(δπ, π) for κ = ` +
+        `${kappa}, 2δ = ${twoDelta}; v0.1 covers sectorIndex ∈ {−1, 0, +1} ` +
+        `only. Multi-Stokes refinement is a follow-on bead.`,
     };
   }
   return verdict;
@@ -1132,6 +1193,35 @@ export function meijergAsymptotic(
         `follow-on bead.`,
     };
   }
+  if (verdict.kind === "degenerate-principal-sector") {
+    // ADR-0039 §D6 (bead `atip`). Reaches here only for κ ≥ 3 (the
+    // classifier's κ=1 path does not emit this verdict — see the
+    // `SectorVerdict` TSDoc). The κ ≥ 3 inner pFq is formally
+    // divergent, so the algebraic series needs a non-empty asymptotic
+    // sector `|arg z| < δπ`; with δ ≤ 0 the sector is empty and
+    // `H_workbench` has no valid expansion. For κ = 3 with δ = 0 the
+    // kernel was previously emitting answers wrong by ~125× (deleted
+    // golden 17, verified against mpmath: kernel +4.4×10⁻³ vs truth
+    // −0.5549…). Refusing here is the honest path; the dominant-E
+    // Braaksma formula that would lift the refusal is substantial new
+    // mathematics, distinct from the connection-formula assembly that
+    // `ulze` retracted.
+    const twoDelta = verdict.twoDelta;
+    const deltaStr =
+      twoDelta % 2 === 0 ? `${twoDelta / 2}` : `${twoDelta}/2`;
+    return {
+      status: "degenerate-principal-sector",
+      reason:
+        `δ = m + n − (p+q)/2 = ${deltaStr} ≤ 0 with κ ≥ 3 ` +
+        `(Paris-Kaminski algebraic-sector defect, §2.2.2). The ` +
+        `algebraic envelope |arg z| < δπ is empty and the inner pFq ` +
+        `is formally divergent; the right-closing Slater residue ` +
+        `series H_workbench does not converge to G in this regime. ` +
+        `The dominant-E Braaksma path that would handle this shape is ` +
+        `deferred; route to meijergContour for a numerical answer. ` +
+        `Tracked as scientist-workbench-atip.`,
+    };
+  }
 
   // |z| sanity. The asymptotic requires |z| large enough that the
   // term ratio shrinks for at least the first few k. Hard floor at
@@ -1230,9 +1320,10 @@ export function meijergAsymptotic(
   }
 
   // Unreachable: classifySector's verdict union is `principal | stokes |
-  // out-of-coverage | secondary` after the egf retraction. The four
-  // branches above are exhaustive; this throw exists only to satisfy
-  // TypeScript's exhaustiveness check.
+  // out-of-coverage | secondary | degenerate-principal-sector` after the
+  // `ulze` retraction and `atip` δπ-envelope fix. The five branches
+  // above are exhaustive; this throw exists only to satisfy TypeScript's
+  // exhaustiveness check.
   const _exhaustive: never = verdict;
   throw new Error(
     `meijergAsymptotic: unexpected sector verdict ${JSON.stringify(_exhaustive)}`,

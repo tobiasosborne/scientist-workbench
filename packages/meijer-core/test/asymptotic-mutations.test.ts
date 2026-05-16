@@ -215,6 +215,76 @@ describe("mutation 4: sector classifier wrongly admits secondary sector", () => 
 });
 
 // -----------------------------------------------------------------------------
+// 4b. δπ algebraic-sector envelope — mutation-prove (bead atip)
+// -----------------------------------------------------------------------------
+//
+// Worklog 125 surfaced that the κ-aware classifier's `κπ/2` boundary
+// was the wrong geometry: it admitted κ≥3, δ=0 shapes into the
+// algebraic-only path even though the Paris–Kaminski algebraic envelope
+// `|arg z| < δπ` is empty when δ ≤ 0. Bead `atip` added the refusal.
+//
+// The mutation here is the lifted refusal — what the kernel did before
+// `atip`: route the κ=3, δ=0 input through `assembleAlgebraic` and
+// return its output as if it were a valid asymptotic. The wrong-valued
+// behaviour at the exact deleted-golden-17 input is captured as a
+// pinned constant from the math-research investigation: kernel emitted
+// `+4.4×10⁻³` for an mpmath truth of `−0.5549…` (off by ~125× and the
+// wrong sign). The post-`atip` invariant is that the kernel refuses
+// rather than emits any value; this test asserts the refusal and
+// records — for a future reader — the magnitude of the silent wrong
+// answer the refusal replaces. If the refusal is ever lifted without a
+// matching dominant-E Braaksma implementation, the next failure mode
+// would be re-emission of the wrong value.
+
+describe("mutation 4b: degenerate principal sector (κ≥3, δ≤0) ⇒ refuse, not silently emit", () => {
+  test("κ=3, δ=0 (G^{1,1}_{1,3}, deleted golden 17) refuses with degenerate-principal-sector", () => {
+    // Exact deleted-golden-17 input. Pre-`atip` kernel value at this
+    // input: +4.4×10⁻³ at 50 dps. Mpmath truth at 50 dps: −0.5549…
+    // (sign wrong, magnitude wrong by ~125×).
+    const params: MeijerGParameters = {
+      an: [
+        cfromStrings(
+          "0.333333333333333333333333333333333333333333333333333",
+          "0",
+          WORK_BITS,
+        ),
+      ],
+      ap: [],
+      bm: [cfromStrings("0.5", "0", WORK_BITS)],
+      bq: [
+        cfromStrings(
+          "0.666666666666666666666666666666666666666666666666667",
+          "0",
+          WORK_BITS,
+        ),
+        cfromStrings("0.75", "0", WORK_BITS),
+      ],
+    };
+    const z = cfromStrings("2", "0.1", WORK_BITS);
+    const r = meijergAsymptotic(params, z, 50);
+    expect(r.status).toBe("degenerate-principal-sector");
+    if (r.status === "degenerate-principal-sector") {
+      expect(r.reason).toMatch(/atip/);
+    }
+  });
+
+  test("κ=1, δ=0 (G^{1,1}_{2,2}, bead 43i family) is NOT refused", () => {
+    // The atip refusal is gated on κ≥3 — for κ=1 the inner pFq is
+    // convergent for |z|>1 (Slater 1966 §5.5 q≥p condition) and the
+    // algebraic series equals G as a convergent formula regardless of
+    // δ. The bead 43i `G^{1,1}_{2,2}` tests are mpmath-verified at 30
+    // dps for δ=0 shapes; refusing them would deprecate working,
+    // shipped behaviour. This test pins the κ=1 admission invariant —
+    // if a future change broadens the refusal to all δ≤0 regardless
+    // of κ, this test goes red.
+    const params = P(["0.5"], ["0.75"], ["0"], ["-0.25"]);
+    const z = cfromInts(50n, 0n, WORK_BITS);
+    const r = meijergAsymptotic(params, z, TARGET_DPS);
+    expect(r.status).toBe("success");
+  });
+});
+
+// -----------------------------------------------------------------------------
 // 5. Bonus: divide-by-z mutation (omit the 1/z in the recurrence)
 // -----------------------------------------------------------------------------
 //
