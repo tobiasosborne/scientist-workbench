@@ -595,53 +595,49 @@ describe("asymptotic: optimal-truncation invariant", () => {
 // 6. Refusal envelope — each refusal class hit
 // -----------------------------------------------------------------------------
 
-describe("asymptotic: structured refusal envelope (ADR-0039 §D3 update)", () => {
+describe("asymptotic: structured refusal envelope (post-egf retraction)", () => {
   // The κ-aware classifier of ADR-0039 §D3 changes the refusal-envelope
   // shape for inputs that *used to* fall through the conservative
-  // `|arg z| ≥ π/2 − π/64` cap. For a κ=1 input:
-  //   - z = −100 (arg z = π): past the Stokes line at π/2 by more than
-  //     the band W ≈ 0.5 (|z|=100), so the classifier emits `stokes`
-  //     and the kernel assembles the connection formula. No refusal.
-  //   - z = +iy ≈ on the Stokes line at π/2 (arg z = π/2): inside the
-  //     band ⇒ stokes-band-refused (or sharp-switch `stokes` for very
-  //     large |z| or higher precision).
-  // The legacy "secondary-sector for arg z = π / π/2" tests are
-  // therefore reframed: the κ=1 cases are no longer secondary, but
-  // small-z, n=0, and input-error refusals still apply unchanged.
+  // `|arg z| ≥ π/2 − π/64` cap. After the worklog-125 retraction of the
+  // Stokes-band machinery, the classifier emits only principal / stokes
+  // / secondary / out-of-coverage; the `stokes-band-refused` verdict
+  // and the connection-formula assembly it gated are gone. For a κ=1
+  // input:
+  //   - z = −100 (arg z = π): past the boundary at π/2, classified as
+  //     `stokes`. The same algebraic per-pole loop as the principal
+  //     path runs; the success record is tagged `method:
+  //     braaksma-stokes, sector: stokes`.
+  //   - z = +iy at arg z = π/2 (exactly on the boundary): admitted as
+  //     principal (`|arg z| ≤ θ_S` is the principal-side convention).
+  //
+  // small-z, n=0, input-error, and coverage-gap (κ=2) refusals still
+  // apply unchanged.
 
-  test("refusal 1: κ=1 z negative real ⇒ stokes or stokes-band-refused", () => {
-    // κ=1 G^{1,1}_{1,1} at arg z = π. With the κ-aware classifier the
-    // negative-real-axis input is past the Stokes line at π/2 and
-    // either (a) the classifier emits `stokes` (sectorIndex = ±1) and
-    // the kernel assembles the connection formula, or (b) the band W
-    // (capped at θ_S/2 = π/4) places `|absArg − π/2| = π/2 > π/4` so
-    // outside band ⇒ `stokes`. Use a small |z| so the connection-
-    // formula evaluation is fast (`N* = ⌊|z|⌋` so |z|=5 ⇒ N*=5).
+  test("refusal 1: κ=1 z negative real ⇒ success (stokes-tagged) or input-error", () => {
+    // κ=1 G^{1,1}_{1,1} at arg z = π. Past the boundary, classified as
+    // `stokes`. The algebraic per-pole loop runs; at small |z| the
+    // truncation may degenerate (input-error from a Γ-pole or
+    // non-asymptotic-regime are also admissible).
     const params = P(["0.5"], [], ["0"], [], WORK_BITS);
     const z = cfromInts(-5n, 0n, WORK_BITS);
     const r = meijergAsymptotic(params, z, TARGET_DPS);
-    // Either success (egf connection-formula assembly), input-error
-    // (Γ-pole on rotated arg), stokes-band-refused (the band engulfed
-    // this small |z| at higher precision), or non-asymptotic-regime
-    // are all admissible — the *previous* `secondary-sector` is the
-    // old ADR-0026 behaviour, replaced by the egf v0.1 path.
     expect(
       r.status === "success" ||
         r.status === "input-error" ||
-        r.status === "stokes-band-refused" ||
         r.status === "non-asymptotic-regime",
     ).toBe(true);
   });
 
-  test("refusal 2: κ=1 pure imaginary at arg z = π/2 ⇒ stokes or band-refused", () => {
+  test("refusal 2: κ=1 pure imaginary at arg z = π/2 ⇒ principal (boundary admitted)", () => {
     const params = P(["0.5"], [], ["0"], [], WORK_BITS);
     const z = cfromStrings("0", "100", WORK_BITS);
     const r = meijergAsymptotic(params, z, TARGET_DPS);
-    // Exactly on the Stokes line. Per Option C: stokes (sharp-switch)
-    // when band < sub-precision threshold; otherwise stokes-band-refused.
-    expect(
-      r.status === "success" || r.status === "stokes-band-refused",
-    ).toBe(true);
+    // Boundary case: `|arg z| ≤ θ_S` ⇒ principal. Numerical success.
+    expect(r.status).toBe("success");
+    if (r.status === "success") {
+      expect(r.method).toBe("braaksma-algebraic");
+      expect(r.sector).toBe("principal");
+    }
   });
 
   test("refusal 3: small-z for |z| < 1", () => {
@@ -686,19 +682,22 @@ describe("asymptotic: structured refusal envelope (ADR-0039 §D3 update)", () =>
     }
   });
 
-  test("refusal 8: small-|z| in-band ⇒ stokes-band-refused", () => {
+  test("refusal 8: small-|z| just past π/2 ⇒ success (stokes-tagged) post-egf-retraction", () => {
     // κ=1 shape (G^{1,1}_{1,1}) with z just past the Stokes line at
-    // π/2 + a small offset, |z|=5. Band W = 5 · 5^{-1/2} ≈ 2.236. The
-    // sub-precision threshold at 50 dps is 2^{-95} ≈ 2.5·10^{-29}. Band
-    // is far above sub-precision, so we're in the smoothing-band-
-    // refused regime. arg z = π/2 + 0.1 puts us inside the band.
+    // π/2 + a small offset, |z|=5. Pre-worklog-125 this refused as
+    // `stokes-band-refused`. Post-retraction the kernel runs the
+    // algebraic per-pole path and emits a numerical value tagged
+    // `sector: stokes`. The shape has `δ = 1 ≥ 1` so the empirical
+    // verification (worklog 125) guarantees H_workbench = G at this
+    // input to working precision.
     const params = P(["0.5"], [], ["0"], [], WORK_BITS);
     // z = 5 * exp(i * (pi/2 + 0.1)) ≈ -0.4992 + 4.9750 i
     const z = cfromStrings("-0.4991671106784", "4.9750208403262", WORK_BITS);
     const r = meijergAsymptotic(params, z, TARGET_DPS);
-    expect(r.status === "stokes-band-refused" || r.status === "small-z").toBe(
-      true,
-    );
+    expect(r.status).toBe("success");
+    if (r.status === "success") {
+      expect(r.sector).toBe("stokes");
+    }
   });
 });
 
@@ -760,17 +759,16 @@ describe("classifySector — κ-aware (ADR-0039 §D3)", () => {
     const v = classifySector(1, 1, 1, 1, z, WORK_BITS);
     expect(v.kind).toBe("principal");
   });
-  test("κ=1: z = +iy large (arg ≈ π/2), tight band ⇒ stokes or refused", () => {
-    // At |z| = 1e30 with workingBits ≈ 130, band W = 5 · 10^{-15}; the
-    // sub-precision threshold is 2^{-65} ≈ 3·10^{-20}. Band exceeds
-    // threshold ⇒ stokes-band-refused for inputs *in* the band; here
-    // arg z is exactly π/2 so right on the line.
+  test("κ=1: z = +iy at arg = π/2 (exactly on the boundary) ⇒ principal", () => {
+    // Post-worklog-125 retraction the Stokes-band geometry is gone; the
+    // classifier is a sharp line and the boundary case `|arg z| ≤ θ_S`
+    // is admitted as principal (the principal-value convention; the
+    // BigFloat `carg` range is `(−π, π]` so arg z = π/2 maps to the
+    // principal side, and the kernel runs the same algebraic path that
+    // principal-sector inputs run).
     const z = cfromStrings("0", "100", WORK_BITS);
     const v = classifySector(1, 1, 1, 1, z, WORK_BITS);
-    // On the line, the verdict depends on band-vs-precision. Either
-    // "stokes" (sharp-switch, principal-side) or "stokes-band-refused"
-    // is acceptable; both are honest outcomes per Option C.
-    expect(["stokes", "stokes-band-refused"]).toContain(v.kind);
+    expect(v.kind).toBe("principal");
   });
   test("κ=1: z = +x · e^{-iπ/4}, well inside principal ⇒ principal", () => {
     const z = cfromStrings("70.71067811865475", "-70.71067811865475", WORK_BITS);

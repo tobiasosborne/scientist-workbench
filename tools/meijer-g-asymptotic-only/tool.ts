@@ -35,7 +35,13 @@
 //     meijer-g-asymptotic-only/small-z                 record { reason }
 //     meijer-g-asymptotic-only/non-asymptotic-regime   record { reason }
 //     meijer-g-asymptotic-only/no-pole-residues        record { reason }
+//     meijer-g-asymptotic-only/coverage-gap            record { reason }
 //     meijer-g-asymptotic-only/input-error             record { reason }
+//
+// The egf-era `stokes-band-refused` tag was retracted with worklog 125
+// — the band machinery and the connection-formula assembly it gated
+// were both removed when empirical verification confirmed
+// `H_workbench(z) = G(z)` on the principal Riemann sheet for δ ≥ 1.
 //
 // `--precision=N` (decimal digits, default 50) is the standard
 // ADR-0020 flag inherited from the runner. Determinism contract:
@@ -109,32 +115,22 @@ const successOutputSchema = S.record({
 const refusalOutputSchema = (tag: string) =>
   S.tagged(tag, S.record({ reason: S.kind("string") }));
 
-// `stokes-band-refused` carries an additional `band_half_width`
-// bigfloat field (ADR-0039 §D5 Option C); the caller can read it to
-// decide whether a wider precision would shrink the band below the
-// sub-precision threshold.
-const stokesBandRefusedSchema = S.tagged(
-  `${NAME}/stokes-band-refused`,
-  S.record({
-    reason: S.kind("string"),
-    band_half_width: bigfloatSchema,
-  }),
-);
-
 const outputSchema = S.union([
   successOutputSchema,
-  // Existing refusal classes (ADR-0026 envelope). `stokes-line` is
-  // retained as defence-in-depth (the new κ-aware classifier may
-  // surface it on edge cases the multiplier table cannot resolve);
-  // on covered regimes it should be unreachable after egf v0.1.
+  // Refusal classes (ADR-0026 envelope + ADR-0039 §D3 `coverage-gap`).
+  // `stokes-line` is retained as defence-in-depth for κ ≤ 0 fallback
+  // edges; the κ-aware classifier never emits it for κ ≥ 1 inputs.
+  // `stokes-band-refused` and the Stokes-multiplier-driven `egf` v0.1
+  // assembly were retracted with worklog 125; the band geometry was
+  // gating a connection formula that empirical verification proved
+  // unnecessary (H_workbench = G on the principal Riemann sheet for
+  // δ ≥ 1). The retracted tag is no longer reachable from the kernel.
   refusalOutputSchema(`${NAME}/stokes-line`),
   refusalOutputSchema(`${NAME}/secondary-sector`),
   refusalOutputSchema(`${NAME}/small-z`),
   refusalOutputSchema(`${NAME}/non-asymptotic-regime`),
   refusalOutputSchema(`${NAME}/no-pole-residues`),
   refusalOutputSchema(`${NAME}/input-error`),
-  // New refusal classes (ADR-0039 §D3 §D5).
-  stokesBandRefusedSchema,
   refusalOutputSchema(`${NAME}/coverage-gap`),
 ]);
 
@@ -266,20 +262,10 @@ export const def = defineTool({
     }
 
     const tag = `${NAME}/${result.status}`;
-    // `stokes-band-refused` carries `band_half_width` per ADR-0039 §D5
-    // Option C. All other refusals are plain `{ reason }` records.
-    if (
-      result.status === "stokes-band-refused" &&
-      result.bandHalfWidth !== undefined
-    ) {
-      return tagged(
-        tag,
-        record({
-          reason: str(result.reason),
-          band_half_width: bigfloatToValue(result.bandHalfWidth),
-        }),
-      );
-    }
+    // All refusal records are plain `{ reason }` shapes. The egf-era
+    // `stokes-band-refused` tag (which carried an extra
+    // `band_half_width` BigFloat) was retracted with worklog 125; the
+    // band machinery it surfaced is gone with it.
     return tagged(tag, record({ reason: str(result.reason) }));
   },
 });

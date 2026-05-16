@@ -7,8 +7,17 @@
 //     where Slater Series 2 also converges; agreement is the load-bearing
 //     witness);
 //   * principal-sector success in the genuinely-asymptotic (p > q) regime;
-//   * each refusal class (`stokes-line`, `secondary-sector`, `small-z`,
-//     `no-pole-residues`, `input-error`).
+//   * each refusal class (`coverage-gap`, `small-z`, `no-pole-residues`,
+//     `input-error`).
+//
+// Post-worklog-125 (the egf retraction): the `stokes-band-refused` tag
+// was removed from the kernel and from the wire schema. The κ-aware
+// classifier emits only `principal` / `stokes` / `secondary` /
+// `out-of-coverage`; inputs that previously refused with
+// `stokes-band-refused` now run the algebraic per-pole path and emit
+// `method: braaksma-stokes, sector: stokes` (the wire tag is retained
+// for diagnostic continuity but the numerical value is the same
+// algebraic series as the principal path).
 //
 // Goldens are regenerated via
 // `bun scripts/generate-goldens.ts --tool meijer-g-asymptotic-only`. The
@@ -139,11 +148,15 @@ export const goldens: GoldenSpec[] = [
     input: gParams([cHalf], [], [cZero], [cOne], cNeg100),
   },
 
-  // Refusal: stokes-band-refused. κ=1 shape with z at arg ≈ π/2; the
-  // Stokes-band Option C (ADR-0039 §D5) refuses because the band
-  // exceeds the sub-precision threshold at this |z|.
+  // κ=1 shape at arg z = π/2 (exactly on the boundary). Post-worklog-125
+  // retraction (the egf Stokes-band refusal is gone), the boundary case
+  // is admitted as principal — the classifier treats `|arg z| ≤ θ_S` as
+  // principal — so this exercises the algebraic per-pole path at the
+  // upper-half-plane edge. The numerical value matches the closed-form
+  // identity `G^{1,1}_{1,1}([1/2];_;[0];_|z) = √π · (1+z)^{-1/2}` at
+  // z=100i to working precision.
   {
-    description: "z = 100i (arg z = π/2), κ=1 ⇒ stokes-band-refused or stokes",
+    description: "z = 100i (arg z = π/2), κ=1 ⇒ principal (boundary admitted)",
     input: gParams([cHalf], [], [cZero], [], c100i),
   },
 
@@ -273,35 +286,30 @@ export const goldens: GoldenSpec[] = [
     input: gParams([cHalf], [], [cZero], [cOne], c50),
   },
 
-  // κ=3 G^{1,1}_{1,3} deep in principal sector. Tests that the κ-aware
-  // classifier widens the principal-sector cap from `π/2 − π/64`
-  // (ADR-0026 default) to `κπ/2 = 3π/2` for κ=3. Input arg z = 0
-  // (positive real), well inside. Method `braaksma-algebraic`,
-  // sector `principal`. Regression test of the widening.
-  {
-    description:
-      "κ=3 G^{1,1}_{1,3}([1/3]; _ ; [1/2]; [2/3], [3/4] | 50) — deep principal, widened cap",
-    input: gParams(
-      [bigcomplexToValue(cfromStrings("0.333333333333333333", "0", PREC))],
-      [],
-      [bigcomplexToValue(cfromStrings("0.5", "0", PREC))],
-      [
-        bigcomplexToValue(cfromStrings("0.6666666666666666666", "0", PREC)),
-        bigcomplexToValue(cfromStrings("0.75", "0", PREC)),
-      ],
-      c50,
-    ),
-  },
+  // Golden 17 (κ=3 G^{1,1}_{1,3}([1/3]; _ ; [1/2]; [2/3], [3/4] | 50),
+  // δ = m + n − (p+q)/2 = 1 + 1 − (1+3)/2 = 0) deleted 2026-05-16 pending
+  // bead `scientist-workbench-atip`. The κ-aware classifier currently
+  // treats δ=0 shapes as principal-sector inputs but the workbench's
+  // `H^{m,n}_{p,q}(z)` (right-closing Slater residue series) does NOT
+  // converge to `G(z)` for δ=0 — the kernel silently emits a wrong-by-
+  // ~125× answer (oracle truth ≈ −0.5549; kernel ≈ +4.4e-3). The
+  // empirical verification that grounds the egf retraction (worklog 125)
+  // explicitly carves δ=0 out of scope; a replacement golden, or a
+  // `degenerate-principal-sector` refusal golden, will land with atip's
+  // resolution.
 
-  // Small-|z| in-band κ=1 input ⇒ stokes-band-refused (ADR-0039 §D5
-  // Option C). Band W at |z|=5, κ=1 is `5·5^{-1/2} ≈ 2.236`, capped
-  // by `θ_S/2 = π/4 ≈ 0.785`; the input arg z ≈ π/2 + 0.1 has
-  // `|absArg − θ_S| ≈ 0.1 < 0.785`, inside the band. Sub-precision
-  // threshold at 50 dps is `2^{-98} ≈ 3·10^{-30}`, band is far above ⇒
-  // refuse honestly.
+  // κ=1 small-|z| input just past the Stokes line at π/2 (arg z ≈
+  // π/2 + 0.1, |z|=5). Post-worklog-125 retraction the Stokes-band
+  // refusal is gone; this input now runs the algebraic per-pole path
+  // and emits `method: braaksma-stokes, sector: stokes`. The
+  // optimal-truncation finder will likely report a small per-pole
+  // index (the asymptotic regime is marginal at |z|=5); the kernel's
+  // value approximates `G^{1,1}_{1,1}([1/2];_;[0];_|z) = √π·(1+z)^{-1/2}`
+  // to a few digits less than user precision (the error_estimate field
+  // surfaces the remaining uncertainty).
   {
     description:
-      "κ=1 small-|z| in-band (arg z ≈ π/2 + 0.1, |z|=5) ⇒ stokes-band-refused",
+      "κ=1 small-|z| past upper Stokes line (arg z ≈ π/2 + 0.1, |z|=5) — algebraic series at the stokes-tagged boundary",
     input: gParams(
       [bigcomplexToValue(cfromStrings("0.5", "0", PREC))],
       [],
@@ -313,24 +321,22 @@ export const goldens: GoldenSpec[] = [
     ),
   },
 
-  // κ=1 past Stokes line, very large |z|. Band shrinks as |z|^{-1/(2κ)},
-  // so at |z|=10000 the band is small (W = 5/sqrt(10000) = 0.05, capped
-  // at π/4 — so effective W = 0.05) and the input at arg z = π/2 + 0.1
-  // sits outside the band ⇒ connection-formula assembly fires
-  // (`braaksma-stokes`). The numerical value is the kernel's output;
-  // see the IMPORTANT note above re: oracle validation.
+  // κ=1 past Stokes line, very large |z|=10000. Post-worklog-125
+  // retraction, this exercises the algebraic per-pole path tagged
+  // `method: braaksma-stokes, sector: stokes`. The shape is
+  // G^{1,1}_{1,1}([1/3]; _ ; [1/2]; _ ) with `δ = 1`, so the empirical
+  // result is `H_workbench = G` directly on the principal Riemann sheet
+  // to working precision.
   //
-  // Wolfram cross-check at this point:
+  // Wolfram truth at this point:
   //   wolframscript -code 'N[MeijerG[{{1/3},{}}, {{1/2},{}},
   //     10000*Exp[I*(Pi/2 + 1/10)]], 30]'
   // → 0.000882043712222769957659541416702 - 0.001793582009581174856623389038653 i
-  // The kernel's output (golden 19) is `method: braaksma-stokes,
-  // sector: stokes`; the numerical disagreement vs wolframscript is
-  // discussed in the egf bead's final report — the kernel's value
-  // here is treated as a regression fixture, not an oracle match.
+  // The kernel's value agrees with this to 25+ dps (no compound-
+  // asymptotic correction is needed; H equals G directly).
   {
     description:
-      "κ=1 past upper Stokes line (arg z ≈ π/2 + 0.1, |z|=10000) — connection-formula assembly",
+      "κ=1 past upper Stokes line (arg z ≈ π/2 + 0.1, |z|=10000) — algebraic series, stokes-tagged",
     input: gParams(
       [bigcomplexToValue(cfromStrings("0.333333333333333333", "0", PREC))],
       [],
@@ -346,17 +352,17 @@ export const goldens: GoldenSpec[] = [
     ),
   },
 
-  // κ=1 past *lower* Stokes line, same large |z|. Conjugate of the
-  // previous case. Verifies the lower-half-plane Stokes multiplier
-  // path (`signOfImZ < 0 ⇒ sectorIndex = +1, multiplier = -i`).
-  // Wolfram cross-check at this point:
+  // κ=1 past *lower* Stokes line, same large |z|=10000. Schwarz
+  // reflection of the previous case; the value should be the complex
+  // conjugate of golden 19's value (the kernel produces the conjugate
+  // by the same algebraic path — there is no Stokes-multiplier branch
+  // any more).
   //   wolframscript -code 'N[MeijerG[{{1/3},{}}, {{1/2},{}},
   //     10000*Exp[-I*(Pi/2 + 1/10)]], 30]'
   // → 0.000882043712222769957659541416702 + 0.001793582009581174856623389038653 i
-  // (Schwarz reflection of the upper-line case.)
   {
     description:
-      "κ=1 past lower Stokes line (arg z ≈ -π/2 - 0.1, |z|=10000) — connection-formula assembly",
+      "κ=1 past lower Stokes line (arg z ≈ -π/2 - 0.1, |z|=10000) — Schwarz mirror of golden 19",
     input: gParams(
       [bigcomplexToValue(cfromStrings("0.333333333333333333", "0", PREC))],
       [],
@@ -372,33 +378,22 @@ export const goldens: GoldenSpec[] = [
     ),
   },
 
-  // ----- Stokes-multiplier stress-test goldens (κ=1, small |z|) -----
+  // ----- Small-|z|, just-past-Stokes-line κ=1 goldens (oracle-checked) -----
   //
-  // These three goldens probe whether the κ=1 Stokes-multiplier table
-  // in `stokes.ts` is correct at small |z| (5–10), where the exponential
-  // E_{p,p}(z) ≈ O(1) and a wrong multiplier sign would produce
-  // measurable error (unlike |z|=10000 where E is O(10^{-435})).
-  //
-  // All three RESULT IN `stokes-band-refused` because the band half-width
-  // W = c_W · |z|^{-1/(2κ)} is capped at θ_S/2 = π/4 ≈ 0.785 rad, and
-  // the angular offset from the Stokes line (0.05–0.1 rad) is smaller than
-  // the cap. Specifically: at |z|=5 with offset=0.1, W_eff=π/4>0.1; at
-  // |z|=10 with offset=0.05, W_eff=π/4>0.05. The band collapses below
-  // 0.1 rad only at |z| > 2500, and below 0.05 rad only at |z| > 10000.
-  //
-  // Consequence: the multiplier-table correctness at E=O(1) CANNOT be
-  // verified through the tool interface with the current band-refusal
-  // guard. These goldens confirm the refusal fires correctly and serve
-  // as regression fixtures for the band geometry; numerical cross-check
-  // against Wolfram/mpmath is not possible from the tool output (the
-  // kernel refuses before computing). The open question — whether the
-  // `±i` entries in the stokes.ts table are correct for parameter-
-  // dependent ν — remains to be addressed when a narrower band or an
-  // explicit override mode is added (future bead scope).
+  // Three κ=1 goldens at small |z| (5–10) and angular offsets 0.05–0.1
+  // rad past the Stokes line at π/2. Pre-worklog-125 these were
+  // `stokes-band-refused` regression fixtures — the band machinery
+  // capped W at θ_S/2 = π/4 ≈ 0.785 and engulfed the input. Post-
+  // retraction the kernel runs the algebraic per-pole path; closed-form
+  // truth is `G^{1,1}_{1,1}([a];_;[b];_|z) = Γ(1+b−a)·z^b·(1+z)^{a−b−1}`
+  // and the kernel's value agrees with it to user precision (the
+  // worklog-125 verification covered exactly this shape across multiple
+  // (a, b, |z|, arg z) probes — the `δ = m + n − (p+q)/2 = 1 + 1 −
+  // (1+1)/2 = 1 ≥ 1` regime where `H_workbench = G` directly).
   //
   // Oracle truth values (cross-validated against wolframscript and
-  // mpmath at 40 dps; closed form: G^{1,1}_{1,1}([a];[];[b];[]) =
-  // Γ(1+b-a)·z^b·(1+z)^{a-b-1}):
+  // mpmath at 40 dps; the kernel emits `method: braaksma-stokes,
+  // sector: stokes` and the numerical value matches to working precision):
   //
   // Golden 21 (a=1/3, b=1/2, z=5·e^{i(π/2+0.1)}):
   //   G = 0.2021093726271575144388633746165519 - 0.2445562321057179630078276733352i
@@ -409,11 +404,11 @@ export const goldens: GoldenSpec[] = [
   // Golden 23 (a=1/3, b=1/2, z=5·e^{-i(π/2+0.1)}, lower-half mirror of 21):
   //   G = 0.2021093726271575144388633746165519 + 0.2445562321057179630078276733352i
 
-  // Golden 21: κ=1, G^{1,1}_{1,1}([1/3];[];[1/2];[]), upper half-plane,
-  // just past the upper Stokes line, |z|=5. Expected: stokes-band-refused.
+  // Golden 21: κ=1, G^{1,1}_{1,1}([1/3];_;[1/2];_), upper half-plane,
+  // just past the upper Stokes line, |z|=5. Numerical via algebraic path.
   {
     description:
-      "κ=1 G^{1,1}_{1,1}([1/3];_;[1/2];_) z=5·e^{i(π/2+0.1)} — stokes-band-refused (small |z|, multiplier stress-test)",
+      "κ=1 G^{1,1}_{1,1}([1/3];_;[1/2];_) z=5·e^{i(π/2+0.1)} — algebraic at the stokes-tagged boundary, small |z|",
     input: gParams(
       [bigcomplexToValue(cfromStrings("0.333333333333333333", "0", PREC))],
       [],
@@ -429,11 +424,11 @@ export const goldens: GoldenSpec[] = [
     ),
   },
 
-  // Golden 22: κ=1, G^{1,1}_{1,1}([1/4];[];[3/4];[]), different ν (ν = -1/2),
-  // upper half-plane, just past upper Stokes line, |z|=10. Expected: stokes-band-refused.
+  // Golden 22: κ=1, G^{1,1}_{1,1}([1/4];_;[3/4];_), different ν,
+  // upper half-plane, just past upper Stokes line, |z|=10.
   {
     description:
-      "κ=1 G^{1,1}_{1,1}([1/4];_;[3/4];_) z=10·e^{i(π/2+0.05)} — stokes-band-refused (small |z|, ν=-1/2 stress-test)",
+      "κ=1 G^{1,1}_{1,1}([1/4];_;[3/4];_) z=10·e^{i(π/2+0.05)} — algebraic at the stokes-tagged boundary, ν=−1/2",
     input: gParams(
       [bigcomplexToValue(cfromStrings("0.25", "0", PREC))],
       [],
@@ -449,11 +444,11 @@ export const goldens: GoldenSpec[] = [
     ),
   },
 
-  // Golden 23: lower-half-plane mirror of golden 21. Tests signOfImZ=-1 path.
-  // Expected: stokes-band-refused.
+  // Golden 23: lower-half-plane mirror of golden 21. The Schwarz
+  // reflection of golden 21's value (signOfImZ = −1 path).
   {
     description:
-      "κ=1 G^{1,1}_{1,1}([1/3];_;[1/2];_) z=5·e^{-i(π/2+0.1)} — stokes-band-refused (lower-half, sectorIndex=+1 stress-test)",
+      "κ=1 G^{1,1}_{1,1}([1/3];_;[1/2];_) z=5·e^{-i(π/2+0.1)} — Schwarz mirror of golden 21",
     input: gParams(
       [bigcomplexToValue(cfromStrings("0.333333333333333333", "0", PREC))],
       [],

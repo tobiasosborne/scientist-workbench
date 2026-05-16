@@ -120,10 +120,8 @@ import {
   csub,
   decimalToBinaryPrecision,
   div as divBF,
-  exp as expBF,
   fromInt,
   isZero,
-  log as logBF,
   mul as mulBF,
   neg as negBF,
   pi,
@@ -131,8 +129,6 @@ import {
   sub as subBF,
   toFloat64,
 } from "@workbench/bigfloat";
-import { evaluateEpq } from "./exponential.js";
-import { stokesMultiplier } from "./stokes.js";
 import type { MeijerGParameters } from "./types.js";
 
 // -----------------------------------------------------------------------------
@@ -205,7 +201,6 @@ export interface MeijerGAsymptoticSuccess {
 export interface MeijerGAsymptoticRefusal {
   readonly status:
     | "stokes-line"
-    | "stokes-band-refused"
     | "coverage-gap"
     | "secondary-sector"
     | "small-z"
@@ -213,14 +208,6 @@ export interface MeijerGAsymptoticRefusal {
     | "no-pole-residues"
     | "input-error";
   readonly reason: string;
-  /**
-   * Present iff `status === "stokes-band-refused"`. The band
-   * half-width `W = c_W · |z|^{-1/(2κ)}` in radians (BigFloat at
-   * working precision), per ADR-0039 §D5 Option C. Surfaces the
-   * smoothing-band geometry so the caller can pick a wider precision
-   * (which narrows the band) or route to a smoothing-capable layer.
-   */
-  readonly bandHalfWidth?: BigFloat;
 }
 
 export type MeijerGAsymptoticResult =
@@ -228,101 +215,74 @@ export type MeijerGAsymptoticResult =
   | MeijerGAsymptoticRefusal;
 
 // -----------------------------------------------------------------------------
-// Sector classification — κ-aware (ADR-0039 §D3 + §D4)
+// Sector classification — κ-aware (ADR-0039 §D3, post-egf retraction)
 // -----------------------------------------------------------------------------
 //
-// The v0.1-of-`egf` classifier replaces the single conservative cap of
-// ADR-0026 with a `κ = q − p + 1`-aware verdict. The regime split:
+// The classifier replaces the single conservative cap of ADR-0026 with
+// a `κ = q − p + 1`-aware verdict. The regime split:
 //
-//   * `κ = 1` (`p = q`): principal sector `|arg z| < π/2`. Stokes lines
-//     at `arg z = ±π/2`. Past the upper Stokes line (signOfImZ ≥ 0):
-//     sectorIndex = −1. Past the lower (signOfImZ ≤ 0): sectorIndex
-//     = +1. Outside `[−π, π]` is `out-of-coverage` (the negative-real
-//     axis is already refused upstream as the branch cut).
+//   * `κ = 1` (`p = q`): principal sector `|arg z| < π/2`. Past `π/2`
+//     is tagged `"stokes"`. Outside `[−π, π]` is `out-of-coverage` (the
+//     negative-real axis is already refused upstream as the branch cut).
 //
 //   * `κ = 2` (`p = q − 1`): the three-term H + E^− + E^+ formula
 //     (DLMF 16.11.8) is structurally distinct from κ=1 and κ≥3 and is
 //     filed as a separate bead (`scientist-workbench-fc83`). Verdict:
 //     `out-of-coverage`.
 //
-//   * `κ ≥ 3` (`p ≤ q − 2`): principal sector `|arg z| < κπ/2`. Stokes
-//     lines at `arg z = ±π, ±2π, …, ±⌊(κ−1)/2⌋·π`. v0.1 covers
-//     `sectorIndex ∈ {−1, 0, +1}`, i.e. the principal sector and the
-//     two sectors adjacent to `arg z = ±π`; beyond is `out-of-coverage`
-//     (multi-Stokes refinement is a follow-on bead).
+//   * `κ ≥ 3` (`p ≤ q − 2`): principal sector `|arg z| < κπ/2`. v0.1
+//     covers the principal sector and one sector past `arg z = ±π`,
+//     tagged `"stokes"`; beyond is `out-of-coverage`.
 //
-// The Stokes-band geometry comes from ADR-0039 §D4 (Option C of §D5).
-// The band half-width is
-//
-//   W = c_W · |z|^{-1/(2κ)}      with c_W = 5
-//
-// computed at BigFloat precision via `cpow(|z|, -1/(2κ))`. The band
-// gates the Stokes-line decision:
-//
-//   * `W < 2^{-workingBits/2}`: band is sub-precision (the sharp-switch
-//     regime; the Berry smoothing is below working precision). Treat
-//     the line as sharp and classify as `"stokes"` if inside the band.
-//
-//   * `W ≥ 2^{-workingBits/2}`: band is above sub-precision. Refuse
-//     with `"stokes-band-refused"` carrying the band half-width
-//     (per Option C, refuse honestly until Berry smoothing ships in a
-//     follow-on bead).
+// **Retraction note (worklog 125, 2026-05-16).** ADR-0039 §D4/§D5 wired
+// in a Stokes-band geometry (`W = c_W · |z|^{-1/(2κ)}`) that gated a
+// distinct `"stokes-band-refused"` verdict and a connection-formula
+// assembly path. Empirical verification across five κ=1 shapes
+// determined that the workbench's `H^{m,n}_{p,q}(z)` (right-closing
+// Slater residues) equals `G(z)` directly on the principal Riemann
+// sheet for `δ = m + n − (p+q)/2 ≥ 1`, without any compound-asymptotic
+// correction — so there is nothing to smooth across the band. The band
+// machinery, the `"stokes-band-refused"` verdict, the Stokes-multiplier
+// table, and the `E_{p,q}` exponential series are all retracted. The
+// classifier now emits only the four kinds below; the assembly path
+// for the `"stokes"` kind is the same algebraic per-pole loop as the
+// principal path, distinguished only by its `method` / `sector` tags
+// on the success record.
 //
 // All comparisons happen at BigFloat precision; no `Math.atan2`, no
-// float64 cast of `z.im` for sign decisions. The `arbprec: true`
-// contract (ADR-0020) holds end-to-end through the classifier.
+// float64 cast of `z.im`. The `arbprec: true` contract (ADR-0020)
+// holds end-to-end through the classifier.
 
 /**
  * The verdict returned by the κ-aware sector classifier.
  *
- * `"principal"` — the algebraic series alone is asymptotic; the caller
- * should use the existing `braaksma-algebraic` path. `sectorIndex = 0`
- * is the principal exponential branch.
+ * `"principal"` — `|arg z|` is strictly inside the principal sector
+ * for the regime's `κ`; the algebraic series alone is asymptotic to
+ * `G(z)`.
  *
- * `"stokes"` — `|arg z|` is past one of the covered Stokes lines and
- * the multiplier table can resolve the regime. `sectorIndex ∈ {−1, +1}`
- * picks which rotated `E` representative carries the discontinuity;
- * `signOfImZ` indexes the upper-vs-lower-half-plane geometry.
+ * `"stokes"` — `|arg z|` is past one of the principal-sector
+ * boundaries but inside the v0.1 coverage envelope. The same algebraic
+ * series is summed; the kernel emits `method: "braaksma-stokes"` and
+ * `sector: "stokes"` on the success record for wire-schema
+ * bookkeeping. The numerical value is identical to what the principal
+ * path would produce on the same input (no compound-asymptotic
+ * correction is added).
  *
- * `"stokes-band-refused"` — `|arg z|` is inside the Stokes band and the
- * band is wider than sub-precision; the Berry smoothing is not yet
- * available (ADR-0039 §D5, Option C). The caller refuses with the
- * band half-width attached for diagnostics.
+ * `"secondary"` — `|arg z|` is past the v0.1-covered cap for κ ≤ 0
+ * shapes (the legacy ADR-0026 conservative cap). Retained for the
+ * `classifyKappaLE0` fallback.
  *
- * `"secondary"` — `|arg z|` is past the v0.1-covered Stokes lines for
- * the regime. The legacy ADR-0026 refusal class; retained for inputs
- * that fall outside both the principal sector and the immediately
- * adjacent Stokes-covered sectors.
- *
- * `"out-of-coverage"` — the regime is mathematically defined but not
- * in v0.1 scope. Notably `κ = 2` (the three-term H + E^− + E^+ formula
- * of DLMF 16.11.8; filed as `scientist-workbench-fc83`). The `reason`
- * names the follow-up bead so the caller can route or surface.
+ * `"out-of-coverage"` — the regime is mathematically defined but not in
+ * v0.1 scope. Notably `κ = 2` (the three-term H + E^− + E^+ formula of
+ * DLMF 16.11.8; filed as `scientist-workbench-fc83`) and `κ ≥ 3` past
+ * the first interior Stokes line at `±π`. The `reason` names the
+ * follow-up bead so the caller can route or surface.
  */
 export type SectorVerdict =
   | { kind: "principal"; sectorIndex: 0 }
   | { kind: "stokes"; sectorIndex: -1 | 0 | 1; signOfImZ: -1 | 0 | 1 }
-  | {
-      kind: "stokes-band-refused";
-      signOfImZ: -1 | 0 | 1;
-      bandHalfWidth: BigFloat;
-    }
   | { kind: "secondary"; sectorIndex: number }
   | { kind: "out-of-coverage"; reason: string };
-
-/**
- * The Stokes-band coefficient `c_W` of ADR-0039 §D4 (Option C of §D5):
- * `W = c_W · |z|^{-1/(2κ)}` with `c_W = 5` chosen so that
- * `erfc(c_W) ≈ 1.5·10^{-12}` — the multiplier transition is below
- * working precision outside the band for any reasonable user request.
- *
- * This constant is part of the **input identity for caching purposes**:
- * changing it changes the output bytes near the Stokes band. Fixed for
- * `egf` v0.1; widening it requires a separate ADR (it strictly narrows
- * the refusal envelope so the change is backwards-compatible at the
- * value level but not at the bytes level).
- */
-const STOKES_BAND_CW = 5n;
 
 /**
  * Classify the sector containing `z` for the κ-aware asymptotic
@@ -455,9 +415,24 @@ export function classifySector(
 
 /**
  * Sector classification at a single Stokes line `θ_S` (real positive
- * BigFloat). Computes the band half-width `W = c_W · |z|^{-1/(2κ)}`
- * at BigFloat precision; compares `|absArg − θ_S|` against `W` and
- * `θ_S` itself to decide principal / stokes / band-refused / secondary.
+ * BigFloat). Compares `|arg z|` against `θ_S` to decide principal vs
+ * stokes.
+ *
+ * Post-egf-retraction (worklog 125): the Stokes-band geometry and the
+ * `"stokes-band-refused"` verdict are gone. The classifier is a sharp
+ * line: `|arg z| ≤ θ_S` ⇒ principal, `|arg z| > θ_S` ⇒ stokes. The
+ * boundary case (`|arg z| == θ_S`) is admitted as principal — this is
+ * the principal-value convention for the upper-half-plane convention
+ * carried in `signOfImZ` and matches the BigFloat `carg` range
+ * `(−π, π]`. (For `arg z = +π` exactly, `signOfImZ = +1` by the
+ * `sgn(argZ)` rule above; for `arg z = −π`, by convention `argZ ∈ (−π,
+ * π]` so this value never appears — `arg z = π` is the canonical
+ * representative of the cut.)
+ *
+ * `signOfImZ` and the resulting `sectorIndex` are retained on the
+ * `"stokes"` verdict for diagnostic continuity with the egf-era wire
+ * envelope, but the assembler no longer branches on them (the same
+ * algebraic per-pole loop runs regardless).
  */
 function classifyAroundLine(
   absArg: BigFloat,
@@ -467,107 +442,19 @@ function classifyAroundLine(
   z: BigComplex,
   workingBits: number,
 ): SectorVerdict {
-  // Band half-width W = c_W · |z|^{-1/(2κ)}. Computed at BigFloat
-  // precision via exp(−log(|z|) / (2κ)) · c_W. The negative exponent
-  // is built explicitly (rather than `cpow` on a real base) to keep
-  // the algebra real-only and avoid the complex-power machinery.
-  const absZ = cabs(z, workingBits);
-  // |z|^{-1/(2κ)} = exp(−log|z| / (2κ)). |z| > 0 here by the z=0 gate
-  // at the top of `classifySector`.
-  const logAbsZ = logBF(absZ, workingBits);
-  const twoKappaBF = fromInt(BigInt(2 * kappa), workingBits);
-  const negLogOverTwoK = negBF(divBF(logAbsZ, twoKappaBF, workingBits));
-  const absZToNegInvTwoK = expBF(negLogOverTwoK, workingBits);
-  const cW = fromInt(STOKES_BAND_CW, workingBits);
-  let bandW = mulBF(cW, absZToNegInvTwoK, workingBits);
-
-  // Band cap (ADR-0039 §D5 Option C, refined). The raw formula
-  // `c_W · |z|^{-1/(2κ)}` is wide at modest `|z|`: at `|z| = 10, κ = 1`
-  // we get `W ≈ 1.5` rad, which exceeds the principal-sector half-
-  // width `π/2 ≈ 1.57`. Without a cap, the entire principal sector
-  // would refuse with `stokes-band-refused` — clearly not the intent
-  // (the ref doc §5.3 derives an O(0.3 rad) width at |z|=10, and the
-  // `c_W = 5` factor extends that to cover ~12 dps of erfc fall-off,
-  // not to engulf the principal sector).
-  //
-  // Cap: `min(W, θ_S / 2)`. The band can never extend more than
-  // halfway across the principal sector. The cap is essentially
-  // inactive once `|z|` is large enough that `W < θ_S/2` (e.g.
-  // `|z| > 400` for κ = 1) — the asymptotic-regime use case. The
-  // cap *is* active for `|z| < ~400` (κ = 1), refusing only inputs
-  // genuinely close to the line.
-  //
-  // This refinement is *not* in the ADR text; it is a clarifying
-  // implementation choice motivated by the existing test suite (the
-  // closed-form anchor at `z = 10+5i` falls in principal sector with
-  // `arg z = 0.46` but the uncapped `W = 1.5` would erroneously
-  // capture it). The cap is bit-deterministic (BigFloat division by
-  // 2) and changes the refusal envelope from the literal ADR formula
-  // — surfacing here as a deviation that the bead's final report
-  // will flag.
-  const thetaSOverTwo = divBF(thetaS, fromInt(2n, workingBits), workingBits);
-  if (cmp(bandW, thetaSOverTwo) > 0) {
-    bandW = thetaSOverTwo;
-  }
-
-  // Sub-precision threshold: 2^{-workingBits/2}. Built as
-  // exp(−(workingBits/2) · ln 2) via the `pow` route would be one
-  // exp+log; we use `pow(2, ...)` exposed as `powInt` on integers
-  // shifted into BigFloat, or simpler: a BigFloat with mantissa = 1 and
-  // exponent = −workingBits/2 represents `2^{−workingBits/2}` exactly.
-  const halfBits = Math.floor(workingBits / 2);
-  const subPrecisionThreshold: BigFloat = {
-    mantissa: 1n,
-    exponent: -halfBits,
-    precision: workingBits,
-  };
-
-  // |absArg − θ_S|: subtraction can yield a small positive or negative
-  // BigFloat near the line; we take abs() to compare against W and 0.
+  void kappa;
+  void z;
+  // |absArg − θ_S|: a single BigFloat subtraction at working precision.
+  // The sign of the difference is the entire classification: ≤ 0 ⇒
+  // principal (boundary admitted), > 0 ⇒ stokes.
   const diff = subBF(absArg, thetaS, workingBits);
-  const absDiff = absBF(diff);
-
-  // Inside the band? `|absArg − θ_S| < W`.
-  const insideBand = cmp(absDiff, bandW) < 0;
-
-  if (insideBand) {
-    // Sharp-switch regime: W < sub-precision threshold ⇒ treat the
-    // line as exact, classify by signOfArgDiff.
-    const bandIsSubPrecision = cmp(bandW, subPrecisionThreshold) < 0;
-    if (bandIsSubPrecision) {
-      // On (or sub-precision-close-to) the line. Choose which side:
-      // diff > 0 ⇒ |absArg| > θ_S, just past the line, sectorIndex = ±1.
-      // diff ≤ 0 ⇒ |absArg| ≤ θ_S, in the principal sector (or
-      // sub-precision-on the line, treated as principal by Option C).
-      if (cmp(diff, fromInt(0n, workingBits)) > 0) {
-        const sectorIndex = signOfImZ >= 0 ? -1 : 1;
-        return { kind: "stokes", sectorIndex, signOfImZ };
-      }
-      return { kind: "principal", sectorIndex: 0 };
-    }
-    // Band exceeds sub-precision: refuse with band-half-width.
-    return { kind: "stokes-band-refused", signOfImZ, bandHalfWidth: bandW };
-  }
-
-  // Outside the band. Is `|absArg|` past the line?
   if (cmp(diff, fromInt(0n, workingBits)) > 0) {
-    // `|absArg| > θ_S + W`. Past the line, but how far? The next
-    // Stokes line for κ ≥ 3 is at the principal-sector boundary κπ/2;
-    // for κ = 1 the algebraic-sector boundary IS the Stokes line. For
-    // both regimes, sectorIndex = ±1 is the "first sector past the
-    // line" — v0.1's scope cap. Wider than that is `secondary` for
-    // the caller to disposition.
-    //
-    // The caller refines: for κ=1, anything past π/2 within the
-    // multiplier-table's covered range is sectorIndex = ±1. For κ ≥ 3,
-    // sectorIndex = ±1 covers `π < |arg z| < ?`; we return `stokes`
-    // here and let the caller decide whether `|arg z|` is also past
-    // the next line (currently it isn't in v0.1 scope; this returns
-    // `secondary` from `classifySector` for κ ≥ 3 by the wrapper).
+    // Past the line. Choose sectorIndex by half-plane: upper (signOfImZ
+    // ≥ 0) maps to −1; lower maps to +1. This is the egf-era encoding,
+    // retained for diagnostic continuity; the assembler ignores it.
     const sectorIndex = signOfImZ >= 0 ? -1 : 1;
     return { kind: "stokes", sectorIndex, signOfImZ };
   }
-  // `|absArg| < θ_S − W`: strictly inside the principal sector.
   return { kind: "principal", sectorIndex: 0 };
 }
 
@@ -1235,21 +1122,6 @@ export function meijergAsymptotic(
       reason: verdict.reason,
     };
   }
-  if (verdict.kind === "stokes-band-refused") {
-    return {
-      status: "stokes-band-refused",
-      reason:
-        `|arg z − θ_S| < c_W · |z|^{-1/(2κ)} = band half-width; the ` +
-        `Berry smoothing layer for this band is deferred to bead ` +
-        `scientist-workbench-ybrw (egf v0.2). Option C (ADR-0039 §D5) ` +
-        `refuses honestly until then. Workarounds: (a) raise the ` +
-        `working precision to shrink the sub-precision threshold below ` +
-        `the band width; (b) request a |z| large enough that the band ` +
-        `falls below sub-precision (W ~ |z|^{-1/(2κ)}); (c) move |arg ` +
-        `z| further from the line.`,
-      bandHalfWidth: verdict.bandHalfWidth,
-    };
-  }
   if (verdict.kind === "secondary") {
     return {
       status: "secondary-sector",
@@ -1295,159 +1167,76 @@ export function meijergAsymptotic(
   }
 
   // -----------------------------------------------------------------
-  // Stokes-band path: connection-formula assembly (ADR-0039 §D3)
+  // Stokes path: same numerical assembly as principal, tagged "stokes"
   // -----------------------------------------------------------------
   //
-  // We evaluate
+  // ADR-0039 §D3 (egf v0.1) originally assembled a connection formula
   //
   //   G(z) ~ H_alg(z) + Σ_k S_k · E_{p,q}(z e^{2πik/κ})
   //
-  // where `S_k` ∈ {0, ±1, ±i} is the Stokes multiplier from `stokes.ts`.
+  // for inputs past the κ=1 Stokes lines at `arg z = ±π/2` and past the
+  // first interior Stokes lines at `arg z = ±π` for κ≥3. The compound
+  // assembly has been retracted (worklog 125, math-research empirical
+  // verification 2026-05-15): the workbench's H^{m,n}_{p,q}(z) is the
+  // right-closing Slater residue series, which equals `G(z)` directly on
+  // the principal Riemann sheet `|arg z| < π` — not the DLMF H_{q,q}
+  // (the asymptotic series for {}_qF_q) for which 16.11.7-9 are written.
   //
-  // The algebraic argument z_H = z (identity) for ALL κ in v0.1 scope.
+  // Specifically:
   //
-  // Bug-fix note (math-research subagent diagnosis): the previous code
-  // set `zArgForH = cneg(z)` for κ = 1, citing DLMF 16.11.7's
-  // `H_{q,q}(z e^{∓πi})` formula. That rotation applies to DLMF's
-  // H_{q,q}, which is the *asymptotic series for {}_qF_q* (i.e. the
-  // case (m,n) = (0,p) where only one residue family is present and
-  // the argument must be rotated to land on the correct Riemann sheet
-  // of the hypergeometric function). The workbench's `assembleAlgebraic`
-  // computes the *right-closing Slater-residue series* for G^{m,n}_{p,q}
-  // itself (ref doc §2.2, the H^{m,n}_{p,q}(z) formula). This series is
-  // evaluated on the principal Riemann sheet and equals G(z) directly —
-  // no rotation is needed or correct. The apparent DLMF discrepancy is
-  // because DLMF 16.11.7 is written for {}_qF_q, not for the general
-  // Meijer-G; see `docs/refs/dlmf-16-11.md` §2.2 for the workbench-H
-  // definition and §4.3 for the distinction between the DLMF-H_{q,q}
-  // (pFq asymptotic) and the workbench H^{m,n}_{p,q} (Slater residues).
+  //   * For κ=1 with `δ = m + n − (p+q)/2 ≥ 1`, the algebraic series
+  //     `H_workbench(z) = G(z)` everywhere on the principal sheet,
+  //     verified to 50+ dps across five shapes (G^{1,1}_{1,1},
+  //     G^{2,2}_{2,2}, G^{1,1}_{2,2}, G^{2,1}_{2,2}, G^{1,2}_{2,2}) at
+  //     multiple |z| and arg z values including near the negative real
+  //     axis.
   //
-  // The algebraic part is evaluated by the *existing* per-pole loop
-  // (`assembleAlgebraic`). The per-pole prefactor `B_h` is unchanged;
-  // the `z^{a_h - 1}` factor is evaluated at z directly via
-  // principal-value `cpow`.
+  //   * For κ≥3 with `δ ≥ 1`, `H_workbench(z) = G(z) + O(e^{−κ|z|^{1/κ}})`
+  //     with no Stokes-line crossings inside the principal Riemann sheet
+  //     (the lines sit at `arg z = ±κπ/2`, outside `|arg z| ≤ π`).
+  //     Practical: 10⁻³ at |z|=10, 10⁻²⁴ at |z|=1000 — well below user
+  //     precision for any realistic request.
+  //
+  //   * The `δ = 0` regime (e.g. G^{1,1}_{1,3}) is genuinely broken —
+  //     `H_workbench ≠ G` even asymptotically — and is filed as bead
+  //     `scientist-workbench-atip`. That work touches the classifier
+  //     and the assembler; it is *not* fixed by routing through
+  //     `assembleAlgebraic` here. (The `δ=0` shapes currently route
+  //     through this branch and silently emit a wrong answer; atip
+  //     adds a `degenerate-principal-sector` refusal.)
+  //
+  // The Stokes path therefore reuses the same algebraic assembly as the
+  // principal path; the only distinction is the `method: "braaksma-
+  // stokes"` and `sector: "stokes"` tags on the success record, which
+  // exist for wire-schema bookkeeping. A caller treating "stokes" as a
+  // tier-aware quality signal can derate the result by the expected
+  // exponentially-small remainder if it wants finer accounting; the
+  // kernel does not adjust the numerical value because there is no
+  // additive correction to apply.
+  //
+  // See `docs/refs/dlmf-16-11.md` §2.4 + worklog 125 for the empirical
+  // verification and ADR-0039 §D3 retraction.
+  if (verdict.kind === "stokes") {
+    return assembleAlgebraic(
+      params,
+      z,
+      z,
+      precision,
+      workingBits,
+      maxTermsPerPole,
+      "braaksma-stokes",
+      "stokes",
+    );
+  }
 
-  const kappa = q - p + 1;
-
-  // zArgForH = z for all κ in v0.1 scope (identity — no rotation).
-  // See the fix-note above for why the previous κ = 1 rotation to
-  // cneg(z) was incorrect.
-  const zArgForH = z;
-
-  // 1. Algebraic part: assemble H at the (possibly-rotated) argument
-  //    using the *same* per-pole machinery as the principal path. We
-  //    pass `z` as the "factor-z" argument so per-pole error estimates
-  //    are reported relative to the original `z` magnitude.
-  const algResult = assembleAlgebraic(
-    params,
-    zArgForH,
-    z,
-    precision,
-    workingBits,
-    maxTermsPerPole,
-    "braaksma-stokes",
-    "stokes",
+  // Unreachable: classifySector's verdict union is `principal | stokes |
+  // out-of-coverage | secondary` after the egf retraction. The four
+  // branches above are exhaustive; this throw exists only to satisfy
+  // TypeScript's exhaustiveness check.
+  const _exhaustive: never = verdict;
+  throw new Error(
+    `meijergAsymptotic: unexpected sector verdict ${JSON.stringify(_exhaustive)}`,
   );
-  if (algResult.status !== "success") {
-    // Algebraic refusal propagates; the connection formula cannot
-    // assemble without the H contribution.
-    return algResult;
-  }
-
-  // 2. Exponential contributions. For the v0.1 scope, sectorIndex ∈
-  //    {−1, 0, +1}: three rotated E representatives. The Stokes
-  //    multipliers S_k come from `stokes.ts`; zero multipliers
-  //    short-circuit the E evaluation entirely.
-  const sectorIndices: ReadonlyArray<-1 | 0 | 1> = [-1, 0, 1];
-  let total: BigComplex = algResult.value;
-  let warnings: string[] = [...algResult.warnings];
-  let totalErrorEstimate: BigFloat = algResult.errorEstimate;
-
-  for (const sectorIndex of sectorIndices) {
-    const mult = stokesMultiplier(
-      kappa,
-      sectorIndex,
-      verdict.signOfImZ,
-      workingBits,
-    );
-    if (mult.status === "coverage-gap") {
-      return {
-        status: "coverage-gap",
-        reason: mult.reason!,
-      };
-    }
-    if (mult.status === "out-of-table") {
-      // Defensive — the κ-aware classifier should already have routed
-      // to coverage-gap. Surface as input-error so the bug is loud.
-      return {
-        status: "input-error",
-        reason:
-          `internal: Stokes-multiplier lookup returned out-of-table for ` +
-          `(κ=${kappa}, sectorIndex=${sectorIndex}, signOfImZ=${verdict.signOfImZ}). ` +
-          `Reason: ${mult.reason}. This is a contract violation between ` +
-          `classifySector and stokesMultiplier; please file a bug.`,
-      };
-    }
-    const multBC = mult.multiplier!;
-
-    // Short-circuit: multiplier = 0 + 0i ⇒ the contribution vanishes
-    // (no E evaluation needed). Saves a full `evaluateEpq` call when
-    // the table says "inactive."
-    if (multBC.re.mantissa === 0n && multBC.im.mantissa === 0n) {
-      continue;
-    }
-
-    // Map sectorIndex {-1, 0, +1} to evaluateEpq's branchSign argument
-    // (same encoding). evaluateEpq computes E_{p,q}(z · e^{2πi k / κ})
-    // for the k = sectorIndex selection.
-    const eResult = evaluateEpq(params, z, sectorIndex, workingBits);
-    if (eResult.status !== "success") {
-      // Forward the refusal as input-error with context; the connection
-      // formula cannot assemble if any of its E contributions fails.
-      return {
-        status: "input-error",
-        reason:
-          `Stokes connection-formula assembly: E_{p,q}(z e^{2πi · ${sectorIndex}/κ}) ` +
-          `refused (status=${eResult.status}, reason=${eResult.reason}). ` +
-          `The egf v0.1 path cannot proceed without all required E terms.`,
-      };
-    }
-
-    // S_k · E_k: complex multiplication. Per the stokes.ts table the
-    // multiplier is one of {0, ±1, ±i} — exact rational complex — so
-    // the cmul here introduces no precision loss.
-    const contribution = cmul(multBC, eResult.value, workingBits);
-    total = cadd(total, contribution, workingBits);
-    // Fold the E's first-omitted-term magnitude into the overall
-    // error estimate. Multiplier magnitude is exactly 1 (or 0,
-    // already short-circuited), so |S_k · err_k| = err_k.
-    totalErrorEstimate = add(
-      totalErrorEstimate,
-      eResult.errorEstimate,
-      workingBits,
-    );
-    for (const w of eResult.warnings) {
-      warnings = [...warnings, `E_${sectorIndex}: ${w}`];
-    }
-  }
-
-  // Round to user precision.
-  const userBits = decimalToBinaryPrecision(precision, 0);
-  return {
-    status: "success",
-    value: {
-      re: roundTo(total.re, userBits),
-      im: roundTo(total.im, userBits),
-    },
-    achievedPrecision: precision,
-    method: "braaksma-stokes",
-    nTerms: algResult.nTerms,
-    optimalTermIndices: algResult.optimalTermIndices,
-    errorEstimate: totalErrorEstimate,
-    sector: "stokes",
-    workingPrecision: workingBits,
-    warnings,
-  };
 }
 
 /**

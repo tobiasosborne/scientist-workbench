@@ -114,26 +114,26 @@ export {
 } from "./asymptotic.js";
 
 // -----------------------------------------------------------------------------
-// Layer 6 — Stokes-line connection coefficients (ADR-0039, bead egf)
+// Layer 6 — Stokes-line connection coefficients: RETRACTED (worklog 125)
 // -----------------------------------------------------------------------------
 //
-// Pure-math modules for the v0.1 connection-formula scope. Part 2 of
-// bead `egf` (hv0.9.2) wires these into `meijergAsymptotic` and the
-// dispatcher; they ship here as standalone so the math is independently
-// testable. See `docs/refs/dlmf-16-11.md` §§3, 4 for the specification.
-
-export {
-  type EpqResult,
-  type EpqSuccess,
-  type EpqRefusal,
-  evaluateEpq,
-} from "./exponential.js";
-
-export {
-  type StokesMultiplier,
-  stokesMultiplier,
-  principalSectorBound,
-} from "./stokes.js";
+// ADR-0039 §D3 (bead `egf`) originally shipped a connection-formula
+// assembly (`G(z) ~ H(z) + Σ_k S_k · E_{p,q}(z e^{2πik/κ})`) with two
+// supporting modules: `exponential.ts` for the `E_{p,q}` series and
+// `stokes.ts` for the `S_k` multiplier table. The math-research
+// subagent verified empirically (2026-05-15) that the workbench's
+// `H^{m,n}_{p,q}(z)` (right-closing Slater residues) equals `G(z)`
+// directly on the principal Riemann sheet for `δ = m + n − (p+q)/2
+// ≥ 1`, without any compound-asymptotic correction. The two modules
+// and their exports have been retracted; the asymptotic layer is now
+// the algebraic series alone, tagged `"braaksma-algebraic"` in the
+// principal sector and `"braaksma-stokes"` past the κ-aware boundary
+// (the wire-schema tag is retained for diagnostic continuity).
+//
+// The `δ = 0` regime is genuinely broken (the kernel emits a wrong
+// answer for κ≥3 δ=0 shapes such as G^{1,1}_{1,3}) and is filed as
+// bead `scientist-workbench-atip`. See `docs/worklog/125-*.md` for the
+// empirical verification.
 
 // -----------------------------------------------------------------------------
 // Layer 4 — symbolic dispatch (Adamchik–Marichev + Roach)
