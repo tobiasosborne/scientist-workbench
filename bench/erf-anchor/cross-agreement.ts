@@ -90,6 +90,29 @@ const ORACLE_TIERS: Record<string, Tier> = {
   arb: "gold",       // (deferred; not installed)
 };
 
+/**
+ * Oracles whose adapters honestly refuse on certain input classes
+ * documented in R5 + the adapter README. Asymmetric refusals BY these
+ * oracles are downgraded to "info" severity (the oracle is doing the
+ * right thing; the gap is a known capability limit, not a bug).
+ *
+ *   boost  — refuses all complex (no std::complex template instantiation
+ *            per R5 §1), all Erfi (no Boost primitive), and all non-finite
+ *            literals (cpp_bin_float can't parse Infinity / NaN).
+ *   mpmath — refuses MAX_DOUBLE Erfc / Erfcx (overflow on exp(z²) bridge,
+ *            per G3 adapter summary).
+ *
+ * If an oracle is in this set, ANY asymmetric refusal by it is treated
+ * as expected. (The adapter's own README documents the specific class;
+ * the comparator doesn't need to re-verify the class — the adapter
+ * already paid the honest-scope cost.)
+ */
+const ORACLES_WITH_EXPECTED_REFUSALS = new Set<string>(["boost", "mpmath"]);
+
+function isExpectedRefusal(oracleId: string): boolean {
+  return ORACLES_WITH_EXPECTED_REFUSALS.has(oracleId);
+}
+
 // -----------------------------------------------------------------------------
 // Value normalisation — handle the union of output shapes
 // -----------------------------------------------------------------------------
@@ -304,15 +327,26 @@ function comparePair(
   const tierB = ORACLE_TIERS[ob];
   const tier_pair = `${tierA}-${tierB}`;
 
-  // Refusal handling
+  // Refusal handling — distinguish *expected* asymmetric refusals (oracle
+  // capability documented in R5/G-bead summaries) from unexpected ones.
+  // Per ADR-0040 §"Decision 8" + R5: Boost cpp_bin_float<N> refuses
+  // complex (no std::complex template), Erfi (no Boost primitive), and
+  // non-finite literals. mpmath refuses MAX_DOUBLE Erfc/Erfcx (overflow
+  // on exp(z²) bridge). Both refusal classes are documented in their
+  // respective adapter READMEs and don't surface bugs — they surface
+  // capability gaps that the v0.1 oracle hierarchy is comfortable with.
+  // Downgrade these to "info" so the agreement matrix surfaces only
+  // *unexpected* refusals (which warrant attention).
   if (va.kind === "refused" && vb.kind === "refused") {
     return { kind: "both-refused", severity: "info", tier_pair };
   }
   if (va.kind === "refused") {
-    return { kind: "asymmetric-refusal", severity: "warn", tier_pair, oracle_refused: oa };
+    const sev: "info" | "warn" = isExpectedRefusal(oa) ? "info" : "warn";
+    return { kind: "asymmetric-refusal", severity: sev, tier_pair, oracle_refused: oa };
   }
   if (vb.kind === "refused") {
-    return { kind: "asymmetric-refusal", severity: "warn", tier_pair, oracle_refused: ob };
+    const sev: "info" | "warn" = isExpectedRefusal(ob) ? "info" : "warn";
+    return { kind: "asymmetric-refusal", severity: sev, tier_pair, oracle_refused: ob };
   }
 
   // Limit-value handling. Normalise oracle-specific spellings: Wolfram says

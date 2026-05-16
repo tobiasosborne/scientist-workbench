@@ -295,6 +295,41 @@ ClassifyResult[r_] := Which[
   True, "REFUSE"
 ];
 
+(* FormatNumeric renders a Wolfram numeric value as a standard-scientific or *)
+(* plain-decimal string. Wolfram's InputForm of an arb-prec real has the    *)
+(* shape <mantissa>BT<prec>. (no exponent, e.g. 0.5204..BT60.) or           *)
+(* <mantissa>BT<prec>.*^<exp> (with exponent, e.g. 6.5632..BT60.*^-343),    *)
+(* where BT is the literal backtick character — Wolfram-native precision    *)
+(* annotation invisible to every downstream consumer (TS, Python, awk) which*)
+(* all speak the standard e<exp> exponent marker. Worse, an unchanged       *)
+(* InputForm silently round-trips back through the TS stripPrecisionSuffix  *)
+(* shaver, which cuts everything from the first backtick onward and so      *)
+(* *drops the exponent entirely*, leaving a mantissa-only string that the   *)
+(* cross-agreement comparator dutifully parses as if Erfc(28)~6.56 instead  *)
+(* of 6.56e-343 (G2a, bead scientist-workbench-nwdj). The fix lives on this *)
+(* side of the wire: emit <mantissa>e<exp> (or just <mantissa> for the      *)
+(* no-exponent case) so both the TS adapter and the comparator agree on    *)
+(* what the value is.                                                        *)
+(*                                                                          *)
+(* The substitutions: the *first* regex catches BT<prec>.*^ and rewrites it *)
+(* to e; the second strips the trailing BT<prec>. precision annotation on   *)
+(* values without an exponent. Order matters — strip-exponent first so the  *)
+(* trailing-strip regex doesn't shave the mantissa.                         *)
+(* The regex string literals look over-escaped because they are: Wolfram's *)
+(* string parser interprets backslash-escape sequences inside "..." before  *)
+(* the resulting string reaches RegularExpression[], so "\\*" → "\*" → the  *)
+(* regex engine sees a literal asterisk-class. Inside a JS template literal *)
+(* every backslash doubles again, so "\\\\*" in the .ts source emits "\\*"  *)
+(* on the wire, which Wolfram parses to "\*" for the regex engine. The     *)
+(* backtick (codepoint 96) is not a regex metacharacter and needs no       *)
+(* escaping on the regex side, only the JS-template-literal "\`" escape so *)
+(* it doesn't terminate the template literal in adapter.ts.                *)
+FormatNumeric[x_] := StringReplace[
+  ToString[x, InputForm],
+  {RegularExpression["\`[0-9.]+\\\\*\\\\^"] -> "e",
+   RegularExpression["\`[0-9.]+$"] -> ""}
+];
+
 (* PrintRecord emits one line per input. The separator is "|"; the consumer *)
 (* TS adapter splits on "|" and never expects "|" inside a numeric token.   *)
 (*                                                                          *)
@@ -314,11 +349,11 @@ PrintRecord[id_, expr_] := Module[{r, replaced, cls, reStr, imStr},
   cls = ClassifyResult[replaced];
   Which[
     cls === "INEXACT-NUMERIC",
-      reStr = ToString[Re[replaced], InputForm];
-      imStr = ToString[Im[replaced], InputForm];
+      reStr = FormatNumeric[Re[replaced]];
+      imStr = FormatNumeric[Im[replaced]];
       Print[StringJoin[id, "|INEXACT|", reStr, "|", imStr]],
     cls === "EXACT-NUMERIC",
-      Print[StringJoin[id, "|EXACT|", ToString[replaced, InputForm], "|0"]],
+      Print[StringJoin[id, "|EXACT|", FormatNumeric[replaced], "|0"]],
     True,
       Print[StringJoin[id, "|", cls, "||"]]
   ]
@@ -348,20 +383,24 @@ function buildBatchProgram(inputs: ReadonlyArray<CorpusInput>): string {
 }
 
 // -----------------------------------------------------------------------------
-// wolframscript output parser — strip precision suffixes and normalize forms
+// wolframscript output parser — defensive sanitiser for precision suffixes
 // -----------------------------------------------------------------------------
 //
-// A Wolfram InputForm decimal carries a precision annotation appended after a
-// backtick: `0.918050…`60.` (real) or `0.…`59.96099923118899` (complex with
-// per-component tracked precision). The annotation is informative for the
-// kernel; the consumer wants only the decimal-string body. The regex strips
-// from the first backtick to end-of-string.
+// Historically the .wls emitted `<mantissa>`<prec>.` or
+// `<mantissa>`<prec>.*^<exp>` from `ToString[x, InputForm]` and this function
+// had to do all the cleanup. That was a landmine: the literal
+// `s.slice(0, tick)` truncates at the first backtick, which silently DROPS
+// the `*^<exp>` exponent marker living *after* the backtick, producing
+// mantissa-only strings that comparators parse as if Erfc(28)≈6.56 instead of
+// 6.56e-343 (G2a, bead `scientist-workbench-nwdj`).
 //
-// One subtlety: Wolfram's InputForm of a non-trivial decimal sometimes has a
-// trailing dot before the backtick (`-1.\`60.`). The dot is informational
-// (it asserts "this is a real number" rather than an integer); we preserve
-// the leading sign and digits up to but not including the backtick, then drop
-// any trailing dot. Result: `-1` or `-1.234`.
+// The fix is on the .wls side now: `FormatNumeric` rewrites `<prec>.*^` to
+// `e` and strips the trailing `<prec>.` annotation before printing, so the
+// wire format is standard scientific (`<mantissa>e<exp>`) or plain decimal
+// (`<mantissa>`). This TS function therefore receives backtick-free input
+// in the normal case; it remains as belt-and-suspenders against any future
+// regression in the .wls preamble, and to handle the trailing-dot case (`1.`
+// → `1`) which the .wls doesn't bother normalising.
 
 function stripPrecisionSuffix(s: string): string {
   const tick = s.indexOf("`");

@@ -67,11 +67,17 @@ WOLFRAMSCRIPT_BIN=/path/to/wolframscript bun bench/erf-anchor/oracles/wolfram/ad
    60-decimal numbers across multiple lines, breaking the consumer's
    line-oriented parser. The batch script sets `$PageWidth = Infinity`.
 
-5. **Precision-suffix on InputForm strings.** Wolfram's `InputForm` of an
-   arb-prec real number is e.g. `` 0.918050…`60. `` with a backtick-prefixed
-   precision annotation. The adapter strips everything from the first
-   backtick onward and trims a trailing `.` before emitting the JSON
-   record's `output` field.
+5. **Precision-suffix and `*^` exponent marker on InputForm strings (G2a,
+   bead `scientist-workbench-nwdj`).** Wolfram's `InputForm` of an arb-prec
+   real number is e.g. `` 0.918050…`60. `` (no exponent) or e.g.
+   `` 6.5632…`60.*^-343 `` (with the Wolfram-native `*^<exp>` exponent
+   marker living *after* the precision suffix). A naive "strip from the first
+   backtick onward" silently drops `*^-343` and emits a mantissa-only string,
+   which the cross-agreement comparator parses as ~6.56 instead of 6.56e-343.
+   The fix lives in the .wls preamble: `FormatNumeric[x_]` rewrites
+   `` `<prec>.*^ `` → `e` and then strips the trailing `` `<prec>. ``, so the
+   wire format is standard-scientific (`<mantissa>e<exp>`) or plain-decimal.
+   The TS-side `stripPrecisionSuffix` remains as belt-and-suspenders.
 
 ## Output shape
 
