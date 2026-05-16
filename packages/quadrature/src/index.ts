@@ -80,3 +80,33 @@ export {
   UnknownVocabularyError,
   evalNumericExpr,
 } from "./eval-expr.js";
+
+// Float64 special-function dispatch (ADR-0040 Decision 4). Adds the
+// Erf family (Erf / Erfc / Erfcx / Erfi / InverseErf / InverseErfc)
+// to the closed-vocabulary evaluator. Future per-head ADRs extend
+// `SPECIAL_HEADS` additively without re-touching `eval-expr.ts`.
+export {
+  SPECIAL_HEADS,
+  ADMITTED_HEADS as ADMITTED_HEADS_WITH_SPECIAL,
+  evalNumericExpr as evalNumericExprWithSpecial,
+} from "./eval-numeric-expr.js";
+
+// Per-head float64 implementations (ADR-0015 `numerical: true` tier).
+// Re-exported so consumers (e.g. `packages/meijer-core`'s bridge
+// numerical cross-check, the Phase 1 bench grader) can call directly
+// without going through the AST evaluator.
+export {
+  type ComplexF64,
+  erfFloat64,
+  erfcFloat64,
+  erfcxFloat64,
+  erfiFloat64,
+  erfInvFloat64,
+  erfcInvFloat64,
+  wFunctionFloat64,
+  erfComplexFloat64,
+  erfcComplexFloat64,
+  erfcxComplexFloat64,
+  erfiComplexFloat64,
+  maskLowWord,
+} from "./special-funcs/erf-float64.js";

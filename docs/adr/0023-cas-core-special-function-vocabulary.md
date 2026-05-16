@@ -135,6 +135,28 @@ its source. The honest refusal is correct (PRD §6.1; ADR-0003
 boundary-class) — agents see `tagged "cas-diff/out-of-scope"` with the
 head name in the payload, and route around or refuse upstream.
 
+### Amendment — 2026-05-16 (ADR-0040 §"Decision 6"; bead `m114`)
+
+The closed vocabulary table grew **27 → 28** by admitting `Erfi`, the
+imaginary error function `erfi(z) := -i · erf(i·z)` (DLMF §7.10). The
+discovery surfaced during ADR-0040's R4 Meijer-G bridge research: the
+canonical G-form table for the Erf family treats `Erf`, `Erfc`, and
+`Erfi` symmetrically (all three share the parameter tuple `an=[1/2],
+ap=[], bm=[0], bq=[-1/2]`; only the z-argument sign distinguishes them),
+and admitting `Erfi` is a prerequisite for the bidirectional bridge.
+`Erfi` is single-argument (`{shape: "fixed", count: 1}`), entire on `C`
+(no branch-cut bookkeeping), and ships with its closed-form derivative
+`d/dz erfi(z) = (2/√π) · exp(z²)` (DLMF §7.10.2) — joining the v0.1
+differentiable subset alongside `Erf` and `Erfc`. The diff-rule output
+stays in the elementary vocabulary (`exp`, `^`, `*`, `/`) so the result
+is itself recursively differentiable. Per ADR-0040 §"Why ADR-0023 amends
+rather than a new vocabulary ADR", this amendment was the right
+granularity: a single closed-form head with a single diff rule and a
+single Meijer-G representation — no design controversy, no
+list-parameter ambiguity. Inverse-erf vocabulary heads (`InverseErf`,
+`InverseErfc`) are deferred to a future ADR with a concrete consumer
+(probability tail-quantile work would motivate them).
+
 ## What we will not decide here
 
 * **Numerical evaluation of these heads.** Per-head `evalAt(args,

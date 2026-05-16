@@ -52,14 +52,14 @@ function diff(e: Value, wrt = z): Value {
 // -----------------------------------------------------------------------------
 
 describe("SPECIAL_FUNCTION_HEADS — vocabulary table", () => {
-  test("contains exactly the 27 heads ADR-0023 admits", () => {
+  test("contains exactly the 28 heads ADR-0023 admits (Erfi added 2026-05-16 per ADR-0040)", () => {
     const expected = [
       "Gamma", "Digamma", "Polygamma",
       "BesselJ", "BesselY", "BesselI", "BesselK",
       "HypergeometricPFQ",
       "WhittakerM", "WhittakerW",
       "ParabolicCylinderD",
-      "Erf", "Erfc",
+      "Erf", "Erfc", "Erfi",
       "ExpIntegralEi", "ExpIntegralE",
       "FresnelC", "FresnelS",
       "LegendreP", "LegendreQ",
@@ -69,9 +69,10 @@ describe("SPECIAL_FUNCTION_HEADS — vocabulary table", () => {
       "Polylog", "LerchPhi",
       "MeijerG",
     ];
-    // 27 above; the 28th is reserved by counting Polygamma which is one
-    // head with two args (n, z). Re-count to guard against drift:
-    expect(expected.length).toBe(27);
+    // 28 heads after ADR-0040 §"Decision 6" admitted Erfi as the third
+    // member of the error-function family. Re-count to guard against
+    // drift on future vocabulary additions:
+    expect(expected.length).toBe(28);
     // The set the module exports must match this array exactly.
     expect([...SPECIAL_FUNCTION_HEADS].sort()).toEqual([...expected].sort());
   });
@@ -109,7 +110,7 @@ describe("specialFunctionArity — arity contracts", () => {
   });
 
   test("single-z heads have arity 1", () => {
-    for (const h of ["Gamma", "Digamma", "Erf", "Erfc",
+    for (const h of ["Gamma", "Digamma", "Erf", "Erfc", "Erfi",
                      "ExpIntegralEi", "FresnelC", "FresnelS"]) {
       const a = specialFunctionArity(h);
       expect(a).not.toBeNull();
@@ -161,10 +162,10 @@ describe("specialFunctionArity — arity contracts", () => {
 // -----------------------------------------------------------------------------
 
 describe("SPECIAL_FUNCTION_DIFFERENTIABLE_HEADS — v0.1 subset", () => {
-  test("matches ADR-0023's shipped subset exactly", () => {
+  test("matches ADR-0023's shipped subset exactly (incl. Erfi per ADR-0040)", () => {
     const expected = [
       "Gamma", "Digamma", "Polygamma",
-      "Erf", "Erfc",
+      "Erf", "Erfc", "Erfi",
       "ExpIntegralEi", "ExpIntegralE",
       "FresnelC", "FresnelS",
       "BesselJ", "BesselY", "BesselI", "BesselK",
@@ -266,6 +267,76 @@ describe("differentiate — Erf / Erfc", () => {
       int(2n),
     ]);
     expect(eq(got, want)).toBe(true);
+  });
+});
+
+// -----------------------------------------------------------------------------
+// Erfi — imaginary error function (admitted 2026-05-16 per ADR-0040 §"Decision 6")
+// -----------------------------------------------------------------------------
+//
+// `erfi(z) := -i · erf(i·z)` is the Dawson / Faddeeva sister of `erf`
+// on the imaginary axis. The derivative `(2/√π)·exp(z²)` (note the
+// `+z²` exponent — `erf`'s is `-z²`) is the single sign-flip that
+// makes erfi grow super-exponentially on the real axis. ADR-0040
+// §"Decision 6" pinned `mkPower(sym("pi"), rat(1n, 2n))` as the
+// canonical √π encoding for the per-head Erf substrate, so the bridge
+// to Meijer-G (R4 §1; bead `tc2c`) sees one uniform `z/√π` prefactor
+// shape across Erf, Erfc, and Erfi G-forms.
+
+describe("differentiate — Erfi (DLMF §7.10.2)", () => {
+  test("specialFunctionArity Erfi → fixed count 1", () => {
+    const a = specialFunctionArity("Erfi");
+    expect(a).not.toBeNull();
+    expect(a!.shape).toBe("fixed");
+    expect((a as Extract<SpecialFunctionArity, { shape: "fixed" }>).count).toBe(1);
+  });
+
+  test("d/dz erfi(z) = (2/√π) · exp(z²)  (DLMF §7.10.2)", () => {
+    const got = diff(expr("Erfi", [z]));
+    // The chain-rule factor `dz/dz = 1` is absorbed by `mkTimes`'s
+    // smart constructor (1 dropped); the result is the bare prefactor
+    // times `exp(z²)` with no extraneous `1`.
+    const want = expr("*", [
+      expr("/", [int(2n), expr("^", [sym("pi"), rat(1n, 2n)])]),
+      expr("exp", [expr("^", [z, int(2n)])]),
+    ]);
+    expect(eq(got, want)).toBe(true);
+  });
+
+  test("d/dy erfi(x) = 0  (free-symbol-independence; x ≠ y)", () => {
+    const x = sym("x");
+    const y = sym("y");
+    const got = diff(expr("Erfi", [x]), y);
+    expect(eq(got, int(0n))).toBe(true);
+  });
+
+  test("chain rule: d/dz erfi(2z) = ((2/√π) · exp((2z)²)) · 2", () => {
+    const inner = expr("*", [int(2n), z]);
+    const got = diff(expr("Erfi", [inner]));
+    const want = expr("*", [
+      expr("*", [
+        expr("/", [int(2n), expr("^", [sym("pi"), rat(1n, 2n)])]),
+        expr("exp", [expr("^", [inner, int(2n)])]),
+      ]),
+      int(2n),
+    ]);
+    expect(eq(got, want)).toBe(true);
+  });
+
+  test("foreign pass-through: erfi inside an unknown head refuses cleanly", () => {
+    // The ADR-0023 / ADR-0040 honest-scope discipline: heads not in
+    // SPECIAL_FUNCTION_HEADS continue to refuse via the existing
+    // boundary tag. Adding Erfi must NOT silently admit any other
+    // erf-family variant (e.g. InverseErf, which ADR-0040 §"What we
+    // will not decide here" explicitly defers).
+    expect(() => diff(expr("InverseErf", [z]))).toThrow(CasDiffOutOfScopeError);
+  });
+
+  test("determinism: hash-equal across two calls on the Erfi rule", () => {
+    const f = expr("Erfi", [z]);
+    const a = canonicalize(diff(f));
+    const b = canonicalize(diff(f));
+    expect(a).toBe(b);
   });
 });
 

@@ -64,11 +64,21 @@
 //
 // Diff-rule output is in the same closed vocabulary
 // -------------------------------------------------
-// Bessel rules emit Bessel; Erf/Erfc/Fresnel/ExpIntegralEi/ExpIntegralE
-// rules emit elementary heads (`exp`, `cos`, `sin`, `*`, `/`, `^`).
-// Both are admissible — when cas-diff recurs through a Bessel
-// derivative result, the dispatcher fires again on the new BesselJ
-// node. The output is well-formed AST, recursively differentiable.
+// Bessel rules emit Bessel; Erf/Erfc/Erfi/Fresnel/ExpIntegralEi/
+// ExpIntegralE rules emit elementary heads (`exp`, `cos`, `sin`, `*`,
+// `/`, `^`). Both are admissible — when cas-diff recurs through a
+// Bessel derivative result, the dispatcher fires again on the new
+// BesselJ node. The output is well-formed AST, recursively
+// differentiable.
+//
+// Amendments
+// ----------
+// 2026-05-16 (ADR-0040 §"Decision 6"; bead `m114`): vocabulary table
+// grew 27 → 28 by admitting `Erfi` — the per-head substrate this ADR
+// pins for the Erf family needs `Erfi` as a first-class head (the
+// canonical Meijer-G forward table R4 §1 covers `Erf`, `Erfc`, and
+// `Erfi` symmetrically). Diff rule `d/dz Erfi(z) = (2/√π)·exp(z²)`
+// per DLMF §7.10.2.
 
 import {
   expr,
@@ -121,6 +131,7 @@ export const SPECIAL_FUNCTION_HEADS: readonly string[] = [
   // Error / exponential / Fresnel integrals.
   "Erf",
   "Erfc",
+  "Erfi",
   "ExpIntegralEi",
   "ExpIntegralE",
   "FresnelC",
@@ -155,6 +166,7 @@ export const SPECIAL_FUNCTION_DIFFERENTIABLE_HEADS: readonly string[] = [
   "Polygamma",
   "Erf",
   "Erfc",
+  "Erfi",
   "ExpIntegralEi",
   "ExpIntegralE",
   "FresnelC",
@@ -208,6 +220,7 @@ const ARITY_TABLE: Readonly<Record<string, SpecialFunctionArity>> = {
   ParabolicCylinderD: { shape: "fixed", count: 2 },
   Erf: { shape: "fixed", count: 1 },
   Erfc: { shape: "fixed", count: 1 },
+  Erfi: { shape: "fixed", count: 1 },
   ExpIntegralEi: { shape: "fixed", count: 1 },
   ExpIntegralE: { shape: "fixed", count: 2 },
   FresnelC: { shape: "fixed", count: 1 },
@@ -305,6 +318,8 @@ export function differentiateSpecialFunction(
       return ruleErf(args, wrt, recurDiff, /*sign=*/ 1);
     case "Erfc":
       return ruleErf(args, wrt, recurDiff, /*sign=*/ -1);
+    case "Erfi":
+      return ruleErfi(args, wrt, recurDiff);
     case "ExpIntegralEi":
       return ruleExpIntegralEi(args, wrt, recurDiff);
     case "ExpIntegralE":
@@ -429,6 +444,43 @@ function ruleErf(
   const prefactor = sign === 1 ? twoOverSqrtPi : mkNeg(twoOverSqrtPi);
   const expFactor = expr("exp", [mkNeg(mkPower(z, int(2n)))]);
   return mkTimes(mkTimes(prefactor, expFactor), dz);
+}
+
+// d/dz erfi(z) = (2/√π) · exp(z²)     — DLMF §7.10.2 (imaginary error function)
+//
+// The imaginary error function `erfi(z) := -i · erf(i·z)` is the
+// Dawson / Faddeeva sister of `erf` on the imaginary axis; its
+// derivative differs from `erf`'s only in the sign of the exponent
+// (`+z²` not `-z²`). That sign flip is what makes `erfi` grow super-
+// exponentially on the real axis where `erf` saturates at ±1 — the
+// numerical-evaluation challenges of `erfi` (catastrophic cancellation
+// for moderate |z|, the need for Karbach-Weideman in the complex plane)
+// trace back to this single sign and motivate the substrate pattern
+// pinned by ADR-0040.
+//
+// Encoding choice: we emit `√π` as `expr("^", [sym("pi"), rat(1/2)])`
+// per ADR-0040 §"Decision 6"'s literal-of-record code. The `sqrt`
+// elementary head (used by `ruleErf` above) and `pi^(1/2)` are
+// canonically distinct AST shapes — both within the closed elementary
+// vocabulary, both recursively differentiable — but the per-head
+// substrate at ADR-0040 picked the rational-exponent shape so the
+// downstream Meijer-G bridge (R4 §1; bead `tc2c`) sees a single
+// uniform encoding for the `z/√π` prefactor common to Erf, Erfc, and
+// Erfi G-forms. The two encodings reduce to the same value under any
+// numerical or arb-prec evaluator; their difference is purely
+// canonical-form bookkeeping.
+function ruleErfi(
+  args: readonly Value[],
+  wrt: SymbolValue,
+  recurDiff: RecurDiff,
+): Value | null {
+  arityCheck(args, 1, "Erfi");
+  const z = args[0]!;
+  const dz = recurDiff(z, wrt);
+  if (isZero(dz)) return ZERO;
+  const twoOverSqrtPi = mkDiv(int(2n), mkPower(sym("pi"), rat(1n, 2n)));
+  const expZSquared = expr("exp", [mkPower(z, int(2n))]);
+  return mkTimes(mkTimes(twoOverSqrtPi, expZSquared), dz);
 }
 
 // d/dz Ei(z) = exp(z) / z   — DLMF §6.2.6

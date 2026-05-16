@@ -4,7 +4,7 @@ Compute `∂f/∂var` for an expression `f` over the closed numerical
 vocabulary `{+ − * / ^ neg exp sin cos tan log sqrt abs asin acos atan
 sinh cosh tanh asinh acosh atanh log2 log10}` plus constants `pi`, `e`,
 *and* the special-function vocabulary admitted by ADR-0023 (`Gamma`,
-`Digamma`, `Polygamma`, `Erf`, `Erfc`, `ExpIntegralEi`,
+`Digamma`, `Polygamma`, `Erf`, `Erfc`, `Erfi`, `ExpIntegralEi`,
 `ExpIntegralE`, `FresnelC`, `FresnelS`, `BesselJ`, `BesselY`,
 `BesselI`, `BesselK`, `HermiteH`, `Polylog` — each with its DLMF-cited
 closed-form rule). The elementary output composes directly with
@@ -121,6 +121,7 @@ Rule table:
 | `Polygamma(n, z)` | `Polygamma(n+1, z) · dz` (DLMF §5.15.3; var = z; refuses on var = n) |
 | `Erf(z)` | `(2/√π) · exp(−z²) · dz` (DLMF §7.7.1) |
 | `Erfc(z)` | `−(2/√π) · exp(−z²) · dz` |
+| `Erfi(z)` | `(2/√π) · exp(z²) · dz` (DLMF §7.10.2; admitted 2026-05-16 per ADR-0040) |
 | `ExpIntegralEi(z)` | `(exp(z)/z) · dz` (DLMF §6.2.6) |
 | `ExpIntegralE(n, z)` | `−ExpIntegralE(n−1, z) · dz` (DLMF §8.19.13; var = z) |
 | `FresnelC(z)` | `cos(π·z²/2) · dz` (DLMF §7.2.7) |
