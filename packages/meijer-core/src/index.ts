@@ -185,6 +185,17 @@ export {
   meijerGToHead,
 } from "./bridges/erf.js";
 
+// Bessel-family bridge (ADR-0041 §"Decision 5" + Bessel R4 §A.4):
+// per-head sister module to `bridges/erf.ts`, the first 2-arg bridge
+// (`(ν, z)`). Re-exported under disambiguated names so callers can
+// route head → bridge explicitly; the top-level `headToMeijerG`
+// dispatcher (when it lands) will iterate over both modules' bridges
+// and return the first non-null hit.
+export {
+  headToMeijerG as headToMeijerGBessel,
+  meijerGToHead as meijerGToHeadBessel,
+} from "./bridges/bessel.js";
+
 // -----------------------------------------------------------------------------
 // Layer 7 — top-level dispatcher (ADR-0027)
 // -----------------------------------------------------------------------------

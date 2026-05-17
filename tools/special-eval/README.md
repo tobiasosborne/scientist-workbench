@@ -1,17 +1,24 @@
 # special-eval
 
-The umbrella per-head arb-prec / float64 evaluator for the Erf family,
-covering the wire surface defined by ADR-0040 §"Decision 7". One tool
-dispatches across six closed-vocabulary heads — `Erf`, `Erfc`, `Erfcx`,
-`Erfi`, `InverseErf`, `InverseErfc` — and across two determinism tiers
-(float64 / arb-prec) behind a single `--head=<name>` flag. The
-agent's mental model is "give me Erf at this argument, this precision";
-the cross-tier dispatch and the per-head substrate dispatch live behind
-the same wire schema.
+The umbrella per-head arb-prec / float64 evaluator for the Erf family
+(ADR-0040 §"Decision 7") plus the canonical Bessel family (ADR-0041
+§"Decision 7"). One tool dispatches across twelve closed-vocabulary
+heads behind a single `--head=<name>` flag and across two determinism
+tiers (float64 / arb-prec). The agent's mental model is "give me Erf
+(or BesselJ) at this argument, this precision"; the cross-tier dispatch
+and the per-head substrate dispatch live behind the same wire schema.
 
-This is the v0.1 instantiation of the per-head substrate pattern; future
-heads (Bessel, Whittaker, ParabolicCylinder, Legendre family) plug into
-the same umbrella additively.
+Heads (v0.2):
+
+- **Erf family** (arity 1, `args = [z]`): `Erf`, `Erfc`, `Erfcx`,
+  `Erfi`, `InverseErf`, `InverseErfc`.
+- **Bessel family** (arity 2, `args = [ν, z]`): `BesselJ`, `BesselY`,
+  `BesselI`, `BesselK`, `BesselIScaled` (`= e^{-|z|}·I_ν(z)`),
+  `BesselKScaled` (`= e^{z}·K_ν(z)`).
+
+Future heads (Whittaker, ParabolicCylinder, Legendre family, LerchPhi)
+plug into the same umbrella additively per the per-head substrate
+pattern.
 
 ## Input
 
@@ -46,10 +53,16 @@ Or for complex evaluation:
 }
 ```
 
-Every v0.1 head is arity 1, so the `args` list (real) or `re` / `im`
-parallel lists (complex) contain exactly one entry. The list-of-args
-shape preserves the door for future multi-parameter heads
-(`BesselJ(order, argument)`) without breaking the wire.
+Erf-family heads are arity 1 (single argument `z`); Bessel-family heads
+are arity 2 (`(ν, z)`). For arity-2 heads:
+
+- **real**: `args = list([nu, z])` (length 2).
+- **complex**: `args = record{re: list([nu, z.re]), im: list([0, z.im])}`
+  — ν is real by convention in v0.2 (the substrate's complex layer admits
+  complex ν but the wire convention sets `args.im[0] = 0`).
+
+The list-of-args shape generalises to higher-arity heads
+(`WhittakerM(κ, μ, z)`, etc.) without further wire change.
 
 ## Output
 
@@ -89,6 +102,24 @@ planner's downstream debugging):
   `x_c(prec) = √(prec · ln 2)`; series uses DLMF 7.6.2 Borel form).
 - `erf-karbach-weideman` — arb-prec complex (Karbach 2014 /
   Weideman-Fourier with closed-form `(τ_m, N)` precision-scaling).
+- `bessel-musl-sunpro-1993` — float64 real Bessel J / Y (musl libm
+  port of Sun Microsystems 1993 `j0.c` / `j1.c` / `jn.c`; ≤ 2-4 ULP).
+- `bessel-cephes-moshier-2000` — float64 real Bessel I / K (Cephes
+  port; ≤ 5 ULP).
+- `bessel-cephes-moshier-2000-scaled` — float64 scaled variants
+  (`besselIScaledFloat64` / `besselKScaledFloat64`); use when `|z| > 700`.
+- `bessel-amos-toms644` — float64 complex Bessel J / Y / I / K (AMOS
+  TOMS 644 Fortran port; ≤ 18 dp).
+- `bessel-flint-0f1-or-hankel{,-scaled}` — arb-prec real J / Y / I /
+  scaled-I (FLINT-pattern cancellation-retry ₀F₁ Maclaurin + Hankel
+  asymptotic on the `z_c_Hankel(p) = p/2` crossover; ADR-0041 §3).
+- `bessel-flint-temme-or-connection{,-scaled}` — arb-prec real K /
+  scaled-K (Temme path for integer ν, I-connection formula for
+  non-integer ν).
+- `bessel-amos-rotation-arbprec` — arb-prec complex J / Y (AMOS-style
+  rotation `J_ν(z) = exp(±νπi/2)·I_ν(∓iz)`; ADR-0041 §11).
+- `bessel-flint-{0f1-or-hankel,temme-or-connection}-{scaled-}complex`
+  — arb-prec complex I / K (direct series + modified Hankel asymptotic).
 
 The `value` field is a `tagged "bigfloat"` (real) or `tagged "bigcomplex"`
 (complex) — both encodings of ADR-0020's arb-prec value protocol. The
@@ -149,17 +180,33 @@ Four refusal classes:
 
 | head | real float64 | real arb-prec | complex float64 | complex arb-prec |
 |---|---|---|---|---|
-| `Erf`         | `erfFloat64` | `bigErf` | `erfComplexFloat64` | `bigCErf` |
-| `Erfc`        | `erfcFloat64` | `bigErfc` | `erfcComplexFloat64` | `bigCErfc` |
-| `Erfcx`       | `erfcxFloat64` | `bigErfcx` | `erfcxComplexFloat64` | `bigCErfcx` |
-| `Erfi`        | `erfiFloat64` | via `bigCErfi` | `erfiComplexFloat64` | `bigCErfi` |
-| `InverseErf`  | `erfInvFloat64` | refuse | refuse | refuse |
-| `InverseErfc` | `erfcInvFloat64` | refuse | refuse | refuse |
+| `Erf`            | `erfFloat64`         | `bigErf`            | `erfComplexFloat64`     | `bigCErf` |
+| `Erfc`           | `erfcFloat64`        | `bigErfc`           | `erfcComplexFloat64`    | `bigCErfc` |
+| `Erfcx`          | `erfcxFloat64`       | `bigErfcx`          | `erfcxComplexFloat64`   | `bigCErfcx` |
+| `Erfi`           | `erfiFloat64`        | via `bigCErfi`      | `erfiComplexFloat64`    | `bigCErfi` |
+| `InverseErf`     | `erfInvFloat64`      | refuse              | refuse                  | refuse |
+| `InverseErfc`    | `erfcInvFloat64`     | refuse              | refuse                  | refuse |
+| `BesselJ`        | `besselJFloat64`     | `bigBesselJ`        | `besselJComplexFloat64` | `bigCBesselJ` |
+| `BesselY`        | `besselYFloat64`     | `bigBesselY`        | `besselYComplexFloat64` | `bigCBesselY` |
+| `BesselI`        | `besselIFloat64`     | `bigBesselI`        | `besselIComplexFloat64` | `bigCBesselI` |
+| `BesselK`        | `besselKFloat64`     | `bigBesselK`        | `besselKComplexFloat64` | `bigCBesselK` |
+| `BesselIScaled`  | `besselIScaledFloat64` | `bigBesselIScaled`| refuse (R3 §0.4 gap)    | `bigCBesselIScaled` |
+| `BesselKScaled`  | `besselKScaledFloat64` | `bigBesselKScaled`| refuse (R3 §0.4 gap)    | `bigCBesselKScaled` |
 
 Real arb-prec Erfi routes through `bigCErfi(x + 0i)` and takes the real
 part — the substrate doesn't ship a separate `bigErfi` because the
 identity `Erfi(x) = Im of bigCErfi result on the imaginary axis` makes
 it redundant.
+
+`BesselIScaled` / `BesselKScaled` on the complex float64 lane refuse
+with `no-known-representation`: AMOS TOMS 644 exposes scaled variants on
+the real axis only; the arb-prec complex scaled variants
+(`bigCBesselIScaled` / `bigCBesselKScaled`) ship and route at
+`--precision > 15`.
+
+Bessel boundary cases (`K_0(0) = +∞`, `Y_0(0) = -∞`, `I_ν(0)` for
+negative non-integer ν) are reported as `no-known-representation`
+refusals — the input is finite but the closed-form output is unbounded.
 
 ### Per-output tier dispatch
 
@@ -252,19 +299,29 @@ echo '{"kind":"record","fields":{
 }}' | bun tools/special-eval/tool.ts --precision=10
 ```
 
-## Out of scope (v0.1, all deliberate)
+## Out of scope (v0.2, all deliberate)
 
 - **Real arb-prec InverseErf / InverseErfc.** Phase 2 substrate gap;
   Newton-on-bigErf was spec'd in I5 but deferred. The float64 path
   remains available; future bead with a concrete consumer can lift.
 - **Complex InverseErf / InverseErfc at any precision.** Multi-valued
   Riemann surface; no canonical computational form. R3 §3.
-- **Future heads (Bessel, Whittaker, …).** The substrate pattern is
-  reusable; per-head ADRs cover each. The wire surface is additive —
-  a new head is one row in the dispatch table plus its substrate.
-- **Multi-parameter heads (`BesselJ(order, argument)`).** The args
-  list/record shape supports them by construction; only the dispatch
-  table needs extension.
+- **Complex float64 BesselIScaled / BesselKScaled.** R3 §0.4 substrate
+  gap; AMOS TOMS 644 exposes scaled variants on the real axis only.
+  The arb-prec complex scaled variants ship and route normally.
+- **Complex ν for Bessel.** The substrate's complex layer admits
+  complex ν, but the v0.2 wire convention sets `args.im[0] = 0`.
+  Pass non-zero `args.im[0]` and the arb-prec lane will route it through
+  the substrate; the float64 lane refuses with no-known-representation.
+- **HankelH1 / HankelH2 / SphericalBesselJ / SphericalBesselY.**
+  Admitted to the cas-core vocabulary (ADR-0041 §"Decision 6") but not
+  yet routed through `special-eval`. The substrate primitives
+  (`bigCHankelH1`, `bigCHankelH2`) ship; routing them is a one-line
+  table extension when a consumer surfaces.
+- **Future heads (Whittaker, ParabolicCylinder, Legendre family).**
+  The substrate pattern is reusable; per-head ADRs cover each. The wire
+  surface is additive — a new head is one row in the dispatch table
+  plus its substrate.
 
 ## Standard flags
 
@@ -280,16 +337,19 @@ precisions cache to different output hashes.
 
 - **ADR-0040** — Per-head special-function substrate + bidirectional
   Meijer-G bridge. The architectural rationale; §"Decision 7" is this
-  tool's spec.
+  tool's spec for the Erf family.
+- **ADR-0041** — Per-head substrate applied to the Bessel family
+  (`scientist-workbench-zcam` epic). §"Decision 7" is this tool's spec
+  for the Bessel family (6 new heads, arity-2 wire shape).
 - **ADR-0020** — Arbitrary-precision tier (`arbprec: true` +
   `--precision`).
 - **ADR-0015** — Numerical tier (the float64 lane's underlying
   contract).
 - **ADR-0023** — Closed-vocabulary special-function table.
-- **R1**–**R5** under `docs/refs/erf-research/` — the five-axis
-  research record (symbolic / arb-prec / float64 / Meijer bridge /
-  oracles).
-- **Substrate packages:** `@workbench/bigfloat` (arb-prec); 
+- **R1**–**R5** under `docs/refs/erf-research/` and
+  `docs/refs/besselj-research/` — the five-axis research records
+  (symbolic / arb-prec / float64 / Meijer bridge / oracles).
+- **Substrate packages:** `@workbench/bigfloat` (arb-prec);
   `@workbench/quadrature` (float64).
 
 ## Closes

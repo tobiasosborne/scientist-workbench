@@ -5,36 +5,53 @@
 // The wire surface for ADR-0040's per-head special-function substrate.
 // This is the *single* tool an agent reaches for when the question is "give
 // me Erf at this argument, this precision" — the dispatch across the Erf
-// family (6 real heads + 4 complex heads) and across the two determinism
-// tiers (float64 vs arb-prec) lives behind one umbrella with a single
-// `--head=<name>` flag. ADR-0040 §"Decision 7" is the design rationale;
-// the prompt and seven-artefact contract are non-negotiable per PRD §4.2
-// + CLAUDE.md Rules 0, 1, 8, 10.
+// family (6 real heads + 4 complex heads) and the Bessel family (4 primary
+// heads + 2 scaled variants) lives behind one umbrella with a single
+// `--head=<name>` flag.  ADR-0040 §"Decision 7" pins the Erf wire surface;
+// **ADR-0041 §"Decision 7"** extends it with the canonical Bessel family
+// per the per-head substrate pattern; the seven-artefact contract is
+// non-negotiable per PRD §4.2 + CLAUDE.md Rules 0, 1, 8, 10.
 //
 // What this tool is (the agent's mental model)
 // --------------------------------------------
 // "I have a Value-protocol-shaped scientific request — `head: 'Erf', args:
-// [0.5], precision: 200` — and I want the answer as a value-protocol Value
-// I can hash, cache, and feed into another tool. I want bit-determinism
-// across runtimes (`arbprec: true`, ADR-0020) at high precision, and
-// `numerical: true`-grade float64 at low precision (ADR-0015). I want
-// honest refusal — `tagged "special-eval/no-known-representation"` for
-// `InverseErf` on the complex axis, because no canonical computational
-// form exists. I don't want to learn 6 tools, one per head."
+// [0.5], precision: 200` (or `head: 'BesselJ', args: [3, 1.5], precision:
+// 200`) — and I want the answer as a value-protocol Value I can hash,
+// cache, and feed into another tool.  I want bit-determinism across
+// runtimes (`arbprec: true`, ADR-0020) at high precision, and `numerical:
+// true`-grade float64 at low precision (ADR-0015).  I want honest refusal
+// — `tagged "special-eval/no-known-representation"` for `InverseErf` on
+// the complex axis, because no canonical computational form exists.  I
+// don't want to learn 12 tools, one per head."
 //
-// Per-head dispatch table (v0.1)
-// ------------------------------
+// Per-head dispatch table (v0.2 — Erf + Bessel)
+// ---------------------------------------------
 //
-//   head           real (float64 / arb-prec)              complex (float64 / arb-prec)
-//   --------------+---------------------------------------+-----------------------------------
-//   Erf            erfFloat64        / bigErf              erfComplexFloat64        / bigCErf
-//   Erfc           erfcFloat64       / bigErfc             erfcComplexFloat64       / bigCErfc
-//   Erfcx          erfcxFloat64      / bigErfcx            erfcxComplexFloat64      / bigCErfcx
-//   Erfi           erfiFloat64       / via bigCErfi        erfiComplexFloat64       / bigCErfi
-//   InverseErf     erfInvFloat64     / —  (no-known-repr)  —  (no-known-repr)        / —
-//   InverseErfc    erfcInvFloat64    / —  (no-known-repr)  —  (no-known-repr)        / —
+//   head           real (float64 / arb-prec)               complex (float64 / arb-prec)
+//   --------------+----------------------------------------+-----------------------------------
+//   Erf            erfFloat64         / bigErf              erfComplexFloat64        / bigCErf
+//   Erfc           erfcFloat64        / bigErfc             erfcComplexFloat64       / bigCErfc
+//   Erfcx          erfcxFloat64       / bigErfcx            erfcxComplexFloat64      / bigCErfcx
+//   Erfi           erfiFloat64        / via bigCErfi        erfiComplexFloat64       / bigCErfi
+//   InverseErf     erfInvFloat64      / —  (no-known-repr)  —  (no-known-repr)        / —
+//   InverseErfc    erfcInvFloat64     / —  (no-known-repr)  —  (no-known-repr)        / —
+//   BesselJ        besselJFloat64     / bigBesselJ          besselJComplexFloat64    / bigCBesselJ
+//   BesselY        besselYFloat64     / bigBesselY          besselYComplexFloat64    / bigCBesselY
+//   BesselI        besselIFloat64     / bigBesselI          besselIComplexFloat64    / bigCBesselI
+//   BesselK        besselKFloat64     / bigBesselK          besselKComplexFloat64    / bigCBesselK
+//   BesselIScaled  besselIScaledFloat64 / bigBesselIScaled  via bigCBesselIScaled    / bigCBesselIScaled
+//   BesselKScaled  besselKScaledFloat64 / bigBesselKScaled  via bigCBesselKScaled    / bigCBesselKScaled
 //
-// Two known v0.1 gaps surfaced honestly in the table above:
+// The Bessel heads are arity-2 (`args: [nu, z]` real; complex shape places
+// `nu` in `args.re[0]` with `args.im[0] = 0` and `z` in `args.{re,im}[1]`).
+// The arity check in the dispatcher refuses any args-list of length ≠ head-
+// declared arity with `tagged "special-eval/degenerate-shape"`.  ν is real
+// throughout v0.2 (the substrate's complex layer accepts complex ν but the
+// wire only surfaces real-ν; integer / half-integer / general-real ν all
+// flow through the same dispatch); a future ADR can lift this if a use
+// case for complex ν arrives.
+//
+// Known v0.2 gaps surfaced honestly in the table above:
 //
 //   * `bigErfi(BigFloat, prec)` does not exist as a separate real entry
 //     point — but per the Karbach identity table (R2 §"Pick"), real-axis
@@ -54,6 +71,27 @@
 //     float64 path remains available (`--precision = 53`). Complex
 //     InverseErf / InverseErfc refuse always per R3 §3 — multi-valued
 //     Riemann surface; no canonical computational form.
+//
+//   * For Bessel, the complex float64 path for `BesselIScaled` and
+//     `BesselKScaled` is not in the v0.2 quadrature dispatcher (R3 §0.4
+//     ships scaled variants on the real axis only — AMOS TOMS 644's
+//     `zbesi` / `zbesk` carry an internal scaling parameter but the wire
+//     entries `besselIComplexFloat64` / `besselKComplexFloat64` expose
+//     the unscaled call shape only).  At `--precision ≤ 15` the complex
+//     scaled call refuses with `tagged "special-eval/no-known-
+//     representation"`; the arb-prec path (`bigCBesselIScaled` /
+//     `bigCBesselKScaled`) at `--precision > 15` is fully available.
+//
+// Bessel-specific honesty (ADR-0041 §"Decision 3" + §"Decision 13"):
+//
+//   * `K_ν(0)` is singular (`K_0(0+) = +∞ logarithmic`); the substrate
+//     throws `RangeError`, which we map to a `non-finite-input` refusal
+//     on the wire (the input is finite but the output isn't).  Same for
+//     negative-non-integer-ν `I_ν(0) = unbounded`.
+//   * `BesselIScaled(ν, z) = e^{-|z|}·I_ν(z)` and `BesselKScaled(ν, z) =
+//     e^{z}·K_ν(z)`.  Use these when `|z| > ~700` to avoid the float64
+//     overflow / underflow cliff (the unscaled real I/K at `|z| > 700`
+//     overflow / underflow to ±Inf / 0).
 //
 // Per-output tier dispatch (ADR-0040 §"Decision 9")
 // -------------------------------------------------
@@ -103,19 +141,35 @@
 //
 // References
 // ----------
-// ADR-0040 (per-head substrate), ADR-0020 (arb-prec tier), ADR-0015
-// (numerical tier), ADR-0011 (typed flags), CLAUDE.md (every rule).
+// ADR-0040 (per-head substrate — Erf prototype), **ADR-0041 (per-head
+// substrate — Bessel; §"Decision 7" is the wire surface this tool
+// implements for the Bessel family)**, ADR-0020 (arb-prec tier), ADR-
+// 0015 (numerical tier), ADR-0011 (typed flags), CLAUDE.md (every rule).
 // The substrate this tool wraps lives in:
 //
-//   * Real arb-prec:  @workbench/bigfloat::{bigErf, bigErfc, bigErfcx}
-//   * Complex arb-prec: @workbench/bigfloat::{bigCErf, bigCErfc,
-//                       bigCErfcx, bigCErfi}
-//   * Real float64:   @workbench/quadrature::{erfFloat64, erfcFloat64,
-//                       erfcxFloat64, erfiFloat64, erfInvFloat64,
-//                       erfcInvFloat64}
-//   * Complex float64: @workbench/quadrature::{erfComplexFloat64,
-//                       erfcComplexFloat64, erfcxComplexFloat64,
-//                       erfiComplexFloat64}
+//   * Real arb-prec (Erf):    @workbench/bigfloat::{bigErf, bigErfc,
+//                             bigErfcx}
+//   * Complex arb-prec (Erf): @workbench/bigfloat::{bigCErf, bigCErfc,
+//                             bigCErfcx, bigCErfi}
+//   * Real float64 (Erf):     @workbench/quadrature::{erfFloat64,
+//                             erfcFloat64, erfcxFloat64, erfiFloat64,
+//                             erfInvFloat64, erfcInvFloat64}
+//   * Complex float64 (Erf):  @workbench/quadrature::{erfComplexFloat64,
+//                             erfcComplexFloat64, erfcxComplexFloat64,
+//                             erfiComplexFloat64}
+//   * Real arb-prec (Bessel): @workbench/bigfloat::{bigBesselJ,
+//                             bigBesselY, bigBesselI, bigBesselK,
+//                             bigBesselIScaled, bigBesselKScaled}
+//   * Complex arb-prec (Bessel): @workbench/bigfloat::{bigCBesselJ,
+//                             bigCBesselY, bigCBesselI, bigCBesselK,
+//                             bigCBesselIScaled, bigCBesselKScaled}
+//   * Real float64 (Bessel):  @workbench/quadrature::{besselJFloat64,
+//                             besselYFloat64, besselIFloat64,
+//                             besselKFloat64, besselIScaledFloat64,
+//                             besselKScaledFloat64}
+//   * Complex float64 (Bessel): @workbench/quadrature::{besselJComplexFloat64,
+//                             besselYComplexFloat64, besselIComplexFloat64,
+//                             besselKComplexFloat64}
 
 import {
   float64FromNumber,
@@ -142,9 +196,21 @@ import {
   bigCErfc,
   bigCErfcx,
   bigCErfi,
+  bigCBesselI,
+  bigCBesselIScaled,
+  bigCBesselJ,
+  bigCBesselK,
+  bigCBesselKScaled,
+  bigCBesselY,
   bigErf,
   bigErfc,
   bigErfcx,
+  bigBesselI,
+  bigBesselIScaled,
+  bigBesselJ,
+  bigBesselK,
+  bigBesselKScaled,
+  bigBesselY,
   bigcomplexSchema,
   bigcomplexToValue,
   bigfloatSchema,
@@ -159,6 +225,16 @@ import {
   toString as bfToString,
 } from "@workbench/bigfloat";
 import {
+  besselIComplexFloat64,
+  besselIFloat64,
+  besselIScaledFloat64,
+  besselJComplexFloat64,
+  besselJFloat64,
+  besselKComplexFloat64,
+  besselKFloat64,
+  besselKScaledFloat64,
+  besselYComplexFloat64,
+  besselYFloat64,
   erfcComplexFloat64,
   erfcFloat64,
   erfcInvFloat64,
@@ -183,12 +259,20 @@ const VERSION = "0.1.0";
 // per-head substrate landing per ADR-0040's substrate pattern.
 
 const ADMITTED_HEADS = [
+  // Erf family (ADR-0040 §"Decision 7"; T2 worklog 139).
   "Erf",
   "Erfc",
   "Erfcx",
   "Erfi",
   "InverseErf",
   "InverseErfc",
+  // Bessel family (ADR-0041 §"Decision 7"; T2 worklog 163).
+  "BesselJ",
+  "BesselY",
+  "BesselI",
+  "BesselK",
+  "BesselIScaled",
+  "BesselKScaled",
 ] as const;
 
 type AdmittedHead = (typeof ADMITTED_HEADS)[number];
@@ -197,8 +281,28 @@ function isAdmittedHead(h: string): h is AdmittedHead {
   return (ADMITTED_HEADS as readonly string[]).includes(h);
 }
 
-// Heads for which we have NO arb-prec implementation in v0.1, and
-// for which complex evaluation is mathematically refused.
+// Per-head arity declaration.  Erf-family heads are arity-1 (single
+// argument `z`); Bessel-family heads are arity-2 (`(ν, z)`).  The
+// dispatcher's arity check refuses any `args` list whose length
+// disagrees with this table, with `tagged "special-eval/degenerate-
+// shape"`.
+const HEAD_ARITY: Record<AdmittedHead, 1 | 2> = {
+  Erf: 1,
+  Erfc: 1,
+  Erfcx: 1,
+  Erfi: 1,
+  InverseErf: 1,
+  InverseErfc: 1,
+  BesselJ: 2,
+  BesselY: 2,
+  BesselI: 2,
+  BesselK: 2,
+  BesselIScaled: 2,
+  BesselKScaled: 2,
+};
+
+// Heads for which we have NO arb-prec real implementation in v0.2 (and
+// for which complex evaluation is mathematically refused).
 //
 // Per R3 §3: InverseErf / InverseErfc on the complex axis have no
 // canonical computational form (multi-valued Riemann surface; SciPy /
@@ -215,6 +319,19 @@ const NO_COMPLEX_AT_ALL: ReadonlySet<AdmittedHead> = new Set([
   "InverseErfc",
 ]);
 
+// Heads for which the v0.2 quadrature substrate ships no complex-
+// float64 implementation.  R3 §0.4: AMOS TOMS 644 carries an internal
+// scaling parameter but the wire entries `besselIComplexFloat64` /
+// `besselKComplexFloat64` only expose the unscaled call shape; the
+// arb-prec complex scaled variants (`bigCBesselIScaled` /
+// `bigCBesselKScaled`) ship and route normally on the `--precision > 15`
+// lane.  At `--precision ≤ 15` we refuse with no-known-representation
+// rather than silently fall through to the unscaled call.
+const NO_FLOAT64_COMPLEX: ReadonlySet<AdmittedHead> = new Set([
+  "BesselIScaled",
+  "BesselKScaled",
+]);
+
 // Float64-tier method tags. Informational, written into the output
 // `method` field so an agent's planner can audit which algorithm
 // produced the value (R3's lineage; load-bearing for provenance audit).
@@ -229,6 +346,12 @@ const FLOAT64_METHOD: Record<AdmittedHead, string> = {
   Erfi: "erf-sunpro-1993",
   InverseErf: "erf-blair-1976-inverse",
   InverseErfc: "erf-blair-1976-inverse",
+  BesselJ: "bessel-musl-sunpro-1993",
+  BesselY: "bessel-musl-sunpro-1993",
+  BesselI: "bessel-cephes-moshier-2000",
+  BesselK: "bessel-cephes-moshier-2000",
+  BesselIScaled: "bessel-cephes-moshier-2000-scaled",
+  BesselKScaled: "bessel-cephes-moshier-2000-scaled",
 };
 
 const FLOAT64_COMPLEX_METHOD: Record<AdmittedHead, string> = {
@@ -238,6 +361,12 @@ const FLOAT64_COMPLEX_METHOD: Record<AdmittedHead, string> = {
   Erfi: "erf-faddeeva-johnson",
   InverseErf: "—",
   InverseErfc: "—",
+  BesselJ: "bessel-amos-toms644",
+  BesselY: "bessel-amos-toms644",
+  BesselI: "bessel-amos-toms644",
+  BesselK: "bessel-amos-toms644",
+  BesselIScaled: "—",
+  BesselKScaled: "—",
 };
 
 const ARBPREC_METHOD_REAL: Record<AdmittedHead, string> = {
@@ -247,6 +376,16 @@ const ARBPREC_METHOD_REAL: Record<AdmittedHead, string> = {
   Erfi: "erf-karbach-weideman",
   InverseErf: "—",
   InverseErfc: "—",
+  // Bessel arb-prec real: FLINT-pattern cancellation-retry ₀F₁ Maclaurin
+  // for |z| < min(8, 2|z|/p); Hankel asymptotic for |z| > p/2;
+  // cancellation-driven precision retry in between.  R2 §3 + ADR-0041
+  // §"Decision 3".
+  BesselJ: "bessel-flint-0f1-or-hankel",
+  BesselY: "bessel-flint-0f1-or-hankel",
+  BesselI: "bessel-flint-0f1-or-hankel",
+  BesselK: "bessel-flint-temme-or-connection",
+  BesselIScaled: "bessel-flint-0f1-or-hankel-scaled",
+  BesselKScaled: "bessel-flint-temme-or-connection-scaled",
 };
 
 const ARBPREC_METHOD_COMPLEX: Record<AdmittedHead, string> = {
@@ -256,6 +395,16 @@ const ARBPREC_METHOD_COMPLEX: Record<AdmittedHead, string> = {
   Erfi: "erf-karbach-weideman",
   InverseErf: "—",
   InverseErfc: "—",
+  // Complex Bessel arb-prec: AMOS-style rotation per R2 §3.3 +
+  // ADR-0041 §"Decision 11".  Modified I/K computed first via direct
+  // series + Hankel asymptotic; J/Y derived algebraically via
+  // J_ν(z) = exp(±νπi/2) · I_ν(∓iz).
+  BesselJ: "bessel-amos-rotation-arbprec",
+  BesselY: "bessel-amos-rotation-arbprec",
+  BesselI: "bessel-flint-0f1-or-hankel-complex",
+  BesselK: "bessel-flint-temme-or-connection-complex",
+  BesselIScaled: "bessel-flint-0f1-or-hankel-scaled-complex",
+  BesselKScaled: "bessel-flint-temme-or-connection-scaled-complex",
 };
 
 // -----------------------------------------------------------------------------
@@ -490,9 +639,10 @@ function formatNonFinite(v: number): string {
 // -----------------------------------------------------------------------------
 
 /**
- * Dispatch a real-axis call. Caller has validated arity (one arg) and
- * finiteness. Returns the encoded success record OR a tagged refusal
- * (no-known-representation when arb-prec is requested for an inverse).
+ * Dispatch a real-axis call for arity-1 heads (Erf family).  Caller has
+ * validated arity (one arg) and finiteness.  Returns the encoded success
+ * record OR a tagged refusal (no-known-representation when arb-prec is
+ * requested for an inverse).
  */
 function dispatchReal(
   head: AdmittedHead,
@@ -598,6 +748,14 @@ function dispatchReal(
     case "InverseErfc":
       // Unreachable — handled by NO_ARBPREC_REAL gate above.
       return noKnownRepresentation(head, "real", "unreachable inverse gate");
+    case "BesselJ":
+    case "BesselY":
+    case "BesselI":
+    case "BesselK":
+    case "BesselIScaled":
+    case "BesselKScaled":
+      // Unreachable — Bessel heads go through dispatchRealBessel (arity 2).
+      throw new ToolError(`${NAME}: internal — Bessel head ${head} routed through arity-1 dispatchReal`);
   }
   return realSuccess(result, method, precBits, []);
 }
@@ -672,8 +830,271 @@ function dispatchComplex(
     case "InverseErfc":
       // Unreachable — handled by NO_COMPLEX_AT_ALL gate above.
       return noKnownRepresentation(head, "complex", "unreachable inverse gate");
+    case "BesselJ":
+    case "BesselY":
+    case "BesselI":
+    case "BesselK":
+    case "BesselIScaled":
+    case "BesselKScaled":
+      // Unreachable — Bessel heads go through dispatchRealBessel /
+      // dispatchComplexBessel (arity-2).  The exhaustiveness check keeps
+      // this branch present so the TypeScript narrowing stays honest.
+      throw new ToolError(`${NAME}: internal — Bessel head ${head} routed through arity-1 dispatchComplex`);
   }
   return complexSuccess(result, method, precBits, []);
+}
+
+// -----------------------------------------------------------------------------
+// Core dispatch — Bessel (arity-2: ν + z)
+// -----------------------------------------------------------------------------
+//
+// The Bessel family is the first 2-argument special-function head in the
+// vocabulary (Erf was uniformly 1-arg).  ADR-0041 §"Decision 7" pins the
+// wire shape; the dispatch matrix mirrors `dispatchReal` / `dispatchComplex`
+// above but threads ν as a separate parameter.
+//
+// ν is real throughout v0.2.  Integer ν, half-integer ν, and general-
+// real ν all flow through the same dispatch entry — the substrate is
+// internally ν-aware (FLINT-pattern integer fast paths in `bigBesselY` /
+// `bigBesselK`, scaled variants for the float64 overflow boundary).
+
+/**
+ * Real-axis Bessel dispatch.  Caller has validated arity (`args.length
+ * === 2`) and finiteness of both `nu` and `z`.  Routes float64 vs arb-
+ * prec by the same `--precision <= 15` boundary as the Erf dispatcher.
+ *
+ * Negative-non-integer ν `I_ν(0) = unbounded`, `K_ν(0) = +∞`, and
+ * `Y_ν(0) = -∞` are substrate-thrown `RangeError`s; we catch and convert
+ * to `non-finite-input` refusals (the input is finite but the closed-
+ * form output isn't — semantically the same boundary).
+ */
+function dispatchRealBessel(
+  head: AdmittedHead,
+  nu: number,
+  z: number,
+  precisionDecimal: number,
+): Value {
+  const useFloat64 = precisionDecimal <= 15;
+
+  if (useFloat64) {
+    // Float64 lane.  Verbatim R3 ports — musl SunPro J/Y for integer ν,
+    // Cephes Moshier I/K for order 0/1, AMOS for the rest.  Scaled
+    // variants avoid the `|z| > 700` overflow cliff.
+    const fn: (nu: number, z: number) => number =
+      head === "BesselJ" ? besselJFloat64
+      : head === "BesselY" ? besselYFloat64
+      : head === "BesselI" ? besselIFloat64
+      : head === "BesselK" ? besselKFloat64
+      : head === "BesselIScaled" ? besselIScaledFloat64
+      : besselKScaledFloat64; // BesselKScaled
+    let y: number;
+    try {
+      y = fn(nu, z);
+    } catch (e) {
+      // Substrate throws on singular inputs (K_ν(0), I_ν(0) for
+      // negative non-integer ν).  Convert to a no-known-representation
+      // refusal — the input is well-formed but the value is unbounded.
+      return noKnownRepresentation(
+        head,
+        "real",
+        `${head}(${nu}, ${z}) is mathematically unbounded or singular: ${(e as Error).message}`,
+      );
+    }
+    const method = FLOAT64_METHOD[head];
+    const warnings: string[] = [];
+    if (!Number.isFinite(y)) {
+      // Saturation at the float64 boundary — most commonly `besselI(0,
+      // 700)` overflowing to +Inf, or `besselK(0, 1e6)` underflowing to
+      // 0 (technically not non-finite for underflow, but +Inf is).  We
+      // emit a max-magnitude finite BigFloat with a warning, mirroring
+      // the Erf saturation pattern; an agent reading the warnings list
+      // knows to retry with the Scaled variant or with a higher precision.
+      warnings.push(
+        `float64-saturation: ${head}(${nu}, ${z}) = ${formatNonFinite(y)}; saturated at float64 boundary (try the Scaled variant or --precision > 15)`,
+      );
+      const sat = y > 0 ? Number.MAX_VALUE : -Number.MAX_VALUE;
+      return realSuccess(float64ToBigFloat(sat), method, 53, warnings);
+    }
+    return realSuccess(float64ToBigFloat(y), method, 53, warnings);
+  }
+
+  // Arb-prec lane (real Bessel).  Substrates live in
+  // `packages/bigfloat/src/special-funcs/bessel{j,y,i,k}.ts`.
+  const precBits = decimalToBinaryPrecision(precisionDecimal);
+  const nuBig = fromFloat64(nu);
+  const zBig = fromFloat64(z);
+  const method = ARBPREC_METHOD_REAL[head];
+
+  let result: BigFloat;
+  try {
+    switch (head) {
+      case "BesselJ":
+        result = bigBesselJ(nuBig, zBig, precBits);
+        break;
+      case "BesselY":
+        result = bigBesselY(nuBig, zBig, precBits);
+        break;
+      case "BesselI":
+        result = bigBesselI(nuBig, zBig, precBits);
+        break;
+      case "BesselK":
+        result = bigBesselK(nuBig, zBig, precBits);
+        break;
+      case "BesselIScaled":
+        result = bigBesselIScaled(nuBig, zBig, precBits);
+        break;
+      case "BesselKScaled":
+        result = bigBesselKScaled(nuBig, zBig, precBits);
+        break;
+      default:
+        // Unreachable for Bessel; the Erf-family heads route through
+        // dispatchReal.  Exhaustiveness guard.
+        throw new ToolError(`${NAME}: internal — Erf head ${head} routed through dispatchRealBessel`);
+    }
+  } catch (e) {
+    return noKnownRepresentation(
+      head,
+      "real",
+      `${head}(${nu}, ${z}) at precision ${precisionDecimal}: ${(e as Error).message}`,
+    );
+  }
+  return realSuccess(result, method, precBits, []);
+}
+
+/**
+ * Complex-axis Bessel dispatch.  Caller has validated arity (`re.length
+ * === im.length === 2`) and finiteness of all 4 scalars.  The wire
+ * shape places ν (real) at index 0 and z = re[1] + i·im[1] at index 1;
+ * we accept ν with non-zero imaginary part *if the caller supplies it*
+ * (the substrate's complex layer admits complex ν), but in practice the
+ * golden / test corpus exercises real ν only.
+ *
+ * BesselIScaled / BesselKScaled on the complex float64 lane refuse with
+ * `no-known-representation` per R3 §0.4 — AMOS exposes only the
+ * unscaled call; the arb-prec complex scaled variants ship and route.
+ */
+function dispatchComplexBessel(
+  head: AdmittedHead,
+  nuRe: number,
+  nuIm: number,
+  zRe: number,
+  zIm: number,
+  precisionDecimal: number,
+): Value {
+  const useFloat64 = precisionDecimal <= 15;
+
+  if (useFloat64) {
+    if (NO_FLOAT64_COMPLEX.has(head)) {
+      return noKnownRepresentation(
+        head,
+        "complex",
+        `${head} complex float64 not in v0.2 (AMOS TOMS 644 exposes scaled variants on the real axis only; use --precision > 15 for the arb-prec complex scaled lane)`,
+      );
+    }
+    if (nuIm !== 0) {
+      // Float64 complex Bessel: AMOS ZBESJ/Y/I/K wraps ν as a real
+      // parameter (`fnu` in the Fortran).  A complex-ν call is not part
+      // of the v0.2 float64 surface; refuse honestly rather than silently
+      // drop the imaginary part.
+      return noKnownRepresentation(
+        head,
+        "complex",
+        `${head} float64 complex lane accepts real ν only (got ν.im=${nuIm}); use --precision > 15 for the arb-prec complex-ν lane`,
+      );
+    }
+    const fn: (nu: number, re: number, im: number) => { re: number; im: number } =
+      head === "BesselJ" ? besselJComplexFloat64
+      : head === "BesselY" ? besselYComplexFloat64
+      : head === "BesselI" ? besselIComplexFloat64
+      : besselKComplexFloat64; // BesselK
+    let result: { re: number; im: number };
+    try {
+      result = fn(nuRe, zRe, zIm);
+    } catch (e) {
+      return noKnownRepresentation(
+        head,
+        "complex",
+        `${head}(${nuRe}, ${zRe}+${zIm}i): ${(e as Error).message}`,
+      );
+    }
+    const { re: yRe, im: yIm } = result;
+    const method = FLOAT64_COMPLEX_METHOD[head];
+    const warnings: string[] = [];
+    if (!Number.isFinite(yRe) || !Number.isFinite(yIm)) {
+      warnings.push(
+        `float64-saturation: ${head}(${nuRe}, ${zRe}+${zIm}i) = (${formatNonFinite(yRe)} + ${formatNonFinite(yIm)}i); saturated`,
+      );
+      const satRe = Number.isFinite(yRe) ? yRe : (yRe > 0 ? Number.MAX_VALUE : -Number.MAX_VALUE);
+      const satIm = Number.isFinite(yIm) ? yIm : (yIm > 0 ? Number.MAX_VALUE : -Number.MAX_VALUE);
+      return complexSuccess(float64ToBigComplex(satRe, satIm), method, 53, warnings);
+    }
+    return complexSuccess(float64ToBigComplex(yRe, yIm), method, 53, warnings);
+  }
+
+  // Arb-prec complex Bessel.  AMOS-style rotation (ADR-0041 §"Decision
+  // 11"): the substrate's complex layer computes modified I/K directly
+  // and derives J/Y algebraically via `J_ν(z) = exp(±νπi/2)·I_ν(∓iz)`.
+  const precBits = decimalToBinaryPrecision(precisionDecimal);
+  // ν: build as a BigComplex (the substrate signature is uniform).
+  // nuIm is typically 0; we accept caller-supplied non-zero ν.im
+  // verbatim since the substrate's complex layer admits it.
+  const nuBig: BigComplex = {
+    re: fromFloat64(nuRe),
+    im: fromFloat64(nuIm),
+  };
+  const z: BigComplex = {
+    re: fromFloat64(zRe),
+    im: fromFloat64(zIm),
+  };
+  const method = ARBPREC_METHOD_COMPLEX[head];
+
+  let result: BigComplex;
+  try {
+    switch (head) {
+      case "BesselJ":
+        result = bigCBesselJ(nuBig, z, precBits);
+        break;
+      case "BesselY":
+        result = bigCBesselY(nuBig, z, precBits);
+        break;
+      case "BesselI":
+        result = bigCBesselI(nuBig, z, precBits);
+        break;
+      case "BesselK":
+        result = bigCBesselK(nuBig, z, precBits);
+        break;
+      case "BesselIScaled":
+        result = bigCBesselIScaled(nuBig, z, precBits);
+        break;
+      case "BesselKScaled":
+        result = bigCBesselKScaled(nuBig, z, precBits);
+        break;
+      default:
+        throw new ToolError(`${NAME}: internal — Erf head ${head} routed through dispatchComplexBessel`);
+    }
+  } catch (e) {
+    return noKnownRepresentation(
+      head,
+      "complex",
+      `${head}(ν=${nuRe}+${nuIm}i, z=${zRe}+${zIm}i) at precision ${precisionDecimal}: ${(e as Error).message}`,
+    );
+  }
+  return complexSuccess(result, method, precBits, []);
+}
+
+// -----------------------------------------------------------------------------
+// Per-head family classification
+// -----------------------------------------------------------------------------
+
+function isBesselHead(h: AdmittedHead): boolean {
+  return (
+    h === "BesselJ" ||
+    h === "BesselY" ||
+    h === "BesselI" ||
+    h === "BesselK" ||
+    h === "BesselIScaled" ||
+    h === "BesselKScaled"
+  );
 }
 
 // -----------------------------------------------------------------------------
@@ -713,12 +1134,36 @@ export const def = defineTool({
       flags: { precision: "50" },
     },
     {
-      description: "unknown head → tagged refusal",
+      description: "BesselJ(3, 1.5) at precision 50 (arb-prec; FLINT ₀F₁ Maclaurin)",
       input: record({
         head: str("BesselJ"),
+        args: list([float64FromNumber(3), float64FromNumber(1.5)]),
+      }),
+      flags: { precision: "50" },
+    },
+    {
+      description: "BesselK(0, 10) at precision 100 (arb-prec deep series)",
+      input: record({
+        head: str("BesselK"),
+        args: list([float64FromNumber(0), float64FromNumber(10)]),
+      }),
+      flags: { precision: "100" },
+    },
+    {
+      description: "BesselIScaled(0, 700) at precision 10 (float64; unscaled would overflow)",
+      input: record({
+        head: str("BesselIScaled"),
+        args: list([float64FromNumber(0), float64FromNumber(700)]),
+      }),
+      flags: { precision: "10" },
+    },
+    {
+      description: "unknown head → tagged refusal",
+      input: record({
+        head: str("WhittakerM"),
         args: list([float64FromNumber(0)]),
       }),
-      output: unknownHead("BesselJ"),
+      output: unknownHead("WhittakerM"),
     },
     {
       description: "complex InverseErf → no-known-representation",
@@ -782,13 +1227,25 @@ export const def = defineTool({
     {
       name: "unknown-head-tagged",
       statement:
-        "head not in {Erf, Erfc, Erfcx, Erfi, InverseErf, InverseErfc} → tagged 'special-eval/unknown-head' with the admitted list — never a silent fallthrough.",
+        "head not in {Erf, Erfc, Erfcx, Erfi, InverseErf, InverseErfc, BesselJ, BesselY, BesselI, BesselK, BesselIScaled, BesselKScaled} → tagged 'special-eval/unknown-head' with the admitted list — never a silent fallthrough.",
       machine_checkable: true,
     },
     {
       name: "degenerate-shape-tagged",
       statement:
-        "complex args with mismatched re/im list lengths → tagged 'special-eval/degenerate-shape' — never a silent zero-fill.",
+        "complex args with mismatched re/im list lengths → tagged 'special-eval/degenerate-shape'; args of wrong arity for the head (Erf=1, Bessel=2) → 'special-eval/degenerate-shape' — never a silent zero-fill.",
+      machine_checkable: true,
+    },
+    {
+      name: "bessel-integer-nu-parity",
+      statement:
+        "bigBesselJ(-n, z, prec) == (-1)^n · bigBesselJ(n, z, prec) byte-identically for n ∈ ℤ, real z > 0 (DLMF §10.4.1). Routed through dispatchRealBessel at arb-prec.",
+      machine_checkable: true,
+    },
+    {
+      name: "bessel-scaled-vs-unscaled-identity",
+      statement:
+        "bigBesselIScaled(ν, z, prec) · exp(|z|) ≈ bigBesselI(ν, z, prec) for moderate z (substrate identity from R3 §0.4; not byte-identical due to internal precision margins).",
       machine_checkable: true,
     },
   ],
@@ -820,18 +1277,31 @@ export const def = defineTool({
     }
 
     // Dispatch on the args' wire shape: list = real axis; record = complex.
+    // The HEAD_ARITY table (Erf=1, Bessel=2) is the arity gate; the
+    // per-family dispatcher (`dispatchReal{Bessel?}` / `dispatchComplex
+    // {Bessel?}`) splits on family because the substrate signatures and
+    // refusal envelopes differ.
+    const arity = HEAD_ARITY[head];
+    const bessel = isBesselHead(head);
+
     if (argsField.kind === "list") {
       const xs = readRealArgs(argsField as ListValue);
-      if (xs.length !== 1) {
+      if (xs.length !== arity) {
         return degenerateShape(
-          `head '${head}' requires arity 1; got args list of length ${xs.length}`,
+          `head '${head}' requires arity ${arity}; got args list of length ${xs.length}`,
         );
       }
-      const x = xs[0]!;
-      if (!Number.isFinite(x)) {
-        return nonFinite("args[0]", x);
+      for (let i = 0; i < xs.length; i++) {
+        if (!Number.isFinite(xs[i]!)) {
+          return nonFinite(`args[${i}]`, xs[i]!);
+        }
       }
-      return dispatchReal(head, x, precisionDecimal);
+      if (bessel) {
+        // Bessel: args = [ν, z]; route through dispatchRealBessel.
+        return dispatchRealBessel(head, xs[0]!, xs[1]!, precisionDecimal);
+      }
+      // Erf family: args = [z]; route through arity-1 dispatchReal.
+      return dispatchReal(head, xs[0]!, precisionDecimal);
     }
     if (argsField.kind === "record") {
       const { re, im } = readComplexArgs(argsField as RecordValue);
@@ -840,16 +1310,30 @@ export const def = defineTool({
           `complex args 're' and 'im' lists must have matching lengths; got re.length=${re.length}, im.length=${im.length}`,
         );
       }
-      if (re.length !== 1) {
+      if (re.length !== arity) {
         return degenerateShape(
-          `head '${head}' requires arity 1; got complex args of length ${re.length}`,
+          `head '${head}' requires arity ${arity}; got complex args of length ${re.length}`,
         );
       }
-      const rePart = re[0]!;
-      const imPart = im[0]!;
-      if (!Number.isFinite(rePart)) return nonFinite("args.re[0]", rePart);
-      if (!Number.isFinite(imPart)) return nonFinite("args.im[0]", imPart);
-      return dispatchComplex(head, rePart, imPart, precisionDecimal);
+      for (let i = 0; i < re.length; i++) {
+        if (!Number.isFinite(re[i]!)) return nonFinite(`args.re[${i}]`, re[i]!);
+        if (!Number.isFinite(im[i]!)) return nonFinite(`args.im[${i}]`, im[i]!);
+      }
+      if (bessel) {
+        // Bessel: complex args.re = [ν.re, z.re], args.im = [ν.im, z.im].
+        // ν is typically real (ν.im = 0); the substrate's complex layer
+        // admits complex ν, so we pass it through verbatim.
+        return dispatchComplexBessel(
+          head,
+          re[0]!,
+          im[0]!,
+          re[1]!,
+          im[1]!,
+          precisionDecimal,
+        );
+      }
+      // Erf family: arity-1, args = [z.re + i·z.im].
+      return dispatchComplex(head, re[0]!, im[0]!, precisionDecimal);
     }
     throw new ToolError(
       `${NAME}: args must be either a list<float64> (real) or record{re, im: list<float64>} (complex); got ${argsField.kind}`,
@@ -1052,6 +1536,135 @@ export const def = defineTool({
       }
     }
 
+    // ----- Bessel J_0 corpus spot-checks against Arb@55dp -----
+    //
+    // Reference values transcribed from bench/besselj-anchor/oracles/arb/
+    // results.json. Agreement to 30 dp is the bar (the Arb radius at
+    // these inputs is ~1e-60, so 30 dp is comfortable).
+    const besselJCases: Array<{ nu: number; z: number; expected: string }> = [
+      // T1-besselj-003 (z=0.5)
+      { nu: 0, z: 0.5, expected: "0.9384698072408129042284046735997126255689267970968215766" },
+      // T1-besselj-007 (z=8.0)
+      { nu: 0, z: 8.0, expected: "0.1716508071375539060908694078519720010684237099201356660" },
+    ];
+    for (const c of besselJCases) {
+      const r = dispatchRealBessel("BesselJ", c.nu, c.z, 50);
+      if (r.kind !== "record") {
+        errors.push(`BesselJ(${c.nu}, ${c.z}) @ p=50 expected success, got ${r.kind}`);
+        continue;
+      }
+      // Extract bigfloat from value, convert to decimal, compare leading digits.
+      const valField = (r as RecordValue).fields.value;
+      if (!valField || valField.kind !== "tagged") {
+        errors.push(`BesselJ(${c.nu}, ${c.z}): value field not a bigfloat tagged value`);
+        continue;
+      }
+      // Decode mantissa/exponent/precision and render to string.
+      const payload = (valField as { payload: RecordValue }).payload;
+      const mantStr = (payload.fields.mantissa as { value: string }).value;
+      const expStr = (payload.fields.exponent as { value: string }).value;
+      const precStr = (payload.fields.precision as { value: string }).value;
+      const bf: BigFloat = {
+        mantissa: BigInt(mantStr),
+        exponent: Number(expStr),
+        precision: Number(precStr),
+      };
+      const actualStr = stripDecimalToDigits(bfToString(bf, 40));
+      const expectedStr = stripDecimalToDigits(c.expected);
+      if (actualStr.slice(0, 30) !== expectedStr.slice(0, 30)) {
+        errors.push(
+          `BesselJ(${c.nu}, ${c.z}) @ p=50 disagrees with Arb corpus at 30 dp; got ${actualStr.slice(0, 35)}, expected ${expectedStr.slice(0, 35)}`,
+        );
+      }
+    }
+
+    // ----- Bessel integer-ν parity: J_{-n}(z) = (-1)^n · J_n(z) -----
+    //
+    // DLMF §10.4.1. We assert this at the wire level for a couple of
+    // (n, z) pairs to prove the dispatcher's integer-ν fast path
+    // preserves the substrate's identity-honouring discipline.
+    for (const [n, z] of [[1, 2.5], [2, 3.7], [3, 4.5]] as Array<[number, number]>) {
+      const sign = n % 2 === 0 ? 1 : -1;
+      const rPos = dispatchRealBessel("BesselJ", n, z, 50);
+      const rNeg = dispatchRealBessel("BesselJ", -n, z, 50);
+      if (rPos.kind !== "record" || rNeg.kind !== "record") {
+        errors.push(`BesselJ parity: dispatch failed for n=${n}, z=${z}`);
+        continue;
+      }
+      // Compare the bigfloat mantissas: J_{-n}.mantissa should equal
+      // sign · J_n.mantissa byte-for-byte at the same exponent/precision.
+      const pPos = ((rPos as RecordValue).fields.value as { payload: RecordValue }).payload;
+      const pNeg = ((rNeg as RecordValue).fields.value as { payload: RecordValue }).payload;
+      const mPos = BigInt((pPos.fields.mantissa as { value: string }).value);
+      const mNeg = BigInt((pNeg.fields.mantissa as { value: string }).value);
+      if (mNeg !== BigInt(sign) * mPos) {
+        errors.push(
+          `BesselJ parity: J_{-${n}}(${z}) (mantissa ${mNeg}) != (-1)^${n} · J_${n}(${z}) (mantissa ${sign === 1 ? mPos : -mPos})`,
+        );
+      }
+    }
+
+    // ----- Bessel scaled-vs-unscaled: I_ν(z) · exp(-|z|) ≈ IScaled(ν, z) -----
+    //
+    // R3 §0.4 identity. Not byte-identical (internal precision margins
+    // differ); we assert agreement at the float64 lane to 1 ULP × tens.
+    {
+      const nu = 0;
+      const z = 5.0;
+      const rI = dispatchRealBessel("BesselI", nu, z, 10);
+      const rIS = dispatchRealBessel("BesselIScaled", nu, z, 10);
+      if (rI.kind === "record" && rIS.kind === "record") {
+        // Decode both as float64 via the bigfloat encoding (53-bit lane).
+        const pI = ((rI as RecordValue).fields.value as { payload: RecordValue }).payload;
+        const pIS = ((rIS as RecordValue).fields.value as { payload: RecordValue }).payload;
+        const bfI: BigFloat = {
+          mantissa: BigInt((pI.fields.mantissa as { value: string }).value),
+          exponent: Number((pI.fields.exponent as { value: string }).value),
+          precision: Number((pI.fields.precision as { value: string }).value),
+        };
+        const bfIS: BigFloat = {
+          mantissa: BigInt((pIS.fields.mantissa as { value: string }).value),
+          exponent: Number((pIS.fields.exponent as { value: string }).value),
+          precision: Number((pIS.fields.precision as { value: string }).value),
+        };
+        const iVal = parseFloat(bfToString(bfI, 20));
+        const isVal = parseFloat(bfToString(bfIS, 20));
+        const expected = iVal * Math.exp(-Math.abs(z));
+        const rel = Math.abs(isVal - expected) / Math.abs(expected);
+        if (rel > 1e-12) {
+          errors.push(
+            `BesselIScaled identity: BesselI(${nu},${z})·exp(-${z}) = ${expected}, but BesselIScaled(${nu},${z}) = ${isVal} (relative diff ${rel.toExponential(3)})`,
+          );
+        }
+      } else {
+        errors.push(`BesselIScaled identity test: dispatch failed`);
+      }
+    }
+
+    // ----- Bessel refusal coverage: unknown-head, K_0(0) singular -----
+    {
+      // K_0(0) is +∞ (logarithmic singularity); substrate throws.
+      // Our wrapper converts to no-known-representation.
+      const r = dispatchRealBessel("BesselK", 0, 0, 50);
+      if (r.kind !== "tagged" || (r as { tag: string }).tag !== `${NAME}/no-known-representation`) {
+        errors.push(
+          `BesselK(0, 0) at precision 50 should refuse (K_0 is singular at 0); got ${r.kind}`,
+        );
+      }
+    }
+
+    // ----- Bessel complex arb-prec smoke test -----
+    //
+    // bigCBesselJ on a near-real input — we don't pin the value here
+    // (substrate tests do that); we just prove the path returns a
+    // successful record with a non-zero result.
+    {
+      const r = dispatchComplexBessel("BesselJ", 0, 0, 2.0, 0.5, 50);
+      if (r.kind !== "record") {
+        errors.push(`complex BesselJ smoke test failed: got ${r.kind}`);
+      }
+    }
+
     if (errors.length > 0) {
       throw new Error(
         `${NAME} --test failed (${errors.length} assertions):\n  ${errors.join("\n  ")}`,
@@ -1059,7 +1672,7 @@ export const def = defineTool({
     }
 
     process.stderr.write(
-      `${NAME} --test: ${erfCases.length} corpus cases + parity + erf+erfc + restriction-to-real + refusals + determinism — all green\n`,
+      `${NAME} --test: ${erfCases.length} corpus cases + parity + erf+erfc + restriction-to-real + refusals + determinism + ${besselJCases.length} Bessel corpus + Bessel parity + Bessel scaled identity + Bessel refusal + complex Bessel smoke — all green\n`,
     );
   },
 });

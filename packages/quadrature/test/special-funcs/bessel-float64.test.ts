@@ -261,6 +261,93 @@ describe("Algebraic identities", () => {
 });
 
 // -----------------------------------------------------------------------------
+// §3a. V1-cross-cutting regressions (worklog 165 — fixes for i3la + tke9)
+// -----------------------------------------------------------------------------
+//
+// These two bugs were discovered by the V1 cross-cutting test suite
+// (`tools/special-eval/bessel-cross-cutting.test.ts`, worklog 164):
+//
+//   - i3la: `besselYFloat64(ν, z)` returned the WRONG SIGN at odd-
+//     half-integer ν ∈ {1.5, 3.5, 5.5, …}. The Wronskian invariant
+//     (DLMF 10.5.2) caught it; arbprec parity confirmed the float64
+//     lane was the broken substrate. Root cause: the leading factor
+//     `(z/2)^ν / Γ(ν+1)` in `besselJ_series` / `besselI_series` was
+//     computed as `exp(ν·log(z/2) − logGamma(ν+1))`, which silently
+//     dropped the sign of Γ for ν+1 ∈ (−1, 0) (Γ negative). Fix:
+//     multiply by `gammaSign(ν+1)`.
+//
+//   - tke9: `besselIFloat64(−n, z)` for integer n ≥ 2 returned
+//     ±Infinity instead of the parity-equal `besselIFloat64(n, z)`.
+//     DLMF §10.27.1: `I_{−n}(z) = I_n(z)` for all integer n. Root
+//     cause: `besselI_real_general` special-cased ν ∈ {0, ±1} but fell
+//     through to the ascending series for ν ≤ −2, where Γ(ν+1) hits a
+//     pole. Fix: top-of-dispatcher reflection in `besselIFloat64`.
+//
+// Mutation-proving: removing `gammaSign(...)` from the series leading
+// factor immediately flips the sign of `Y_1.5(5)` (confirmed RED on
+// perturb). Removing the `nu < 0` reflection from `besselIFloat64`
+// restores the Infinity values for `I_{−n}(z)` (confirmed RED on
+// perturb).
+
+describe("V1 cross-cutting regressions (i3la, tke9)", () => {
+  // The general-ν Y path goes through the connection formula
+  //   Y_ν = (J_ν · cos(νπ) − J_{−ν}) / sin(νπ)
+  // which has a divisive-cancellation budget; agreement to ~1e-12 is
+  // the documented v0.1 ceiling. The bug under test was a SIGN flip
+  // (gross error, not last-ULP), so the right invariant to lock in is
+  // "matches Arb to ~12 dp", not "within 8 ULPs of the gold value".
+
+  test("i3la: besselYFloat64(1.5, 5.0) ≈ +0.32192444296114 (Arb gold, sign restored)", () => {
+    // Pre-fix: returned −0.32192… (wrong sign). Post-fix: +0.32192…
+    expect(besselYFloat64(1.5, 5.0)).toBeCloseTo(0.32192444296114014, 12);
+  });
+
+  test("i3la: besselYFloat64(3.5, 10.0) ≈ −0.24052386219566 (Arb gold, sign restored)", () => {
+    expect(besselYFloat64(3.5, 10.0)).toBeCloseTo(-0.24052386219566083, 12);
+  });
+
+  test("i3la: besselYFloat64(1.5, 2.0) ≈ −0.3956232813587 (Arb gold, sign restored)", () => {
+    expect(besselYFloat64(1.5, 2.0)).toBeCloseTo(-0.3956232813587035, 12);
+  });
+
+  test("i3la: besselJFloat64(−1.5, 5.0) ≈ +0.32192444296114 (root cause)", () => {
+    // The connection formula Y_ν = (J_ν·cos(νπ) − J_{−ν})/sin(νπ) at
+    // ν=1.5 reduces to Y_1.5 = J_{−1.5}; the underlying broken value
+    // was J_{−1.5}(5), which goes through `besselJ_series(-1.5, 5)`
+    // — that's where the missing `gammaSign(-0.5) = -1` lives.
+    expect(besselJFloat64(-1.5, 5.0)).toBeCloseTo(0.32192444296114014, 12);
+  });
+
+  test("i3la: even-half-integer ν stays correct (no regression)", () => {
+    // ν ∈ {0.5, 2.5, 4.5} were never affected by the sign bug; assert
+    // the gammaSign fix didn't break them. (Γ(1.5), Γ(3.5), Γ(5.5)
+    // are all positive — gammaSign returns +1, no behaviour change.)
+    expect(besselYFloat64(0.5, 5.0)).toBeCloseTo(-0.1012177091851084, 12);
+    expect(besselYFloat64(2.5, 5.0)).toBeCloseTo(0.29437237496179247, 12);
+  });
+
+  test("tke9: besselIFloat64(−2, 5) === besselIFloat64(2, 5) (parity)", () => {
+    // DLMF §10.27.1: I_{−n}(z) = I_n(z) for integer n.
+    // Pre-fix: returned +Infinity. Post-fix: byte-identical to positive ν.
+    expect(besselIFloat64(-2, 5)).toBe(besselIFloat64(2, 5));
+  });
+
+  test("tke9: besselIFloat64(−3, 5) === besselIFloat64(3, 5) (parity)", () => {
+    expect(besselIFloat64(-3, 5)).toBe(besselIFloat64(3, 5));
+  });
+
+  test("tke9: besselIFloat64(−5, 5) === besselIFloat64(5, 5) (parity)", () => {
+    expect(besselIFloat64(-5, 5)).toBe(besselIFloat64(5, 5));
+  });
+
+  test("tke9: besselIFloat64(−2, 5) is finite (~17.5056, not Infinity)", () => {
+    const v = besselIFloat64(-2, 5);
+    expect(Number.isFinite(v)).toBe(true);
+    expect(v).toBeCloseTo(17.505614966624236, 10);
+  });
+});
+
+// -----------------------------------------------------------------------------
 // §4. Dispatcher round-trip
 // -----------------------------------------------------------------------------
 

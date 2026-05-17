@@ -1209,11 +1209,58 @@ function gamma(z: number): number {
 }
 
 /**
+ * Sign of Γ(x) for non-integer real x.
+ *
+ * `logGamma` returns `log|Γ(z)|` (the standard convention — its
+ * reflection branch uses `|sin(π·z)|`), so any caller that wants the
+ * *signed* reciprocal `1/Γ(x)` must multiply by this sign.
+ *
+ * For x > 0: Γ(x) > 0 always — returns +1.
+ * For negative non-integer x: from the reflection identity
+ *   Γ(x) = π / (sin(π·x) · Γ(1 − x))
+ * with Γ(1 − x) > 0 (since 1 − x > 1), we have
+ *   sign(Γ(x)) = sign(sin(π·x))
+ * which alternates in unit intervals: Γ < 0 on (−1, 0), Γ > 0 on
+ * (−2, −1), Γ < 0 on (−3, −2), and so on.
+ *
+ * Integer x is a pole of Γ; this helper returns 0 in that case
+ * (callers in `besselJ_series` / `besselI_series` never feed integer
+ * ν+1 here — integer-ν inputs route to the SunPro/Cephes paths
+ * upstream in `besselJ_real_general` / `besselI_real_general`).
+ *
+ * **Why this helper exists (the i3la sign bug, V1 worklog 164 §F1):**
+ * The previous implementation computed `(z/2)^ν / Γ(ν+1)` as
+ * `exp(ν·log(z/2) − logGamma(ν+1))`, which silently dropped the sign
+ * of Γ for ν+1 < 0. That produced wrong-sign `J_{−1.5}`, `J_{−3.5}`,
+ * etc., and through the connection formula `Y_ν = (J_ν·cos(νπ) −
+ * J_{−ν}) / sin(νπ)`, wrong-sign `Y_{1.5}`, `Y_{3.5}`, etc. — caught
+ * by the V1 Wronskian invariant. The fix multiplies the series leading
+ * coefficient by `gammaSign(ν+1)` so the signed reciprocal `1/Γ(ν+1)`
+ * is honored.
+ */
+function gammaSign(x: number): number {
+  if (x > 0) return 1;
+  if (Number.isInteger(x)) return 0; // pole
+  // Negative non-integer: sign(Γ) alternates in unit intervals.
+  //   x ∈ (−1, 0) → ⌊x⌋ = −1 → Γ < 0
+  //   x ∈ (−2, −1) → ⌊x⌋ = −2 → Γ > 0
+  //   x ∈ (−3, −2) → ⌊x⌋ = −3 → Γ < 0
+  // In JS bitwise `& 1` on a negative integer treats it as two's-
+  // complement 32-bit (−1 & 1 === 1, −2 & 1 === 0, −3 & 1 === 1), so
+  // the bottom-bit parity is "1 ↔ odd ↔ Γ < 0" on negative ⌊x⌋.
+  return (Math.floor(x) & 1) === 1 ? -1 : 1;
+}
+
+/**
  * J_ν(z) for general real ν, real z ≥ 0 — DLMF 10.2.2 ascending series.
  * Returns the series sum; the caller decides when the series is
  * accurate (small enough z).
  *
  *   J_ν(z) = (z/2)^ν · Σ_{k=0}^∞ (−1)^k · (z/2)^{2k} / (k! · Γ(ν+k+1))
+ *
+ * The leading factor `(z/2)^ν / Γ(ν+1)` carries the sign of Γ(ν+1),
+ * which `logGamma` (= log|Γ|) loses. See `gammaSign` for the
+ * background on the i3la half-integer-ν sign bug.
  */
 function besselJ_series(nu: number, z: number): number {
   const halfZ = z / 2;
@@ -1225,7 +1272,7 @@ function besselJ_series(nu: number, z: number): number {
     if (nu > 0) return 0;
     return Number.POSITIVE_INFINITY; // J(neg-non-int, 0) blows up
   }
-  lead = Math.exp(nu * Math.log(halfZ) - logGamma(nu + 1));
+  lead = gammaSign(nu + 1) * Math.exp(nu * Math.log(halfZ) - logGamma(nu + 1));
   let sum = 1.0;
   let term = 1.0;
   for (let k = 1; k < 200; k++) {
@@ -1239,6 +1286,10 @@ function besselJ_series(nu: number, z: number): number {
 /**
  * I_ν(z) for general real ν, real z ≥ 0 — DLMF 10.25.2 ascending series.
  *   I_ν(z) = (z/2)^ν · Σ (z/2)^{2k} / (k! · Γ(ν+k+1))
+ *
+ * Same `gammaSign(ν+1)` correction as `besselJ_series` — the leading
+ * `1/Γ(ν+1)` factor must carry the sign of Γ, which the unsigned
+ * `log|Γ|` from `logGamma` drops.
  */
 function besselI_series(nu: number, z: number): number {
   if (z === 0) {
@@ -1248,7 +1299,7 @@ function besselI_series(nu: number, z: number): number {
   }
   const halfZ = z / 2;
   const halfZ2 = halfZ * halfZ;
-  const lead = Math.exp(nu * Math.log(halfZ) - logGamma(nu + 1));
+  const lead = gammaSign(nu + 1) * Math.exp(nu * Math.log(halfZ) - logGamma(nu + 1));
   let sum = 1.0;
   let term = 1.0;
   for (let k = 1; k < 200; k++) {
@@ -1557,8 +1608,24 @@ export function besselYFloat64(nu: number, z: number): number {
   return besselY_general(nu, z);
 }
 
-/** `I_ν(z)` for real ν and real z — float64 implementation. */
+/**
+ * `I_ν(z)` for real ν and real z — float64 implementation.
+ *
+ * **Negative integer ν (the tke9 parity fix, V1 worklog 164 §F2).**
+ * DLMF §10.27.1 specifies `I_{−n}(z) = I_n(z)` for all integer n (no
+ * sign flip — `I` is even in ν at integer order, unlike `J` which
+ * carries `(−1)^n`). The internal `besselI_real_general` happens to
+ * special-case ν ∈ {0, ±1} but falls through to the ascending series
+ * for `ν ≤ −2` integer, where the series `lead` formula `(z/2)^ν /
+ * Γ(ν+1)` hits Γ's poles at non-positive integers and returns
+ * ±Infinity. The cross-cutting V1 parity invariant caught this for
+ * `I_{−2}(5)`, `I_{−3}(5)`, `I_{−5}(5)` (all returned Infinity
+ * instead of the parity-equal positive integer-ν result). The fix is
+ * the dispatcher-level reflection here — symmetric, one-line, only
+ * fires for the previously-broken case.
+ */
 export function besselIFloat64(nu: number, z: number): number {
+  if (Number.isInteger(nu) && nu < 0) return besselI_real_general(-nu, z);
   return besselI_real_general(nu, z);
 }
 

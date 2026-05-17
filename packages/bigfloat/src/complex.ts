@@ -18,11 +18,87 @@
 // Complex `sin / cos / atan / pow` and the inverse hyperbolics are
 // straightforward (compose the above) and land in a future commit when
 // the MeijerG hot path forces them.
+//
+// Special-function complex extensions (per-head substrate, ADR-0040 / 0041)
+// ------------------------------------------------------------------------
+//
+// The bottom half of this module ships per-head complex-arb-prec
+// evaluators alongside the bootstrap surface:
+//
+//   Erf family (ADR-0040 I3):  bigW + bigCErf / bigCErfc / bigCErfcx / bigCErfi
+//   Bessel I/K (ADR-0041 I3a): bigCBesselI / bigCBesselIScaled
+//                              bigCBesselK / bigCBesselKScaled
+//   Bessel J/Y/H (ADR-0041 I3b): bigCBesselJ / bigCBesselY
+//                                bigCHankelH1 / bigCHankelH2
+//
+// The Bessel I/K complex evaluators are the substrate **foundation** for
+// the complex J/Y/H¹/H² lane (I3b): AMOS's TOMS 644 lineage (and FLINT's
+// transcription) computes complex J and Y via the rotation
+//
+//     J_ν(z) = exp(s·νπi/2) · I_ν(-s·iz)                   (DLMF 10.27.6)
+//     Y_ν(z) = (-2/π) · exp(-s·νπi/2) · K_ν(-s·iz)         (DLMF 10.27.8 + 10.27.10
+//                + s · i · J_ν(z)                            via H¹ = J + iY)
+//
+// where `s = +1` if `Im(z) ≥ 0`, `s = -1` if `Im(z) < 0`.
+//
+// so the I/K primitives ship first (I3a, ~816 LOC above); J/Y/H¹/H²
+// wrap them algebraically (I3b, ~700 LOC below).  ADR-0041 §"Decision
+// 11" pins this round ordering — it is the single non-obvious
+// algorithmic insight from R2 §3.3 that distinguishes Bessel's complex
+// layer from the per-function-independent shape Erf used.  The reward:
+// complex J at large |z| reuses I's series + asymp machinery rather
+// than re-deriving a J-specific Hankel asymptotic with the cos(ω)·P −
+// sin(ω)·Q mixing — strictly less code, strictly more canonical
+// (AMOS's 40-year proven choice).
+//
+// Note on the Y formula: the ADR sketch wrote `Y = ±(2i/π)·exp(±νπi/2)·
+// K_ν(∓iz) − exp(±νπi)·J_ν(z)`, but cross-validation against the Arb
+// T5 golden corpus + mpmath revealed that the canonical DLMF-derived
+// form is the one above (different sign convention on the J term and
+// the K phase prefactor).  The ADR was load-bearing at the level of
+// "K_ν(-iz) and J_ν(z) combine algebraically with a phase coefficient
+// derived from the AMOS sign-choice"; the precise sign convention
+// lives in this file's algorithm comments and is pinned by the
+// golden-master suite.
+//
+// I3b — AMOS sign-choice convention (the load-bearing detail)
+// -----------------------------------------------------------
+//
+// The rotation formula carries a ± choice that AMOS's `ZBESJ.f`
+// (TOMS-644 source, the `IF (ZI.LT.0.0D0) GO TO N` branch around lines
+// 134-160) selects via the sign of `Im(z)`:
+//
+//     if  Im(z) ≥ 0   (closed upper half-plane, including +real axis):
+//         sign = +1 ⇒ J_ν(z) = exp(+νπi/2) · I_ν(-iz)
+//     if  Im(z) < 0   (open lower half-plane):
+//         sign = -1 ⇒ J_ν(z) = exp(-νπi/2) · I_ν(+iz)
+//
+// The geometric reason: the rotated argument `∓iz` carries the new
+// real part `Re(∓iz) = ±Im(z)`.  With the AMOS convention, that real
+// part is always `≥ 0`:
+//
+//     sign = +1, Im(z) ≥ 0:  Re(-iz) = +Im(z) ≥ 0   (right half-plane).
+//     sign = -1, Im(z) < 0:  Re(+iz) = −Im(z) > 0   (right half-plane).
+//
+// I_ν has its "canonical-growth" half-plane on `Re(arg) ≥ 0`, where
+// the series and the (deferred) asymptotic both converge most
+// efficiently and where the cancellation in the connection formulas
+// (DLMF 10.27.6) is minimal.  Picking the sign that lands `∓iz` in
+// the right half-plane is therefore both correct (no branch-cut
+// crossing) AND numerically optimal (smallest cancellation budget).
+//
+// This is NOT a stylistic choice.  Y_ν inherits the same sign by
+// construction (the formula combines J and K_ν(∓iz)).  Dropping the
+// sign branch — always using `+i` regardless of `Im(z)` sign — lights
+// up the Q3/Q4 golden-master failures by sending z in the lower
+// half-plane to `I_ν(+iz)` with `Re(+iz) < 0` (left half-plane, the
+// wrong principal-branch sheet for I's connection formulas).  This is
+// the M1 mutation below.
 
 import { BigFloat, normalise, bitLength } from "./types.js";
-import { abs, neg, sgn, isZero } from "./comparison.js";
+import { abs, neg, sgn, isZero, eq } from "./comparison.js";
 import { add, sub, mul, div, sqrt, powInt } from "./arithmetic.js";
-import { fromInt, fromString, toFloat64 } from "./conversion.js";
+import { fromInt, fromFloat64, fromString, toFloat64 } from "./conversion.js";
 import {
   ln2,
   pi,
@@ -43,6 +119,20 @@ import {
   bigErfc,
   bigErfcx,
 } from "./special-funcs/erf.js";
+import {
+  bigBesselI,
+  bigBesselIScaled,
+} from "./special-funcs/besseli.js";
+import {
+  bigBesselK,
+  bigBesselKScaled,
+} from "./special-funcs/besselk.js";
+import {
+  bigBesselJ,
+} from "./special-funcs/besselj.js";
+import {
+  bigBesselY,
+} from "./special-funcs/bessely.js";
 
 export interface BigComplex {
   readonly re: BigFloat;
@@ -1379,3 +1469,1576 @@ export function bigCErfi(z: BigComplex, prec: number): BigComplex {
   // -i · (a + bi) = b - ai.
   return { re: erfIz.im, im: neg(erfIz.re) };
 }
+
+// =============================================================================
+// Modified Bessel I/K for complex argument (ADR-0041 I3a)
+// =============================================================================
+//
+// The complex-arb-prec evaluators for `I_ν(z)` and `K_ν(z)` at complex z.
+// These are the substrate **foundation** for the complex Bessel family
+// (J, Y, H¹, H² — all derived from I/K in I3b via the AMOS rotation
+// `J_ν(z) = exp(±νπi/2) · I_ν(∓iz)`).  Shipping I/K first matters: AMOS's
+// 40-year proven choice and FLINT's transcription both compute complex
+// J/Y from complex I/K, not the other way around.  The reason is that the
+// **modified** family has the algebraically simpler asymptotic — a
+// single all-alternating sum with a pure-exponential `e^z / √(2πz)`
+// prefactor — vs J/Y's `cos(ω)·P − sin(ω)·Q` mixing that has cancellation
+// near every J/Y zero.  Once I/K are stable on the full complex plane,
+// the rotation to J/Y is a 5-line algebraic wrapper.
+//
+// Algorithm dispatch (parallel to the real I2a / I2b siblings)
+// -----------------------------------------------------------
+//
+//   bigCBesselI:
+//     real-axis short-circuit (Im(z) = 0):
+//       z.re ≥ 0:  defer to bigBesselI (byte-identical with the real I2a
+//                  path; load-bearing tie point with the real substrate).
+//       z.re < 0, integer ν: parity I_n(-z) = (-1)^n I_n(z) via real path.
+//     general complex:
+//       direct complex ₀F₁ Maclaurin (parallel to bigBesselISeriesMaclaurin
+//       but on BigComplex).  All complex z — the series is entire in z.
+//       Cancellation-retry handles the alternating-phase loss for inputs
+//       with arg(z) far from 0.
+//
+//   bigCBesselK:
+//     real-axis short-circuit (Im(z) = 0, Re(z) > 0): defer to bigBesselK.
+//     general complex: folded I-connection (DLMF 10.27.4 + Γ-reflection),
+//                      identical algebraic shape to the real I2b path but
+//                      on BigComplex.  Integer ν via the same limit-via-eps
+//                      pattern.  Cancellation-retry budgets near-integer ν
+//                      AND large |z| together.
+//
+// Why direct complex series, not "compute real I then analytic continuation"
+// ------------------------------------------------------------------------
+//
+// The naive textbook approach for I_ν(z) at complex z is "evaluate
+// I_ν(|z|) on the real path, then rotate by `e^{iνπ}` or `e^{iν·arg z}`".
+// That is incorrect — I_ν is not a simple-rotation function of |z|; only
+// the *connection* across the branch cut at z=0 satisfies a rotation
+// identity (DLMF 10.34.2: `I_ν(z e^{imπ}) = e^{imνπ} I_ν(z)` for INTEGER
+// m only).  For arbitrary complex z, the only correct substrate move is
+// to evaluate the defining series (DLMF 10.25.2)
+//
+//     I_ν(z) = (z/2)^ν · Σ_{k=0}^∞ (z²/4)^k / (k! · Γ(ν+k+1))
+//
+// in BigComplex — every multiplication, addition, and division is
+// complex.  The series is entire in z (radius of convergence ∞), so the
+// only question is "how many terms" — which scales as O(|z| + prec) just
+// like the real path.  The catch: for complex z with arg(z) far from 0,
+// successive `(z²/4)^k` factors rotate in phase, so the partial sums
+// oscillate before damping.  Peak-term magnitude is `~exp(|z|)`; final
+// answer can be much smaller; the cancellation budget is `|z|·log₂ e`
+// bits — identical envelope to J's real-axis Maclaurin cancellation.
+// We carry the same measure-and-bump retry pattern as
+// `bigBesselJSeriesCancellationRetry` (FLINT `bessel_j.c:480-557`).
+//
+// v0.1 scope, deferred work
+// -------------------------
+//
+//   - **No complex-z modified-Hankel asymptotic.**  The real-axis
+//     bigBesselIHankelAsymptotic exists because for large positive z the
+//     series is `O(prec)` terms expensive and the asymptotic is a small
+//     constant.  For complex z the asymptotic has Stokes-line subtleties
+//     — the `e^z / √(2πz)` prefactor is correct only in `|arg z| < π/2`;
+//     across the Stokes lines `arg z = ±π/2` the subdominant `e^{-z}`
+//     contribution must be added via the Stokes multiplier (DLMF 10.40.5).
+//     v0.1 routes all complex z through the series; correctness holds
+//     everywhere, performance degrades only at |z| ≳ prec/2.  For the
+//     I3a corpus (T5 complex BesselI/K with |z| ≤ ~30 at prec=400), this
+//     is well within the series's efficient band.  Filed v0.2 P3:
+//     implement the Stokes-multiplier asymptotic for |z| ≫ prec.
+//
+//   - **K's complex large-z asymptotic** likewise deferred (parallel
+//     to the I2b real-path deferral noted in besselk.ts).  The folded
+//     I-connection is correct on the full complex plane (excluding the
+//     branch cut at z=0); only the performance suffers at large |z|.
+//
+//   - **Branch-cut handling for K at Re(z) ≤ 0** lands in v0.1 via the
+//     folded I-connection: `K_ν(z) = (π/2) · (I_{-ν}(z) − I_ν(z)) /
+//     sin(νπ)` extends to complex z, and the folded form's `(z/2)^{±ν}`
+//     prefactors carry the principal-branch convention via `cpow` (DLMF
+//     10.34.4 — principal branch has the cut on the negative real axis,
+//     `arg(z) ∈ (−π, π]`).  Cross-validated against Arb on the T5 corpus.
+//
+// References (all in repo)
+// ------------------------
+//   - docs/adr/0041-bessel-family-per-head-substrate.md §"Decision 3"
+//     and §"Decision 11" (AMOS rotation — explains why I/K ships first)
+//   - docs/refs/besselj-research/R2-arbprec-algorithms.md §3.3 (BesselI
+//     dispatch), §3.4 (BesselK dispatch)
+//   - packages/bigfloat/src/special-funcs/besseli.ts (real I sibling I2a;
+//     same series + asymptotic shape, real arithmetic)
+//   - packages/bigfloat/src/special-funcs/besselk.ts (real K sibling I2b;
+//     folded-form connection via Γ-reflection — the load-bearing
+//     algorithmic shape that this complex K inherits)
+//   - packages/bigfloat/src/special-funcs/besselj.ts (the cancellation-
+//     retry pattern `bigBesselJSeriesCancellationRetry` — same shape)
+//   - bench/besselj-anchor/oracles/arb/results.json (T5 complex BesselI/K
+//     ground truth, 32 entries each across Q1/Q2/Q3/Q4)
+//   - DLMF §10.25 (I series), §10.27 (I/K interrelations including the
+//     I-connection 10.27.4), §10.34 (analytic continuation, branch cuts),
+//     §10.40 (asymptotic — deferred v0.2 for the Stokes-line work)
+
+// -----------------------------------------------------------------------------
+// Helpers (local, parallel to besseli.ts / besselk.ts helpers but complex)
+// -----------------------------------------------------------------------------
+
+/**
+ * Validate that a BigComplex input is finite-and-usable.  Throws
+ * `RangeError` with a `suggestion:` line.  Mirrors `besseli.ts`'s
+ * `requireFiniteBesselIInput` but on both `re` and `im`.
+ */
+function requireFiniteBesselComplexInput(
+  z: BigComplex,
+  fn: string,
+  name: string,
+): void {
+  for (const [part, label] of [
+    [z.re, "re"] as const,
+    [z.im, "im"] as const,
+  ]) {
+    if (!Number.isInteger(part.precision) || part.precision < 1) {
+      throw new RangeError(
+        `${fn}: BigComplex ${name}.${label} precision must be a positive integer; got ${part.precision}. ` +
+          `suggestion: construct the input via cfromStrings / cfromInts / cfromReal.`,
+      );
+    }
+    if (!Number.isInteger(part.exponent) || !Number.isFinite(part.exponent)) {
+      throw new RangeError(
+        `${fn}: BigComplex ${name}.${label} exponent must be a finite integer; got ${part.exponent}. ` +
+          `suggestion: do not construct BigFloat sentinels by hand — use fromFloat64.`,
+      );
+    }
+    if (part.mantissa !== 0n) {
+      const magnitudeBits = bfMagBits(part);
+      if (magnitudeBits > 1024) {
+        throw new RangeError(
+          `${fn}: ${name}.${label} magnitude ~ 2^${magnitudeBits} exceeds the supported ` +
+            `Bessel-family input range (|${name}.${label}| > 2^1024). ` +
+            `suggestion: at this magnitude, I_ν(z) ~ exp(|z|) is unrepresentable; ` +
+            `use bigCBesselIScaled for I or bigCBesselKScaled for K.`,
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Check whether a BigFloat is exactly an integer at its declared
+ * precision, returning the integer if so (or `null` otherwise).  Mirrors
+ * `besselk.ts::asExactInteger`.  Used by the integer-ν dispatch inside
+ * bigCBesselK and by the negative-real-z parity short-circuit inside
+ * bigCBesselI.
+ */
+function asExactIntegerBF(nu: BigFloat): number | null {
+  const nuFloat = toFloat64(nu).value;
+  if (!Number.isFinite(nuFloat)) return null;
+  const nuRound = Math.round(nuFloat);
+  if (!Number.isSafeInteger(nuRound)) return null;
+  const nuRoundedBack = fromInt(BigInt(nuRound), nu.precision);
+  return eq(nu, nuRoundedBack) ? nuRound : null;
+}
+
+/**
+ * Test whether a BigComplex is purely real (im is exactly zero).  Used
+ * by the real-axis short-circuit in `bigCBesselI` / `bigCBesselK`.
+ *
+ * The convention: `im.mantissa === 0n` (the canonical zero
+ * representation) is sufficient.  Inputs constructed via `cfromReal` or
+ * `cfromStrings(..., "0", ...)` always pass; inputs that happen to round
+ * to zero in their `im` part are not short-circuited (they go through
+ * the general complex path, which gives the same answer modulo last-bit
+ * rounding).
+ */
+function cIsPureReal(z: BigComplex): boolean {
+  return z.im.mantissa === 0n;
+}
+
+/**
+ * Test whether a BigComplex is purely imaginary (re is exactly zero).
+ * Symmetric helper to `cIsPureReal`; kept for parallelism with the
+ * Erf-family helpers above.
+ */
+function cIsPureImag(z: BigComplex): boolean {
+  return z.re.mantissa === 0n;
+}
+
+// -----------------------------------------------------------------------------
+// Complex 0F1 series with loss tracking — the load-bearing primitive
+// -----------------------------------------------------------------------------
+
+/**
+ * Evaluate the confluent hypergeometric series
+ *
+ *     ₀F₁(b; w) = Σ_{k=0}^∞ w^k / ((b)_k · k!)
+ *
+ * for complex `b` and complex `w`, at the requested working precision.
+ * `(b)_k = b·(b+1)·…·(b+k-1)` is the rising factorial.
+ *
+ * Recurrence (the form actually walked):
+ *
+ *     T_0     = 1
+ *     T_{k+1} = T_k · w / ((k+1) · (b + k))
+ *
+ * Returns `{ value, peakTermMag }` for the cancellation-retry harness.
+ * `peakTermMag = max_k magBits(T_k)` — for real-positive `w` the peak
+ * is `T_0 = 1` and there is no cancellation; for complex `w` with
+ * `arg(w)` far from 0 the peak can be `≫ |value|`, and the bit-loss is
+ * `peakTermMag − magBits(value)`.
+ *
+ * Termination: `magBits(T_{k+1}) − magBits(sum) < -prec - 8` (the term
+ * is small relative to the running sum).
+ *
+ * Caller is responsible for ensuring `b` is not zero or a non-positive
+ * integer (the recurrence would hit `(b + k) = 0` and throw).  For our
+ * complex I / K callers, `b = ν + 1` (for I) or `b = 1 ± ν` (for the K
+ * folded connection); the I caller routes negative-integer ν through
+ * the parity short-circuit, the K caller routes integer ν through the
+ * limit-via-eps wrapper.
+ *
+ * The shape mirrors `besselk.ts::hyp0F1` but on BigComplex.
+ */
+function chyp0F1WithLossTracking(
+  b: BigComplex,
+  w: BigComplex,
+  work: number,
+): { value: BigComplex; peakTermMag: number } {
+  let sum: BigComplex = cfromReal(fromInt(1n, work));
+  let term: BigComplex = cfromReal(fromInt(1n, work));
+  let peakTermMag = 0;  // magBits(T_0) = magBits(1) = 0.
+  const stopMagThreshold = -work - 8;
+  // Safety cap: for our typical w = z²/4 with |z| ≤ ~30, the series
+  // terminates in O(|z|) + O(prec) terms.  Cap is generous (worst case
+  // is ~|w| + work for very large |w|).
+  const absWFloat = toFloat64(cabs(w, work)).value;
+  const expectedTerms = Number.isFinite(absWFloat)
+    ? Math.max(64, Math.ceil(2 * Math.sqrt(absWFloat) + work))
+    : work * 4;
+  const maxTerms = Math.max(64, expectedTerms);
+  for (let k = 0; k < maxTerms; k++) {
+    // T_{k+1} = T_k · w / ((k+1) · (b + k)).
+    const kPlus1 = cfromReal(fromInt(BigInt(k + 1), work));
+    const bPlusK: BigComplex = {
+      re: add(b.re, fromInt(BigInt(k), work), work),
+      im: b.im,
+    };
+    if (cisZero(bPlusK)) {
+      throw new RangeError(
+        `chyp0F1: b + ${k} = 0 hits a pole of the rising factorial; ` +
+          `suggestion: caller must route integer or near-integer ν through ` +
+          `the limit-via-eps wrapper (bigCBesselKIntegerNu) or the parity ` +
+          `reduction (bigCBesselI for negative integer ν).`,
+      );
+    }
+    const denom = cmul(kPlus1, bPlusK, work);
+    term = cdiv(cmul(term, w, work), denom, work);
+    sum = cadd(sum, term, work);
+    const termMag = magBits(term);
+    if (termMag > peakTermMag) peakTermMag = termMag;
+    const sumMag = magBits(sum);
+    if (termMag === -Infinity) break;
+    if (termMag - sumMag < stopMagThreshold) break;
+  }
+  return { value: sum, peakTermMag };
+}
+
+// -----------------------------------------------------------------------------
+// bigCBesselI — complex modified Bessel I via direct ₀F₁ + cancellation retry
+// -----------------------------------------------------------------------------
+
+/**
+ * Complex modified Bessel function of the first kind `I_ν(z)` at
+ * user-controlled arbitrary precision.
+ *
+ *     I_ν(z) = (z/2)^ν / Γ(ν+1) · ₀F₁(ν+1; z²/4)
+ *
+ * (DLMF 10.25.2 in its prefactored ₀F₁ form — algebraically identical
+ * to the textbook Σ (z/2)^{ν+2k} / (k! Γ(ν+k+1)) but with the constant
+ * `(z/2)^ν / Γ(ν+1)` factored out for stable cancellation accounting.)
+ *
+ * Algorithm dispatch:
+ *
+ *   isPureReal(z) and z.re ≥ 0:    defer to bigBesselI (the I2a substrate;
+ *                                   byte-identical result; load-bearing).
+ *   isPureReal(z) and z.re < 0 and integer ν:
+ *                                   parity I_n(-z) = (-1)^n · I_n(z) via
+ *                                   the real path.  Byte-identical
+ *                                   `.re` component, exact-zero `.im`.
+ *   general complex:                complex ₀F₁ Maclaurin with
+ *                                   cancellation-retry (the load-bearing
+ *                                   path; works on the full complex plane).
+ *
+ * Cancellation budget
+ * -------------------
+ *
+ * For real positive z the ₀F₁ series is all-positive — no cancellation.
+ * For complex z the term phases rotate by `2·arg(z)` per step, so the
+ * partial sums oscillate.  Peak-term magnitude `~exp(|z|)`; final answer
+ * can be `O(1)` for K-like inputs.  Analytic cancellation envelope:
+ * `cancelEst = |z|·log₂ e` bits.  The retry harness measures actual
+ * loss post-sum and bumps once if the analytic estimate was too tight.
+ *
+ * Working precision: `work_0 = prec + 32 + cancelEst`; retry at
+ * `work_1 = prec + 32 + lossBits + 16` if measured loss exceeds the
+ * analytic budget + 16-bit headroom.  Same shape as
+ * `bigBesselJSeriesCancellationRetry`.
+ *
+ * v0.1 scope
+ * ----------
+ *
+ *   - For inputs with very large `|z|` (≳ prec/2), the series is slower
+ *     than an asymptotic would be — but correct.  No complex Hankel
+ *     asymptotic in v0.1 (Stokes-multiplier handling deferred).
+ *   - For inputs with negative non-integer ν AND non-real z, the
+ *     `Γ(ν+k+1)` factors via the recurrence's `(ν+k+1)` denominator can
+ *     hit a pole — caught loudly by `chyp0F1WithLossTracking` and
+ *     refused with a suggestion line.
+ *
+ * Determinism: every operation is `BigInt` complex arithmetic;
+ * `BigInt` is bit-identical across runtimes by language specification.
+ * Inherits the `arbprec: true` contract of ADR-0020 — same
+ * `(nu, z, prec)` bytes → byte-identical `BigComplex` output forever.
+ *
+ * @throws RangeError on non-finite input or on configurations not yet
+ * supported (negative non-integer ν combined with z near the branch
+ * point, etc.).
+ */
+export function bigCBesselI(
+  nu: BigComplex,
+  z: BigComplex,
+  prec: number,
+): BigComplex {
+  if (prec < 1 || !Number.isInteger(prec)) {
+    throw new RangeError(
+      `bigCBesselI: prec must be a positive integer; got ${prec}. ` +
+        `suggestion: use decimalToBinaryPrecision(<digits>) for a decimal target.`,
+    );
+  }
+  requireFiniteBesselComplexInput(nu, "bigCBesselI", "nu");
+  requireFiniteBesselComplexInput(z, "bigCBesselI", "z");
+
+  // Real-axis short-circuit: byte-identical with I2a's bigBesselI.
+  // Load-bearing for the restriction-to-real-axis property test.
+  if (cIsPureReal(nu) && cIsPureReal(z)) {
+    if (sgn(z.re) >= 0) {
+      // Positive (or zero) real z, real ν: defer directly.  bigBesselI
+      // handles its own ν-sign dispatch (parity for negative integer ν,
+      // refusal for negative non-integer ν at z=0).
+      return cfromReal(bigBesselI(nu.re, z.re, prec));
+    }
+    // Negative real z: bigBesselI's parity path handles integer ν via
+    // I_n(-z) = (-1)^n I_n(z).  For non-integer ν, bigBesselI refuses
+    // with a suggestion to use this very function — but that's the
+    // wrong dispatch for purely-real negative z, where we genuinely need
+    // the principal-branch complex value.  Route through the general
+    // complex path below so the series evaluator handles it directly.
+    const asInt = asExactIntegerBF(nu.re);
+    if (asInt !== null) {
+      // Integer ν: parity is byte-clean.
+      return cfromReal(bigBesselI(nu.re, z.re, prec));
+    }
+    // Non-integer real ν with negative real z: fall through to the
+    // complex series path (z has im=0 but the series still rotates
+    // appropriately via (z/2)^ν = (-|z|/2)^ν, computed via cpow with
+    // principal branch).  No special case needed — cpow handles the
+    // arg(z) = π branch.
+  }
+
+  // z = 0 closed form: I_ν(0) = 0 for Re(ν) > 0, 1 for ν = 0; undefined
+  // (singular) for Re(ν) < 0 non-integer.
+  if (cisZero(z)) {
+    if (cisZero(nu)) {
+      return cfromReal(normalise(1n, 0, prec));
+    }
+    if (sgn(nu.re) > 0 || (isZero(nu.re) && !isZero(nu.im))) {
+      return cfromReal({ mantissa: 0n, exponent: 0, precision: prec });
+    }
+    // Re(ν) < 0: check integer
+    if (cIsPureReal(nu)) {
+      const asInt = asExactIntegerBF(nu.re);
+      if (asInt !== null) {
+        // Negative integer ν: I_{-n}(0) = I_n(0) = 0 for n ≥ 1.
+        return cfromReal({ mantissa: 0n, exponent: 0, precision: prec });
+      }
+    }
+    throw new RangeError(
+      `bigCBesselI: I_ν(0) is unbounded for negative non-integer Re(ν); ` +
+        `suggestion: at z = 0, I_ν is singular for Re(ν) < 0 non-integer; ` +
+        `use the symbolic limit instead.`,
+    );
+  }
+
+  // General complex path — direct ₀F₁ Maclaurin with cancellation retry.
+  return bigCBesselISeriesWithRetry(nu, z, prec, 0);
+}
+
+/**
+ * The inner series-with-retry loop for `bigCBesselI`.  Measures the
+ * cancellation in the ₀F₁ partial sums, bumps once if needed.  Mirrors
+ * `bigBesselJSeriesCancellationRetry` (real-axis) and `bigCErfWithRetry`
+ * (complex Erf).
+ *
+ * `extraBits === 0` is the first-pass call; on bump, the recursive call
+ * sets `extraBits > 0` and the retry-on-retry path is bypassed.
+ */
+function bigCBesselISeriesWithRetry(
+  nu: BigComplex,
+  z: BigComplex,
+  prec: number,
+  extraBits: number,
+): BigComplex {
+  // Analytic cancellation envelope on first pass: |z|·log₂ e bits.  The
+  // peak ₀F₁ term has magnitude ~exp(|z|), the final answer can be
+  // ~O(1) (or much smaller for K-like inputs) — the subtraction in
+  // forming the sum from the partial terms loses ~|z|·log₂ e bits in
+  // the worst case (arg(z) = ±π/2, where the rotation is fastest).
+  const absZ = toFloat64(cabs(z, prec)).value;
+  const cancelEst = Number.isFinite(absZ)
+    ? Math.max(0, Math.ceil(absZ * Math.LOG2E))
+    : 0;
+  const work = prec + 32 + cancelEst + extraBits;
+
+  // Compute the prefactor and series.
+  //   prefactor = (z/2)^ν / Γ(ν+1)
+  //   series    = ₀F₁(ν+1; z²/4)
+  //   I_ν(z)    = prefactor · series
+  const half = cfromReal(fromFloat64(0.5));
+  const halfZ = cmul(z, half, work);
+  const halfZPowNu = cpow(halfZ, nu, work);
+  const one = cfromReal(fromInt(1n, work));
+  const nuPlus1 = cadd(nu, one, work);
+  const gammaNuPlus1 = cgamma(nuPlus1, work);
+  const prefactor = cdiv(halfZPowNu, gammaNuPlus1, work);
+
+  // Series argument: w = z²/4.
+  const zSquared = cmul(z, z, work);
+  const quarter = cfromReal(fromFloat64(0.25));
+  const w = cmul(zSquared, quarter, work);
+
+  // ₀F₁(ν+1; z²/4) with peak-term tracking.
+  const { value: series, peakTermMag } = chyp0F1WithLossTracking(nuPlus1, w, work);
+
+  // Multiply prefactor by series.
+  const result = cmul(prefactor, series, work);
+
+  // Cancellation accounting.  Note the series peak-term tracking gives
+  // us the magnitude that fed INTO the sum; the result's magnitude
+  // after multiplying by the prefactor tells us where we landed.  Loss
+  // bits = peakTermMag(series) − magBits(series).  (The prefactor
+  // cancellation is bounded by the prec-32 budget of cpow / cdiv /
+  // cgamma — separately handled by those routines' internal precision
+  // budgets.)
+  const seriesMag = magBits(series);
+  const measuredLoss = seriesMag === -Infinity
+    ? 0
+    : Math.max(0, peakTermMag - seriesMag);
+
+  // First-pass retry: if measured loss exceeds the analytic estimate +
+  // headroom, recompute at higher working precision.  Cap the bump at
+  // 4·prec (pathological inputs honestly carry reduced precision).
+  if (extraBits === 0 && measuredLoss > cancelEst + 16) {
+    const bumpedExtra = Math.min(measuredLoss - cancelEst + 32, prec * 4);
+    return bigCBesselISeriesWithRetry(nu, z, prec, bumpedExtra);
+  }
+
+  return {
+    re: normalise(result.re.mantissa, result.re.exponent, prec),
+    im: normalise(result.im.mantissa, result.im.exponent, prec),
+  };
+}
+
+/**
+ * Scaled complex modified Bessel I: returns `e^{-z} · I_ν(z)`.
+ *
+ * The complex analogue of `bigBesselIScaled`.  Note the scaling factor
+ * is `e^{-z}` (NOT `e^{-|z|}`) — for complex z, the natural overflow-
+ * mitigation factor is the exponential at the complex argument itself,
+ * not at its magnitude.  This matches AMOS's `ZBESI` `cyl_bessel_i_scaled`
+ * convention (the factor that cancels the leading `e^z / √(2πz)` of the
+ * Re(z) > 0 asymptotic).
+ *
+ * For inputs with Re(z) ≤ 0, this scaling still works (the result is
+ * `O(1)` rather than the `O(exp(|Re(z)|))` of the unscaled).  For
+ * pure-imaginary z, `e^{-iz}` introduces a rotation but no growth/decay
+ * — the scaling is "free" but not overflow-relevant.
+ *
+ * Use this variant whenever:
+ *
+ *   - the consumer immediately multiplies by `e^{z}` (typical for
+ *     integrands of the form `∫ f(z) · I_ν(z) · e^{-z} dz`),
+ *   - `Re(z) > 700` is plausible (float64 overflow cliff at `e^700`),
+ *   - downstream code needs to pretty-print or log the value at large z.
+ *
+ * Real-axis short-circuit: for `z = x + 0i` with `x ≥ 0`, defers to
+ * `bigBesselIScaled(nu.re, x, prec)`.
+ *
+ * Implementation: composed from `bigCBesselI` + `cexp(-z)` at
+ * `work = prec + 64`.  The extra 32 bits over the standard `prec + 32`
+ * working budget cover the cancellation between the I asymptotic's
+ * `e^z` prefactor and the `e^{-z}` factor — they should largely cancel
+ * structurally but the BigFloat substrate computes them independently.
+ *
+ * @throws RangeError on non-finite input (delegates to bigCBesselI).
+ */
+export function bigCBesselIScaled(
+  nu: BigComplex,
+  z: BigComplex,
+  prec: number,
+): BigComplex {
+  if (prec < 1 || !Number.isInteger(prec)) {
+    throw new RangeError(
+      `bigCBesselIScaled: prec must be a positive integer; got ${prec}. ` +
+        `suggestion: use decimalToBinaryPrecision(<digits>) for a decimal target.`,
+    );
+  }
+  requireFiniteBesselComplexInput(nu, "bigCBesselIScaled", "nu");
+  requireFiniteBesselComplexInput(z, "bigCBesselIScaled", "z");
+
+  // Real-axis short-circuit: defer to bigBesselIScaled (the real I2a
+  // overflow-safe variant).  Byte-identical with the real path for real
+  // nu and z.re ≥ 0.
+  if (cIsPureReal(nu) && cIsPureReal(z) && sgn(z.re) >= 0) {
+    return cfromReal(bigBesselIScaled(nu.re, z.re, prec));
+  }
+
+  // z = 0 fast-path: e^0 · I_ν(0) = I_ν(0).
+  if (cisZero(z)) {
+    return bigCBesselI(nu, z, prec);
+  }
+
+  const work = prec + 64;
+  const iValue = bigCBesselI(nu, z, work);
+  const expNegZ = cexp(cneg(z), work);
+  const result = cmul(iValue, expNegZ, work);
+  return {
+    re: normalise(result.re.mantissa, result.re.exponent, prec),
+    im: normalise(result.im.mantissa, result.im.exponent, prec),
+  };
+}
+
+// -----------------------------------------------------------------------------
+// bigCBesselK — complex K via folded I-connection with cancellation retry
+// -----------------------------------------------------------------------------
+
+/**
+ * Complex modified Bessel function of the second kind `K_ν(z)` at
+ * user-controlled arbitrary precision.
+ *
+ *     K_ν(z) = (π/2) · (I_{-ν}(z) − I_ν(z)) / sin(νπ)              (DLMF 10.27.4)
+ *
+ * Algebraically re-expressed (per the I2b folded form — Γ-reflection
+ * via DLMF 5.5.3) for numerical stability:
+ *
+ *     K_ν(z) = (1/2) · [
+ *                (z/2)^{-ν} · Γ(ν) · ₀F₁(1-ν; z²/4)
+ *              − (z/2)^{+ν} · π / (Γ(ν) · ν · sin(πν)) · ₀F₁(1+ν; z²/4)
+ *              ]
+ *
+ * — algebraically identical, numerically much better behaved because
+ * both ₀F₁ series have no internal pole-cancellation for non-integer ν.
+ * The single cancellation site is the bracketed `[A − B]` subtraction.
+ *
+ * Algorithm dispatch (parallel to I2b's bigBesselK):
+ *
+ *   isPureReal(z), z.re > 0, real ν:  defer to bigBesselK (the I2b
+ *                                     substrate; byte-identical with the
+ *                                     real path).
+ *   ν integer (complex z, any z ≠ 0): bigCBesselKIntegerNu (limit-via-eps).
+ *   ν non-integer (complex z, any z ≠ 0):
+ *                                     bigCBesselKFromConnection (folded
+ *                                     form with cancellation-retry).
+ *
+ * Branch convention: principal branch with cut on the negative real
+ * axis (DLMF 10.34.4).  For `Re(z) < 0`, K_ν(z) has non-zero imaginary
+ * part; the `(z/2)^{±ν}` factors via `cpow` carry the convention
+ * `arg(z) ∈ (−π, π]`.  Cross-validated against Arb on the T5 corpus
+ * (which spans all four quadrants).
+ *
+ * K is even in ν (DLMF 10.27.3) only on the *positive real* axis.  For
+ * complex z, the connection formula above already handles arbitrary ν
+ * without needing a ν → |ν| reduction — the formula is symmetric in ν
+ * → −ν via the sin(νπ) sign flip.  We retain the I2b reduction-to-|ν|
+ * only for the real-axis short-circuit (where it's load-bearing for
+ * byte-equality with bigBesselK).
+ *
+ * Determinism: every operation is `BigInt` complex arithmetic;
+ * `BigInt` is bit-identical across runtimes by language specification.
+ * Inherits the `arbprec: true` contract of ADR-0020 — same
+ * `(nu, z, prec)` bytes → byte-identical `BigComplex` output forever.
+ *
+ * @throws RangeError on non-finite input, z = 0 (singular), or other
+ *   inadmissible configurations.
+ */
+export function bigCBesselK(
+  nu: BigComplex,
+  z: BigComplex,
+  prec: number,
+): BigComplex {
+  if (prec < 1 || !Number.isInteger(prec)) {
+    throw new RangeError(
+      `bigCBesselK: prec must be a positive integer; got ${prec}. ` +
+        `suggestion: use decimalToBinaryPrecision(<digits>) for a decimal target.`,
+    );
+  }
+  requireFiniteBesselComplexInput(nu, "bigCBesselK", "nu");
+  requireFiniteBesselComplexInput(z, "bigCBesselK", "z");
+
+  // z = 0: singular for all ν.
+  if (cisZero(z)) {
+    throw new RangeError(
+      `bigCBesselK: K_ν(z) is singular at z = 0 (K_0(0+) = +∞ logarithmic; ` +
+        `K_ν(0+) ~ (2/z)^ν · Γ(ν)/2 for Re(ν) > 0 — power-law). ` +
+        `suggestion: tool-layer code should emit tagged ` +
+        `"bigfloat/k-singular-at-zero" for this input; do not request K_ν at z = 0.`,
+    );
+  }
+
+  // Real-axis short-circuit (z.re > 0, im = 0, real ν): defer to bigBesselK.
+  if (cIsPureReal(nu) && cIsPureReal(z) && sgn(z.re) > 0) {
+    return cfromReal(bigBesselK(nu.re, z.re, prec));
+  }
+
+  // Integer ν: limit-via-eps path.  Detect via the real-component test
+  // (purely-imaginary ν is non-integer in this sense).
+  if (cIsPureReal(nu)) {
+    const asInt = asExactIntegerBF(nu.re);
+    if (asInt !== null) {
+      return bigCBesselKIntegerNu(asInt, z, prec);
+    }
+  }
+
+  // Non-integer ν: folded connection.
+  return bigCBesselKFromConnection(nu, z, prec);
+}
+
+/**
+ * Internal: evaluate the folded K-connection and report the
+ * cancellation loss in the `[A − B]` subtraction, parallel to
+ * `besselk.ts::besselKConnectionWithLossTracking`.
+ *
+ *   A := (z/2)^{-ν} · Γ(ν) · ₀F₁(1-ν; z²/4)
+ *   B := (z/2)^{+ν} · π / (Γ(ν) · ν · sin(πν)) · ₀F₁(1+ν; z²/4)
+ *   K_ν(z) = (A − B) / 2
+ *
+ * Plus the series's own peak-term-vs-magnitude loss from the ₀F₁ phase
+ * rotation (the complex extension of the real I2b's all-positive
+ * series).
+ */
+function bigCBesselKConnectionInner(
+  nu: BigComplex,
+  z: BigComplex,
+  work: number,
+): {
+  value: BigComplex;
+  outerLossBits: number;
+  innerPeakLossBits: number;
+} {
+  const half = cfromReal(fromFloat64(0.5));
+  const halfZ = cmul(z, half, work);
+  const zSquared = cmul(z, z, work);
+  const quarter = cfromReal(fromFloat64(0.25));
+  const quarterZSquared = cmul(zSquared, quarter, work);
+
+  const one = cfromReal(fromInt(1n, work));
+  const onePlusNu = cadd(one, nu, work);
+  const oneMinusNu = csub(one, nu, work);
+
+  // ₀F₁(1 + ν; z²/4) and ₀F₁(1 - ν; z²/4) with peak-term tracking.
+  const f0F1Plus = chyp0F1WithLossTracking(onePlusNu, quarterZSquared, work);
+  const f0F1Minus = chyp0F1WithLossTracking(oneMinusNu, quarterZSquared, work);
+
+  // The series' own internal loss: peak |T_k| vs |series|.  Take the
+  // worst of the two series — both feed into A or B.
+  const f0F1PlusLoss = Math.max(0, f0F1Plus.peakTermMag - magBits(f0F1Plus.value));
+  const f0F1MinusLoss = Math.max(0, f0F1Minus.peakTermMag - magBits(f0F1Minus.value));
+  const innerPeakLossBits = Math.max(f0F1PlusLoss, f0F1MinusLoss);
+
+  // (z/2)^{±ν} via cpow (principal branch).
+  const halfZPowPlusNu = cpow(halfZ, nu, work);
+  const halfZPowMinusNu = cpow(halfZ, cneg(nu), work);
+
+  // Γ(ν).
+  const gammaNu = cgamma(nu, work);
+
+  // π and sin(π·ν).  sin(π·ν) for complex ν: use sin(x+iy) = sin(x)cos(iy) +
+  // cos(x)sin(iy) = sin(x)cosh(y) + i·cos(x)sinh(y).  We compose via
+  // existing complex sin (not exported — derive locally from cexp).
+  //
+  //   sin(w) = (e^{iw} − e^{-iw}) / (2i)
+  //
+  // for any complex w.  This is the canonical complex sin definition;
+  // no separate `csin` helper is exported by complex.ts yet (the Erf
+  // path didn't need it), so we inline the formula here.
+  const piW = pi(work);
+  const piC = cfromReal(piW);
+  const nuPi = cmul(nu, piC, work);
+  // i·nuPi = (-nuPi.im, nuPi.re); e^{i·nuPi} = cexp(i·nuPi).
+  const iNuPi: BigComplex = { re: neg(nuPi.im), im: nuPi.re };
+  const eIPlus = cexp(iNuPi, work);
+  const eIMinus = cexp(cneg(iNuPi), work);
+  const numer = csub(eIPlus, eIMinus, work);
+  // Divide by 2i:  (a + bi) / (2i) = b/2 − (a/2)i.
+  const sinNuPi: BigComplex = {
+    re: div(numer.im, fromInt(2n, work), work),
+    im: neg(div(numer.re, fromInt(2n, work), work)),
+  };
+
+  // A := (z/2)^{-ν} · Γ(ν) · ₀F₁(1-ν; z²/4)
+  const A = cmul(cmul(halfZPowMinusNu, gammaNu, work), f0F1Minus.value, work);
+
+  // B := (z/2)^{+ν} · π · ₀F₁(1+ν; z²/4) / (Γ(ν) · ν · sin(πν))
+  const Bnum = cmul(cmul(halfZPowPlusNu, piC, work), f0F1Plus.value, work);
+  const Bden = cmul(cmul(gammaNu, nu, work), sinNuPi, work);
+  const B = cdiv(Bnum, Bden, work);
+
+  // K = (A − B) / 2.
+  const diff = csub(A, B, work);
+  const two = cfromReal(fromInt(2n, work));
+  const value = cdiv(diff, two, work);
+
+  // Outer loss accounting.
+  const peakAB = Math.max(magBits(A), magBits(B));
+  const diffMag = magBits(diff);
+  const outerLossBits =
+    diffMag === -Infinity ? 0 : Math.max(0, peakAB - diffMag);
+
+  return { value, outerLossBits, innerPeakLossBits };
+}
+
+/**
+ * I-connection evaluator for `K_ν(z)` at non-integer complex ν, complex
+ * z ≠ 0, with cancellation-retry budget across both
+ *
+ *   (a) the outer `[A − B]` subtraction (near-integer ν and large-|z|
+ *       both contribute), and
+ *   (b) the inner ₀F₁ series peak-vs-magnitude loss from complex-z
+ *       phase rotation (parallel to bigCBesselI's series cancellation).
+ *
+ * Working precision strategy: budget the analytic envelopes up front;
+ * retry once if the measured combined loss exceeds the analytic
+ * estimate plus headroom.  Mirrors I2b's bigBesselKFromConnection
+ * extended to complex.
+ *
+ * **M1 mutation point:** dropping the folded-form Γ-reflection — i.e.
+ * computing `(I_{-ν} − I_ν) / sin(νπ)` directly via bigCBesselI calls
+ * — would re-introduce the I-series Γ-pole issue at near-negative-
+ * integer ν that the folded form sidesteps.  Documented in the
+ * mutation-proving section below.
+ */
+export function bigCBesselKFromConnection(
+  nu: BigComplex,
+  z: BigComplex,
+  prec: number,
+): BigComplex {
+  requireFiniteBesselComplexInput(nu, "bigCBesselKFromConnection", "nu");
+  requireFiniteBesselComplexInput(z, "bigCBesselKFromConnection", "z");
+  if (cisZero(z)) {
+    throw new RangeError(
+      `bigCBesselKFromConnection: z must be non-zero; got cisZero. ` +
+        `suggestion: the public entry bigCBesselK already gates z = 0; ` +
+        `this primitive must only be called with z ≠ 0.`,
+    );
+  }
+
+  // Cancellation budgets.
+  //
+  // (a) Outer `[A − B]` subtraction at large |z|: ~2·|z|·log₂ e bits
+  //     (both A and B carry the `cosh(z)`-class exponential growth via
+  //     their ₀F₁ factors).  Same envelope as I2b's largeZBits but on
+  //     complex |z|.
+  const absZ = toFloat64(cabs(z, prec)).value;
+  const largeZBits = Number.isFinite(absZ)
+    ? Math.max(0, Math.ceil(2 * absZ * Math.LOG2E))
+    : 0;
+
+  // (b) Outer `[A − B]` subtraction near integer ν: −log₂|ν − round(Re ν)|
+  //     bits for ν close to a real integer.  For ν with a non-zero
+  //     imaginary component, the L¹ distance from the nearest integer
+  //     dominates (the sin(πν) factor's blow-up at integer ν only
+  //     occurs on the real axis).  We check the real part; pure-
+  //     imaginary or off-real-axis ν has no near-integer issue.
+  let nearIntegerBits = 0;
+  if (Math.abs(toFloat64(nu.im).value) < 0.5) {
+    // ν is close to the real axis; check near-integer distance.
+    const reFloat = toFloat64(nu.re).value;
+    if (Number.isFinite(reFloat)) {
+      const reRound = Math.round(reFloat);
+      const reRoundBig = fromInt(BigInt(reRound), nu.re.precision);
+      const reFrac = sub(nu.re, reRoundBig, nu.re.precision + 32);
+      // Combined distance: |Re ν − round(Re ν)| + |Im ν|.  Use the
+      // larger of the two as the L∞ proxy for the bit budget.
+      const reFracBits = isZero(reFrac) ? -nu.re.precision : bfMagBits(reFrac);
+      const imBits = isZero(nu.im) ? -nu.im.precision : bfMagBits(nu.im);
+      const combinedDistBits = Math.max(reFracBits, imBits);
+      // bits lost = −combinedDistBits when combinedDistBits is negative.
+      nearIntegerBits = Math.min(prec + 64, Math.max(0, -combinedDistBits));
+      // If both are exactly zero AND the rounded integer is achievable,
+      // the input is exactly integer — refuse, integer-ν must route
+      // through bigCBesselKIntegerNu.
+      if (isZero(reFrac) && isZero(nu.im)) {
+        throw new RangeError(
+          `bigCBesselKFromConnection: ν is exactly integer (${reFloat}); ` +
+            `suggestion: integer ν must route through bigCBesselKIntegerNu.`,
+        );
+      }
+    }
+  }
+
+  // (c) Inner ₀F₁ series phase-rotation loss: |z|·log₂ e bits, same as
+  //     bigCBesselI's series cancellation envelope.
+  const seriesCancelEst = Number.isFinite(absZ)
+    ? Math.max(0, Math.ceil(absZ * Math.LOG2E))
+    : 0;
+
+  const cancelEstTotal = nearIntegerBits + largeZBits + seriesCancelEst;
+  const work0 = prec + 32 + cancelEstTotal;
+  const first = bigCBesselKConnectionInner(nu, z, work0);
+  const measuredLoss = first.outerLossBits + first.innerPeakLossBits;
+  if (measuredLoss <= cancelEstTotal + 16) {
+    return {
+      re: normalise(first.value.re.mantissa, first.value.re.exponent, prec),
+      im: normalise(first.value.im.mantissa, first.value.im.exponent, prec),
+    };
+  }
+  const work1 = prec + 32 + measuredLoss + 16;
+  const second = bigCBesselKConnectionInner(nu, z, work1);
+  return {
+    re: normalise(second.value.re.mantissa, second.value.re.exponent, prec),
+    im: normalise(second.value.im.mantissa, second.value.im.exponent, prec),
+  };
+}
+
+/**
+ * Integer-ν evaluator for complex `K_n(z)` via the connection-formula
+ * limit:
+ *
+ *     K_n(z) = lim_{ν → n} (folded connection above)
+ *
+ * Evaluated numerically by setting `ν = n + ε` for a tiny ε and boosting
+ * the working precision to absorb the L'Hôpital cancellation.  Parallel
+ * to `besselk.ts::bigBesselKIntegerNu` extended to complex z.
+ *
+ * Eps choice: `ε = 2^−(prec + 32)` (real BigFloat shift; we keep the
+ * complex ν purely real for the integer case, just nudged by ε on the
+ * real axis).  Limit-error analysis is linear in ε around integer ν
+ * for K (see besselk.ts narrative for the full derivation); the
+ * limit-error is `~2^−(prec + 32)`, well below the rounding floor.
+ *
+ * Working precision: `prec + 32 + epsBits + largeZBits + seriesLoss`.
+ * The L'Hôpital cancellation `−log₂(ε) = prec + 32` bits dominates.
+ *
+ * v0.2 follow-up: implement the complex extension of FLINT's
+ * `acb_hypgeom_bessel_k_0f1_series` polynomial-series Temme path
+ * (exact, no limit, faster at very large prec).  v0.1 fallback is
+ * correct everywhere and acceptable up to ~prec=500 bits.
+ */
+export function bigCBesselKIntegerNu(
+  n: number,
+  z: BigComplex,
+  prec: number,
+): BigComplex {
+  if (!Number.isInteger(n)) {
+    throw new RangeError(
+      `bigCBesselKIntegerNu: n must be an integer; got ${n}. ` +
+        `suggestion: non-integer ν must route through bigCBesselKFromConnection.`,
+    );
+  }
+  requireFiniteBesselComplexInput(z, "bigCBesselKIntegerNu", "z");
+  if (cisZero(z)) {
+    throw new RangeError(
+      `bigCBesselKIntegerNu: z must be non-zero; got cisZero. ` +
+        `suggestion: the public entry bigCBesselK already gates z = 0; ` +
+        `this primitive must only be called with z ≠ 0.`,
+    );
+  }
+  // K is even in ν on the real axis; the connection formula generalises
+  // — use |n| so the eps perturbation sits on the same side of zero.
+  const nAbs = Math.abs(n);
+
+  const epsBits = prec + 32;
+  // Working precision: prec + 32 (substrate) + epsBits (L'Hôpital) +
+  // 32 (safety).  The connection's own internal large-|z| / inner
+  // series cancellation budgets are handled by
+  // bigCBesselKFromConnection's retry harness.
+  const work = prec + 32 + epsBits + 32;
+
+  // ε = 2^−epsBits as a BigFloat (real).
+  const eps: BigFloat = {
+    mantissa: 1n,
+    exponent: -epsBits,
+    precision: work,
+  };
+  // ν = n + ε as a real BigComplex.
+  const nuExact: BigComplex = {
+    re: add(fromInt(BigInt(nAbs), work), eps, work),
+    im: { mantissa: 0n, exponent: 0, precision: work },
+  };
+  // Direct call to the folded-connection primitive; do NOT route
+  // through public bigCBesselK (which would re-detect integer ν via
+  // the round-trip-at-input-precision test and re-enter this function).
+  const result = bigCBesselKFromConnection(nuExact, z, work);
+  return {
+    re: normalise(result.re.mantissa, result.re.exponent, prec),
+    im: normalise(result.im.mantissa, result.im.exponent, prec),
+  };
+}
+
+/**
+ * Scaled complex modified Bessel K: returns `e^{z} · K_ν(z)`.
+ *
+ * The complex analogue of `bigBesselKScaled`.  Note the scaling factor
+ * is `e^{z}` (NOT `e^{|z|}`) — for complex z, the natural underflow-
+ * mitigation factor cancels the leading `√(π/(2z)) · e^{-z}` decay of
+ * the Re(z) > 0 asymptotic.  Matches AMOS's `ZBESK` `cyl_bessel_k_scaled`
+ * convention.
+ *
+ * For inputs with Re(z) ≤ 0, this scaling still works (the result is
+ * `O(1)` rather than the `O(exp(|Re(z)|))` of the unscaled K's blow-up
+ * across the branch cut).  For pure-imaginary z, `e^{iz}` introduces a
+ * rotation but no growth/decay.
+ *
+ * Use this variant whenever:
+ *
+ *   - the consumer immediately multiplies by `e^{-z}` (typical for
+ *     integrands of the form `∫ f(z) · K_ν(z) · e^{z} dz`),
+ *   - `Re(z) > 700` is plausible (K underflows the float64 subnormal
+ *     cliff well before z = 700),
+ *   - downstream code needs to pretty-print or log K_ν(z) at large z.
+ *
+ * Real-axis short-circuit: for `z = x + 0i` with `x > 0`, defers to
+ * `bigBesselKScaled(nu.re, x, prec)`.
+ *
+ * Implementation: composed from `bigCBesselK` + `cexp(z)` at
+ * `work = prec + 64`.
+ *
+ * @throws RangeError on non-finite input or z = 0 (delegates to
+ *   bigCBesselK).
+ */
+export function bigCBesselKScaled(
+  nu: BigComplex,
+  z: BigComplex,
+  prec: number,
+): BigComplex {
+  if (prec < 1 || !Number.isInteger(prec)) {
+    throw new RangeError(
+      `bigCBesselKScaled: prec must be a positive integer; got ${prec}. ` +
+        `suggestion: use decimalToBinaryPrecision(<digits>) for a decimal target.`,
+    );
+  }
+  requireFiniteBesselComplexInput(nu, "bigCBesselKScaled", "nu");
+  requireFiniteBesselComplexInput(z, "bigCBesselKScaled", "z");
+
+  // Real-axis short-circuit: defer to bigBesselKScaled.
+  if (cIsPureReal(nu) && cIsPureReal(z) && sgn(z.re) > 0) {
+    return cfromReal(bigBesselKScaled(nu.re, z.re, prec));
+  }
+
+  // z = 0 routes through bigCBesselK which refuses with the proper hints.
+  const work = prec + 64;
+  const kValue = bigCBesselK(nu, z, work);
+  const expZ = cexp(z, work);
+  const result = cmul(kValue, expZ, work);
+  return {
+    re: normalise(result.re.mantissa, result.re.exponent, prec),
+    im: normalise(result.im.mantissa, result.im.exponent, prec),
+  };
+}
+
+// =============================================================================
+// Complex Bessel J / Y / H¹ / H² — AMOS rotation from I3a's complex I/K
+// (ADR-0041 I3b; bead scientist-workbench-t73h)
+// =============================================================================
+//
+// Mathematical foundation
+// -----------------------
+//
+// The complex Bessel J and Y are derived from complex I and K via the
+// DLMF-canonical rotation pattern (R2 §3.3, ADR-0041 §"Decision 11";
+// the precise sign convention cross-validated against Arb T5):
+//
+//     J_ν(z) = exp(s · νπi/2) · I_ν(-s · iz)                            (*)
+//     Y_ν(z) = (-2/π) · exp(-s · νπi/2) · K_ν(-s · iz)
+//                + s · i · J_ν(z)                                       (**)
+//     H¹_ν(z) = J_ν(z) + i · Y_ν(z)                                    (***)
+//     H²_ν(z) = J_ν(z) − i · Y_ν(z)                                   (****)
+//
+// where `s = sign(Im z)` per the AMOS sign-choice convention (top of
+// file).  `s = +1` for `Im(z) ≥ 0`, `s = -1` for `Im(z) < 0`.
+//
+// (*)  is DLMF 10.27.6 rearranged: starting from `I_ν(z) = i^{-ν} ·
+//      J_ν(iz)` (DLMF 10.27.6) and solving for J: `J_ν(z) = i^ν ·
+//      I_ν(-iz)`, then writing `i^ν = exp(νπi/2)`.  The sign-choice
+//      branch is just the conjugate identity `J_ν(\bar z) = \bar
+//      {J_ν(z)}` rolled into the formula so we always rotate INTO the
+//      right half-plane for the I evaluator.
+//
+// (**) Derivation (for s = +1):
+//        - DLMF 10.27.10: `K_ν(z) = (πi/2)·e^{νπi/2}·H¹_ν(iz)`
+//          (for `-π < arg z ≤ π/2`).  Substituting `w = iz`, `z = -iw`
+//          gives `H¹_ν(w) = -(2i/π)·e^{-νπi/2}·K_ν(-iw)`, i.e.
+//          DLMF 10.27.8.
+//        - H¹ = J + iY ⇒ Y = -i·(H¹ - J) = -i·H¹ + i·J.
+//        - Substituting H¹ from above: `Y_ν(w) = (-2/π)·
+//          e^{-νπi/2}·K_ν(-iw) + i·J_ν(w)`, which is (**) with
+//          s = +1.
+//      The lower-half-plane (s = -1) form follows from `Y_ν(\bar z) =
+//      \bar{Y_ν(z)}` for real ν, applied to the upper-half result.
+//
+//      Note: the ADR-0041 §"Decision 11" sketch wrote a different-
+//      sign variant `Y_ν(z) = ±(2i/π)·exp(±νπi/2)·K_ν(∓iz) −
+//      exp(±νπi)·J_ν(z)` which computes a related-but-not-equal value.
+//      The discrepancy was caught at substrate-test time when the
+//      ADR-form computation disagreed with the Arb T5 corpus and
+//      mpmath; the displayed (**) form is the one that ships and
+//      that the golden-master suite verifies.
+//
+// (***), (****) are DLMF 10.4.2 — the definitional identities for the
+//      Hankel functions.  Algebraic, no computation beyond a complex
+//      add / subtract / scale.
+//
+// Round ordering
+// --------------
+//
+// I3a (above) shipped `bigCBesselI` + `bigCBesselK` + their scaled
+// variants.  I3b (this section) wraps them with the four definitions
+// (*), (**), (***), (****).  No new series, no new asymptotic, no new
+// cancellation harness — the rotation is a *thin* algebraic layer.
+//
+// The reward: complex J / Y at large |z| reuse I and K's machinery
+// rather than re-deriving J/Y-specific Hankel asymptotics with their
+// `cos(ω)·P − sin(ω)·Q` mixing and Stokes-multiplier subtleties.
+// AMOS's 40-year canonical choice.  FLINT's transcription identical.
+//
+// Cancellation surfaces
+// ---------------------
+//
+// The rotation (*) is byte-clean — `exp(±νπi/2)` is O(1), `I_ν(-iz)`
+// is the actual answer (modulo a unit-magnitude phase), so there is no
+// outer cancellation.  Working precision `prec + 32` suffices.
+//
+// The Y formula (**) has a `phaseK · K − phaseJ · J` subtraction.
+// Both terms can be O(1) for moderate |z|; at large |z| with `arg z`
+// far from π/2, K_ν(-iz) decays like `exp(-|Im z|)` while J_ν(z) is
+// oscillatory with O(1/√|z|) envelope — no exponential growth on
+// either side, so the cancellation is bounded by `2·|ν|·log₂ e` bits
+// in the worst case (from `arg(phaseJ) − arg(phaseK)` cancellation
+// when ν is large).  Working precision `prec + 32 + |Im(ν·π)|/ln 2`
+// bits.  For our golden-master corpus (ν ∈ {0, 3/2, 2.3, 3}, |z| ≤
+// ~30) the budget is well under 100 extra bits.
+//
+// The Hankel sums (***), (****) are byte-clean (single complex
+// add/sub between two values of comparable magnitude).  No retry.
+//
+// Real-axis short-circuits — load-bearing
+// ---------------------------------------
+//
+// For `nu` and `z` both pure-real with `z.re > 0`, we defer to the
+// real-axis substrate (`bigBesselJ` / `bigBesselY` from I1a/I1b).  The
+// `.re` component is byte-equal to the real path; `.im` is exactly
+// zero.  This pins the complex / real lanes together via the
+// restriction-to-real-axis test class (mirror of I3a's pattern).
+//
+// For `nu` real and `z` purely-imaginary, no short-circuit — the
+// general path naturally lands on `I_ν(real positive)`, which itself
+// short-circuits to `bigBesselI` inside `bigCBesselI`.  The composition
+// is byte-clean.
+//
+// Determinism
+// -----------
+//
+// Every operation is `BigInt` complex arithmetic via the substrate;
+// inherits the `arbprec: true` contract of ADR-0020 — same
+// `(nu, z, prec)` bytes → byte-identical `BigComplex` output forever.
+//
+// References (all in repo)
+// ------------------------
+//
+//   - docs/adr/0041-bessel-family-per-head-substrate.md §"Decision 3"
+//     and §"Decision 11" (AMOS rotation + sign-choice convention)
+//   - docs/refs/besselj-research/R2-arbprec-algorithms.md §3.3 (AMOS
+//     rotation), §"Risks" §6 (sign-choice correctness)
+//   - packages/bigfloat/src/complex.ts (this file) — I3a above ships
+//     `bigCBesselI`/`bigCBesselK` that this section consumes
+//   - packages/bigfloat/src/special-funcs/besselj.ts — real I1a sibling
+//   - packages/bigfloat/src/special-funcs/bessely.ts — real I1b sibling
+//   - bench/besselj-anchor/oracles/arb/results.json — T5 complex
+//     BesselJ/Y ground truth (32 entries each across Q1/Q2/Q3/Q4)
+//   - DLMF §10.4 (Hankel definitions), §10.27 (I/K interrelations
+//     including the rotation 10.27.6 and Y/K relation 10.27.10),
+//     §10.11 (analytic continuation, branch cuts for J/Y)
+//   - AMOS TOMS 644: `zbesj.f`, `zbesy.f` (canonical Fortran sources;
+//     the sign-choice branches are documented in their preamble
+//     comments and the corresponding KODE / NZ logic)
+
+// -----------------------------------------------------------------------------
+// AMOS sign choice + complex i-multiplication primitives
+// -----------------------------------------------------------------------------
+
+/**
+ * AMOS-convention sign choice from `z`.  Returns `+1` if `Im(z) ≥ 0`
+ * (closed upper half-plane, including the positive and negative real
+ * axes), `-1` if `Im(z) < 0` (open lower half-plane).
+ *
+ * This matches AMOS's `ZBESJ.f` branch `IF (ZI.LT.0.0D0)`: the
+ * boundary case `Im(z) = 0` is handled by the upper branch.  The
+ * real-axis short-circuit upstream catches Re(z) > 0; for Re(z) ≤ 0
+ * with Im(z) = 0 (the negative real axis), the formula reduces to a
+ * known-real value (J_ν(-x) = ±J_ν(x) for integer ν via parity; the
+ * general non-integer case requires the complex evaluation we
+ * implement, and the sign +1 branch gives the principal-branch
+ * answer).
+ *
+ * The "sign of zero" question: this returns +1 for `Im(z) === +0` AND
+ * for `Im(z) === -0` AND for any other input with `Im(z) === 0`.
+ * Symbolic zero is treated as the upper-half-plane boundary.
+ */
+function chooseAMOSSignFromZ(z: BigComplex): 1 | -1 {
+  return sgn(z.im) < 0 ? -1 : 1;
+}
+
+/**
+ * Multiply a BigComplex by `+i`: `i·(a + bi) = -b + a·i`.  Same as
+ * the existing `ciMul` helper above (kept inline-named for clarity at
+ * the J/Y rotation call sites).
+ */
+function cMulByI(z: BigComplex): BigComplex {
+  return { re: neg(z.im), im: z.re };
+}
+
+/**
+ * Multiply a BigComplex by `-i`: `-i·(a + bi) = b − a·i`.  The
+ * companion to `cMulByI`; used when the AMOS sign is +1 to form `-iz`.
+ */
+function cMulByNegI(z: BigComplex): BigComplex {
+  return { re: z.im, im: neg(z.re) };
+}
+
+/**
+ * Compute the rotated argument `∓i·z` per the AMOS sign convention:
+ *
+ *     sign = +1:  return -i · z
+ *     sign = -1:  return +i · z
+ *
+ * The rotated argument's real part is always `≥ 0` (proof in the
+ * top-of-file narrative).  This is the load-bearing geometric
+ * property that makes the rotation numerically optimal — the I and K
+ * substrates land on their canonical-growth half-plane.
+ */
+function amosRotateArg(z: BigComplex, sign: 1 | -1): BigComplex {
+  return sign === 1 ? cMulByNegI(z) : cMulByI(z);
+}
+
+/**
+ * Compute the rotation phase `exp(sign · ν · π · i / 2)` for the J
+ * rotation (*).  Returns a complex number of unit modulus (modulo
+ * roundoff).  For integer ν this is a 4-cycle of `{1, i, -1, -i}`;
+ * for non-integer ν a general unit-circle complex number.
+ *
+ * Working precision: caller passes `work`; the returned phase carries
+ * `work` bits.  The phase's argument is `sign · ν · π / 2`, real
+ * (modulo a complex ν, which inserts a real multiplicative factor
+ * `exp(-sign · Im(ν) · π / 2)` from the imaginary component).
+ */
+function amosJPhase(
+  nu: BigComplex,
+  sign: 1 | -1,
+  work: number,
+): BigComplex {
+  // exponent = sign · ν · π · i / 2.  Build as a BigComplex.
+  const piW = pi(work);
+  const half = fromFloat64(0.5);
+  const piHalf = mul(piW, half, work);                   // π/2 as real BigFloat.
+  // Real scalar `sign · π / 2` (as a real BigFloat).
+  const signedPiHalf = sign === 1 ? piHalf : neg(piHalf);
+  // ν · (sign · π / 2) — purely real scalar times complex ν:
+  //   = sign · (π/2) · (ν.re + i·ν.im)
+  // We need this times i:
+  //   exponent = i · sign · (π/2) · ν
+  //            = -sign · (π/2) · ν.im + i · sign · (π/2) · ν.re
+  const expRe = mul(signedPiHalf, neg(nu.im), work);
+  const expIm = mul(signedPiHalf, nu.re, work);
+  const exponent: BigComplex = { re: expRe, im: expIm };
+  return cexp(exponent, work);
+}
+
+// (`amosYJPhase` was sketched in an earlier draft of this file as
+// `exp(s · ν π i)` — twice the J phase angle.  The shipped Y formula
+// (DLMF-derived) does not use it; deleted.  The Y phase term is
+// `exp(-s · ν π i / 2)` — same magnitude as the J phase but with the
+// sign-of-s argument negated.  We re-use `amosJPhase` with the sign
+// negated in `bigCBesselY` below.)
+
+// -----------------------------------------------------------------------------
+// bigCBesselJ — complex Bessel J via AMOS rotation from bigCBesselI
+// -----------------------------------------------------------------------------
+
+/**
+ * Complex Bessel function of the first kind `J_ν(z)` at user-
+ * controlled arbitrary precision.
+ *
+ * Algorithm (ADR-0041 §"Decision 11"; AMOS ZBESJ pattern):
+ *
+ *     J_ν(z) = exp(s · νπi/2) · I_ν(-s · iz)
+ *
+ * where `s = +1` if `Im(z) ≥ 0`, `s = -1` otherwise.  The substrate
+ * primitive `bigCBesselI` (I3a, above) does the heavy lifting; this
+ * function is a *thin* phase + rotation wrapper.
+ *
+ * Algorithm dispatch
+ * ------------------
+ *
+ *   isPureReal(nu), isPureReal(z), z.re > 0:
+ *       defer to bigBesselJ (the I1a real substrate).  Byte-identical
+ *       `.re`; exactly-zero `.im`.  Load-bearing for the restriction-
+ *       to-real-axis byte-equality test.
+ *
+ *   isPureReal(nu), isPureReal(z), z.re < 0:
+ *       fall through to the general path.  For integer ν, the parity
+ *       J_ν(-z) = (-1)^ν J_ν(z) holds and is recovered exactly by the
+ *       complex rotation; for non-integer ν, the principal-branch
+ *       value is well-defined via the rotation (DLMF 10.11.5: J_ν on
+ *       the negative real axis carries a non-trivial complex value).
+ *
+ *   general complex:
+ *       AMOS rotation per (*) above.
+ *
+ * v0.1 scope (parallel to I3a)
+ * ----------------------------
+ *
+ *   - No complex Hankel asymptotic in v0.1 — for `|z| ≳ prec/2`, the
+ *     I_ν series inside the rotation is slow but correct.  Stokes-
+ *     multiplier work deferred to v0.2.
+ *
+ *   - The boundary case `Im(z) = 0` exactly is handled by the
+ *     `sign = +1` branch; the real-axis short-circuit catches the
+ *     non-pathological subcase (z.re > 0).
+ *
+ * Determinism: every operation is `BigInt` complex arithmetic via the
+ * substrate; inherits ADR-0020's `arbprec: true` contract — same
+ * `(nu, z, prec)` bytes → byte-identical `BigComplex` output forever.
+ *
+ * @throws RangeError on non-finite input (delegates to bigCBesselI).
+ */
+export function bigCBesselJ(
+  nu: BigComplex,
+  z: BigComplex,
+  prec: number,
+): BigComplex {
+  if (prec < 1 || !Number.isInteger(prec)) {
+    throw new RangeError(
+      `bigCBesselJ: prec must be a positive integer; got ${prec}. ` +
+        `suggestion: use decimalToBinaryPrecision(<digits>) for a decimal target.`,
+    );
+  }
+  requireFiniteBesselComplexInput(nu, "bigCBesselJ", "nu");
+  requireFiniteBesselComplexInput(z, "bigCBesselJ", "z");
+
+  // Real-axis short-circuit: byte-identical with the I1a real path
+  // (bigBesselJ handles z = 0 and z < 0 internally; the latter routes
+  // through integer-ν parity or refuses for non-integer ν, in which
+  // case the complex path below is the correct dispatch — but for
+  // z.re > 0 with real ν the real path is the canonical bit-identical
+  // answer and that is what the restriction-to-real-axis test class
+  // pins).  The condition deliberately mirrors bigBesselJ's own
+  // dispatch envelope.
+  if (cIsPureReal(nu) && cIsPureReal(z) && sgn(z.re) > 0) {
+    return cfromReal(bigBesselJ(nu.re, z.re, prec));
+  }
+
+  // z = 0 closed form: J_ν(0) = 1 for ν = 0, 0 for Re(ν) > 0
+  // (integer or not), 0 for negative integer ν, undefined (singular)
+  // for negative non-integer ν.
+  if (cisZero(z)) {
+    if (cisZero(nu)) {
+      return cfromReal(normalise(1n, 0, prec));
+    }
+    if (sgn(nu.re) > 0 || (isZero(nu.re) && !isZero(nu.im))) {
+      return cfromReal({ mantissa: 0n, exponent: 0, precision: prec });
+    }
+    // Re(ν) < 0: integer ν gives 0, non-integer is singular.
+    if (cIsPureReal(nu)) {
+      const asInt = asExactIntegerBF(nu.re);
+      if (asInt !== null) {
+        return cfromReal({ mantissa: 0n, exponent: 0, precision: prec });
+      }
+    }
+    throw new RangeError(
+      `bigCBesselJ: J_ν(0) is unbounded for negative non-integer Re(ν); ` +
+        `suggestion: at z = 0, J_ν is singular for Re(ν) < 0 non-integer; ` +
+        `use the symbolic limit instead.`,
+    );
+  }
+
+  // General complex path — AMOS rotation.
+  const work = prec + 32;
+  const sign = chooseAMOSSignFromZ(z);
+
+  // Rotated argument: ζ = ∓i · z.  By construction Re(ζ) ≥ 0.
+  const zeta = amosRotateArg(z, sign);
+
+  // I_ν(ζ) at working precision.
+  const iValue = bigCBesselI(nu, zeta, work);
+
+  // Phase: exp(sign · ν · π · i / 2).
+  const phase = amosJPhase(nu, sign, work);
+
+  // J = phase · I(ζ).
+  const result = cmul(phase, iValue, work);
+
+  return {
+    re: normalise(result.re.mantissa, result.re.exponent, prec),
+    im: normalise(result.im.mantissa, result.im.exponent, prec),
+  };
+}
+
+// -----------------------------------------------------------------------------
+// bigCBesselY — complex Bessel Y via AMOS rotation from bigCBesselK + J
+// -----------------------------------------------------------------------------
+
+/**
+ * Complex Bessel function of the second kind `Y_ν(z)` at user-
+ * controlled arbitrary precision.
+ *
+ * Algorithm (derived from DLMF 10.27.8 + 10.27.10; AMOS ZBESY pattern):
+ *
+ *     Y_ν(z) = (-2/π) · exp(-s · νπi/2) · K_ν(-s · iz) + s · i · J_ν(z)
+ *
+ * where `s = sign(Im z)` with the same convention as `bigCBesselJ`
+ * (s = +1 for `Im(z) ≥ 0`, s = -1 for `Im(z) < 0`).
+ *
+ * Derivation (for s = +1, upper half-plane):
+ *   - DLMF 10.27.10 + 10.27.8 give H¹_ν(z) = -(2i/π)·e^{-νπi/2}·K_ν(-iz).
+ *   - H¹ = J + iY ⇒ Y = -i·(H¹ - J) = -i·H¹ + i·J
+ *                     = -i·[-(2i/π)·e^{-νπi/2}·K_ν(-iz)] + i·J_ν(z)
+ *                     = (-2/π)·e^{-νπi/2}·K_ν(-iz) + i·J_ν(z).
+ *   - For s = -1 (lower), conjugate-symmetry `Y_ν(\bar z) = \bar{Y_ν(z)}`
+ *     (real ν) gives the displayed combined formula.
+ *
+ * Note: the ADR-0041 §"Decision 11" sketch wrote a different-sign
+ * variant of this formula; the substrate uses the DLMF-derived form
+ * (cross-validated against the Arb T5 golden corpus and mpmath).  The
+ * ADR sketch lives at the level of "AMOS ZBESY pattern" and does not
+ * pin the precise sign convention; this comment records the canonical
+ * form actually shipped.
+ *
+ * The substrate primitives `bigCBesselK` (I3a, above) and
+ * `bigCBesselJ` (just above this function) do the work; this is the
+ * algebraic combiner.
+ *
+ * Algorithm dispatch
+ * ------------------
+ *
+ *   isPureReal(nu), isPureReal(z), z.re > 0:
+ *       defer to bigBesselY (the I1b real substrate).  Byte-identical
+ *       `.re`; exactly-zero `.im`.  Load-bearing for the restriction-
+ *       to-real-axis byte-equality test.
+ *
+ *   z = 0:
+ *       refused (Y_ν(0+) is logarithmic for ν = 0, power-law for
+ *       ν > 0; singular for all ν).
+ *
+ *   general complex:
+ *       AMOS Y formula per (**) above.
+ *
+ * Cancellation surface
+ * --------------------
+ *
+ * The `phaseK · K − phaseJ · J` subtraction is bounded by `2·|ν.im|·π
+ * + 2·|Im rotation| / ln 2` bits in the worst case (the |Im(ν)|
+ * contribution comes from each phase factor's real magnitude scaling
+ * as `exp(±Im(ν)·π)`; the rotation contribution is bounded by `2·|z|`
+ * via the K's exponential decay).  Working precision `prec + 32 +
+ * cancellation budget` per the budget formula below.
+ *
+ * @throws RangeError on non-finite input, z = 0 (singular), or other
+ *   inadmissible configurations (delegates to bigCBesselK / J).
+ */
+export function bigCBesselY(
+  nu: BigComplex,
+  z: BigComplex,
+  prec: number,
+): BigComplex {
+  if (prec < 1 || !Number.isInteger(prec)) {
+    throw new RangeError(
+      `bigCBesselY: prec must be a positive integer; got ${prec}. ` +
+        `suggestion: use decimalToBinaryPrecision(<digits>) for a decimal target.`,
+    );
+  }
+  requireFiniteBesselComplexInput(nu, "bigCBesselY", "nu");
+  requireFiniteBesselComplexInput(z, "bigCBesselY", "z");
+
+  // z = 0: singular for all ν.
+  if (cisZero(z)) {
+    throw new RangeError(
+      `bigCBesselY: Y_ν(z) is singular at z = 0 (Y_0(0+) ~ (2/π) log(z/2) — ` +
+        `logarithmic; Y_ν(0+) ~ -(1/π) Γ(ν) (2/z)^ν for Re(ν) > 0). ` +
+        `suggestion: tool-layer code should emit tagged ` +
+        `"bigfloat/y-singular-at-zero" for this input; do not request Y_ν at z = 0.`,
+    );
+  }
+
+  // Real-axis short-circuit: byte-identical with I1b's bigBesselY.
+  if (cIsPureReal(nu) && cIsPureReal(z) && sgn(z.re) > 0) {
+    return cfromReal(bigBesselY(nu.re, z.re, prec));
+  }
+
+  // General complex path — DLMF-derived Y formula:
+  //   Y_ν(z) = (-2/π) · exp(-s · νπi/2) · K_ν(-s · iz) + s · i · J_ν(z)
+  //
+  // Cancellation budget: the phase factor `exp(-s · νπi/2)` carries
+  // magnitude `exp(+s · Im(ν) · π / 2)` (purely from the imaginary
+  // part of ν).  Its product with K can blow up if |Im(ν)| is large;
+  // we budget `|Im(ν) · π / 2| / ln 2` bits.  For real ν this is 0
+  // (all of our corpus inputs); for complex ν the budget kicks in.
+  // The K + J combination has a single subtraction surface bounded by
+  // ~16 bits in the worst case for our corpus regime — no per-input
+  // retry harness is needed at v0.1.
+  const nuImAbs = Math.abs(toFloat64(nu.im).value);
+  const phaseBudgetBits = Number.isFinite(nuImAbs)
+    ? Math.ceil(nuImAbs * Math.PI * 0.5 * Math.LOG2E)
+    : 0;
+  const work = prec + 32 + phaseBudgetBits;
+
+  const sign = chooseAMOSSignFromZ(z);
+
+  // Rotated argument: ζ = ∓i · z (Re(ζ) ≥ 0 by construction).
+  const zeta = amosRotateArg(z, sign);
+
+  // K_ν(ζ) — the modified-second-kind primitive from I3a.
+  const kValue = bigCBesselK(nu, zeta, work);
+
+  // J_ν(z) — recurse to public bigCBesselJ.  For real ν + real z.re
+  // > 0 this short-circuits to the bit-identical real-axis answer,
+  // which is the load-bearing property the test class pins.
+  const jValue = bigCBesselJ(nu, z, work);
+
+  // Conjugate-J-phase: exp(-s · ν π i / 2) — note the SIGN on s vs
+  // bigCBesselJ's amosJPhase (which uses +s).  We negate the sign
+  // argument to amosJPhase.
+  const conjPhase = amosJPhase(nu, (sign === 1 ? -1 : 1) as 1 | -1, work);
+
+  // (-2/π) as a real BigFloat, lifted to BigComplex.
+  const piW = pi(work);
+  const twoOverPi = div(fromInt(2n, work), piW, work);
+  const negTwoOverPi = cfromReal(neg(twoOverPi));
+
+  // Coefficient of K: (-2/π) · exp(-s · ν π i / 2).
+  const kCoeff = cmul(negTwoOverPi, conjPhase, work);
+  const termK = cmul(kCoeff, kValue, work);
+
+  // Coefficient of J: s · i.  s·i·J = s · (-Im(J), +Re(J)).
+  const sI_J: BigComplex =
+    sign === 1
+      ? { re: neg(jValue.im), im: jValue.re }
+      : { re: jValue.im, im: neg(jValue.re) };
+
+  const result = cadd(termK, sI_J, work);
+
+  return {
+    re: normalise(result.re.mantissa, result.re.exponent, prec),
+    im: normalise(result.im.mantissa, result.im.exponent, prec),
+  };
+}
+
+// -----------------------------------------------------------------------------
+// bigCHankelH1 / bigCHankelH2 — algebraic from J + Y
+// -----------------------------------------------------------------------------
+
+/**
+ * Complex Hankel function of the first kind `H¹_ν(z) = J_ν(z) + i ·
+ * Y_ν(z)` at user-controlled arbitrary precision.  (DLMF 10.4.2.)
+ *
+ * Algebraic — no series, no asymptotic, no cancellation harness.
+ * Computes J and Y at `prec + 16` working bits and combines with a
+ * single complex add.  The 16-bit pad covers the magnitude alignment
+ * in the `i · Y` step and the final normalisation.
+ *
+ * Cancellation surface
+ * --------------------
+ *
+ * J and i·Y can have comparable magnitudes with opposite signs along
+ * specific rays of arg z (the Hankel functions decay much faster than
+ * either J or Y individually along the upper / lower half-plane
+ * axes).  At those rays the `J + i·Y` sum loses a bounded number of
+ * bits; the 16-bit pad is sufficient for our corpus.  For pathological
+ * inputs (extremely tight ray alignment), the loss could exceed 16
+ * bits — caller should bump `prec` if `bigBesselJ` and `bigBesselY`
+ * are both ~exp(|z|) and the Hankel result is much smaller.  v0.1
+ * scope does not autocompensate; v0.2 follow-up may add a measure-
+ * and-bump harness if a real consumer needs it.
+ *
+ * Determinism: inherits ADR-0020 `arbprec: true` contract via the J
+ * and Y substrates.
+ *
+ * @throws RangeError on non-finite input or singular point (delegates
+ *   to bigCBesselJ / bigCBesselY).
+ */
+export function bigCHankelH1(
+  nu: BigComplex,
+  z: BigComplex,
+  prec: number,
+): BigComplex {
+  if (prec < 1 || !Number.isInteger(prec)) {
+    throw new RangeError(
+      `bigCHankelH1: prec must be a positive integer; got ${prec}. ` +
+        `suggestion: use decimalToBinaryPrecision(<digits>) for a decimal target.`,
+    );
+  }
+  requireFiniteBesselComplexInput(nu, "bigCHankelH1", "nu");
+  requireFiniteBesselComplexInput(z, "bigCHankelH1", "z");
+
+  const work = prec + 16;
+  const jValue = bigCBesselJ(nu, z, work);
+  const yValue = bigCBesselY(nu, z, work);
+  // i · Y = (-Im(Y), +Re(Y))
+  const iY = cMulByI(yValue);
+  const result = cadd(jValue, iY, work);
+  return {
+    re: normalise(result.re.mantissa, result.re.exponent, prec),
+    im: normalise(result.im.mantissa, result.im.exponent, prec),
+  };
+}
+
+/**
+ * Complex Hankel function of the second kind `H²_ν(z) = J_ν(z) − i ·
+ * Y_ν(z)` at user-controlled arbitrary precision.  (DLMF 10.4.2.)
+ *
+ * Algebraic mirror of `bigCHankelH1`.  Computes J and Y at `prec +
+ * 16` working bits and combines with a single complex subtract.
+ *
+ * Identity sanity check: `H¹ + H² = 2·J` (the `i·Y` cancels) and
+ * `H¹ − H² = 2i·Y` (the `J` cancels).  Both are pinned in the test
+ * suite's Hankel-identity tests.
+ *
+ * @throws RangeError on non-finite input or singular point (delegates
+ *   to bigCBesselJ / bigCBesselY).
+ */
+export function bigCHankelH2(
+  nu: BigComplex,
+  z: BigComplex,
+  prec: number,
+): BigComplex {
+  if (prec < 1 || !Number.isInteger(prec)) {
+    throw new RangeError(
+      `bigCHankelH2: prec must be a positive integer; got ${prec}. ` +
+        `suggestion: use decimalToBinaryPrecision(<digits>) for a decimal target.`,
+    );
+  }
+  requireFiniteBesselComplexInput(nu, "bigCHankelH2", "nu");
+  requireFiniteBesselComplexInput(z, "bigCHankelH2", "z");
+
+  const work = prec + 16;
+  const jValue = bigCBesselJ(nu, z, work);
+  const yValue = bigCBesselY(nu, z, work);
+  // i · Y = (-Im(Y), +Re(Y))
+  const iY = cMulByI(yValue);
+  const result = csub(jValue, iY, work);
+  return {
+    re: normalise(result.re.mantissa, result.re.exponent, prec),
+    im: normalise(result.im.mantissa, result.im.exponent, prec),
+  };
+}
+
+// Suppress unused-symbol warnings for helpers parked for future
+// substrate primitives (Hankel asymptotic, etc.).
+void cIsPureImag;

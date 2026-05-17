@@ -58,6 +58,25 @@ function complexInput(head: string, re: number, im: number) {
   return record({ head: str(head), args: complexArgs(re, im) });
 }
 
+// Arity-2 helpers for the Bessel family — args = [ν, z] (real) or
+// args.re = [ν, z.re], args.im = [0, z.im] (complex).
+function realInput2(head: string, nu: number, z: number) {
+  return record({
+    head: str(head),
+    args: list([float64FromNumber(nu), float64FromNumber(z)]),
+  });
+}
+
+function complexInput2(head: string, nu: number, zRe: number, zIm: number) {
+  return record({
+    head: str(head),
+    args: record({
+      re: list([float64FromNumber(nu), float64FromNumber(zRe)]),
+      im: list([float64FromNumber(0), float64FromNumber(zIm)]),
+    }),
+  });
+}
+
 export const goldens: GoldenSpec[] = [
   // Golden 1: real Erf, float64 lane (default precision = 50).
   // At p=50 (>15) this routes the arb-prec lane. To exercise the
@@ -162,9 +181,14 @@ export const goldens: GoldenSpec[] = [
   },
 
   // Golden 13: refusal — unknown head.
+  //
+  // Was `BesselJ` pre-ADR-0041; now that BesselJ is admitted (T2 worklog
+  // 163 / bead unno), the unknown-head test rotates to `WhittakerM`
+  // (admitted to the cas-core vocabulary per ADR-0023 but with no
+  // special-eval substrate; still refused as unknown-head here).
   {
-    description: "BesselJ → unknown-head refusal",
-    input: realInput("BesselJ", 0.5),
+    description: "WhittakerM → unknown-head refusal",
+    input: realInput("WhittakerM", 0.5),
     flags: { precision: "50" },
   },
 
@@ -189,5 +213,154 @@ export const goldens: GoldenSpec[] = [
       }),
     }),
     flags: { precision: "50" },
+  },
+
+  // ===========================================================================
+  // Bessel family goldens (ADR-0041 §"Decision 7"; T2 worklog 163)
+  // ===========================================================================
+  //
+  // 20 goldens spanning the 4 primary heads × 5 tiers each:
+  //   T1 — small-z series regime (|z| ≲ 1)
+  //   T2 — mid-z (transition / O(1))
+  //   T3 — large-z asymptotic regime
+  //   T5 — complex argument
+  //   T7 — higher-ν stress
+  //
+  // Reference values for the arb-prec lane are byte-identical to FLINT/Arb
+  // via python-flint (bench/besselj-anchor/oracles/arb/results.json); the
+  // float64-lane goldens pin the verbatim R3 ports' output bytes.
+
+  // ---- BesselJ ----
+  {
+    description: "BesselJ(0, 0.5) at precision 50 — T1 small-z series",
+    input: realInput2("BesselJ", 0, 0.5),
+    flags: { precision: "50" },
+  },
+  {
+    description: "BesselJ(0, 8.0) at precision 50 — T2 mid-z (cancellation regime)",
+    input: realInput2("BesselJ", 0, 8.0),
+    flags: { precision: "50" },
+  },
+  {
+    description: "BesselJ(0, 200.0) at precision 50 — T3 large-z Hankel asymptotic",
+    input: realInput2("BesselJ", 0, 200.0),
+    flags: { precision: "50" },
+  },
+  {
+    description: "BesselJ(3, 1.5) at precision 50 — T7 higher-ν integer",
+    input: realInput2("BesselJ", 3, 1.5),
+    flags: { precision: "50" },
+  },
+  {
+    description: "BesselJ(2, 1.0+0.5i) at precision 50 — T5 complex z (arb-prec AMOS rotation)",
+    input: complexInput2("BesselJ", 2, 1.0, 0.5),
+    flags: { precision: "50" },
+  },
+
+  // ---- BesselY ----
+  {
+    description: "BesselY(0, 0.5) at precision 50 — T1 small-z (log singularity nearby)",
+    input: realInput2("BesselY", 0, 0.5),
+    flags: { precision: "50" },
+  },
+  {
+    description: "BesselY(0, 5.0) at precision 50 — T2 mid-z",
+    input: realInput2("BesselY", 0, 5.0),
+    flags: { precision: "50" },
+  },
+  {
+    description: "BesselY(0, 100.0) at precision 50 — T3 large-z Hankel asymptotic",
+    input: realInput2("BesselY", 0, 100.0),
+    flags: { precision: "50" },
+  },
+  {
+    description: "BesselY(2, 3.0) at precision 50 — T7 higher-ν integer",
+    input: realInput2("BesselY", 2, 3.0),
+    flags: { precision: "50" },
+  },
+  {
+    description: "BesselY(1, 3.0) at precision 10 — float64 lane (musl SunPro)",
+    input: realInput2("BesselY", 1, 3.0),
+    flags: { precision: "10" },
+  },
+
+  // ---- BesselI ----
+  {
+    description: "BesselI(0, 0.5) at precision 50 — T1 small-z ₀F₁ Maclaurin",
+    input: realInput2("BesselI", 0, 0.5),
+    flags: { precision: "50" },
+  },
+  {
+    description: "BesselI(0, 5.0) at precision 50 — T2 mid-z (modified Hankel boundary)",
+    input: realInput2("BesselI", 0, 5.0),
+    flags: { precision: "50" },
+  },
+  {
+    description: "BesselI(0, 50.0) at precision 50 — T3 large-z modified asymptotic",
+    input: realInput2("BesselI", 0, 50.0),
+    flags: { precision: "50" },
+  },
+  {
+    description: "BesselI(2, 2.0) at precision 50 — T7 higher-ν integer",
+    input: realInput2("BesselI", 2, 2.0),
+    flags: { precision: "50" },
+  },
+  {
+    description: "BesselI(1, 1.0+0.5i) at precision 50 — T5 complex z arb-prec",
+    input: complexInput2("BesselI", 1, 1.0, 0.5),
+    flags: { precision: "50" },
+  },
+
+  // ---- BesselK ----
+  {
+    description: "BesselK(0, 0.5) at precision 50 — T1 small-z (logarithmic regime)",
+    input: realInput2("BesselK", 0, 0.5),
+    flags: { precision: "50" },
+  },
+  {
+    description: "BesselK(0, 10.0) at precision 100 — T2/T3 deep arb-prec asymptotic",
+    input: realInput2("BesselK", 0, 10.0),
+    flags: { precision: "100" },
+  },
+  {
+    description: "BesselK(0, 50.0) at precision 50 — T3 large-z (tiny: ~3.4e-23)",
+    input: realInput2("BesselK", 0, 50.0),
+    flags: { precision: "50" },
+  },
+  {
+    description: "BesselK(2, 1.0) at precision 50 — T7 higher-ν integer",
+    input: realInput2("BesselK", 2, 1.0),
+    flags: { precision: "50" },
+  },
+  {
+    description: "BesselK(1, 2.0+1.0i) at precision 50 — T5 complex z arb-prec",
+    input: complexInput2("BesselK", 1, 2.0, 1.0),
+    flags: { precision: "50" },
+  },
+
+  // ---- BesselIScaled / BesselKScaled (the overflow / underflow lifters) ----
+  {
+    description: "BesselIScaled(0, 700) at precision 10 — float64 (unscaled would overflow)",
+    input: realInput2("BesselIScaled", 0, 700),
+    flags: { precision: "10" },
+  },
+  {
+    description: "BesselKScaled(0, 1000) at precision 10 — float64 (unscaled would underflow to 0)",
+    input: realInput2("BesselKScaled", 0, 1000),
+    flags: { precision: "10" },
+  },
+
+  // ---- Bessel refusal: K_ν(0) singular ----
+  {
+    description: "BesselK(0, 0) → no-known-representation (logarithmic singularity)",
+    input: realInput2("BesselK", 0, 0),
+    flags: { precision: "50" },
+  },
+
+  // ---- Bessel float64 lane spot-check ----
+  {
+    description: "BesselJ(0, 2.0) at precision 10 — float64 lane (musl SunPro j0.c)",
+    input: realInput2("BesselJ", 0, 2.0),
+    flags: { precision: "10" },
   },
 ];
