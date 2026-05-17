@@ -110,3 +110,19 @@ export {
   erfiComplexFloat64,
   maskLowWord,
 } from "./special-funcs/erf-float64.js";
+
+// Float64 Bessel family substrate (ADR-0041 §Decision 4). Inherits
+// `numerical: true` (ADR-0015). Six real entry points (J, Y, I, K +
+// scaled I, scaled K) + 4 complex (via AMOS-style rotation per R3 §1.6).
+export {
+  besselJFloat64,
+  besselYFloat64,
+  besselIFloat64,
+  besselKFloat64,
+  besselIScaledFloat64,
+  besselKScaledFloat64,
+  besselJComplexFloat64,
+  besselYComplexFloat64,
+  besselIComplexFloat64,
+  besselKComplexFloat64,
+} from "./special-funcs/bessel-float64.js";

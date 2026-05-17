@@ -262,6 +262,32 @@ the closure name in the test name itself. The rename therefore had to
 update the describe-block title (not just the call site) to keep the
 runner output honest about what's being tested.
 
+### F5 — Prior-subagent commit `6bfce74` shipped with a stale M3 mutation un-restored (deep bug; this session fixed)
+
+A prior I6-prep subagent invocation hit the harness duration cap before
+bd-close and committed the work in `6bfce74` with one of the
+mutation-proving perturbations (M3 in this shard's mutation taxonomy:
+`recovered[0]!` → `recovered[1]!` in `tools/special-eval/cross-cutting.
+test.ts`) NOT restored before the commit. The committed test was RED on
+every Erf-family cross-cutting sample (15 fails per `bun test tools/
+special-eval/cross-cutting.test.ts` with `TypeError: undefined is not
+an object (evaluating 'v.kind')`). This is exactly the failure mode
+CLAUDE.md Rule 2 ("all bugs are deep") calls out: a mutation that was
+correctly RED in mutation-proving should NEVER survive into a commit;
+when it does, the silent breakage is far worse than the rename being
+incomplete. This session's first action was to detect the broken state
+via `git diff` (single-line stale mutation visible immediately), verify
+it was the M3 mutation pattern, restore the line to `recovered[0]!`,
+and confirm the cross-cutting test returns 56/0/120 byte-identically
+green. The fix is a 1-character (`1` → `0`) change committed in
+lockstep with the close-out. Filed informally as a methodology lesson
+for subagent-handoff hygiene: any subagent that applies a mutation MUST
+restore-and-verify-green before bd-update / bd-close / commit, with a
+post-mutation `git diff packages/ tools/` sanity check showing the
+intended edits ONLY (no stray mutation residue). The mutation-proving
+discipline only catches what it tests; a broken commit-time invariant
+catches everything else.
+
 ## Mutation-proving
 
 Per CLAUDE.md Rule 6 (port-and-verify variant — the rename is a

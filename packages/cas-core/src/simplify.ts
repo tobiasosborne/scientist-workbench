@@ -64,19 +64,39 @@ import {
   isErfFamilyHead,
   tryErfSimplify,
 } from "./special-funcs/erf-identities.js";
+import {
+  isBesselFamilyHead,
+  tryBesselSimplify,
+} from "./special-funcs/bessel-identities.js";
 
 export const SIMPLIFY_TAG = "cas-simplify/out-of-scope";
 
 /** Bound on per-node rewrite-cascade iterations. See file header. */
 const ERF_REWRITE_MAX_ITERATIONS = 8;
 
+/**
+ * Bound on per-node Bessel-rewrite cascade iterations. Same envelope
+ * as Erf — the longest v0.1 cascade is `j_0(z) → sin(z)/z` (1 step),
+ * but a Hankel-then-half-integer chain could in principle reach
+ * `H¹_{1/2}(z) → J_{1/2}(z) + i·Y_{1/2}(z) → √(...)·sin + i·(-√(...)·
+ * cos)` — at most 3 rewrites on each branch of the binary `+`. The
+ * bound of 8 is comfortable.
+ */
+const BESSEL_REWRITE_MAX_ITERATIONS = 8;
+
 export function casSimplify(v: Value): Value {
   if (v.kind === "tagged" && v.tag === SIMPLIFY_TAG) return v;
-  // Pre-pass: run the Erf-family identity table bottom-up. The result
+  // Pre-passes: run the per-head identity tables bottom-up. The result
   // is structurally either the same Value (if no rule fires anywhere)
-  // or a new Value with Erf-family rewrites applied and Erf/Erfc
-  // complement pairs collapsed.
-  const rewritten = applyErfRewrites(v);
+  // or a new Value with the per-head rewrites applied (Erf-family
+  // rewrites + Erf/Erfc complement collapses, then Bessel-family
+  // rewrites). The two passes are independent: an Erf-pass-rewritten
+  // sub-tree contains no Bessel-family heads and vice versa, so the
+  // ordering between them is mathematically irrelevant. Running Erf
+  // first matches declaration order in this file (the historical
+  // first pre-pass).
+  const afterErf = applyErfRewrites(v);
+  const rewritten = applyBesselRewrites(afterErf);
   try {
     const rf = valueToRatFn(rewritten);
     return ratFnToValue(rf);
@@ -220,4 +240,86 @@ function sameArgs(a: readonly Value[], b: readonly Value[]): boolean {
     if (a[i] !== b[i]) return false;
   }
   return true;
+}
+
+// -----------------------------------------------------------------------------
+// Bessel-family pre-pass
+// -----------------------------------------------------------------------------
+//
+// Parallel to `applyErfRewrites` — bottom-up rewrite walker, bounded
+// fixed-point per node, the same idempotence + foreign-pass-through
+// invariants. Implemented as a sibling rather than a unified "per-
+// head pre-pass" function so that:
+//   * Adding the next per-head substrate (Gamma, Whittaker, …) ships
+//     as a literally additive new pre-pass function — no need to
+//     refactor a shared walker.
+//   * The per-head rule tables stay disjoint by head, so a Bessel
+//     rule can never accidentally see an Erf-family input or vice
+//     versa.
+//   * Each pre-pass's iteration bound is local to that substrate's
+//     cascade depth.
+//
+// See `bessel-identities.ts`'s top-of-file narrative for the rule-
+// cascade analysis that justifies the bound.
+
+function applyBesselRewrites(v: Value): Value {
+  switch (v.kind) {
+    case "integer":
+    case "rational":
+    case "float64":
+    case "boolean":
+    case "string":
+    case "symbol":
+      return v;
+    case "tagged":
+      // Tagged values are opaque to the rewriter — foreign-pass-through
+      // invariant. The payload was simplified at the time it was tagged.
+      return v;
+    case "list":
+      return list(v.items.map(applyBesselRewrites));
+    case "record": {
+      const f: Record<string, Value> = {};
+      for (const [k, vv] of Object.entries(v.fields)) {
+        f[k] = applyBesselRewrites(vv);
+      }
+      return record(f);
+    }
+    case "expression": {
+      // Recurse children first (bottom-up).
+      const newArgs = v.args.map(applyBesselRewrites);
+      let current: Value;
+      if (sameArgs(v.args, newArgs)) {
+        current = v;
+      } else {
+        // Smart-ctor rebuild for the elementary heads that have one,
+        // direct `expr` rebuild otherwise.
+        if (v.head === "neg" && newArgs.length === 1) {
+          current = mkNeg(newArgs[0]!);
+        } else if (v.head === "+") {
+          current = mkPlus(newArgs);
+        } else if (v.head === "*") {
+          current = mkTimes(...newArgs);
+        } else {
+          current = expr(v.head, newArgs);
+        }
+      }
+
+      // Per-head Bessel-family rewrites with bounded cascade.
+      if (current.kind === "expression" && isBesselFamilyHead(current.head)) {
+        for (let i = 0; i < BESSEL_REWRITE_MAX_ITERATIONS; i++) {
+          if (current.kind !== "expression") break;
+          if (!isBesselFamilyHead(current.head)) break;
+          const result = tryBesselSimplify(current.head, current.args);
+          if (result === null) break;
+          // Re-walk the rewritten result so any newly-introduced
+          // Bessel-family sub-expressions (e.g. class-D Hankel →
+          // J + i·Y produces both J and Y children that might match
+          // class-C half-integer closures) get a chance to fire.
+          current = applyBesselRewrites(result);
+        }
+      }
+
+      return current;
+    }
+  }
 }

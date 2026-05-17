@@ -360,10 +360,13 @@ describe("maskLowWord helper (SunPro SET_LOW_WORD port)", () => {
 // -----------------------------------------------------------------------------
 
 describe("Dispatcher hook (eval-numeric-expr)", () => {
-  test("SPECIAL_HEADS lists the six Erf-family heads", () => {
-    expect([...SPECIAL_HEADS].sort()).toEqual(
-      ["Erf", "Erfc", "Erfcx", "Erfi", "InverseErf", "InverseErfc"].sort(),
-    );
+  test("SPECIAL_HEADS contains the six Erf-family heads (plus Bessel additions from ADR-0041)", () => {
+    // ADR-0040 admitted the Erf family; ADR-0041 added the Bessel
+    // family additively. This test asserts the Erf membership only —
+    // the bessel-float64 test suite covers BesselJ/Y/I/K dispatch.
+    for (const h of ["Erf", "Erfc", "Erfcx", "Erfi", "InverseErf", "InverseErfc"]) {
+      expect(SPECIAL_HEADS).toContain(h);
+    }
   });
 
   test("Erf head dispatches to erfFloat64", () => {

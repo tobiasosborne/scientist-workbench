@@ -90,6 +90,12 @@ import {
   erfInvFloat64,
   erfcInvFloat64,
 } from "./special-funcs/erf-float64.js";
+import {
+  besselJFloat64,
+  besselYFloat64,
+  besselIFloat64,
+  besselKFloat64,
+} from "./special-funcs/bessel-float64.js";
 
 /**
  * Special-function heads admitted in addition to the elementary
@@ -105,6 +111,15 @@ export const SPECIAL_HEADS: readonly string[] = [
   "Erfi",
   "InverseErf",
   "InverseErfc",
+  // Bessel family (ADR-0041 §Decision 4). All arity-2: (ν, z).
+  // BesselIScaled / BesselKScaled are NOT admitted as primary heads
+  // (per ADR-0041 §Decision 7 — they are wire-tool concepts in
+  // tools/special-eval; users compose them via Times(Exp(...),
+  // BesselI(...)) which evalNumericExpr already handles).
+  "BesselJ",
+  "BesselY",
+  "BesselI",
+  "BesselK",
 ];
 
 /** Union of elementary + special heads, exported for tool layer messages. */
@@ -159,6 +174,34 @@ const SPECIAL_DISPATCH = new Map<string, (args: number[]) => number>([
     (a) => {
       requireArity("InverseErfc", a, 1);
       return erfcInvFloat64(a[0]!);
+    },
+  ],
+  [
+    "BesselJ",
+    (a) => {
+      requireArity("BesselJ", a, 2);
+      return besselJFloat64(a[0]!, a[1]!);
+    },
+  ],
+  [
+    "BesselY",
+    (a) => {
+      requireArity("BesselY", a, 2);
+      return besselYFloat64(a[0]!, a[1]!);
+    },
+  ],
+  [
+    "BesselI",
+    (a) => {
+      requireArity("BesselI", a, 2);
+      return besselIFloat64(a[0]!, a[1]!);
+    },
+  ],
+  [
+    "BesselK",
+    (a) => {
+      requireArity("BesselK", a, 2);
+      return besselKFloat64(a[0]!, a[1]!);
     },
   ],
 ]);

@@ -129,6 +129,13 @@ export {
 } from "./special-funcs/erf.js";
 
 export {
+  bigBesselJ,
+  bigBesselJSeriesMaclaurin,
+  bigBesselJHankelAsymptotic,
+  bigBesselJSeriesCancellationRetry,
+} from "./special-funcs/besselj.js";
+
+export {
   ln2,
   pi,
   e,
