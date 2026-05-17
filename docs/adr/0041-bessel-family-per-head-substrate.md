@@ -1,6 +1,10 @@
 # ADR-0041 — Per-head substrate applied to the canonical Bessel family (J, Y, I, K)
 
-**Status:** Implemented — 2026-05-17 (see worklog 166). Originally proposed 2026-05-17.
+**Status:** Implemented — 2026-05-17 (see worklog 166); complex
+`Y_n` and `K_n` integer-ν NaN regression closed by direct DLMF
+§10.8.1 / §10.31.2 series + asymptotic + forward recurrence —
+2026-05-17 (see worklog 168, beads `phtw` + `9wwc`). Originally
+proposed 2026-05-17.
 **Beads:** `scientist-workbench-zcam` (epic — World-class Bessel J + Y + I + K).
 Phase 0 research children all closed: `cela` (R1 symbolic identities), `dn76`
 (R2 arb-prec algorithms), `1272` (R3 float64 algorithms), `wi4t` (R4 Meijer-G

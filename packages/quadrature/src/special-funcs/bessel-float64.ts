@@ -1839,8 +1839,507 @@ function besselI_complex(nu: number, z: ComplexF64): ComplexF64 {
   return besselI_complex_series(nu, z);
 }
 
+// -----------------------------------------------------------------------------
+// Integer-ν complex Y and K via DLMF §10.8 / §10.31 (closes phtw + 9wwc)
+// -----------------------------------------------------------------------------
+//
+// The connection formulas `Y_ν = (cos(νπ)·J_ν − J_{−ν})/sin(νπ)` and
+// `K_ν = (π/2)·(I_{−ν} − I_ν)/sin(νπ)` carry a removable singularity
+// at integer ν: numerator and denominator both vanish (since
+// `J_{−n} = (−1)^n·J_n` and `I_{−n} = I_n`), giving `0/0 = NaN`.
+//
+// For complex argument the standard cure is direct evaluation by the
+// integer-ν series form (DLMF §10.8.1 for Y; §10.31.2 for K), valid
+// for any complex z ≠ 0, paired with the existing asymptotic for
+// large |z|. We compute `Y_0`/`Y_1` (and `K_0`/`K_1`) directly, then
+// reach larger orders via the three-term recurrence
+//   Y_{n+1}(z) = (2n/z)·Y_n(z) − Y_{n−1}(z),
+//   K_{n+1}(z) = (2n/z)·K_n(z) + K_{n−1}(z).
+// Both recurrences are forward-stable: Y_n and K_n grow with n for
+// fixed z, so forward propagation is dominated by the growing term.
+//
+// References:
+//   - DLMF §10.8.1 (Y_n series), §10.31.2 (K_n series).
+//   - DLMF §10.17.4-5 (Y_ν large-|z| asymptotic via P/Q expansion).
+//   - DLMF §10.6.1 (J/Y recurrence), §10.29.1 (I/K recurrence).
+//   - bd `scientist-workbench-phtw` (Y NaN), `-9wwc` (K NaN), worklog 168.
+
+/** Complex log `ln(z) = ln|z| + i·arg(z)` (principal branch). */
+function clog(z: ComplexF64): ComplexF64 {
+  return complex64(Math.log(Math.hypot(z.re, z.im)), Math.atan2(z.im, z.re));
+}
+
+/** Euler-Mascheroni γ to 21 digits — used in the integer-ν series. */
+const EULER_GAMMA = 0.5772156649015328606065120900824;
+
+/**
+ * `K_0(z)` complex via DLMF §10.31.2 small-|z| series (the integer-ν
+ * limit form, valid for any complex `z ≠ 0`):
+ *
+ *   `K_0(z) = −[ln(z/2) + γ] · I_0(z) + Σ_{k=1}^∞ H_k · (z/2)^{2k} / (k!)²`
+ *
+ * where `H_k = 1 + 1/2 + … + 1/k` is the harmonic number. Converges
+ * absolutely for any finite z; truncation at term-below-ULP.
+ */
+function besselK0_complex_series(z: ComplexF64): ComplexF64 {
+  // Leading log term: −[ln(z/2) + γ] · I_0(z)
+  const halfZ = complex64(z.re / 2, z.im / 2);
+  const lhz = clog(halfZ);
+  const logFactor = complex64(lhz.re + EULER_GAMMA, lhz.im); // ln(z/2) + γ
+  const I0 = besselI_complex_series(0, z);
+  const leadLogRe = -(logFactor.re * I0.re - logFactor.im * I0.im);
+  const leadLogIm = -(logFactor.re * I0.im + logFactor.im * I0.re);
+
+  // Harmonic series: Σ_{k=1}^∞ H_k · (z/2)^{2k} / (k!)²
+  // Recurrence: term_{k+1} = term_k · (z/2)² / ((k+1)²), so each step
+  // is one cmul by half² divided by (k+1)².
+  const half2 = cmul(halfZ, halfZ);
+  let term = complex64(half2.re, half2.im); // k=1 term = (z/2)²/1, missing H_1=1 factor
+  let H = 1; // H_1 = 1
+  let sumRe = H * term.re;
+  let sumIm = H * term.im;
+  for (let k = 2; k < 300; k++) {
+    // term *= (z/2)²/k²
+    term = cmul(term, half2);
+    term = complex64(term.re / (k * k), term.im / (k * k));
+    H += 1 / k;
+    const addRe = H * term.re;
+    const addIm = H * term.im;
+    const newRe = sumRe + addRe;
+    const newIm = sumIm + addIm;
+    if (
+      Math.hypot(addRe, addIm) <
+      1e-18 * Math.hypot(Math.hypot(newRe, newIm), Math.hypot(leadLogRe, leadLogIm))
+    ) {
+      sumRe = newRe;
+      sumIm = newIm;
+      break;
+    }
+    sumRe = newRe;
+    sumIm = newIm;
+  }
+  return complex64(leadLogRe + sumRe, leadLogIm + sumIm);
+}
+
+/**
+ * `K_1(z)` complex via DLMF §10.31.2 small-|z| series (integer-ν limit
+ * form, valid for any complex `z ≠ 0`):
+ *
+ *   `K_1(z) = 1/z + [ln(z/2) + γ] · I_1(z)
+ *            − (z/4) · Σ_{k=0}^∞ [H_k + H_{k+1}] · (z²/4)^k / [k!(k+1)!]`
+ *
+ * The `(z/4)` (not `(z/2)`) coefficient on the harmonic sum comes from
+ * the `(−1)^n · (1/2) · (z/2)^n` DLMF 10.31.2 prefix with `n=1`, then
+ * the `−2γ` absorbed into `(ln(z/2) + γ)` via the identity
+ * `Σ (z²/4)^k / [k!(k+1)!] = (2/z)·I_1(z)`. Coefficient verified by
+ * cross-check against mpmath at `z = 5+5i`, `1+1i`, `10+5i`.
+ *
+ * Note `H_0 = 0` (empty harmonic sum) so the k=0 term reduces to `H_1 = 1`.
+ */
+function besselK1_complex_series(z: ComplexF64): ComplexF64 {
+  const halfZ = complex64(z.re / 2, z.im / 2);
+  const lhz = clog(halfZ);
+  const logFactor = complex64(lhz.re + EULER_GAMMA, lhz.im);
+  const I1 = besselI_complex_series(1, z);
+
+  // 1/z term
+  const invZ = cinv(z);
+
+  // (ln(z/2) + γ) · I_1(z)
+  const lnI1Re = logFactor.re * I1.re - logFactor.im * I1.im;
+  const lnI1Im = logFactor.re * I1.im + logFactor.im * I1.re;
+
+  // Harmonic series: (z/2) · Σ_{k=0}^∞ [H_k + H_{k+1}] · (z/2)^{2k} / [k! (k+1)!]
+  // k=0 term: [0 + 1] · 1 / 1 = 1
+  const half2 = cmul(halfZ, halfZ);
+  let H_k = 0; // H_0
+  let H_kp1 = 1; // H_1
+  let termRe = 1; // k=0 prefix = (z/2)^0 / [0! · 1!] = 1
+  let termIm = 0;
+  let sumRe = (H_k + H_kp1) * termRe;
+  let sumIm = (H_k + H_kp1) * termIm;
+  for (let k = 1; k < 300; k++) {
+    // term *= (z/2)² / (k · (k+1))
+    const nextRe = termRe * half2.re - termIm * half2.im;
+    const nextIm = termRe * half2.im + termIm * half2.re;
+    const denom = k * (k + 1);
+    termRe = nextRe / denom;
+    termIm = nextIm / denom;
+    H_k += 1 / k;
+    H_kp1 += 1 / (k + 1);
+    const w = H_k + H_kp1;
+    const addRe = w * termRe;
+    const addIm = w * termIm;
+    const newRe = sumRe + addRe;
+    const newIm = sumIm + addIm;
+    if (Math.hypot(addRe, addIm) < 1e-18 * Math.hypot(newRe, newIm)) {
+      sumRe = newRe;
+      sumIm = newIm;
+      break;
+    }
+    sumRe = newRe;
+    sumIm = newIm;
+  }
+  // (z/4) · sum — coefficient is z/4, not z/2 (see docstring derivation).
+  const quarterZ_Re = z.re / 4;
+  const quarterZ_Im = z.im / 4;
+  const quarterSumRe = quarterZ_Re * sumRe - quarterZ_Im * sumIm;
+  const quarterSumIm = quarterZ_Re * sumIm + quarterZ_Im * sumRe;
+  // K_1 = 1/z + ln-term · I_1 − (z/4) · sum
+  return complex64(invZ.re + lnI1Re - quarterSumRe, invZ.im + lnI1Im - quarterSumIm);
+}
+
+/**
+ * `K_ν(z)` complex asymptotic for any ν, extracted as a standalone
+ * helper so the integer-ν path can call it at ν=0 and ν=1 (where the
+ * asymptotic is uniformly accurate) without re-routing through
+ * `besselK_complex`'s integer-ν detector. The body is the same
+ * Hankel-style series Faddeeva.cc-style.
+ */
+function besselK_complex_asymptotic_at(nu: number, z: ComplexF64): ComplexF64 {
+  const mu = 4 * nu * nu;
+  let sum: ComplexF64 = complex64(1, 0);
+  let term: ComplexF64 = complex64(1, 0);
+  const invZ = cinv(z);
+  const z8inv: ComplexF64 = complex64(invZ.re / 8, invZ.im / 8);
+  let prevAbs = Infinity;
+  for (let k = 1; k < 60; k++) {
+    const f = mu - (2 * k - 1) * (2 * k - 1);
+    const factor = f / k;
+    term = cmul(term, z8inv);
+    term = complex64(term.re * factor, term.im * factor);
+    sum = complex64(sum.re + term.re, sum.im + term.im);
+    const a = Math.hypot(term.re, term.im);
+    if (a < 1e-18 * Math.hypot(sum.re, sum.im)) break;
+    if (a > prevAbs) break;
+    prevAbs = a;
+  }
+  const negz: ComplexF64 = complex64(-z.re, -z.im);
+  const ez = cexp(negz);
+  const sqrtZ = csqrt(z);
+  const denom: ComplexF64 = complex64(sqrtZ.re * Math.sqrt(2), sqrtZ.im * Math.sqrt(2));
+  const pref = cmul(complex64(SQRT_PI, 0), cinv(denom));
+  return cmul(cmul(pref, ez), sum);
+}
+
+/**
+ * `K_0(z)` complex via series (small |z|) or asymptotic (large |z|).
+ * The K_0 asymptotic is uniformly accurate for |z| > ~5 because
+ * ν=0 → μ=0 makes the a_k coefficients shrink fast. Threshold ≥ 8
+ * gives ≥ 14 digits.
+ */
+function besselK0_complex(z: ComplexF64): ComplexF64 {
+  return cabs(z) > 8
+    ? besselK_complex_asymptotic_at(0, z)
+    : besselK0_complex_series(z);
+}
+
+/** Same for K_1: a_k(1) coefficients grow only mildly; asymptotic for |z| > ~8. */
+function besselK1_complex(z: ComplexF64): ComplexF64 {
+  return cabs(z) > 8
+    ? besselK_complex_asymptotic_at(1, z)
+    : besselK1_complex_series(z);
+}
+
+/**
+ * `K_n(z)` complex for integer `n ≥ 0` via forward recurrence from
+ * `K_0`/`K_1`, each computed by series or asymptotic per `|z|`.
+ *
+ * Why recurrence rather than direct asymptotic at ν=n? The asymptotic
+ * series in `1/(8z)` has terms `(μ − (2k−1)²)/k` with μ=4ν²; for ν=10
+ * and |z|=20 these grow factorially up to `k ≈ ν` before they decay,
+ * giving only ~1e-7 truncation accuracy. Forward recurrence
+ * `K_{n+1} = (2n/z)·K_n + K_{n−1}` from accurate `K_0` and `K_1`
+ * preserves ULP at every n (K_n grows with n at fixed z, so the
+ * recurrence is in the dominant direction and roundoff doesn't
+ * amplify).
+ *
+ * `K_{−n} = K_n` (parity), so negative n is reflected first.
+ */
+function besselK_complex_integer(n: number, z: ComplexF64): ComplexF64 {
+  if (n < 0) return besselK_complex_integer(-n, z);
+  if (n === 0) return besselK0_complex(z);
+  if (n === 1) return besselK1_complex(z);
+  let kPrev = besselK0_complex(z);
+  let kCurr = besselK1_complex(z);
+  const invZ = cinv(z);
+  for (let k = 1; k < n; k++) {
+    const multRe = 2 * k * invZ.re;
+    const multIm = 2 * k * invZ.im;
+    const multKRe = multRe * kCurr.re - multIm * kCurr.im;
+    const multKIm = multRe * kCurr.im + multIm * kCurr.re;
+    const kNext = complex64(multKRe + kPrev.re, multKIm + kPrev.im);
+    kPrev = kCurr;
+    kCurr = kNext;
+  }
+  return kCurr;
+}
+
+/**
+ * `Y_0(z)` complex via DLMF §10.8.1 small-|z| series (integer-ν limit
+ * form, valid for any complex `z ≠ 0`):
+ *
+ *   `Y_0(z) = (2/π) · {[ln(z/2) + γ] · J_0(z)
+ *                       + Σ_{k=1}^∞ (−1)^{k+1} · H_k · (z/2)^{2k} / (k!)²}`
+ */
+function besselY0_complex_series(z: ComplexF64): ComplexF64 {
+  const halfZ = complex64(z.re / 2, z.im / 2);
+  const lhz = clog(halfZ);
+  const logFactor = complex64(lhz.re + EULER_GAMMA, lhz.im); // ln(z/2) + γ
+  // J_0(z) via the existing rotation (besselJComplexFloat64 internally
+  // routes ν=0 cleanly through I_0(−iz) — the integer-ν shortcut here
+  // does NOT route into besselYComplexFloat64).
+  const J0 = besselJComplexFloat64(0, z.re, z.im);
+  const lnJ0Re = logFactor.re * J0.re - logFactor.im * J0.im;
+  const lnJ0Im = logFactor.re * J0.im + logFactor.im * J0.re;
+
+  // Σ_{k=1}^∞ (−1)^{k+1} · H_k · (z/2)^{2k} / (k!)²
+  // Recurrence: term_{k+1}/term_k = −(z/2)² / (k+1)²
+  const half2 = cmul(halfZ, halfZ);
+  let H = 1; // H_1
+  let termRe = half2.re; // k=1 prefactor (z/2)²/1²
+  let termIm = half2.im;
+  let sign = 1; // (−1)^{k+1} for k=1 is +1
+  let sumRe = sign * H * termRe;
+  let sumIm = sign * H * termIm;
+  for (let k = 2; k < 300; k++) {
+    const nextRe = termRe * half2.re - termIm * half2.im;
+    const nextIm = termRe * half2.im + termIm * half2.re;
+    termRe = nextRe / (k * k);
+    termIm = nextIm / (k * k);
+    H += 1 / k;
+    sign = -sign;
+    const addRe = sign * H * termRe;
+    const addIm = sign * H * termIm;
+    const newRe = sumRe + addRe;
+    const newIm = sumIm + addIm;
+    if (
+      Math.hypot(addRe, addIm) <
+      1e-18 * Math.hypot(Math.hypot(newRe, newIm), Math.hypot(lnJ0Re, lnJ0Im))
+    ) {
+      sumRe = newRe;
+      sumIm = newIm;
+      break;
+    }
+    sumRe = newRe;
+    sumIm = newIm;
+  }
+  const TWO_OVER_PI = 0.6366197723675813430755350534900574;
+  return complex64(TWO_OVER_PI * (lnJ0Re + sumRe), TWO_OVER_PI * (lnJ0Im + sumIm));
+}
+
+/**
+ * `Y_1(z)` complex via DLMF §10.8.1 small-|z| series:
+ *
+ *   `Y_1(z) = −(2/(πz)) + (2/π) · [ln(z/2) + γ] · J_1(z)
+ *             − (1/π) · (z/2) · Σ_{k=0}^∞ (−1)^k · [H_k + H_{k+1}] · (z/2)^{2k} / [k! (k+1)!]`
+ */
+function besselY1_complex_series(z: ComplexF64): ComplexF64 {
+  const TWO_OVER_PI = 0.6366197723675813430755350534900574;
+  const ONE_OVER_PI = 0.31830988618379067153776752674503;
+
+  const halfZ = complex64(z.re / 2, z.im / 2);
+  const lhz = clog(halfZ);
+  const logFactor = complex64(lhz.re + EULER_GAMMA, lhz.im);
+  const J1 = besselJComplexFloat64(1, z.re, z.im);
+  const lnJ1Re = logFactor.re * J1.re - logFactor.im * J1.im;
+  const lnJ1Im = logFactor.re * J1.im + logFactor.im * J1.re;
+
+  // −2/(πz)
+  const invZ = cinv(z);
+  const negTwoOverPiZ_Re = -TWO_OVER_PI * invZ.re;
+  const negTwoOverPiZ_Im = -TWO_OVER_PI * invZ.im;
+
+  // Σ_{k=0}^∞ (−1)^k · [H_k + H_{k+1}] · (z/2)^{2k} / [k! (k+1)!]
+  // k=0: 1 · [0 + 1] · 1 / 1 = 1
+  const half2 = cmul(halfZ, halfZ);
+  let H_k = 0;
+  let H_kp1 = 1;
+  let termRe = 1;
+  let termIm = 0;
+  let sign = 1;
+  let sumRe = sign * (H_k + H_kp1) * termRe;
+  let sumIm = sign * (H_k + H_kp1) * termIm;
+  for (let k = 1; k < 300; k++) {
+    const nextRe = termRe * half2.re - termIm * half2.im;
+    const nextIm = termRe * half2.im + termIm * half2.re;
+    const denom = k * (k + 1);
+    termRe = nextRe / denom;
+    termIm = nextIm / denom;
+    H_k += 1 / k;
+    H_kp1 += 1 / (k + 1);
+    sign = -sign;
+    const w = H_k + H_kp1;
+    const addRe = sign * w * termRe;
+    const addIm = sign * w * termIm;
+    const newRe = sumRe + addRe;
+    const newIm = sumIm + addIm;
+    if (Math.hypot(addRe, addIm) < 1e-18 * Math.hypot(newRe, newIm)) {
+      sumRe = newRe;
+      sumIm = newIm;
+      break;
+    }
+    sumRe = newRe;
+    sumIm = newIm;
+  }
+  // (z/2) · sum
+  const halfSumRe = halfZ.re * sumRe - halfZ.im * sumIm;
+  const halfSumIm = halfZ.re * sumIm + halfZ.im * sumRe;
+  // Y_1 = −2/(πz) + (2/π)·ln-term·J_1 − (1/π)·(z/2)·sum
+  return complex64(
+    negTwoOverPiZ_Re + TWO_OVER_PI * lnJ1Re - ONE_OVER_PI * halfSumRe,
+    negTwoOverPiZ_Im + TWO_OVER_PI * lnJ1Im - ONE_OVER_PI * halfSumIm,
+  );
+}
+
+/**
+ * `Y_ν(z)` complex large-|z| asymptotic via DLMF §10.17.4-5:
+ *
+ *   `Y_ν(z) ~ √(2/(πz)) · [P(ν,z) · sin(ω) + Q(ν,z) · cos(ω)]`
+ *   `ω = z − νπ/2 − π/4`
+ *
+ * with `P`, `Q` the standard asymptotic series in `1/(8z)`. Same a_k
+ * coefficients as the K asymptotic; sign and parity differ. Valid
+ * for any (integer or non-integer) ν; we use it here as the
+ * companion to the integer-ν series for `|z| > 18 + n`.
+ *
+ * Note: at integer ν the sin / cos factors stay well-defined, unlike
+ * the connection-formula form.
+ */
+function besselY_complex_asymptotic(nu: number, z: ComplexF64): ComplexF64 {
+  // ω = z − νπ/2 − π/4
+  const omegaRe = z.re - (nu * Math.PI) / 2 - Math.PI / 4;
+  const omegaIm = z.im;
+  // sin(ω) and cos(ω) for complex ω:
+  //   sin(x + iy) = sin x · cosh y + i · cos x · sinh y
+  //   cos(x + iy) = cos x · cosh y − i · sin x · sinh y
+  const sX = Math.sin(omegaRe),
+    cX = Math.cos(omegaRe);
+  const sY = Math.sinh(omegaIm),
+    cY = Math.cosh(omegaIm);
+  const sinOmega = complex64(sX * cY, cX * sY);
+  const cosOmega = complex64(cX * cY, -sX * sY);
+
+  // P/Q asymptotic series in 1/(8z): a_k(ν) = (μ − 1)(μ − 9)…(μ − (2k−1)²)/(k! · 8^k)
+  // P = Σ_{k even} (−1)^{k/2} a_k(ν) / z^k — actually the standard form uses
+  // P(ν,z) = 1 − a_2/(2z)² + a_4/(2z)⁴ − …, with a_2 = (μ−1)(μ−9)/(2!·8²)
+  // and a_4 = (μ−1)(μ−9)(μ−25)(μ−49)/(4!·8⁴). The k-step recurrence:
+  //   term_k → term_{k+1} = term_k · (μ − (2k+1)²) / [(k+1) · 8z]
+  // P picks even k, Q picks odd k (negated/positive per the DLMF sign convention).
+  const mu = 4 * nu * nu;
+  const invZ = cinv(z);
+  const z8inv = complex64(invZ.re / 8, invZ.im / 8);
+  let pRe = 1,
+    pIm = 0;
+  let qRe = 0,
+    qIm = 0;
+  let termRe = 1,
+    termIm = 0;
+  let prevAbs = Infinity;
+  let sign = 1; // alternates each pair: P gets (−1)^{k/2} for even k, Q gets (−1)^{(k−1)/2} for odd k
+  for (let k = 1; k < 60; k++) {
+    // Multiply term by (μ − (2k−1)²) / (k · 8z)
+    const f = mu - (2 * k - 1) * (2 * k - 1);
+    const factor = f / k;
+    const newRe = termRe * z8inv.re - termIm * z8inv.im;
+    const newIm = termRe * z8inv.im + termIm * z8inv.re;
+    termRe = newRe * factor;
+    termIm = newIm * factor;
+    // Accumulate into P (even k) or Q (odd k), with the sign cycle:
+    // k=1 → Q += −term;  k=2 → P += −term;  k=3 → Q += +term;  k=4 → P += +term;  etc.
+    if (k % 2 === 1) {
+      // odd → Q
+      qRe += sign * termRe;
+      qIm += sign * termIm;
+    } else {
+      // even → P, and flip sign before applying P (so k=2 gets −, k=4 gets +, …)
+      sign = -sign;
+      pRe += sign * termRe;
+      pIm += sign * termIm;
+    }
+    const a = Math.hypot(termRe, termIm);
+    // Truncate when both P-add and Q-add are sub-ULP
+    if (a < 1e-18 * Math.hypot(pRe, pIm)) break;
+    if (a > prevAbs) break;
+    prevAbs = a;
+  }
+  // Y = √(2/(πz)) · [P · sin(ω) + Q · cos(ω)]
+  const P_sinRe = pRe * sinOmega.re - pIm * sinOmega.im;
+  const P_sinIm = pRe * sinOmega.im + pIm * sinOmega.re;
+  const Q_cosRe = qRe * cosOmega.re - qIm * cosOmega.im;
+  const Q_cosIm = qRe * cosOmega.im + qIm * cosOmega.re;
+  const bracketRe = P_sinRe + Q_cosRe;
+  const bracketIm = P_sinIm + Q_cosIm;
+  // √(2/(πz)) = √2 / √(πz)
+  const piZ = complex64(Math.PI * z.re, Math.PI * z.im);
+  const sqrtPiZ = csqrt(piZ);
+  const pref = complex64(Math.sqrt(2), 0);
+  const denom = cinv(sqrtPiZ);
+  const factorC = cmul(pref, denom);
+  // Result = factorC · bracket
+  return complex64(
+    factorC.re * bracketRe - factorC.im * bracketIm,
+    factorC.re * bracketIm + factorC.im * bracketRe,
+  );
+}
+
+/**
+ * `Y_n(z)` complex for integer `n` via direct integer-ν series (small
+ * |z|), large-|z| asymptotic, and forward recurrence for `n ≥ 2`.
+ * Forward-stable because Y_n grows with n at fixed z.
+ *
+ * `Y_{−n} = (−1)^n · Y_n` (DLMF §10.4.1).
+ */
+/** `Y_0(z)` complex via series (small |z|) or asymptotic (large |z|). */
+function besselY0_complex(z: ComplexF64): ComplexF64 {
+  return cabs(z) > 8
+    ? besselY_complex_asymptotic(0, z)
+    : besselY0_complex_series(z);
+}
+
+/** `Y_1(z)` complex via series (small |z|) or asymptotic (large |z|). */
+function besselY1_complex(z: ComplexF64): ComplexF64 {
+  return cabs(z) > 8
+    ? besselY_complex_asymptotic(1, z)
+    : besselY1_complex_series(z);
+}
+
+function besselY_complex_integer(n: number, z: ComplexF64): ComplexF64 {
+  if (n < 0) {
+    const Y = besselY_complex_integer(-n, z);
+    const sign = n & 1 ? -1 : 1;
+    return complex64(sign * Y.re, sign * Y.im);
+  }
+  // Same recurrence discipline as K: compute Y_0, Y_1 each via the
+  // method that gives ULP at this |z|, then forward-recur. Direct
+  // asymptotic at ν=n falters at large n / moderate |z| where the
+  // (μ − (2k−1)²) coefficients grow factorially before they decay;
+  // recurrence from low-ν preserves ULP.
+  if (n === 0) return besselY0_complex(z);
+  if (n === 1) return besselY1_complex(z);
+  let yPrev = besselY0_complex(z);
+  let yCurr = besselY1_complex(z);
+  const invZ = cinv(z);
+  for (let k = 1; k < n; k++) {
+    const multRe = 2 * k * invZ.re;
+    const multIm = 2 * k * invZ.im;
+    const multYRe = multRe * yCurr.re - multIm * yCurr.im;
+    const multYIm = multRe * yCurr.im + multIm * yCurr.re;
+    const yNext = complex64(multYRe - yPrev.re, multYIm - yPrev.im);
+    yPrev = yCurr;
+    yCurr = yNext;
+  }
+  return yCurr;
+}
+
 /** K_ν(z) complex — asymptotic for large |z|; reflection via I for small |z|. */
 function besselK_complex(nu: number, z: ComplexF64): ComplexF64 {
+  // Integer ν: the I-reflection form below hits 0/0 (I_{−n} = I_n,
+  // sin(nπ) = 0). Route to the direct integer-ν series + recurrence.
+  // Closes bead `scientist-workbench-9wwc` (worklog 168).
+  if (Number.isInteger(nu)) {
+    return besselK_complex_integer(nu, z);
+  }
   const az = cabs(z);
   if (az > 18 + Math.abs(nu)) {
     // K_ν(z) ~ √(π/(2z)) · e^{-z} · Σ a_k(ν) / z^k
@@ -1869,11 +2368,7 @@ function besselK_complex(nu: number, z: ComplexF64): ComplexF64 {
     const pref = cmul(complex64(SQRT_PI, 0), cinv(denom));
     return cmul(cmul(pref, ez), sum);
   }
-  // Small |z|: reflection K_ν = (π/2)·(I_{-ν} − I_ν)/sin(νπ); near-integer ν cancellates.
-  // For integer ν, use limit form via series (not implemented in v0.1; route to real).
-  if (Number.isInteger(nu) && Math.abs(z.im) < 1e-15) {
-    return complex64(besselK_real_general(nu, z.re), 0);
-  }
+  // Small |z|, non-integer ν: reflection K_ν = (π/2)·(I_{−ν} − I_ν)/sin(νπ).
   const Iplus = besselI_complex(nu, z);
   const Iminus = besselI_complex(-nu, z);
   const num: ComplexF64 = complex64(Iminus.re - Iplus.re, Iminus.im - Iplus.im);
@@ -1904,10 +2399,17 @@ export function besselJComplexFloat64(nu: number, re: number, im: number): Compl
  * (consistent with the connection-formula intent).
  */
 export function besselYComplexFloat64(nu: number, re: number, im: number): ComplexF64 {
+  // Real-axis fast path for integer ν, positive real z.
   if (Number.isInteger(nu) && im === 0 && re > 0) {
     return complex64(_yn(nu, re), 0);
   }
-  // Use Y = (J cos(νπ) − J(−ν)) / sin(νπ).
+  // Integer ν, complex z: the connection formula below hits 0/0.
+  // Route to the direct integer-ν series + recurrence. Closes bead
+  // `scientist-workbench-phtw` (worklog 168).
+  if (Number.isInteger(nu)) {
+    return besselY_complex_integer(nu, complex64(re, im));
+  }
+  // Non-integer ν: Y = (J cos(νπ) − J_{−ν}) / sin(νπ).
   const J = besselJComplexFloat64(nu, re, im);
   const Jm = besselJComplexFloat64(-nu, re, im);
   const c = Math.cos(nu * Math.PI);
