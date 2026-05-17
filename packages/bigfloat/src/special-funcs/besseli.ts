@@ -565,29 +565,52 @@ export function bigBesselI(nu: BigFloat, z: BigFloat, prec: number): BigFloat {
         `wait for the joint I/K substrate.`,
     );
   }
-  // z > 0, ν ≥ 0: the main dispatch.  FLINT pattern, `bessel_i.c:212-216`.
+  // z > 0, ν ≥ 0: the main dispatch.  FLINT pattern, `bessel_i.c:212-216`,
+  // amended to add a large-ν guard (bead `scientist-workbench-m4ut`,
+  // worklog 170).
   //
+  //   if ν ≥ 25:                                    → 0F1 (NEW)
   //   if |z| < 16:                                  → 0F1
-  //   if |z| < 2^64 AND 2|z| < prec:                → 0F1
+  //   if |z| < 2^30 AND 2|z| < prec:                → 0F1
   //   else:                                          → asymptotic
+  //
+  // The large-ν guard (`νFloat ≥ 25 → 0F1`) closes m4ut: the Hankel
+  // asymptotic for I_ν(z) has terms `(4ν² − (2k−1)²)/(8(k+1)z)` that
+  // grow factorially up to `k ≈ ν` before decaying. For ν ≳ x/2 the
+  // optimal-truncation point falls inside catastrophic intermediate-
+  // term growth and the asymptotic returns orders-of-magnitude wrong
+  // values (e.g. bigBesselI(100, 150, 200) was returning `-1.47e+65`
+  // against mpmath `+4.14e+49` — 17 decades wrong + sign flip). The
+  // ascending Maclaurin (0F1) is ULP-accurate for any (ν, z) with
+  // finite-magnitude output; the cost is O(ν + z²/(4ν)) terms which
+  // is acceptable at moderate precision. Mirrors the float64 fix
+  // (worklog 169) which used Olver uniform asymptotic; for bigfloat
+  // we have the cheaper option of Maclaurin since BigFloat exponent
+  // range comfortably holds the intermediate terms.
   //
   // M_dispatch mutation point: tightening "|z| < 16" to "|z| < 4" routes
   // z = 5..15 to the asymptotic which is wildly inaccurate there.  Tested
   // by flipping the constant and watching I_0(8) diverge from the golden.
   const absX = abs(z);
   const xFloat = toFloat64(absX).value;
+  const nuFloat = toFloat64(nu).value;
+  // Large-ν guard (m4ut, worklog 170): the Hankel asymptotic is unsafe
+  // for ν ≥ 25; route to the ULP-accurate Maclaurin instead.
+  if (Number.isFinite(nuFloat) && nuFloat >= 25) {
+    return bigBesselISeriesMaclaurin(nu, absX, prec);
+  }
   // Small-z lane #1: |z| < 16.  FLINT's `mag_cmp_2exp_si(zmag, 4) < 0`.
   if (Number.isFinite(xFloat) && xFloat < 16) {
     return bigBesselISeriesMaclaurin(nu, absX, prec);
   }
-  // Mid-z lane: |z| < 2^64 AND 2|z| < prec.  FLINT's broader 0F1 region.
-  // The 2^64 cap is a finite-magnitude guard for FLINT's internal mag_t;
+  // Mid-z lane: |z| < 2^30 AND 2|z| < prec.  FLINT's broader 0F1 region.
+  // The 2^30 cap is a finite-magnitude guard for FLINT's internal mag_t;
   // we keep the same condition for portability of the dispatch (xFloat
   // is finite here since we've already passed the < 16 lane).
   if (Number.isFinite(xFloat) && xFloat < (1 << 30) && 2 * xFloat < prec) {
     return bigBesselISeriesMaclaurin(nu, absX, prec);
   }
-  // Asymptotic lane: |z| large relative to prec.
+  // Asymptotic lane: |z| large relative to prec AND ν small (< 25).
   return bigBesselIHankelAsymptotic(nu, absX, prec);
 }
 

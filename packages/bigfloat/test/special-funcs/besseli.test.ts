@@ -389,3 +389,49 @@ describe("bigBesselIHankelAsymptotic — primitive isolation", () => {
       .toThrow(/must be positive/);
   });
 });
+
+// -----------------------------------------------------------------------------
+// bigBesselI — bead m4ut regression coverage (large ν, large z)
+// -----------------------------------------------------------------------------
+//
+// The pre-fix dispatcher routed all `2|z| ≥ prec` calls through
+// `bigBesselIHankelAsymptotic`, which is only valid for ν ≪ z. For
+// ν ≳ z/2 the asymptotic's term-ratio `(4ν² − (2k−1)²)/(8(k+1)z)`
+// grows factorially up to k ≈ ν before decaying, and the optimal-
+// truncation point falls inside catastrophic intermediate-term growth.
+//
+// Canonical regression: `bigBesselI(100, 150, 200)` was returning
+// `−1.47e+65` against mpmath `+4.14e+49` — 17 orders of magnitude
+// wrong + sign flip. The fix (worklog 170) adds a `ν ≥ 25 → Maclaurin`
+// guard at the top of the dispatcher; the Maclaurin series is ULP-
+// accurate at any (ν, z) given sufficient working precision.
+
+describe("bigBesselI — bead m4ut large-ν regression (mpmath gold tier)", () => {
+  // Reference values from mpmath dps=25.
+  type MSample = [number, number, number];
+  const SAMPLES: ReadonlyArray<MSample> = [
+    [50, 100, 4.8219580855940807e36],
+    [100, 150, 4.139322752421548e49],
+    [100, 200, 4.352750449727022e74],
+    [200, 300, 4.0755371340915294e100],
+    [50, 200, 4.003924798366753e82],
+  ];
+  for (const [nu, z, ref] of SAMPLES) {
+    test(`bigBesselI(${nu}, ${z}, 100) ≈ mpmath to ≤ 1e-13`, () => {
+      const result = bigBesselI(fromInt(BigInt(nu), 100), fromString(`${z}`, 100), 100);
+      const got = toFloat64(result).value;
+      const rel = Math.abs(got - ref) / Math.abs(ref);
+      expect(rel).toBeLessThan(1e-13);
+    });
+  }
+
+  test("m4ut point regression: bigBesselI(100, 150) → +4.14e+49 (was −1.47e+65 pre-fix)", () => {
+    const result = bigBesselI(fromInt(100n, 100), fromString("150", 100), 100);
+    const got = toFloat64(result).value;
+    // The canonical fingerprint: sign positive, magnitude ~10^49.
+    expect(got).toBeGreaterThan(0); // sign — pre-fix returned negative
+    expect(got).toBeGreaterThan(1e49);
+    expect(got).toBeLessThan(1e50);
+    expect(Math.abs(got - 4.139322752421548e49) / 4.139322752421548e49).toBeLessThan(1e-13);
+  });
+});

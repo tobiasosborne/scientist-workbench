@@ -38,6 +38,7 @@ import {
 import {
   fromString,
   fromInt,
+  toFloat64,
   toString,
   neg,
   abs,
@@ -383,5 +384,50 @@ describe("bigBesselJSeriesCancellationRetry — primitive isolation", () => {
     const direct = bigBesselJSeriesCancellationRetry(nu, z, PREC_50DP);
     const viaDispatch = bigBesselJ(nu, z, PREC_50DP);
     expect(toString(direct, 50)).toBe(toString(viaDispatch, 50));
+  });
+});
+
+// -----------------------------------------------------------------------------
+// bigBesselJ — bead m4ut regression coverage (large ν, large z)
+// -----------------------------------------------------------------------------
+//
+// The pre-fix dispatcher routed all `|z| > z_c_Hankel(prec) = prec/2`
+// calls through `bigBesselJHankelAsymptotic`, which is only valid for
+// ν ≪ z. For ν ≳ z/2 the asymptotic's term-ratio
+// `(4ν² − (2k+1)²)/(8(k+1)z)` grows factorially up to k ≈ ν before
+// decaying.
+//
+// Canonical regression: `bigBesselJ(100, 150, 200)` was returning
+// `+2.17` against mpmath `−0.0154` — 141× wrong + sign flip. The fix
+// (worklog 170) adds a `ν ≥ 25 → Maclaurin / cancellation-retry`
+// guard at the top of the dispatcher.
+
+describe("bigBesselJ — bead m4ut large-ν regression (mpmath gold tier)", () => {
+  type MSample = [number, number, number];
+  // Reference values from mpmath dps=25.
+  const SAMPLES: ReadonlyArray<MSample> = [
+    [50, 100, -0.038698339728525384],
+    [100, 150, -0.015359526118405391],
+    [100, 200, 0.009333214186557586],
+    [200, 300, -0.01936987260083438],
+    [50, 200, 0.015693898978573085],
+  ];
+  for (const [nu, z, ref] of SAMPLES) {
+    test(`bigBesselJ(${nu}, ${z}, 100) ≈ mpmath to ≤ 1e-13`, () => {
+      const result = bigBesselJ(fromInt(BigInt(nu), 100), fromString(`${z}`, 100), 100);
+      const got = toFloat64(result).value;
+      const rel = Math.abs(got - ref) / Math.abs(ref);
+      expect(rel).toBeLessThan(1e-13);
+    });
+  }
+
+  test("m4ut point regression: bigBesselJ(100, 150) → −0.0154 (was +2.17 pre-fix)", () => {
+    const result = bigBesselJ(fromInt(100n, 100), fromString("150", 100), 100);
+    const got = toFloat64(result).value;
+    // The canonical fingerprint: sign negative, magnitude ~0.015.
+    expect(got).toBeLessThan(0); // sign — pre-fix returned positive
+    expect(Math.abs(got)).toBeGreaterThan(0.01);
+    expect(Math.abs(got)).toBeLessThan(0.02);
+    expect(Math.abs(got - -0.015359526118405391) / 0.015359526118405391).toBeLessThan(1e-13);
   });
 });

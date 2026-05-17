@@ -816,12 +816,34 @@ export function bigBesselJ(nu: BigFloat, z: BigFloat, prec: number): BigFloat {
   // z > 0, ν ≥ 0: the main dispatch.
   const absX = abs(z);
   const xFloat = toFloat64(absX).value;
+  const nuFloatEarly = toFloat64(nu).value;
   const zc = crossoverZcHankel(prec);
+  // Large-ν guard (bead `scientist-workbench-m4ut`, worklog 170): the
+  // Hankel asymptotic for J_ν(z) has terms `(4ν² − (2k+1)²)/(8(k+1)z)`
+  // that grow factorially up to `k ≈ ν` before decaying; for ν ≳ x/2
+  // the optimal-truncation point falls inside catastrophic intermediate-
+  // term growth. bigBesselJ(100, 150, 200) was returning `+2.17` against
+  // mpmath `−0.0154` — 141× wrong + sign flip. Route to the
+  // cancellation-retry Maclaurin which is ULP-accurate for any
+  // (ν, z > 0) given sufficient working precision. Mirror of the
+  // bigBesselI fix in besseli.ts; sibling float64 fix is worklog 169
+  // (Olver uniform asymptotic — bigfloat uses Maclaurin instead
+  // because BigFloat exponent range comfortably holds the
+  // intermediate-term magnitudes that float64 cannot).
+  if (Number.isFinite(nuFloatEarly) && nuFloatEarly >= 25) {
+    // For ν > z²/4 the cancellation is negligible (FLINT short-circuit
+    // applies); otherwise the alternating-Maclaurin cancellation retry
+    // sizes the working precision to recover ULP after measured loss.
+    if (Number.isFinite(xFloat) && nuFloatEarly > (xFloat * xFloat) / 4) {
+      return bigBesselJSeriesMaclaurin(nu, absX, prec);
+    }
+    return bigBesselJSeriesCancellationRetry(nu, absX, prec);
+  }
   // Small-z lane: |z| < 8.  Maclaurin direct (cancellation negligible).
   if (Number.isFinite(xFloat) && xFloat < 8) {
     return bigBesselJSeriesMaclaurin(nu, absX, prec);
   }
-  // Large-z lane: |z| > z_c_Hankel.  Hankel asymptotic.
+  // Large-z lane: |z| > z_c_Hankel AND ν < 25.  Hankel asymptotic.
   if (!Number.isFinite(xFloat) || xFloat > zc) {
     return bigBesselJHankelAsymptotic(nu, absX, prec);
   }
