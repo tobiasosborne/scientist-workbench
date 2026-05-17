@@ -104,6 +104,7 @@ export {
   erfInvFloat64,
   erfcInvFloat64,
   wFunctionFloat64,
+  wImFloat64,
   erfComplexFloat64,
   erfcComplexFloat64,
   erfcxComplexFloat64,

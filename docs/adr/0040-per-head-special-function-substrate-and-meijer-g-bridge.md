@@ -1,6 +1,9 @@
 # ADR-0040 — Per-head special-function substrate + bidirectional Meijer-G bridge, prototyped via Erf
 
-**Status:** Implemented — 2026-05-17 (see worklog 142). Originally proposed 2026-05-16.
+**Status:** Implemented — 2026-05-17 (see worklog 142); float64 complex
+substrate amended to full Faddeeva-Johnson port (Algorithm 916 +
+`w_im_y100` Chebyshev) — 2026-05-17 (see worklog 167). Originally
+proposed 2026-05-16.
 **Beads:** `scientist-workbench-43hw` (epic — World-class Erf). Phase 0
 research children all closed: `kvfu` (R1 symbolic identities), `9jpm`
 (R2 arb-prec algorithms), `1i5z` (R3 float64 algorithms), `lnux` (R4
@@ -226,6 +229,23 @@ Algorithm: SunPro 1993 verbatim port per R3 (the canonical libm
 algorithm; ≤ 1 ULP `erf`, ≤ 2 ULP `erfc`). Complex via Faddeeva-Johnson
 2012 (MIT-licensed; canonical w(z) reference). Inverses via Blair-
 Edwards-Johnson 1976 rational approximants.
+
+**Amendment (worklog 167, bead `nxvu`).** The original 2026-05-17 ship
+landed the Faddeeva-Johnson port with the unified Poppe-Wijers
+continued fraction as the universal complex bulk — a deliberate
+v0.1 simplification. Browser-app testing surfaced two regressions:
+(a) `|z| < 1.5` complex Erf was wrong by 1-3 orders of magnitude
+(CF doesn't converge for small `|z|`); (b) real-axis `erfi(x)` for
+`x ∈ [3.5, 6]` was precision-limited to ≈ 1e-7 by the inherent
+asymptotic-truncation floor of an `erfi(x) ~ exp(x²)/(x√π)·(1 +
+1/(2x²) + …)` series. The float64 complex substrate is now upgraded
+to the full Faddeeva-Johnson hybrid: Zaghloul-Ali Algorithm 916
+(`ACM TOMS 38(2), 2011`) for the bulk, Poppe-Wijers CF for large
+`|z|` (Faddeeva.cc's documented envelope), the 100-panel
+`w_im_y100` Chebyshev table on the real axis, and both `taylor` and
+`taylor_erfi` cancellation-band branches for complex `erf`. The
+accuracy contract is now ≤ Faddeeva-Johnson's published `1e-13`
+relative across all of ℂ, matching the canonical reference.
 
 The `applySpecial` dispatch keeps the existing closed-vocabulary
 discipline (ADR-0023 generalised): unknown heads continue to throw

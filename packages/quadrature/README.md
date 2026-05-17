@@ -309,19 +309,29 @@ Per-head implementations live in
   DataView helper) are the load-bearing numerical structure. License:
   BSD-permissive Sun 1993 notice carried verbatim in the module
   header.
-- **Real `erfi`** — derived via the complex `w(z)` machinery as
-  `erfi(x) = Im(erf(i·x))`. Single body of code; inherits the bulk's
-  accuracy.
-- **Complex `w`/`erf`/`erfc`/`erfcx`/`erfi`** — v0.1 port of Stephen
-  G. Johnson's Faddeeva library (MIT, 2012): the unified continued-
-  fraction form (Poppe-Wijers 1990 / Faddeeva.cc lines 745-780) is
-  used for *all* complex inputs, plus a 5-term Taylor for small `|z|`
-  in `erfComplexFloat64` to avoid cancellation. License: MIT notice
-  carried verbatim. **Accuracy contract**: bit-exact (≤ 1 ULP) at
-  large `|z|` (the CF's natural regime); degraded to ~1e-3 relative
-  in the small-`|z|` bulk (where Faddeeva.cc normally uses Algorithm
-  916 + the y100 Chebyshev panels — both deferred to v0.2 as a
-  surgical refinement when a consumer demands tighter accuracy).
+- **Real `erfi`** — `erfi(x) = exp(x²) · w_im(x)` where `w_im(x) =
+  (2/√π)·Dawson(x) = Im[w(x)]` is computed via the 100-panel
+  Chebyshev `wImY100` (Faddeeva-Johnson, MIT, 2012) for `|x| ≤ 45`
+  and a 5-term continued-fraction expansion for `|x| > 45`. Inherits
+  Faddeeva-Johnson's ≤ ULP real-axis precision; the previous v0.1
+  asymptotic-series fallback (precision-limited to ≈ 1e-7 at x=4 and
+  ≈ 1e-11 at x=5 by the inherent asymptotic-truncation floor) is
+  retired (worklog 167 / bead `nxvu`).
+- **Complex `w`/`erf`/`erfc`/`erfcx`/`erfi`** — full port of Stephen
+  G. Johnson's Faddeeva library (MIT, 2012). Hybrid dispatch
+  preserved verbatim from `Faddeeva.cc` lines 692-984:
+  Zaghloul-Ali Algorithm 916 (`ACM TOMS 38(2), 2011`) for the bulk;
+  Poppe-Wijers 1990 continued fraction (`ACM TOMS 16(1)`) for the
+  large-`|z|` envelope (`|Im z| > 7` OR `|Re z| > 6 ∧ |Im z| > 0.1`
+  …); the 100-panel Chebyshev `w_im_y100` on the real axis; SunPro
+  `erfcx` on the imaginary axis; and two complex-`erf` Taylor
+  branches (`taylor` for `|x| < 0.08 ∧ |y| < 0.01`; `taylor_erfi`
+  for `|x| < 5e-3 ∧ |Re·Im| < 2.5e-3`) to handle the
+  `1 − exp(−z²)·w(iz)` cancellation strips. License: MIT notice
+  carried verbatim in the source header. **Accuracy contract**:
+  ≤ Faddeeva-Johnson's published `1e-13` relative error across all
+  of ℂ. The v0.1 "CF-universal" regression (worklog 167) that lost
+  1-3 orders of magnitude at `|z| < 1.5` is retired.
 - **`erfinv`/`erfcinv`** — Blair, Edwards & Johnson 1976 rational
   approximants (Tables 17/37/57 for erfinv, Tables 57/80 for
   erfcinv) plus one Newton-Raphson refinement step (≤ 8 ULP vs

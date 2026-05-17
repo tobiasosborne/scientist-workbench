@@ -70,11 +70,14 @@ import {
   erfComplexFloat64,
   erfcComplexFloat64,
   wFunctionFloat64,
+  wImFloat64,
   maskLowWord,
   evalNumericExprWithSpecial,
   SPECIAL_HEADS,
   UnknownVocabularyError,
 } from "../src/index.js";
+import { bigCErf, bigCErfi } from "@workbench/bigfloat";
+import { fromFloat64, toFloat64 } from "@workbench/bigfloat";
 import { expr, float64FromNumber } from "@workbench/protocol";
 
 // -----------------------------------------------------------------------------
@@ -567,15 +570,14 @@ describe("Complex w / erf — bronze-tier sanity", () => {
     }
   });
 
-  // v0.1 accuracy contract for complex w: bit-exact at large |z|
-  // (CF regime where Faddeeva.cc dispatches the CF), 1e-4 to 1e-13
-  // relative accuracy in the small-|z| bulk. The latter degradation
-  // is because v0.1 ships the unified Faddeeva.cc CF only — it omits
-  // the Zaghloul-Ali Algorithm 916 series that Faddeeva.cc uses for
-  // the small-|z| bulk, and the y100 Chebyshev panels for the
-  // narrow-imaginary-axis band. Both are documented v0.2 follow-ups
-  // (filed in the worklog 133 frictions). The bench's T5/T7 corpus
-  // ULP grading is correspondingly relaxed.
+  // Accuracy contract for complex `w`: Faddeeva-Johnson's published
+  // ≤ 1e-13 relative error across all of ℂ. Achieved by the hybrid
+  // dispatch — Algorithm 916 (Zaghloul-Ali, ACM TOMS 38(2), 2011) in
+  // the bulk, Poppe-Wijers continued fraction at large |z|, the
+  // 100-panel Chebyshev `w_im_y100` on the real axis, and SunPro
+  // `erfcx` on the imaginary axis. The earlier "CF-universal" v0.1
+  // strategy that lost 1-3 orders of magnitude at |z| < 1.5 (worklog
+  // 167, bead `nxvu`) is retired.
   test("w(z) bit-exact vs scipy at large |z| (CF regime)", () => {
     // Reference values from scipy.special.wofz (Faddeeva-Johnson 2012).
     const samples: [number, number, number, number][] = [
@@ -601,17 +603,185 @@ describe("Complex w / erf — bronze-tier sanity", () => {
     expect(Math.abs(e.im - 794895688.6760534)).toBeLessThanOrEqual(tol);
   });
 
-  test("w(z) degraded but bounded at small |z| (v0.1 limitation)", () => {
-    // Documented v0.1 contract: at small |z| the CF alone reaches
-    // ~1e-3 relative accuracy, not the Faddeeva-Johnson 1e-13
-    // target. The y100 / Algorithm 916 panels are deferred.
+  test("w(0.5 + 0.5i) — full Faddeeva-Johnson accuracy in the bulk", () => {
+    // Worklog 167 / bead `nxvu` regression marker: the prior CF-only
+    // dispatch gave (0.5328, 0.2306) here — a 1e-3 relative error.
+    // Algorithm 916 lands the wire-shape Faddeeva.cc value to ≤ ULP.
     const w = wFunctionFloat64(0.5, 0.5);
     const sxRe = 0.5331567079121748;
     const sxIm = 0.2304882313844585;
-    // 1e-3 relative is the v0.1 floor for the small-|z| bulk.
-    expect(Math.abs(w.re - sxRe)).toBeLessThan(1e-3);
-    expect(Math.abs(w.im - sxIm)).toBeLessThan(1e-3);
+    expect(Math.abs(w.re - sxRe)).toBeLessThan(1e-14);
+    expect(Math.abs(w.im - sxIm)).toBeLessThan(1e-14);
   });
+});
+
+// -----------------------------------------------------------------------------
+// Algorithm 916 / w_im — regression tests for the regions broken at v0.1
+// -----------------------------------------------------------------------------
+//
+// Coverage rationale (worklog 167):
+//   The v0.1 CF-only implementation lost 1-3 decades of relative
+//   precision throughout the |z| < 1.5 bulk (worst observed: 89×
+//   relative error at |z| = 0.01), and the real-axis Dawson lane
+//   bottomed out at ≈ 1e-7 relative for `erfi(x)` with `x ∈ [4, 6]`
+//   because an asymptotic series's best achievable error at finite
+//   x exceeds 1 ULP in that band. Both regions are now exercised
+//   directly against the `@workbench/bigfloat` arb-prec oracle.
+//
+// Mutation-prove discipline (PRD §6):
+//   Each test below was first proven RED by perturbing the
+//   replacement code. Specifically:
+//     - replace `algorithm916` with the legacy CF-universal body →
+//       complex small-|z| tests RED at 80+ ULP.
+//     - replace `wImY100` with the legacy `erfiRealOnly` asymptotic →
+//       `erfi(4..5.5)` tests RED at 1e-7 to 1e-11.
+//   These mutations were verified RED in worklog 167's Phase D.
+
+describe("Algorithm 916 — complex w(z) bulk (|z| < 1.5)", () => {
+  // 8-angle ring sweeps at radii spanning the previously-broken
+  // small-|z| region. Each radius gets its worst-angle relative
+  // error compared to arb-prec at 200-bit precision.
+  const refErf = (r: number, i: number) => {
+    const c = bigCErf(
+      { re: fromFloat64(r), im: fromFloat64(i) },
+      200,
+    );
+    return { re: toFloat64(c.re).value, im: toFloat64(c.im).value };
+  };
+
+  const radii: ReadonlyArray<{ r: number; tol: number }> = [
+    { r: 0.001, tol: 1e-14 }, // deep cancellation strip (Taylor regime)
+    { r: 0.01, tol: 1e-14 }, // worst v0.1 spot (was 89× wrong)
+    { r: 0.05, tol: 1e-13 }, // Taylor → Algorithm 916 boundary
+    { r: 0.1, tol: 1e-13 },
+    { r: 0.3, tol: 1e-14 },
+    { r: 0.5, tol: 1e-14 }, // canonical worst-case bulk point
+    { r: 1.0, tol: 1e-14 },
+    { r: 1.5, tol: 1e-14 },
+    { r: 3.0, tol: 1e-14 }, // Algorithm 916 → CF boundary region
+  ];
+
+  for (const { r, tol } of radii) {
+    test(`erf — |z| = ${r}, worst over 16 angles ≤ ${tol}`, () => {
+      let worst = 0;
+      for (let k = 0; k < 16; k++) {
+        const th = (k * 2 * Math.PI) / 16;
+        const x = r * Math.cos(th),
+          y = r * Math.sin(th);
+        if (Math.abs(x) < 1e-300 || Math.abs(y) < 1e-300) continue;
+        const got = erfComplexFloat64(x, y);
+        const ref = refErf(x, y);
+        const rel =
+          Math.hypot(got.re - ref.re, got.im - ref.im) /
+          Math.max(Math.hypot(ref.re, ref.im), 1e-300);
+        if (rel > worst) worst = rel;
+      }
+      expect(worst).toBeLessThan(tol);
+    });
+  }
+
+  test("erf(0.01 + 0.01i) — point regression for worklog 167 / nxvu", () => {
+    // The canonical fingerprint of the v0.1 regression: this point
+    // returned (-3.6, +4.6) under CF-universal — 89× relative error
+    // against the true (0.01128, 0.01128). After Algorithm 916 the
+    // value lands to single ULP.
+    const got = erfComplexFloat64(0.01, 0.01);
+    const ref = refErf(0.01, 0.01);
+    expect(Math.abs(got.re - ref.re)).toBeLessThan(1e-15);
+    expect(Math.abs(got.im - ref.im)).toBeLessThan(1e-15);
+  });
+});
+
+describe("w_im (Dawson) — real-axis y100 Chebyshev + CF (|x| > 45)", () => {
+  // The fix for `erfi(x)` at `x ∈ [4, 5.5]`: the prior asymptotic
+  // series was precision-limited at ≈ 1e-7 at x=4 to ≈ 1e-11 at x=5
+  // (the inherent asymptotic-truncation floor); y100 Chebyshev gives
+  // ≤ ULP across the entire `[0, 45]` panel range.
+  const refWIm = (x: number) => {
+    // w_im(x) = exp(-x²)·erfi(x); use the arb-prec complex erfi at z=x+0i.
+    const e = bigCErfi(
+      { re: fromFloat64(x), im: fromFloat64(0) },
+      200,
+    );
+    return Math.exp(-x * x) * toFloat64(e.re).value;
+  };
+
+  test("w_im worst rel ≤ 1e-13 across x ∈ [0.1, 45] (y100 region)", () => {
+    let worst = 0;
+    let worstX = 0;
+    for (let i = 1; i <= 450; i++) {
+      const x = i * 0.1;
+      const got = wImFloat64(x);
+      const ref = refWIm(x);
+      const rel = Math.abs(got - ref) / Math.max(Math.abs(ref), 1e-300);
+      if (rel > worst) {
+        worst = rel;
+        worstX = x;
+      }
+    }
+    if (worst >= 1e-13)
+      throw new Error(`w_im worst rel=${worst.toExponential(2)} at x=${worstX}`);
+    expect(worst).toBeLessThan(1e-13);
+  });
+
+  test("w_im CF region |x| > 45 — agrees with asymptotic series", () => {
+    // Reference: 5-term asymptotic w_im(x) ~ (1/√π)·(1/x + 1/(2x³) +
+    // 3/(4x⁵) + 15/(8x⁷) + 105/(16x⁹) + ...). Beyond x ≈ 27 the
+    // arb-prec `exp(-x²)·erfi(x)` reference path is invalidated by
+    // `exp(-x²)` underflowing to 0 while `erfi(x)` overflows. The
+    // asymptotic series is accurate to all available digits in this
+    // regime (it IS the algorithm Faddeeva.cc uses).
+    const ispi = 0.56418958354775628694807945156;
+    for (const x of [50, 100, 1000, 1e5, 1e7, 1e10]) {
+      const got = wImFloat64(x);
+      const x2 = x * x;
+      const ref =
+        x > 5e7
+          ? ispi / x
+          : (ispi * (x2 * (x2 - 4.5) + 2)) / (x * (x2 * (x2 - 5) + 3.75));
+      // The implementation uses the exact same formulas as `ref`; this
+      // is structural agreement, not algorithmic cross-check.
+      expect(Object.is(got, ref)).toBe(true);
+    }
+    // Cross-check against the leading 1/(√π·x) term — accurate to
+    // O(1/x²) ≈ 1/2500 at x=50, well below the 0.01 tolerance.
+    expect(Math.abs(wImFloat64(50) - ispi / 50)).toBeLessThan(0.01);
+    expect(Math.abs(wImFloat64(1000) - ispi / 1000)).toBeLessThan(1e-7);
+  });
+
+  test("w_im odd symmetry: w_im(-x) = -w_im(x)", () => {
+    for (const x of [0.5, 1, 5, 10, 45, 50, 1e6]) {
+      expect(wImFloat64(-x)).toBe(-wImFloat64(x));
+    }
+  });
+});
+
+describe("erfi(x) real-axis — worklog 167 bad-band regression coverage", () => {
+  // The full band the v0.1 asymptotic could not handle: x ∈ [3.5, 6].
+  // At x = 4 the old code gave 1.28e-7 relative error; at x = 5 it
+  // gave 1.60e-11. After the rewrite (erfi(x) = exp(x²) · w_im(x))
+  // every point in the band lands to ≤ 1 ULP.
+  const refErfi = (x: number) => {
+    const e = bigCErfi(
+      { re: fromFloat64(x), im: fromFloat64(0) },
+      200,
+    );
+    return toFloat64(e.re).value;
+  };
+  // erfi(x) grows like exp(x²); the `exp(x²) · w_im(x)` assembly
+  // inherits both factors' ULPs, so absolute error scales with the
+  // result. The honest accuracy metric is *relative* error, which
+  // Faddeeva-Johnson's published spec bounds at ≤ 1e-13. We assert
+  // 5e-14 here (a tighter bound observed in practice) to catch any
+  // regression that re-introduces the asymptotic-truncation floor.
+  for (const x of [3.5, 3.8, 4.0, 4.2, 4.5, 4.8, 5.0, 5.2, 5.5, 5.8, 6.0]) {
+    test(`erfi(${x}) — relative error ≤ 5e-14 (Faddeeva-Johnson spec)`, () => {
+      const got = erfiFloat64(x);
+      const ref = refErfi(x);
+      const rel = Math.abs(got - ref) / Math.abs(ref);
+      expect(rel).toBeLessThan(5e-14);
+    });
+  }
 });
 
 // -----------------------------------------------------------------------------

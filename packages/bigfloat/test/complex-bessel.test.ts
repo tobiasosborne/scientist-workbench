@@ -426,7 +426,7 @@ describe("bigCBesselI — golden masters vs Arb (T5 nu=0, all quadrants)", () =>
   });
   for (const entry of nu0Entries) {
     const z = entry.z as { re: string; im: string };
-    test(`${entry.id ?? entry.input_id} I_0(${parseFloat(z.re).toFixed(2)}+${parseFloat(z.im).toFixed(2)}i) agrees with Arb to ≥ 45 dp`, () => {
+    test(`${entry.input_id} I_0(${parseFloat(z.re).toFixed(2)}+${parseFloat(z.im).toFixed(2)}i) agrees with Arb to ≥ 45 dp`, () => {
       if (entry.status !== "success" || !entry.value) return;
       const v = entry.value as { re: string; im: string };
       const zC = cfromStrings(z.re, z.im, PREC_120DP);
