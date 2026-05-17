@@ -52,10 +52,12 @@ function diff(e: Value, wrt = z): Value {
 // -----------------------------------------------------------------------------
 
 describe("SPECIAL_FUNCTION_HEADS — vocabulary table", () => {
-  test("contains exactly the 28 heads ADR-0023 admits (Erfi added 2026-05-16 per ADR-0040)", () => {
+  test("contains exactly the 32 heads ADR-0023 admits (Hankel + spherical Bessel added 2026-05-17 per ADR-0041)", () => {
     const expected = [
       "Gamma", "Digamma", "Polygamma",
       "BesselJ", "BesselY", "BesselI", "BesselK",
+      "HankelH1", "HankelH2",
+      "SphericalBesselJ", "SphericalBesselY",
       "HypergeometricPFQ",
       "WhittakerM", "WhittakerW",
       "ParabolicCylinderD",
@@ -69,10 +71,11 @@ describe("SPECIAL_FUNCTION_HEADS — vocabulary table", () => {
       "Polylog", "LerchPhi",
       "MeijerG",
     ];
-    // 28 heads after ADR-0040 §"Decision 6" admitted Erfi as the third
-    // member of the error-function family. Re-count to guard against
-    // drift on future vocabulary additions:
-    expect(expected.length).toBe(28);
+    // 32 heads after ADR-0041 §"Decision 6" admitted the four Bessel-
+    // family boundary heads (HankelH1, HankelH2, SphericalBesselJ,
+    // SphericalBesselY). Re-count to guard against drift on future
+    // vocabulary additions:
+    expect(expected.length).toBe(32);
     // The set the module exports must match this array exactly.
     expect([...SPECIAL_FUNCTION_HEADS].sort()).toEqual([...expected].sort());
   });
@@ -121,6 +124,8 @@ describe("specialFunctionArity — arity contracts", () => {
 
   test("two-arg heads have arity 2", () => {
     for (const h of ["Polygamma", "BesselJ", "BesselY", "BesselI", "BesselK",
+                     "HankelH1", "HankelH2",
+                     "SphericalBesselJ", "SphericalBesselY",
                      "ExpIntegralE", "LegendreP", "LegendreQ",
                      "LaguerreL", "HermiteH", "ChebyshevT", "ChebyshevU",
                      "Polylog", "ParabolicCylinderD"]) {
@@ -162,13 +167,15 @@ describe("specialFunctionArity — arity contracts", () => {
 // -----------------------------------------------------------------------------
 
 describe("SPECIAL_FUNCTION_DIFFERENTIABLE_HEADS — v0.1 subset", () => {
-  test("matches ADR-0023's shipped subset exactly (incl. Erfi per ADR-0040)", () => {
+  test("matches ADR-0023's shipped subset exactly (incl. Erfi per ADR-0040 + Hankel/spherical Bessel per ADR-0041)", () => {
     const expected = [
       "Gamma", "Digamma", "Polygamma",
       "Erf", "Erfc", "Erfi",
       "ExpIntegralEi", "ExpIntegralE",
       "FresnelC", "FresnelS",
       "BesselJ", "BesselY", "BesselI", "BesselK",
+      "HankelH1", "HankelH2",
+      "SphericalBesselJ", "SphericalBesselY",
       "HermiteH",
       "Polylog",
     ];
@@ -478,6 +485,214 @@ describe("differentiate — Bessel family", () => {
     expect(() => diff(expr("BesselJ", [nu, z]), nu)).toThrow(
       CasDiffOutOfScopeError,
     );
+  });
+});
+
+// -----------------------------------------------------------------------------
+// Hankel H1 / H2 — cylinder-Bessel boundary (admitted 2026-05-17 per ADR-0041)
+// -----------------------------------------------------------------------------
+//
+// H¹_ν = J_ν + i·Y_ν and H²_ν = J_ν − i·Y_ν are the complex-valued
+// cylinder Bessel functions. The numerical evaluation path uses
+// Hankel's expansion (DLMF §10.17.5) *directly* in the upper / lower
+// half-plane to avoid catastrophic cancellation between J_ν and i·Y_ν
+// at large |z|; the symbolic AST needs them as first-class heads for
+// that substrate to dispatch on. Diff rule shape is identical to the
+// cylinder-Bessel rule (DLMF §10.6.1's "any cylinder function" framing
+// covers `C_ν ∈ {J, Y, H¹, H²}`).
+
+describe("differentiate — Hankel functions (DLMF §10.6.1)", () => {
+  test("d/dz H¹_ν(z) = (H¹_{ν-1}(z) − H¹_{ν+1}(z)) / 2  (same shape as J)", () => {
+    const nu = int(3n);
+    const got = diff(expr("HankelH1", [nu, z]));
+    const want = expr("/", [
+      expr("-", [
+        expr("HankelH1", [int(2n), z]),
+        expr("HankelH1", [int(4n), z]),
+      ]),
+      int(2n),
+    ]);
+    expect(eq(got, want)).toBe(true);
+  });
+
+  test("d/dz H²_ν(z) — same recurrence shape as H¹", () => {
+    const nu = int(3n);
+    const got = diff(expr("HankelH2", [nu, z]));
+    const want = expr("/", [
+      expr("-", [
+        expr("HankelH2", [int(2n), z]),
+        expr("HankelH2", [int(4n), z]),
+      ]),
+      int(2n),
+    ]);
+    expect(eq(got, want)).toBe(true);
+  });
+
+  test("rational-order Hankel: d/dz H¹_{1/2}(z) shifts to ν±1 = -1/2, 3/2", () => {
+    const nu = rat(1n, 2n);
+    const got = diff(expr("HankelH1", [nu, z]));
+    const want = expr("/", [
+      expr("-", [
+        expr("HankelH1", [rat(-1n, 2n), z]),
+        expr("HankelH1", [rat(3n, 2n), z]),
+      ]),
+      int(2n),
+    ]);
+    expect(eq(got, want)).toBe(true);
+  });
+
+  test("symbolic-order Hankel: d/dz H²_ν(z) emits H²_{ν-1}, H²_{ν+1} symbolically", () => {
+    const nu = sym("nu");
+    const got = diff(expr("HankelH2", [nu, z]));
+    const want = expr("/", [
+      expr("-", [
+        expr("HankelH2", [expr("-", [nu, int(1n)]), z]),
+        expr("HankelH2", [expr("+", [nu, int(1n)]), z]),
+      ]),
+      int(2n),
+    ]);
+    expect(eq(got, want)).toBe(true);
+  });
+
+  test("chain rule: d/dz H¹_3(2z) = ((H¹_2(2z) − H¹_4(2z)) / 2) · 2", () => {
+    const inner = expr("*", [int(2n), z]);
+    const got = diff(expr("HankelH1", [int(3n), inner]));
+    const want = expr("*", [
+      expr("/", [
+        expr("-", [
+          expr("HankelH1", [int(2n), inner]),
+          expr("HankelH1", [int(4n), inner]),
+        ]),
+        int(2n),
+      ]),
+      int(2n),
+    ]);
+    expect(eq(got, want)).toBe(true);
+  });
+
+  test("d/dν H¹_ν(z) refuses (order-derivative is not in v0.1)", () => {
+    const nu = sym("nu");
+    expect(() => diff(expr("HankelH1", [nu, z]), nu)).toThrow(
+      CasDiffOutOfScopeError,
+    );
+  });
+
+  test("d/dw H²_3(z) = 0  (free-symbol-independence; w ≠ z)", () => {
+    const got = diff(expr("HankelH2", [int(3n), z]), w);
+    expect(eq(got, int(0n))).toBe(true);
+  });
+
+  test("determinism: H¹_3(z) diff hash-equal across two calls", () => {
+    const f = expr("HankelH1", [int(3n), z]);
+    const a = canonicalize(diff(f));
+    const b = canonicalize(diff(f));
+    expect(a).toBe(b);
+  });
+});
+
+// -----------------------------------------------------------------------------
+// SphericalBesselJ / Y — load-bearing physics encoding (ADR-0041 §"Decision 6")
+// -----------------------------------------------------------------------------
+//
+// `j_n(z) = √(π/(2z))·J_{n+1/2}(z)` and the corresponding `y_n` are
+// admitted because consumers (Mie scattering, quantum partial-wave
+// decomposition, gravitational-wave spherical-harmonic expansions)
+// express results as `j_n(kr)` directly, never as the half-integer
+// Bessel composition. Diff rule uses the *asymmetric* DLMF §10.51.2
+// ascent form: `d/dz j_n(z) = j_{n-1}(z) − ((n+1)/z) · j_n(z)`.
+// The `1/z` factor is honest (consumers `integrate-1d` and
+// `eval-numeric-expr` handle it exactly the way they handle the
+// matching `1/z` in `d/dz Li_s(z) = Li_{s-1}(z)/z` per `rulePolylog`).
+
+describe("differentiate — spherical Bessel functions (DLMF §10.51.2)", () => {
+  test("d/dz j_n(z) = j_{n-1}(z) − ((n+1)/z) · j_n(z)  (DLMF §10.51.2)", () => {
+    const nn = int(3n);
+    const got = diff(expr("SphericalBesselJ", [nn, z]));
+    const want = expr("-", [
+      expr("SphericalBesselJ", [int(2n), z]),
+      expr("*", [
+        expr("/", [int(4n), z]),
+        expr("SphericalBesselJ", [int(3n), z]),
+      ]),
+    ]);
+    expect(eq(got, want)).toBe(true);
+  });
+
+  test("d/dz y_n(z) — same recurrence shape as j_n", () => {
+    const nn = int(3n);
+    const got = diff(expr("SphericalBesselY", [nn, z]));
+    const want = expr("-", [
+      expr("SphericalBesselY", [int(2n), z]),
+      expr("*", [
+        expr("/", [int(4n), z]),
+        expr("SphericalBesselY", [int(3n), z]),
+      ]),
+    ]);
+    expect(eq(got, want)).toBe(true);
+  });
+
+  test("symbolic-order spherical Bessel: d/dz j_n(z) emits j_{n-1}, ((n+1)/z)·j_n symbolically", () => {
+    const nn = sym("n");
+    const got = diff(expr("SphericalBesselJ", [nn, z]));
+    const want = expr("-", [
+      expr("SphericalBesselJ", [expr("-", [nn, int(1n)]), z]),
+      expr("*", [
+        expr("/", [expr("+", [nn, int(1n)]), z]),
+        expr("SphericalBesselJ", [nn, z]),
+      ]),
+    ]);
+    expect(eq(got, want)).toBe(true);
+  });
+
+  test("n = 0 case: d/dz j_0(z) = j_{-1}(z) − (1/z) · j_0(z)", () => {
+    // The asymmetric ascent rule fires uniformly for all n; n=0 produces
+    // j_{-1} (which is itself a valid spherical Bessel value via the
+    // half-integer Bessel relation j_{-1}(z) = cos(z)/z; cas-simplify
+    // can rewrite later) and (1/z)·j_0. No special-case branch.
+    const got = diff(expr("SphericalBesselJ", [int(0n), z]));
+    const want = expr("-", [
+      expr("SphericalBesselJ", [int(-1n), z]),
+      expr("*", [
+        expr("/", [int(1n), z]),
+        expr("SphericalBesselJ", [int(0n), z]),
+      ]),
+    ]);
+    expect(eq(got, want)).toBe(true);
+  });
+
+  test("chain rule: d/dz j_3(2z) = (j_2(2z) − (4/(2z))·j_3(2z)) · 2", () => {
+    const inner = expr("*", [int(2n), z]);
+    const got = diff(expr("SphericalBesselJ", [int(3n), inner]));
+    const want = expr("*", [
+      expr("-", [
+        expr("SphericalBesselJ", [int(2n), inner]),
+        expr("*", [
+          expr("/", [int(4n), inner]),
+          expr("SphericalBesselJ", [int(3n), inner]),
+        ]),
+      ]),
+      int(2n),
+    ]);
+    expect(eq(got, want)).toBe(true);
+  });
+
+  test("d/dn j_n(z) refuses (order-derivative is not in v0.1)", () => {
+    const nn = sym("n");
+    expect(() => diff(expr("SphericalBesselJ", [nn, z]), nn)).toThrow(
+      CasDiffOutOfScopeError,
+    );
+  });
+
+  test("d/dw y_3(z) = 0  (free-symbol-independence; w ≠ z)", () => {
+    const got = diff(expr("SphericalBesselY", [int(3n), z]), w);
+    expect(eq(got, int(0n))).toBe(true);
+  });
+
+  test("determinism: j_3(z) diff hash-equal across two calls", () => {
+    const f = expr("SphericalBesselJ", [int(3n), z]);
+    const a = canonicalize(diff(f));
+    const b = canonicalize(diff(f));
+    expect(a).toBe(b);
   });
 });
 

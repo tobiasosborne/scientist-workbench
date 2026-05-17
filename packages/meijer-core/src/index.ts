@@ -162,10 +162,13 @@ export { ALL_RULES, meijergSymbolic } from "./dispatch.js";
 // Per-head modules under `src/bridges/<head>.ts`. Each bridge exports
 // `headToMeijerG(head, args)` (forward) and `meijerGToHead(form,
 // prefactor?)` (standalone backward). The forward bridge returns a
-// `ForwardBridge` (G-form + prefactor `wrap` + `zInverse` closure for
-// byte-identical round-trip); the standalone backward bridge pattern-
-// matches a G-form against the canonical shapes and emits `{head, args}`
-// or `null` (honest refusal per ADR-0003 boundary failure).
+// `ForwardBridge` (G-form + prefactor `wrap` + `argsInverse` closure for
+// byte-identical round-trip; ADR-0040 §"Decision 5" pinned the 1-arg
+// closure under the name `zInverse`, ADR-0041 §"Decision 5" renamed it
+// to `argsInverse` arity-agnostically for 2-arg+ heads like Bessel); the
+// standalone backward bridge pattern-matches a G-form against the
+// canonical shapes and emits `{head, args}` or `null` (honest refusal
+// per ADR-0003 boundary failure).
 //
 // Inverse error functions (`InverseErf`, `InverseErfc`) are honestly
 // refused on both directions — no Meijer-G representation exists per

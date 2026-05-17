@@ -53,7 +53,7 @@
 // head + args). Mathematical equivalence (`mkPower(mkPower(z, 1/2), 2) =
 // z`) is `cas-simplify`'s job — and `cas-simplify` deliberately refuses
 // the nested-power reduction (multi-valued root surface; see
-// `bridges/erf.ts` file-top "The `zInverse` closure trick"). The closure
+// `bridges/erf.ts` file-top "The `argsInverse` closure trick"). The closure
 // assertion is therefore "the bridge emits the *canonical Form-A G-form*
 // for the extracted head + args"; byte-identity of the z-slot back to the
 // rule's original input is not the contract.

@@ -150,6 +150,12 @@ export {
 } from "./special-functions.js";
 
 export {
+  isPositiveInteger,
+  isNonNegativeInteger,
+  isHalfInteger,
+} from "./pattern.js";
+
+export {
   type AlgebraicElement,
   type AlgebraicRingSpec,
   algebraicRing,

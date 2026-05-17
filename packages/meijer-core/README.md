@@ -63,7 +63,7 @@ Public API:
 | `selectSeries`        | The (p, q, m, n, |z|) selection rule alone.                              |
 | `detectCoalescence`   | Integer-spaced-pair detection across the parameter sub-tuples.           |
 | `perturbParameters`   | The deterministic odd-coefficient perturbation.                          |
-| `headToMeijerG`       | **Forward bridge** (ADR-0040 §"Decision 5"). Given a head + args, returns the canonical `MeijerGForm` + prefactor `wrap` + `zInverse` closure for byte-identical round-trip; or `null` for honestly-refused heads (`InverseErf`, `InverseErfc`). v0.1: Erf, Erfc, Erfi. |
+| `headToMeijerG`       | **Forward bridge** (ADR-0040 §"Decision 5"; closure renamed per ADR-0041 §"Decision 5"). Given a head + args, returns the canonical `MeijerGForm` + prefactor `wrap` + `argsInverse` closure for byte-identical round-trip; or `null` for honestly-refused heads (`InverseErf`, `InverseErfc`). v0.1: Erf, Erfc, Erfi. |
 | `meijerGToHead`       | **Standalone backward bridge** (ADR-0040 §"Decision 5"). Pattern-matches a `MeijerGForm` against the canonical Erf-family shapes; emits `{head, args}` or `null`. The Erf/Erfi disambiguation rides on the z-slot sign. |
 | Type exports          | `MeijerGParameters`, `MeijerGSlaterOptions`, `MeijerGContourOptions`, `MeijerGAsymptoticOptions`, `MeijerGSymbolicParams`, `DispatchResult`, `ReductionRule`, `PatternSpec`, `MeijerGForm`, `ForwardBridge`, all result discriminants. |
 
@@ -110,10 +110,14 @@ sibling to `src/dispatch-rules/`. Each bridge ships a forward direction
 literature-pinned table, and a standalone backward direction
 (`meijerGToHead(form)`) pattern-matching G-forms back to heads. The
 forward bridge returns a `ForwardBridge` record carrying the G-form, a
-prefactor `wrap` closure, and the load-bearing `zInverse` closure that
+prefactor `wrap` closure, and the load-bearing `argsInverse` closure that
 recovers the head's original arguments byte-identically — sidestepping
 the multi-valued `√(z²)` problem inherent in the naive backward path
-(see R4 §3.b in `docs/refs/erf-research/R4-meijer-g-bridge.md`).
+(see R4 §3.b in `docs/refs/erf-research/R4-meijer-g-bridge.md`). The
+closure was named `zInverse` in v0.1 (Erf-only era); ADR-0041 §"Decision
+5" renames it to `argsInverse` arity-agnostically so the same interface
+field carries Bessel's `[ν, z]` recovery (and any future N-arg head)
+without further API change.
 
 The Erf family (`Erf`, `Erfc`, `Erfi`) ships as v0.1 (bead `tc2c`,
 worklog 137). The inverse-erf heads (`InverseErf`, `InverseErfc`) are
@@ -129,11 +133,11 @@ const fwd = headToMeijerG("Erf", [z]);
 // fwd = {
 //   gForm: { an: [1/2], ap: [], bm: [0], bq: [-1/2], z: z² },
 //   wrap: g => (z / √π) · g,
-//   zInverse: () => [z],
+//   argsInverse: () => [z],
 // }
 
 // Round-trip via the forward closure (byte-identical):
-const args = fwd!.zInverse();    // [z], byte-identical to the input
+const args = fwd!.argsInverse();    // [z], byte-identical to the input
 
 // Standalone backward path on an arbitrary G-form:
 const bwd = meijerGToHead({

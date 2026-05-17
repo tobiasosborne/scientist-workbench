@@ -255,3 +255,31 @@ purely additive.
 - Documentation lockstep (Law 2): `packages/cas-core/README.md`,
   `tools/cas-diff/README.md`, main `README.md` catalog row,
   worklog shard 074.
+
+### Amendment 2 — 2026-05-17 (ADR-0041 §"Decision 6"; bead `vsvl`)
+
+The vocabulary admits four additional heads at the substrate
+prototype-2 landing (Bessel family per ADR-0041 §"Decision 6"):
+`HankelH1`, `HankelH2`, `SphericalBesselJ`, `SphericalBesselY`. All
+fixed-2 arity. Total head count 28 → 32. Each passes the Erfi
+precedent test (Amendment 1 above): substrate-level pattern tables
+dispatch on the head non-redundantly. Hankel needs first-class status
+because Hankel's expansion (DLMF §10.17.5) is the canonical numeric-
+evaluation path in the upper / lower half-plane — decomposing via
+`J_ν + i·Y_ν` would lose precision through catastrophic cancellation
+between large `Y_ν` and `i·J_ν`. Spherical Bessel needs first-class
+status because the load-bearing physics consumers (Mie scattering,
+quantum partial-wave decomposition, gravitational-wave spherical-
+harmonic expansions) express results as `j_n(kr)` directly. All four
+ship closed-form diff rules: cylinder-Bessel + Hankel share the
+symmetric three-term recurrence (DLMF §10.6.1; `ruleBesselFirstKind`
+fans four heads through one body) and spherical Bessel uses the
+asymmetric ascent recurrence (DLMF §10.51.2; new
+`ruleSphericalBesselFirstKind`). `SphericalBesselI` and
+`SphericalBesselK` are deferred pending a clean resolution of the
+DLMF §10.47.7-8 `i^{(1)}` / `i^{(2)}` convention ambiguity (filed as
+P3 follow-up; the cas-core AST cannot represent "this is one of two
+distinct spherical-modified-Bessel functions" without a tag-
+disambiguator the substrate doesn't yet support). See
+`docs/refs/besselj-research/R1-symbolic-identities.md` §13 for the
+per-head Erfi-precedent justification.

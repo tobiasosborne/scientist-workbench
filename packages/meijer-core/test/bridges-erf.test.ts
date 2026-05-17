@@ -12,9 +12,12 @@
 //
 //   2. **Byte-identical round-trip property.** For every bridged head
 //      (Erf, Erfc, Erfi) and every representative argument sample:
-//      `headToMeijerG(...).zInverse()` returns the original `args`
+//      `headToMeijerG(...).argsInverse()` returns the original `args`
 //      byte-identically (per canonicalize). This IS the bridge's
-//      correctness contract per ADR-0040 §"Decision 5".
+//      correctness contract per ADR-0040 §"Decision 5" (the closure was
+//      named `zInverse` in v0.1; ADR-0041 §"Decision 5" renames it to
+//      `argsInverse` arity-agnostically — Erf returns a 1-element list,
+//      Bessel returns 2-element, etc.).
 //
 //   3. **Backward standalone bridge.** `meijerGToHead(form)` on the
 //      canonical Erf-family G-forms recovers the head + reconstructed
@@ -169,14 +172,14 @@ describe("headToMeijerG — forward bridge structural anchors (R4 §1)", () => {
 // Layer 2 — byte-identical round-trip property (the bridge's correctness contract)
 // -----------------------------------------------------------------------------
 
-describe("round-trip: headToMeijerG(...).zInverse() preserves args byte-identically", () => {
+describe("round-trip: headToMeijerG(...).argsInverse() preserves args byte-identically", () => {
   for (const head of ["Erf", "Erfc", "Erfi"] as const) {
     for (const sample of ARG_SAMPLES) {
       test(`${head}(${sample.label})`, () => {
         const fwd = headToMeijerG(head, [sample.value]);
         expect(fwd).not.toBeNull();
         if (!fwd) return;
-        const recovered = fwd.zInverse();
+        const recovered = fwd.argsInverse();
         expect(recovered.length).toBe(1);
         // Byte-identical: canonicalize bytes must match exactly.
         expect(canonicalize(recovered[0]!)).toBe(canonicalize(sample.value));

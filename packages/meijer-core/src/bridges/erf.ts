@@ -12,9 +12,9 @@
 //
 //   * `headToMeijerG(head, args)` — forward bridge. Given a head name and
 //     its argument list, returns a `ForwardBridge` (G-form + prefactor
-//     `wrap` + `zInverse` closure) on success, or `null` when the head is
-//     out-of-scope (either honestly-refused like `InverseErf` / `InverseErfc`,
-//     or simply not in this bridge module's scope).
+//     `wrap` + `argsInverse` closure) on success, or `null` when the head
+//     is out-of-scope (either honestly-refused like `InverseErf` /
+//     `InverseErfc`, or simply not in this bridge module's scope).
 //
 //   * `meijerGToHead(form, prefactor?)` — backward bridge. Pattern-matches
 //     a `MeijerGForm` against the canonical Erf-family G-forms; on hit,
@@ -56,8 +56,9 @@
 //     per A3; if `cas-simplify` rewrites Erfi via A3 and the user then
 //     bridges, the rewritten form's `i` must be the same encoding).
 //
-// The `zInverse` closure trick (R4 §3, ADR-0040 §"Why `zInverse`")
-// ----------------------------------------------------------------
+// The `argsInverse` closure trick (Erf R4 §3, ADR-0040 §"Why `zInverse`",
+// generalised by ADR-0041 §"Decision 5" / Bessel R4 §C to multi-arg heads)
+// -----------------------------------------------------------------------
 // For Erf and Erfi the z-substitution is `z → ±z²` (the sign distinguishing
 // the two heads). The naïve backward bridge would compute `√(g.z)` to
 // recover `z`, but `√(z²) = |z|` over ℝ and is multi-valued over ℂ. A
@@ -67,10 +68,17 @@
 //
 // The fix is to record the original `args` in a closure on the
 // `ForwardBridge` record. The backward bridge that the *forward bridge
-// produced* recovers the args via `zInverse()`, byte-identically, without
-// computing any square root. For backward calls on G-forms NOT produced
-// by this bridge's forward (e.g. a user-constructed G), the backward
-// matcher reconstructs the args from the G-form's `z`-slot directly:
+// produced* recovers the args via `argsInverse()`, byte-identically,
+// without computing any square root. The closure is named `argsInverse`
+// (not `zInverse` — that was Erf v0.1's name, retired with ADR-0041
+// §"Decision 5") because it returns the WHOLE argument list, arity-
+// agnostic: Erf returns `[origZ]` (1-element), Bessel will return
+// `[origNu, origZ]` (2-element). See `bridges/types.ts` file-top "Why
+// `argsInverse` (the rename from `zInverse`)" for the design rationale.
+//
+// For backward calls on G-forms NOT produced by this bridge's forward
+// (e.g. a user-constructed G), the standalone backward matcher
+// reconstructs the args from the G-form's `z`-slot directly:
 //   * Erf / Erfc: args = [√(z)] (formally — we emit `mkPower(z, rat(1, 2))`
 //     and let the caller's `cas-simplify` reduce it where possible).
 //   * Erfi: args = [√(−z)] (we strip a leading unary `neg` from `z` if
@@ -199,8 +207,13 @@ export function headToMeijerG(
       // the simplify pipeline sees the same grouping the existing cas-core
       // identity table uses (matches A3 / Erfi-canonicaliser shape).
       const wrap = (g: Value): Value => mkTimes(mkDiv(z, SQRT_PI), g);
-      const zInverse = (): readonly Value[] => [z];
-      return { gForm, wrap, zInverse };
+      // Arity-agnostic closure (ADR-0041 §"Decision 5"): Erf's args are
+      // 1-element so `argsInverse` returns `[z]`. The Bessel bridge (when
+      // I6 lands) returns `[nu, z]` from the same interface field. The
+      // closure captures `z` lexically — no multi-valued `√(z²)` inverse
+      // is ever computed at round-trip time.
+      const argsInverse = (): readonly Value[] => [z];
+      return { gForm, wrap, argsInverse };
     }
 
     case "Erfc": {
@@ -216,8 +229,9 @@ export function headToMeijerG(
       // Prefactor `(1/√π) · G` — Erfc has no `z` factor (R4 §1.c, the
       // shape `(2, 0, 1, 2)` is the right-closing Bessel-K-family form).
       const wrap = (g: Value): Value => mkDiv(g, SQRT_PI);
-      const zInverse = (): readonly Value[] => [z];
-      return { gForm, wrap, zInverse };
+      // Arity-agnostic closure: 1-element list `[z]` (see Erf case above).
+      const argsInverse = (): readonly Value[] => [z];
+      return { gForm, wrap, argsInverse };
     }
 
     case "Erfi": {
@@ -236,8 +250,9 @@ export function headToMeijerG(
       // Prefactor identical to Erf's `z/√π · G`. The G itself encodes
       // the `i`-flip via its `−z²` slot.
       const wrap = (g: Value): Value => mkTimes(mkDiv(z, SQRT_PI), g);
-      const zInverse = (): readonly Value[] => [z];
-      return { gForm, wrap, zInverse };
+      // Arity-agnostic closure: 1-element list `[z]` (see Erf case above).
+      const argsInverse = (): readonly Value[] => [z];
+      return { gForm, wrap, argsInverse };
     }
 
     case "InverseErf":
@@ -270,7 +285,7 @@ export function headToMeijerG(
 // For Erf / Erfc / Erfi the z-substitution is `z → ±z²`; the
 // reconstruction `arg ← √(±z)` is honest but emits literal `mkPower`
 // expressions that `cas-simplify` may or may not reduce further. Round-
-// trips through this module's own forward bridge use the `zInverse`
+// trips through this module's own forward bridge use the `argsInverse`
 // closure instead and recover byte-identically (see `test/bridges-erf.test.ts`).
 
 /**
@@ -285,7 +300,7 @@ export function headToMeijerG(
  * form equality through `cas-simplify` is non-trivial for the
  * `z/√π · ...` shape). Today the parameter is accepted for API stability
  * — future iterations may add the verification step. Callers that need
- * round-trip byte-identity should call `headToMeijerG(...).zInverse()`
+ * round-trip byte-identity should call `headToMeijerG(...).argsInverse()`
  * directly, NOT this standalone backward bridge.
  *
  * For G-forms with the `(1, 1, 1, 2)` Erf/Erfi shape, the z-sign

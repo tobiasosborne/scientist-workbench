@@ -58,7 +58,7 @@
 //
 //   (e) Meijer-G round-trip        — meijerGToHead(headToMeijerG("Erf",
 //                                     [z]).gForm) returns {head: "Erf",
-//                                     args: [z]} via the zInverse
+//                                     args: [z]} via the argsInverse
 //                                     closure. The bidirectional bridge
 //                                     (I6) is byte-identical for the
 //                                     Erf-family forward heads.
@@ -481,15 +481,18 @@ describe("(d) casSimplify(Erfc(z) + Erf(z)) collapses to int(1n)", () => {
 });
 
 // =============================================================================
-// (e) Meijer-G bridge round-trip via zInverse closure
+// (e) Meijer-G bridge round-trip via argsInverse closure
 // =============================================================================
 //
 // What this proves: the bidirectional bridge (I6) is byte-identical on
-// round-trip through the `zInverse` closure. The naive backward path
+// round-trip through the `argsInverse` closure. The naive backward path
 // would compute `√(g.z) = |z|` (wrong for negative z); the closure
-// sidesteps the multi-valued root by recording the original args.
+// sidesteps the multi-valued root by recording the original args. The
+// closure was named `zInverse` in v0.1 (Erf, 1-arg); ADR-0041 §"Decision
+// 5" renames it to `argsInverse` arity-agnostically so the same interface
+// field carries Bessel's `[nu, z]` recovery when bridges/bessel.ts ships.
 
-describe("(e) Meijer-G bridge: round-trip via zInverse closure is byte-identical", () => {
+describe("(e) Meijer-G bridge: round-trip via argsInverse closure is byte-identical", () => {
   const ROUND_TRIP_HEADS = ["Erf", "Erfc", "Erfi"] as const;
   const SAMPLES: ReadonlyArray<{ label: string; value: Value }> = [
     { label: "symbolic z", value: sym("z") },
@@ -501,12 +504,13 @@ describe("(e) Meijer-G bridge: round-trip via zInverse closure is byte-identical
 
   for (const head of ROUND_TRIP_HEADS) {
     for (const { label, value } of SAMPLES) {
-      test(`${head}(${label}): zInverse() recovers args byte-identically`, () => {
+      test(`${head}(${label}): argsInverse() recovers args byte-identically`, () => {
         const fwd = headToMeijerG(head, [value]);
         expect(fwd).not.toBeNull();
         if (!fwd) return;
-        // Direct zInverse round-trip (the closure path).
-        const recovered = fwd.zInverse();
+        // Direct argsInverse round-trip (the closure path). Erf's
+        // 1-arg case returns a 1-element list `[z]`.
+        const recovered = fwd.argsInverse();
         expect(recovered.length).toBe(1);
         expect(canonicalize(recovered[0]!)).toBe(canonicalize(value));
       });
