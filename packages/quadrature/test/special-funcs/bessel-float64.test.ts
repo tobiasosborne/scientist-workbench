@@ -445,6 +445,87 @@ describe("Complex paths (AMOS-rotation)", () => {
 // a full AMOS-style port; v0.1 of the fix targets 1e-10 in the
 // moderate-|z| band.
 
+// -----------------------------------------------------------------------------
+// §5a. Real I_ν(z) at large ν — bead zapb regression coverage
+// -----------------------------------------------------------------------------
+//
+// The pre-fix dispatcher routed `I(100, 150) → 2.4e+66` against the
+// true `4.1e+49` — 17 orders of magnitude wrong — by sending all
+// `x > nu + 20` calls through the Hankel asymptotic, which is only
+// valid for `x ≫ ν`. The fix (worklog 169) introduces the Olver
+// uniform asymptotic (DLMF §10.41) for ν ≥ 25 and tightens the
+// Hankel threshold to `x > max(30, 6ν)` for the small-ν zone.
+
+describe("besselIFloat64 large ν, large z (bead zapb)", () => {
+  // Reference values from mpmath, dps=25.
+  type Sample = [number, number, number];
+  const SAMPLES: ReadonlyArray<Sample> = [
+    // The bead's "ν ∈ {50, 100, 200} × z ∈ {100, 150, 300, 500}" test matrix.
+    [50, 100, 4.8219580855940807e36],
+    [50, 150, 1.1460640882062685e60],
+    [50, 300, 6.957991285782926e126],
+    [50, 500, 2.0552180163054087e214],
+    [100, 100, 4.641534941616199e21],
+    [100, 150, 4.139322752421548e49],
+    [100, 300, 2.924473681382622e121],
+    [100, 500, 1.163773286860437e211],
+    [200, 200, 4.5400591322637404e44],
+    [200, 300, 4.0755371340915294e100],
+    [200, 500, 1.7064233617928462e198],
+    // Non-integer ν boundary cases.
+    [50.5, 250, 5.804170234155904e104],
+    [100.5, 500, 1.0533555212151448e211],
+    // The bug fingerprint: I(100, 150) — pre-fix returned ~2.4e+66.
+  ];
+  for (const [nu, z, ref] of SAMPLES) {
+    test(`I(${nu}, ${z}) ≤ 1e-12 relative vs mpmath`, () => {
+      const got = besselIFloat64(nu, z);
+      const rel = Math.abs(got - ref) / Math.abs(ref);
+      expect(rel).toBeLessThan(1e-12);
+    });
+  }
+
+  test("zapb point regression: I(100, 150) ≈ 4.14e+49 (was 2.37e+66 pre-fix)", () => {
+    const got = besselIFloat64(100, 150);
+    // The canonical fingerprint: this case returned the wrong order
+    // of magnitude before the Olver uniform asymptotic was added.
+    expect(got).toBeGreaterThan(1e49);
+    expect(got).toBeLessThan(1e50);
+    const rel = Math.abs(got - 4.139322752421548e49) / 4.139322752421548e49;
+    expect(rel).toBeLessThan(1e-12);
+  });
+
+  test("Olver uniform asymptotic: ν = 25 boundary", () => {
+    // ν = 25 is the cutover threshold. Sweep x ∈ {30, 50, 100}.
+    const refs: Array<[number, number]> = [
+      [30, 33892599.84266375], // mpmath dps=25 I(25, 30)
+      [50, 6.038839050370017e17], // mpmath I(25, 50)
+      [100, 4.720871000552471e40], // mpmath I(25, 100)
+    ];
+    for (const [x, ref] of refs) {
+      const got = besselIFloat64(25, x);
+      const rel = Math.abs(got - ref) / Math.abs(ref);
+      expect(rel).toBeLessThan(1e-9);
+    }
+  });
+
+  test("no regression at small ν (existing series / Hankel path)", () => {
+    // Spot-check that the rewrite doesn't break the pre-existing
+    // small-ν path which was working before zapb.
+    const refs: Array<[number, number, number]> = [
+      [0, 10, 2815.7166284662544], // mpmath I_0(10)
+      [1, 50, 2.903078590103557e20], // mpmath I_1(50)
+      [5, 50, 2.278548307911282e20], // mpmath I_5(50)
+      [10, 30, 145831809975.96713], // mpmath dps=25 I(10, 30)
+    ];
+    for (const [nu, x, ref] of refs) {
+      const got = besselIFloat64(nu, x);
+      const rel = Math.abs(got - ref) / Math.abs(ref);
+      expect(rel).toBeLessThan(1e-12);
+    }
+  });
+});
+
 describe("Integer-ν complex Y (bead phtw — no more NaN)", () => {
   // mpmath cross-reference points: (n, re, im, Y_re, Y_im)
   type Sample = [number, number, number, number, number];
