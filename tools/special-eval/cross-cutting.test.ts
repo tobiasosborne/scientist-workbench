@@ -512,7 +512,7 @@ describe("(e) Meijer-G bridge: round-trip via argsInverse closure is byte-identi
         // 1-arg case returns a 1-element list `[z]`.
         const recovered = fwd.argsInverse();
         expect(recovered.length).toBe(1);
-        expect(canonicalize(recovered[0]!)).toBe(canonicalize(value));
+        expect(canonicalize(recovered[1]!)).toBe(canonicalize(value));
       });
     }
   }
