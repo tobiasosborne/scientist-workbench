@@ -1,0 +1,914 @@
+
+
+DLMF: §10.20 Uniform Asymptotic Expansions for Large Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions
+
+DLMF
+
+Index
+Notations
+Search
+Help?
+Citing
+Customize
+Annotate
+UnAnnotate
+
+About the Project
+
+10 Bessel FunctionsBessel and Hankel Functions10.19 Asymptotic Expansions for Large Order10.21 Zeros
+
+§10.20 Uniform Asymptotic Expansions for Large Order
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Hankel functions, asymptotic expansions for large order, uniform
+
+Referenced by:
+
+§10.41(v),
+§10.57,
+§2.8(iii)
+
+Permalink:
+http://dlmf.nist.gov/10.20
+See also:
+Annotations for Ch.10
+
+Contents
+
+§10.20(i) Real Variables
+§10.20(ii) Complex Variables
+§10.20(iii) Double Asymptotic Properties
+
+§10.20(i) Real Variables
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Hankel functions, derivatives, uniform asymptotic expansions for large order
+
+Notes:
+See Olver (1997b, pp. 419–425).
+Referenced by:
+
+§10.19(iii),
+§10.19(iii),
+§10.20(ii),
+§10.74(i),
+§10.74(ii),
+3rd item
+
+Permalink:
+http://dlmf.nist.gov/10.20.i
+See also:
+Annotations for §10.20 and
+Ch.10
+
+Define ζ=ζ⁡(z) to be the solution of the differential equation
+
+10.20.1
+
+(dζdz)2=1−z2ζ⁢z2
+
+ⓘ
+
+Symbols:
+
+dfdx: derivative of f with respect to x,
+z: complex variable and
+ζ⁡(z): solution
+
+Permalink:
+http://dlmf.nist.gov/10.20.E1
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.20(i),
+§10.20 and
+Ch.10
+
+that is infinitely differentiable on the interval 0<z<∞, including
+z=1. Then
+
+10.20.2
+
+23⁢ζ32=∫z11−t2t⁢dt=ln⁡(1+1−z2z)−1−z2,
+
+0<z≤1,
+
+ⓘ
+
+Symbols:
+
+dx: differential of x,
+∫: integral,
+ln⁡z: principal branch of logarithm function,
+z: complex variable and
+ζ⁡(z): solution
+
+A&S Ref:
+ 9.3.38
+
+Referenced by:
+§10.20(ii)
+Permalink:
+http://dlmf.nist.gov/10.20.E2
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.20(i),
+§10.20 and
+Ch.10
+
+10.20.3
+
+23⁢(−ζ)32=∫1zt2−1t⁢dt=z2−1−arcsec⁡z,
+
+1≤z<∞,
+
+ⓘ
+
+Symbols:
+
+dx: differential of x,
+∫: integral,
+arcsec⁡z: arcsecant function,
+z: complex variable and
+ζ⁡(z): solution
+
+A&S Ref:
+ 9.3.39
+
+Referenced by:
+
+§10.20(ii),
+§10.21(viii)
+
+Permalink:
+http://dlmf.nist.gov/10.20.E3
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.20(i),
+§10.20 and
+Ch.10
+
+all functions taking their principal values, with ζ=∞,0,−∞,
+corresponding to z=0,1,∞, respectively.
+
+As ν→∞ through positive real values
+
+10.20.4
+
+Jν⁡(ν⁢z)
+∼(4⁢ζ1−z2)14⁢(Ai⁡(ν23⁢ζ)ν13⁢∑k=0∞Ak⁡(ζ)ν2⁢k+Ai′⁡(ν23⁢ζ)ν53⁢∑k=0∞Bk⁡(ζ)ν2⁢k),
+
+ⓘ
+
+Symbols:
+
+Ai⁡(z): Airy function,
+Jν⁡(z): Bessel function of the first kind,
+∼: Poincaré asymptotic expansion,
+k: nonnegative integer,
+z: complex variable,
+ν: complex parameter,
+ζ⁡(z): solution,
+Ak⁡(ζ): coefficients and
+Bk⁡(ζ): coefficients
+
+A&S Ref:
+ 9.3.35
+
+Referenced by:
+
+§10.20(ii),
+§10.20(iii)
+
+Permalink:
+http://dlmf.nist.gov/10.20.E4
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.20(i),
+§10.20 and
+Ch.10
+
+10.20.5
+
+Yν⁡(ν⁢z)
+∼−(4⁢ζ1−z2)14⁢(Bi⁡(ν23⁢ζ)ν13⁢∑k=0∞Ak⁡(ζ)ν2⁢k+Bi′⁡(ν23⁢ζ)ν53⁢∑k=0∞Bk⁡(ζ)ν2⁢k),
+
+ⓘ
+
+Symbols:
+
+Bi⁡(z): Airy function,
+Yν⁡(z): Bessel function of the second kind,
+∼: Poincaré asymptotic expansion,
+k: nonnegative integer,
+z: complex variable,
+ν: complex parameter,
+ζ⁡(z): solution,
+Ak⁡(ζ): coefficients and
+Bk⁡(ζ): coefficients
+
+A&S Ref:
+ 9.3.36
+
+Permalink:
+http://dlmf.nist.gov/10.20.E5
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.20(i),
+§10.20 and
+Ch.10
+
+10.20.6
+
+Hν(1)⁡(ν⁢z)Hν(2)⁡(ν⁢z)}∼2⁢e∓π⁢i/3⁢(4⁢ζ1−z2)14⁢(Ai⁡(e±2⁢π⁢i/3⁢ν23⁢ζ)ν13⁢∑k=0∞Ak⁡(ζ)ν2⁢k+e±2⁢π⁢i/3⁢Ai′⁡(e±2⁢π⁢i/3⁢ν23⁢ζ)ν53⁢∑k=0∞Bk⁡(ζ)ν2⁢k),
+
+ⓘ
+
+Symbols:
+
+Ai⁡(z): Airy function,
+Hν(1)⁡(z): Bessel function of the third kind (or Hankel function),
+Hν(2)⁡(z): Bessel function of the third kind (or Hankel function),
+∼: Poincaré asymptotic expansion,
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+i: imaginary unit,
+k: nonnegative integer,
+z: complex variable,
+ν: complex parameter,
+ζ⁡(z): solution,
+Ak⁡(ζ): coefficients and
+Bk⁡(ζ): coefficients
+
+A&S Ref:
+ 9.3.37
+
+Referenced by:
+
+§10.20(iii),
+§10.41(v)
+
+Permalink:
+http://dlmf.nist.gov/10.20.E6
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.20(i),
+§10.20 and
+Ch.10
+
+10.20.7
+
+Jν′⁡(ν⁢z)
+∼−2z⁢(1−z24⁢ζ)14⁢(Ai⁡(ν23⁢ζ)ν43⁢∑k=0∞Ck⁡(ζ)ν2⁢k+Ai′⁡(ν23⁢ζ)ν23⁢∑k=0∞Dk⁡(ζ)ν2⁢k),
+
+ⓘ
+
+Symbols:
+
+Ai⁡(z): Airy function,
+Jν⁡(z): Bessel function of the first kind,
+∼: Poincaré asymptotic expansion,
+k: nonnegative integer,
+z: complex variable,
+ν: complex parameter,
+ζ⁡(z): solution,
+Ck⁡(ζ): coefficients and
+Dk⁡(ζ): coefficients
+
+A&S Ref:
+ 9.3.43
+
+Permalink:
+http://dlmf.nist.gov/10.20.E7
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.20(i),
+§10.20 and
+Ch.10
+
+10.20.8
+
+Yν′⁡(ν⁢z)
+∼2z⁢(1−z24⁢ζ)14⁢(Bi⁡(ν23⁢ζ)ν43⁢∑k=0∞Ck⁡(ζ)ν2⁢k+Bi′⁡(ν23⁢ζ)ν23⁢∑k=0∞Dk⁡(ζ)ν2⁢k),
+
+ⓘ
+
+Symbols:
+
+Bi⁡(z): Airy function,
+Yν⁡(z): Bessel function of the second kind,
+∼: Poincaré asymptotic expansion,
+k: nonnegative integer,
+z: complex variable,
+ν: complex parameter,
+ζ⁡(z): solution,
+Ck⁡(ζ): coefficients and
+Dk⁡(ζ): coefficients
+
+A&S Ref:
+ 9.3.44
+
+Permalink:
+http://dlmf.nist.gov/10.20.E8
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.20(i),
+§10.20 and
+Ch.10
+
+10.20.9
+
+Hν(1)′⁡(ν⁢z)Hν(2)′⁡(ν⁢z)}∼4⁢e∓2⁢π⁢i/3z⁢(1−z24⁢ζ)14⁢(e∓2⁢π⁢i/3⁢Ai⁡(e±2⁢π⁢i/3⁢ν23⁢ζ)ν43⁢∑k=0∞Ck⁡(ζ)ν2⁢k+Ai′⁡(e±2⁢π⁢i/3⁢ν23⁢ζ)ν23⁢∑k=0∞Dk⁡(ζ)ν2⁢k),
+
+ⓘ
+
+Symbols:
+
+Ai⁡(z): Airy function,
+Hν(1)⁡(z): Bessel function of the third kind (or Hankel function),
+Hν(2)⁡(z): Bessel function of the third kind (or Hankel function),
+∼: Poincaré asymptotic expansion,
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+i: imaginary unit,
+k: nonnegative integer,
+z: complex variable,
+ν: complex parameter,
+ζ⁡(z): solution,
+Ck⁡(ζ): coefficients and
+Dk⁡(ζ): coefficients
+
+A&S Ref:
+ 9.3.45
+
+Referenced by:
+§10.20(ii)
+Permalink:
+http://dlmf.nist.gov/10.20.E9
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.20(i),
+§10.20 and
+Ch.10
+
+uniformly for z ∈(0,∞) in all cases, where Ai and Bi are the Airy
+functions (§9.2).
+
+In the following formulas for the coefficients Ak⁡(ζ), Bk⁡(ζ),
+Ck⁡(ζ), and Dk⁡(ζ), uk, vk are the constants defined in
+§9.7(i), and Uk⁡(p), Vk⁡(p) are the polynomials in p of degree
+3⁢k defined in §10.41(ii).
+
+Interval 0<z<1
+
+ⓘ
+
+See also:
+Annotations for §10.20(i),
+§10.20 and
+Ch.10
+
+10.20.10
+
+Ak⁡(ζ)=∑j=02⁢k(32)j⁢vj⁢ζ−3⁢j/2⁢U2⁢k−j⁡((1−z2)−12),
+
+ⓘ
+
+Defines:
+Ak⁡(ζ): coefficients (locally)
+Symbols:
+
+k: nonnegative integer,
+z: complex variable,
+ζ⁡(z): solution,
+vk: constants and
+Uk⁡(p): polynomial coefficient
+
+A&S Ref:
+ 9.3.40
+
+Referenced by:
+
+§10.20(i),
+§10.41(v),
+§10.74(i)
+
+Permalink:
+http://dlmf.nist.gov/10.20.E10
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.20(i),
+§10.20(i),
+§10.20 and
+Ch.10
+
+10.20.11
+
+Bk⁡(ζ)=−ζ−12⁢∑j=02⁢k+1(32)j⁢uj⁢ζ−3⁢j/2⁢U2⁢k−j+1⁡((1−z2)−12),
+
+ⓘ
+
+Defines:
+Bk⁡(ζ): coefficients (locally)
+Symbols:
+
+k: nonnegative integer,
+z: complex variable,
+ζ⁡(z): solution,
+uk: constants and
+Uk⁡(p): polynomial coefficient
+
+A&S Ref:
+ 9.3.40
+
+Referenced by:
+
+§10.21(viii),
+§10.41(v)
+
+Permalink:
+http://dlmf.nist.gov/10.20.E11
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.20(i),
+§10.20(i),
+§10.20 and
+Ch.10
+
+10.20.12
+
+Ck⁡(ζ)=−ζ12⁢∑j=02⁢k+1(32)j⁢vj⁢ζ−3⁢j/2⁢V2⁢k−j+1⁡((1−z2)−12),
+
+ⓘ
+
+Defines:
+Ck⁡(ζ): coefficients (locally)
+Symbols:
+
+k: nonnegative integer,
+z: complex variable,
+ζ⁡(z): solution,
+vk: constants and
+Vk⁡(p): polynomial coefficient
+
+A&S Ref:
+ 9.3.46
+
+Referenced by:
+§10.21(viii)
+Permalink:
+http://dlmf.nist.gov/10.20.E12
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.20(i),
+§10.20(i),
+§10.20 and
+Ch.10
+
+10.20.13
+
+Dk⁡(ζ)=∑j=02⁢k(32)j⁢uj⁢ζ−3⁢j/2⁢V2⁢k−j⁡((1−z2)−12).
+
+ⓘ
+
+Defines:
+Dk⁡(ζ): coefficients (locally)
+Symbols:
+
+k: nonnegative integer,
+z: complex variable,
+ζ⁡(z): solution,
+uk: constants and
+Vk⁡(p): polynomial coefficient
+
+A&S Ref:
+ 9.3.46
+
+Referenced by:
+
+§10.20(i),
+§10.74(i)
+
+Permalink:
+http://dlmf.nist.gov/10.20.E13
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.20(i),
+§10.20(i),
+§10.20 and
+Ch.10
+
+Interval 1<z<∞
+
+ⓘ
+
+See also:
+Annotations for §10.20(i),
+§10.20 and
+Ch.10
+
+In formulas (10.20.10)–(10.20.13) replace
+ζ12, ζ−12, ζ−3⁢j/2, and
+(1−z2)−12 by −i⁢(−ζ)12,
+i⁢(−ζ)−12, i3⁢j⁢(−ζ)−3⁢j/2, and
+i⁢(z2−1)−12, respectively.
+
+Note: Another way of arranging the above formulas for the coefficients
+Ak⁡(ζ),Bk⁡(ζ),Ck⁡(ζ), and Dk⁡(ζ) would be by
+analogy with (12.10.42) and (12.10.46). In this way
+there is less usage of many-valued functions.
+
+Values at ζ=0
+
+ⓘ
+
+See also:
+Annotations for §10.20(i),
+§10.20 and
+Ch.10
+
+10.20.14
+
+A0⁡(0)
+=1,
+
+A1⁡(0)
+=−1225,
+
+A2⁡(0)
+=1 514392182 95000,
+
+A3⁡(0)
+=−8872 78009250 49351 25000,
+
+B0⁡(0)
+=170⁢213,
+
+B1⁡(0)
+=−121310 23750⁢213,
+
+B2⁡(0)
+=1 65425 378333774 32055 00000⁢213,
+
+B3⁡(0)
+=−959 71711 8460325 47666 37125 00000⁢213.
+
+ⓘ
+
+Symbols:
+
+Ak⁡(ζ): coefficients and
+Bk⁡(ζ): coefficients
+
+Referenced by:
+
+§10.20(i),
+Erratum (V1.0.5) for Equation (10.20.14)
+
+Permalink:
+http://dlmf.nist.gov/10.20.E14
+Encodings:
+
+TeX, TeX, TeX, TeX, TeX, TeX, TeX, TeX, pMML, pMML, pMML, pMML, pMML, pMML, pMML, pMML, png, png, png, png, png, png, png, png
+
+Errata (effective with 1.0.5):
+
+Originally the value given for B3⁡(0) was given incorrectly as
+B3⁡(0)=−430 99056 39368 592535 68167 34399 42500 00000⁢213.
+
+Reported 2012-05-11 by Antony Lee
+
+See also:
+Annotations for §10.20(i),
+§10.20(i),
+§10.20 and
+Ch.10
+
+Each of the coefficients Ak⁡(ζ), Bk⁡(ζ), Ck⁡(ζ), and
+Dk⁡(ζ), k=0,1,2,…, is real and infinitely differentiable on the
+interval −∞<ζ<∞. For (10.20.14) and further
+information on the coefficients see Temme (1997).
+
+For numerical tables of ζ=ζ⁡(z), (4⁢ζ/(1−z2))14 and
+Ak⁡(ζ), Bk⁡(ζ), Ck⁡(ζ), and Dk⁡(ζ) see
+Olver (1962, pp. 28–42).
+
+§10.20(ii) Complex Variables
+
+ⓘ
+
+Keywords:
+
+Bessel functions, asymptotic expansions for large order, resurgence properties of coefficients
+
+Notes:
+See Olver (1997b, pp. 419–425) and Olver (1954).
+Referenced by:
+
+§10.14,
+§10.74(i)
+
+Permalink:
+http://dlmf.nist.gov/10.20.ii
+See also:
+Annotations for §10.20 and
+Ch.10
+
+The function ζ=ζ⁡(z) given by (10.20.2) and
+(10.20.3) can be continued analytically to the z-plane cut
+along the negative real axis. Corresponding points of the mapping are shown in
+Figures 10.20.1 and 10.20.2.
+
+The equations of the curved boundaries D1⁢E1 and D2⁢E2 in the
+ζ-plane are given parametrically by
+
+10.20.15
+
+ζ=(32)23⁢(τ∓i⁢π)23,
+
+0≤τ<∞,
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+i: imaginary unit and
+ζ⁡(z): solution
+
+Permalink:
+http://dlmf.nist.gov/10.20.E15
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.20(ii),
+§10.20 and
+Ch.10
+
+respectively.
+
+The curves B⁢P1⁢E1 and B⁢P2⁢E2 in the z-plane are the inverse maps of
+the line segments
+
+10.20.16
+
+ζ=e∓i⁢π/3⁢τ,
+
+0≤τ≤(32⁢π)23,
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+i: imaginary unit and
+ζ⁡(z): solution
+
+Permalink:
+http://dlmf.nist.gov/10.20.E16
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.20(ii),
+§10.20 and
+Ch.10
+
+respectively. They are given parametrically by
+
+10.20.17
+
+z=±(τ⁢coth⁡τ−τ2)12±i⁢(τ2−τ⁢tanh⁡τ)12,
+
+0≤τ≤τ0,
+
+ⓘ
+
+Symbols:
+
+coth⁡z: hyperbolic cotangent function,
+tanh⁡z: hyperbolic tangent function,
+i: imaginary unit and
+z: complex variable
+
+Permalink:
+http://dlmf.nist.gov/10.20.E17
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.20(ii),
+§10.20 and
+Ch.10
+
+where τ0=1.19968⁢… is the positive root of the equation
+τ=coth⁡τ. The points P1,P2 where these curves intersect the
+imaginary axis are ±i⁢c, where
+
+10.20.18
+
+c=(τ02−1)12=0.66274⁢….
+
+ⓘ
+
+Defines:
+c (locally)
+Referenced by:
+§10.41(iii)
+Permalink:
+http://dlmf.nist.gov/10.20.E18
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.20(ii),
+§10.20 and
+Ch.10
+
+The eye-shaped closed domain in the uncut z-plane that is bounded by
+B⁢P1⁢E1 and B⁢P2⁢E2 is denoted by 𝐊; see Figure
+10.20.3.
+
+Figure 10.20.1: z-plane. P1 and P2 are the points ±i⁢c. c=0.66274⁢….
+
+Magnify
+
+ⓘ
+
+Defines:
+
+B: point (locally),
+C: point (locally),
+Ek: points (locally),
+Fk: points (locally),
+Gk: points (locally),
+Pk: points (locally) and
+A: point (locally)
+
+Symbols:
+
+i: imaginary unit,
+k: nonnegative integer,
+z: complex variable,
+Dk⁡(ζ): coefficients and
+c
+
+Referenced by:
+§10.20(ii)
+Permalink:
+http://dlmf.nist.gov/10.20.F1
+Encodings:
+
+pdf, png
+
+See also:
+Annotations for §10.20(ii),
+§10.20 and
+Ch.10
+
+Figure 10.20.2: ζ-plane. E1 and E2 are the points
+e∓π⁢i/3⁢(3⁢π/2)2/3.
+
+Magnify
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+i: imaginary unit,
+ζ⁡(z): solution and
+Ek: points
+
+Referenced by:
+§10.20(ii)
+Permalink:
+http://dlmf.nist.gov/10.20.F2
+Encodings:
+
+pdf, png
+
+See also:
+Annotations for §10.20(ii),
+§10.20 and
+Ch.10
+
+Figure 10.20.3: z-plane. Domain 𝐊 (unshaded). c=0.66274⁢….
+
+Magnify
+
+ⓘ
+
+Defines:
+𝐊: domain (locally)
+Symbols:
+
+z: complex variable and
+c
+
+Referenced by:
+
+§10.20(ii),
+§10.21(ix),
+§10.41(iii)
+
+Permalink:
+http://dlmf.nist.gov/10.20.F3
+Encodings:
+
+pdf, png
+
+See also:
+Annotations for §10.20(ii),
+§10.20 and
+Ch.10
+
+As ν→∞ through positive real values the expansions
+(10.20.4)–(10.20.9) apply uniformly for
+|ph⁡z|≤π−δ, the coefficients Ak⁡(ζ), Bk⁡(ζ),
+Ck⁡(ζ), and Dk⁡(ζ), being the analytic continuations of the
+functions defined in §10.20(i) when ζ is real.
+
+For proofs of the above results and for error bounds and extensions of the
+regions of validity see Olver (1997b, pp. 419–425). For extensions
+to complex ν see Olver (1954). For resurgence properties of the
+coefficients (§2.7(ii)) see Howls and Olde Daalhuis (1999). For further results
+see Dunster (2001a), Wang and Wong (2002), and Paris (2004).
+
+§10.20(iii) Double Asymptotic Properties
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Hankel functions, asymptotic expansions for large order, double asymptotic properties, uniform
+
+Permalink:
+http://dlmf.nist.gov/10.20.iii
+See also:
+Annotations for §10.20 and
+Ch.10
+
+For asymptotic properties of the expansions
+(10.20.4)–(10.20.6) with respect to large values of
+z see §10.41(v).
+
+10.19 Asymptotic Expansions for Large Order10.21 Zeros
+
+© 2010–2026 NIST / Disclaimer / Feedback;
+ Version 1.2.6;
+Release date 2026-03-15.
+
+Site Privacy Accessibility Privacy Program Copyrights Vulnerability Disclosure No Fear Act Policy FOIA Environmental Policy Scientific Integrity Information Quality Standards Commerce.gov Science.gov USA.gov
+

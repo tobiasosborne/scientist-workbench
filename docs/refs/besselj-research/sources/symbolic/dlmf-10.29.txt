@@ -1,0 +1,262 @@
+
+
+DLMF: §10.29 Recurrence Relations and Derivatives ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions
+
+DLMF
+
+Index
+Notations
+Search
+Help?
+Citing
+Customize
+Annotate
+UnAnnotate
+
+About the Project
+
+10 Bessel FunctionsModified Bessel Functions10.28 Wronskians and Cross-Products10.30 Limiting Forms
+
+§10.29 Recurrence Relations and Derivatives
+
+ⓘ
+
+Permalink:
+http://dlmf.nist.gov/10.29
+See also:
+Annotations for Ch.10
+
+Contents
+
+§10.29(i) Recurrence Relations
+§10.29(ii) Derivatives
+
+§10.29(i) Recurrence Relations
+
+ⓘ
+
+Keywords:
+
+modified Bessel functions, recurrence relations
+
+Notes:
+See Watson (1944, p. 79).
+Referenced by:
+
+§10.43(ii),
+Erratum (V1.1.3) for Subsections 10.6(i), 10.29(i),
+Erratum (V1.1.3) for References
+
+Permalink:
+http://dlmf.nist.gov/10.29.i
+Addition (effective with 1.1.3):
+
+A sentence was added just below (10.29.3) regarding results on modified
+quotients of the form z⁢𝒵ν±1⁡(z)/𝒵ν⁡(z).
+
+See also:
+Annotations for §10.29 and
+Ch.10
+
+With 𝒵ν⁡(z) defined as in §10.25(ii),
+
+10.29.1
+
+𝒵ν−1⁡(z)−𝒵ν+1⁡(z)
+=(2⁢ν/z)⁢𝒵ν⁡(z),
+
+𝒵ν−1⁡(z)+𝒵ν+1⁡(z)
+=2⁢𝒵ν′⁡(z).
+
+ⓘ
+
+Symbols:
+
+𝒵ν⁡(z): modified cylinder function,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.26
+
+Referenced by:
+
+§10.29(ii),
+§10.51(ii),
+§7.6(ii)
+
+Permalink:
+http://dlmf.nist.gov/10.29.E1
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.29(i),
+§10.29 and
+Ch.10
+
+10.29.2
+
+𝒵ν′⁡(z)
+=𝒵ν−1⁡(z)−(ν/z)⁢𝒵ν⁡(z),
+
+𝒵ν′⁡(z)
+=𝒵ν+1⁡(z)+(ν/z)⁢𝒵ν⁡(z).
+
+ⓘ
+
+Symbols:
+
+𝒵ν⁡(z): modified cylinder function,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.26
+
+Referenced by:
+
+§10.28,
+§10.43(i),
+§10.51(ii)
+
+Permalink:
+http://dlmf.nist.gov/10.29.E2
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.29(i),
+§10.29 and
+Ch.10
+
+10.29.3
+
+I0′⁡(z)
+=I1⁡(z),
+
+K0′⁡(z)
+=−K1⁡(z).
+
+ⓘ
+
+Symbols:
+
+Iν⁡(z): modified Bessel function of the first kind,
+Kν⁡(z): modified Bessel function of the second kind and
+z: complex variable
+
+A&S Ref:
+ 9.6.27
+
+Referenced by:
+
+§10.29(i),
+Erratum (V1.1.3) for Subsections 10.6(i), 10.29(i)
+
+Permalink:
+http://dlmf.nist.gov/10.29.E3
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.29(i),
+§10.29 and
+Ch.10
+
+For results on modified quotients of the form
+z⁢𝒵ν±1⁡(z)/𝒵ν⁡(z)
+see Onoe (1955) and Onoe (1956).
+
+§10.29(ii) Derivatives
+
+ⓘ
+
+Keywords:
+
+derivatives, explicit forms, modified Bessel functions
+
+Notes:
+See Watson (1944, p. 79). For (10.29.5) use
+induction combined with the second of (10.29.1).
+Permalink:
+http://dlmf.nist.gov/10.29.ii
+See also:
+Annotations for §10.29 and
+Ch.10
+
+For k=0,1,2,…,
+
+10.29.4
+
+(1z⁢ddz)k⁡(zν⁢𝒵ν⁡(z))
+=zν−k⁢𝒵ν−k⁡(z),
+
+(1z⁢ddz)k⁡(z−ν⁢𝒵ν⁡(z))
+=z−ν−k⁢𝒵ν+k⁡(z).
+
+ⓘ
+
+Symbols:
+
+dfdx: derivative of f with respect to x,
+𝒵ν⁡(z): modified cylinder function,
+k: nonnegative integer,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.28
+
+Permalink:
+http://dlmf.nist.gov/10.29.E4
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.29(ii),
+§10.29 and
+Ch.10
+
+10.29.5
+
+𝒵ν(k)⁡(z)=12k⁢(𝒵ν−k⁡(z)+(k1)⁢𝒵ν−k+2⁡(z)+(k2)⁢𝒵ν−k+4⁡(z)+⋯+𝒵ν+k⁡(z)).
+
+ⓘ
+
+Symbols:
+
+(mn): binomial coefficient,
+𝒵ν⁡(z): modified cylinder function,
+k: nonnegative integer,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.29
+
+Referenced by:
+§10.29(ii)
+Permalink:
+http://dlmf.nist.gov/10.29.E5
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.29(ii),
+§10.29 and
+Ch.10
+
+10.28 Wronskians and Cross-Products10.30 Limiting Forms
+
+© 2010–2026 NIST / Disclaimer / Feedback;
+ Version 1.2.6;
+Release date 2026-03-15.
+
+Site Privacy Accessibility Privacy Program Copyrights Vulnerability Disclosure No Fear Act Policy FOIA Environmental Policy Scientific Integrity Information Quality Standards Commerce.gov Science.gov USA.gov
+

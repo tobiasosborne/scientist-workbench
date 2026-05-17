@@ -1,0 +1,339 @@
+
+
+DLMF: §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions
+
+DLMF
+
+Index
+Notations
+Search
+Help?
+Citing
+Customize
+Annotate
+UnAnnotate
+
+About the Project
+
+10 Bessel FunctionsModified Bessel Functions10.37 Inequalities; Monotonicity10.39 Relations to Other Functions
+
+§10.38 Derivatives with Respect to Order
+
+ⓘ
+
+Keywords:
+
+derivatives with respect to order, modified Bessel functions
+
+Notes:
+(10.38.1) is obtained by differentiation of
+(10.25.2); compare (10.15.1). For (10.38.2)
+use (10.27.4). (10.38.3)–(10.38.5) are
+proved in a similar way to (10.15.3)–(10.15.5).
+(10.38.6) and (10.38.7) are stated without proof and
+in a slightly different notation in Magnus et al. (1966, §3.3.3).
+Both cases of (10.38.6) can be derived by a method analogous to
+that used for (10.15.6) and (10.15.7).
+(10.38.7) follows from (10.38.2) and (10.38.6).
+Referenced by:
+Erratum (V1.0.1) for Clarifications
+Permalink:
+http://dlmf.nist.gov/10.38
+Clarification (effective with 1.0.1):
+
+A clarification for negative integer values of ν was inserted after (10.38.3).
+
+See also:
+Annotations for Ch.10
+
+10.38.1
+
+∂I±ν⁡(z)∂ν=±I±ν⁡(z)⁢ln⁡(12⁢z)∓(12⁢z)±ν⁢∑k=0∞ψ⁡(k+1±ν)Γ⁡(k+1±ν)⁢(14⁢z2)kk!,
+
+ⓘ
+
+Symbols:
+
+Γ⁡(z): gamma function,
+ψ⁡(z): psi (or digamma) function,
+!: factorial (as in n!),
+Iν⁡(z): modified Bessel function of the first kind,
+ln⁡z: principal branch of logarithm function,
+∂f∂x: partial derivative of f with respect to x,
+∂x: partial differential of x,
+k: nonnegative integer,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.42
+
+Referenced by:
+
+§10.38,
+§10.38,
+Erratum (V1.0.17) for Equations (10.15.1), (10.38.1)
+
+Permalink:
+http://dlmf.nist.gov/10.38.E1
+Encodings:
+
+TeX, pMML, png
+
+Addition (effective with 1.0.17):
+
+This equation has been generalized to include the additional case of
+∂I−ν⁡(z)/∂ν because it will help the user who wants
+to combine it with (10.38.2).
+
+See also:
+Annotations for §10.38 and
+Ch.10
+
+10.38.2
+
+∂Kν⁡(z)∂ν=12⁢π⁢csc⁡(ν⁢π)⁢(∂I−ν⁡(z)∂ν−∂Iν⁡(z)∂ν)−π⁢cot⁡(ν⁢π)⁢Kν⁡(z),
+
+ν∉ℤ.
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+csc⁡z: cosecant function,
+cot⁡z: cotangent function,
+ℤ: set of all integers,
+Iν⁡(z): modified Bessel function of the first kind,
+Kν⁡(z): modified Bessel function of the second kind,
+∉: not an element of,
+∂f∂x: partial derivative of f with respect to x,
+∂x: partial differential of x,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.43
+
+Referenced by:
+
+(10.38.1),
+§10.38,
+§10.38
+
+Permalink:
+http://dlmf.nist.gov/10.38.E2
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.38 and
+Ch.10
+
+Integer Values of ν
+
+ⓘ
+
+See also:
+Annotations for §10.38 and
+Ch.10
+
+10.38.3
+
+(−1)n⁢∂Iν⁡(z)∂ν|ν=n=−Kn⁡(z)+n!2⁢(12⁢z)n⁢∑k=0n−1(−1)k⁢(12⁢z)k⁢Ik⁡(z)k!⁢(n−k),
+
+ⓘ
+
+Symbols:
+
+!: factorial (as in n!),
+Iν⁡(z): modified Bessel function of the first kind,
+Kν⁡(z): modified Bessel function of the second kind,
+∂f∂x: partial derivative of f with respect to x,
+∂x: partial differential of x,
+n: integer,
+k: nonnegative integer,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.44
+
+Referenced by:
+§10.38
+Permalink:
+http://dlmf.nist.gov/10.38.E3
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.38,
+§10.38 and
+Ch.10
+
+For ∂Iν⁡(z)/∂ν at ν=−n combine (10.38.1), (10.38.2), and (10.38.4).
+
+10.38.4
+
+∂Kν⁡(z)∂ν|ν=n=n!2⁢(12⁢z)n⁢∑k=0n−1(12⁢z)k⁢Kk⁡(z)k!⁢(n−k).
+
+ⓘ
+
+Symbols:
+
+!: factorial (as in n!),
+Kν⁡(z): modified Bessel function of the second kind,
+∂f∂x: partial derivative of f with respect to x,
+∂x: partial differential of x,
+n: integer,
+k: nonnegative integer,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.45
+
+Referenced by:
+§10.38
+Permalink:
+http://dlmf.nist.gov/10.38.E4
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.38,
+§10.38 and
+Ch.10
+
+10.38.5
+
+∂Iν⁡(z)∂ν|ν=0
+=−K0⁡(z),
+
+∂Kν⁡(z)∂ν|ν=0
+=0.
+
+ⓘ
+
+Symbols:
+
+Iν⁡(z): modified Bessel function of the first kind,
+Kν⁡(z): modified Bessel function of the second kind,
+∂f∂x: partial derivative of f with respect to x,
+∂x: partial differential of x,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.46
+
+Referenced by:
+§10.38
+Permalink:
+http://dlmf.nist.gov/10.38.E5
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.38,
+§10.38 and
+Ch.10
+
+Half-Integer Values of ν
+
+ⓘ
+
+See also:
+Annotations for §10.38 and
+Ch.10
+
+For the notations E1 and Ei see §6.2(i).
+When x>0,
+
+10.38.6
+
+∂Iν⁡(x)∂ν|ν=±12=−12⁢π⁢x⁢(E1⁡(2⁢x)⁢ex±Ei⁡(2⁢x)⁢e−x),
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+E1⁡(z): exponential integral,
+Ei⁡(x): exponential integral,
+Iν⁡(z): modified Bessel function of the first kind,
+∂f∂x: partial derivative of f with respect to x,
+∂x: partial differential of x,
+x: real variable and
+ν: complex parameter
+
+A&S Ref:
+ 10.2.32 and 10.2.33 (both corrected)
+
+Referenced by:
+
+§10.38,
+Ch.10
+
+Permalink:
+http://dlmf.nist.gov/10.38.E6
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.38,
+§10.38 and
+Ch.10
+
+10.38.7
+
+∂Kν⁡(x)∂ν|ν=±12=±π2⁢x⁢E1⁡(2⁢x)⁢ex.
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+E1⁡(z): exponential integral,
+Kν⁡(z): modified Bessel function of the second kind,
+∂f∂x: partial derivative of f with respect to x,
+∂x: partial differential of x,
+x: real variable and
+ν: complex parameter
+
+A&S Ref:
+ 10.2.34 (corrected)
+
+Referenced by:
+
+§10.38,
+Ch.10
+
+Permalink:
+http://dlmf.nist.gov/10.38.E7
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.38,
+§10.38 and
+Ch.10
+
+For further results see Brychkov and Geddes (2005).
+
+10.37 Inequalities; Monotonicity10.39 Relations to Other Functions
+
+© 2010–2026 NIST / Disclaimer / Feedback;
+ Version 1.2.6;
+Release date 2026-03-15.
+
+Site Privacy Accessibility Privacy Program Copyrights Vulnerability Disclosure No Fear Act Policy FOIA Environmental Policy Scientific Integrity Information Quality Standards Commerce.gov Science.gov USA.gov
+

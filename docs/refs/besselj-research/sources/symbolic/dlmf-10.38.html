@@ -1,0 +1,657 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>DLMF: §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions</title>
+<link rel="shortcut icon" href="./style/DLMF-16.png" type="image/png">
+<script type="text/javascript"><!--
+	var PATH="DLMF:/10.38";
+	var ROOT="./";
+      //--></script>
+<script type="text/javascript" src="./style/jquery.js"><!-- non-empty so ie6 will accept it --></script>
+<script type="text/javascript" src="./style/jquery.leaveNotice.js"><!-- non-empty so ie6 will accept it --></script>
+<script type="text/javascript" src="./style/DLMF.js"><!-- non-empty so ie6 will accept it --></script>
+<script async="" type="text/javascript" id="_fed_an_ua_tag" src="https://dap.digitalgov.gov/Universal-Federated-Analytics-Min.js?agency=DOC&amp;subagency=NIST&amp;pua=UA-37115410-44&amp;yt=true&amp;exts=ppsx,pps,f90,sch,rtf,wrl,txz,m1v,xlsm,msi,xsd,f,tif,eps,mpg,xml,pl,xlt,c"><!-- non-empty so ie6 will accept it --></script><script async="" src="https://www.googletagmanager.com/gtag/js?id=G-BZB64W4M0L"></script><script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-BZB64W4M0L');
+      </script>
+<link rel="stylesheet" type="text/css" href="./style/LaTeXML.css">
+<link rel="stylesheet" type="text/css" href="./style/DLMF.css">
+<link rel="stylesheet" type="text/css" href="./style/print.css" media="print">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="top" href="./" title="DLMF">
+<link rel="copyright" href="./about/notices" title="Copyright">
+<link rel="search" href="./search/search" title="Search">
+<link rel="help" class="ltx_help" href="./help/" title="Help">
+<link rel="up" href="./10#PT3" title="Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="up up" href="./10" title="Chapter 10 Bessel Functions">
+<link rel="start" href="./" title="">
+<link rel="prev" href="./10.37" title="§10.37 Inequalities; Monotonicity ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="next" href="./10.39" title="§10.39 Relations to Other Functions ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.1" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.2" title="§10.2 Definitions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.3" title="§10.3 Graphics ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.4" title="§10.4 Connection Formulas ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.5" title="§10.5 Wronskians and Cross-Products ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.6" title="§10.6 Recurrence Relations and Derivatives ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.7" title="§10.7 Limiting Forms ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.8" title="§10.8 Power Series ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.9" title="§10.9 Integral Representations ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.10" title="§10.10 Continued Fractions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.11" title="§10.11 Analytic Continuation ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.12" title="§10.12 Generating Function and Associated Series ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.13" title="§10.13 Other Differential Equations ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.14" title="§10.14 Inequalities; Monotonicity ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.15" title="§10.15 Derivatives with Respect to Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.16" title="§10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.17" title="§10.17 Asymptotic Expansions for Large Argument ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.18" title="§10.18 Modulus and Phase Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.19" title="§10.19 Asymptotic Expansions for Large Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.20" title="§10.20 Uniform Asymptotic Expansions for Large Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.21" title="§10.21 Zeros ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.22" title="§10.22 Integrals ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.23" title="§10.23 Sums ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.24" title="§10.24 Functions of Imaginary Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.25" title="§10.25 Definitions ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.26" title="§10.26 Graphics ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.27" title="§10.27 Connection Formulas ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.28" title="§10.28 Wronskians and Cross-Products ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.29" title="§10.29 Recurrence Relations and Derivatives ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.30" title="§10.30 Limiting Forms ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.31" title="§10.31 Power Series ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.32" title="§10.32 Integral Representations ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.33" title="§10.33 Continued Fractions ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.34" title="§10.34 Analytic Continuation ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.35" title="§10.35 Generating Function and Associated Series ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.36" title="§10.36 Other Differential Equations ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.37" title="§10.37 Inequalities; Monotonicity ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.39" title="§10.39 Relations to Other Functions ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.40" title="§10.40 Asymptotic Expansions for Large Argument ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.41" title="§10.41 Asymptotic Expansions for Large Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.42" title="§10.42 Zeros ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.43" title="§10.43 Integrals ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.44" title="§10.44 Sums ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.45" title="§10.45 Functions of Imaginary Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.46" title="§10.46 Generalized and Incomplete Bessel Functions; Mittag-Leffler Function ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.47" title="§10.47 Definitions and Basic Properties ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.48" title="§10.48 Graphs ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.49" title="§10.49 Explicit Formulas ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.50" title="§10.50 Wronskians and Cross-Products ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.51" title="§10.51 Recurrence Relations and Derivatives ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.52" title="§10.52 Limiting Forms ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.53" title="§10.53 Power Series ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.54" title="§10.54 Integral Representations ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.55" title="§10.55 Continued Fractions ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.56" title="§10.56 Generating Functions ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.57" title="§10.57 Uniform Asymptotic Expansions for Large Order ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.58" title="§10.58 Zeros ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.59" title="§10.59 Integrals ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.60" title="§10.60 Sums ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.61" title="§10.61 Definitions and Basic Properties ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.62" title="§10.62 Graphs ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.63" title="§10.63 Recurrence Relations and Derivatives ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.64" title="§10.64 Integral Representations ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.65" title="§10.65 Power Series ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.66" title="§10.66 Expansions in Series of Bessel Functions ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.67" title="§10.67 Asymptotic Expansions for Large Argument ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.68" title="§10.68 Modulus and Phase Functions ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.69" title="§10.69 Uniform Asymptotic Expansions for Large Order ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.70" title="§10.70 Zeros ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.71" title="§10.71 Integrals ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.72" title="§10.72 Mathematical Applications ‣ Applications ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.73" title="§10.73 Physical Applications ‣ Applications ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.74" title="§10.74 Methods of Computation ‣ Computation ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.75" title="§10.75 Tables ‣ Computation ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.76" title="§10.76 Approximations ‣ Computation ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.77" title="§10.77 Software ‣ Computation ‣ Chapter 10 Bessel Functions">
+<link rel="document" href="./front/foreword" title="Foreword">
+<link rel="document" href="./front/preface" title="Preface">
+<link rel="document" href="./front/introduction" title="Mathematical Introduction">
+<link rel="chapter" href="./1" title="Chapter 1 Algebraic and Analytic Methods">
+<link rel="chapter" href="./2" title="Chapter 2 Asymptotic Approximations">
+<link rel="chapter" href="./3" title="Chapter 3 Numerical Methods">
+<link rel="chapter" href="./4" title="Chapter 4 Elementary Functions">
+<link rel="chapter" href="./5" title="Chapter 5 Gamma Function">
+<link rel="chapter" href="./6" title="Chapter 6 Exponential, Logarithmic, Sine, and Cosine Integrals">
+<link rel="chapter" href="./7" title="Chapter 7 Error Functions, Dawson’s and Fresnel Integrals">
+<link rel="chapter" href="./8" title="Chapter 8 Incomplete Gamma and Related Functions">
+<link rel="chapter" href="./9" title="Chapter 9 Airy and Related Functions">
+<link rel="chapter" href="./10" title="Chapter 10 Bessel Functions">
+<link rel="chapter" href="./11" title="Chapter 11 Struve and Related Functions">
+<link rel="chapter" href="./12" title="Chapter 12 Parabolic Cylinder Functions">
+<link rel="chapter" href="./13" title="Chapter 13 Confluent Hypergeometric Functions">
+<link rel="chapter" href="./14" title="Chapter 14 Legendre and Related Functions">
+<link rel="chapter" href="./15" title="Chapter 15 Hypergeometric Function">
+<link rel="chapter" href="./16" title="Chapter 16 Generalized Hypergeometric Functions and Meijer 𝐺-Function">
+<link rel="chapter" href="./17" title="Chapter 17 𝑞-Hypergeometric and Related Functions">
+<link rel="chapter" href="./18" title="Chapter 18 Orthogonal Polynomials">
+<link rel="chapter" href="./19" title="Chapter 19 Elliptic Integrals">
+<link rel="chapter" href="./20" title="Chapter 20 Theta Functions">
+<link rel="chapter" href="./21" title="Chapter 21 Multidimensional Theta Functions">
+<link rel="chapter" href="./22" title="Chapter 22 Jacobian Elliptic Functions">
+<link rel="chapter" href="./23" title="Chapter 23 Weierstrass Elliptic and Modular Functions">
+<link rel="chapter" href="./24" title="Chapter 24 Bernoulli and Euler Polynomials">
+<link rel="chapter" href="./25" title="Chapter 25 Zeta and Related Functions">
+<link rel="chapter" href="./26" title="Chapter 26 Combinatorial Analysis">
+<link rel="chapter" href="./27" title="Chapter 27 Functions of Number Theory">
+<link rel="chapter" href="./28" title="Chapter 28 Mathieu Functions and Hill’s Equation">
+<link rel="chapter" href="./29" title="Chapter 29 Lamé Functions">
+<link rel="chapter" href="./30" title="Chapter 30 Spheroidal Wave Functions">
+<link rel="chapter" href="./31" title="Chapter 31 Heun Functions">
+<link rel="chapter" href="./32" title="Chapter 32 Painlevé Transcendents">
+<link rel="chapter" href="./33" title="Chapter 33 Coulomb Functions">
+<link rel="chapter" href="./34" title="Chapter 34 3⁢𝑗,6⁢𝑗,9⁢𝑗 Symbols">
+<link rel="chapter" href="./35" title="Chapter 35 Functions of Matrix Argument">
+<link rel="chapter" href="./36" title="Chapter 36 Integrals with Coalescing Saddles">
+<link rel="bibliography" href="./bib/" title="Bibliography">
+<link rel="index" href="./idx/" title="Index">
+<link rel="glossary" href="./not/" title="Notations">
+<link rel="document" href="./lof/" title="List of Figures">
+<link rel="document" href="./lot/" title="List of Tables">
+<link rel="document" href="./software/" title="Software Index">
+<link rel="document" href="./errata/" title="Errata">
+<link rel="document" href="./help/" title="Need Help?">
+<link rel="document" href="./search/" title="Advanced Search">
+<link rel="document" href="./about/" title="About the Project">
+<meta name="keywords" lang="en" content="derivatives with respect to order, modified Bessel functions">
+</head>
+<body class="color_default textfont_default titlefont_default fontsize_default navbar_default">
+<div class="ltx_page_navbar">
+<div class="ltx_page_navlogo"><a href="./" title="Digital Library of Mathematical Functions"><span>DLMF</span></a></div>
+<div class="ltx_page_navitems">
+<form method="get" action="./search/search">
+<ul>
+<li><a href="./idx/">Index</a></li>
+<li><a href="./not/">Notations</a></li>
+<li><small><input type="text" name="q" value="" size="6" class="ltx_page_navitem_search"><button type="submit">Search</button></small></li>
+<li><a href="./help/" class="ltx_help">Help?</a></li>
+<li><a href="./help/cite">Citing</a></li>
+<li><a href="./help/customize" class="ltx_customize">Customize</a></li>
+<li id="showinfo"><a href="" onclick="showInfo(); return false;" title="Show Annotations">Annotate</a></li>
+<li id="hideinfo"><a href="" onclick="hideInfo(); return false;">UnAnnotate</a></li>
+</ul>
+</form>
+</div>
+<div class="ltx_page_navsponsors">
+<div><a href="./about/" class="ltx_page_navabout">About the Project</a></div>
+</div>
+</div>
+<div class="ltx_page_main">
+<div class="ltx_page_header">
+<a href="./10" title="" class="ltx_ref" rel="up up"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10 </span>Bessel Functions</span></a><a href="./10#PT3" title="In Chapter 10 Bessel Functions" class="ltx_ref" rel="up"><span class="ltx_text ltx_ref_title">Modified Bessel Functions</span></a><a href="./10.37" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref" rel="prev"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.37 </span>Inequalities; Monotonicity</span></a><a href="./10.39" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref" rel="next"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.39 </span>Relations to Other Functions</span></a>
+</div>
+<div class="ltx_page_content">
+<section class="ltx_section ltx_leqno">
+<h1 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">§10.38 </span>Derivatives with Respect to Order</h1>
+<div id="info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>Keywords:</dt>
+<dd>
+<a class="ltx_keyword" href="./search/search?q=derivatives%20with%20respect%20to%20order">derivatives with respect to order</a>, <a class="ltx_keyword" href="./search/search?q=modified%20Bessel%20functions">modified Bessel functions</a>
+</dd>
+<dt>Notes:</dt>
+<dd>(<a href="./10.38#E1" title="(10.38.1) ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.38.1</span></a>) is obtained by differentiation of
+(<a href="./10.25#E2" title="(10.25.2) ‣ §10.25(ii) Standard Solutions ‣ §10.25 Definitions ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.25.2</span></a>); compare (<a href="./10.15#E1" title="(10.15.1) ‣ Noninteger Values of 𝜈 ‣ §10.15 Derivatives with Respect to Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.15.1</span></a>). For (<a href="./10.38#E2" title="(10.38.2) ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.38.2</span></a>)
+use (<a href="./10.27#E4" title="(10.27.4) ‣ §10.27 Connection Formulas ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.27.4</span></a>). (<a href="./10.38#E3" title="(10.38.3) ‣ Integer Values of 𝜈 ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.38.3</span></a>)–(<a href="./10.38#E5" title="(10.38.5) ‣ Integer Values of 𝜈 ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.38.5</span></a>) are
+proved in a similar way to (<a href="./10.15#E3" title="(10.15.3) ‣ Integer Values of 𝜈 ‣ §10.15 Derivatives with Respect to Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.15.3</span></a>)–(<a href="./10.15#E5" title="(10.15.5) ‣ Integer Values of 𝜈 ‣ §10.15 Derivatives with Respect to Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.15.5</span></a>).
+(<a href="./10.38#E6" title="(10.38.6) ‣ Half-Integer Values of 𝜈 ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.38.6</span></a>) and (<a href="./10.38#E7" title="(10.38.7) ‣ Half-Integer Values of 𝜈 ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.38.7</span></a>) are stated without proof and
+in a slightly different notation in <cite class="ltx_cite ltx_citemacro_citet">Magnus<span class="ltx_text ltx_bib_etal"> et al.</span> (<a href="./bib/M#bib1534" title="Formulas and Theorems for the Special Functions of Mathematical Physics" class="ltx_ref">1966</a>, §3.3.3)</cite>.
+Both cases of (<a href="./10.38#E6" title="(10.38.6) ‣ Half-Integer Values of 𝜈 ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.38.6</span></a>) can be derived by a method analogous to
+that used for (<a href="./10.15#E6" title="(10.15.6) ‣ Half-Integer Values of 𝜈 ‣ §10.15 Derivatives with Respect to Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.15.6</span></a>) and (<a href="./10.15#E7" title="(10.15.7) ‣ Half-Integer Values of 𝜈 ‣ §10.15 Derivatives with Respect to Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.15.7</span></a>).
+(<a href="./10.38#E7" title="(10.38.7) ‣ Half-Integer Values of 𝜈 ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.38.7</span></a>) follows from (<a href="./10.38#E2" title="(10.38.2) ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.38.2</span></a>) and (<a href="./10.38#E6" title="(10.38.6) ‣ Half-Integer Values of 𝜈 ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.38.6</span></a>).</dd>
+<dt>Referenced by:</dt>
+<dd><a href="./errata/#V1.0.1.I4.ix2.p1" title="In Other Changes ‣ Version 1.0.1 (June 27, 2011) ‣ Errata" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Erratum (V1.0.1) for  Clarifications</span></a></dd>
+<dt>Permalink:</dt>
+<dd><a href="./10.38" title="" class="ltx_ref">http://dlmf.nist.gov/10.38</a></dd>
+<dt>Clarification (effective with 1.0.1):</dt>
+<dd>
+A clarification for negative integer values of <math class="ltx_Math" altimg="m21.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="\nu" display="inline"><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></math> was inserted after (<a href="./10.38#E3" title="(10.38.3) ‣ Integer Values of 𝜈 ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.38.3</span></a>).
+</dd>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+
+<div id="p1" class="ltx_para">
+<table id="E1" class="ltx_equation ltx_eqn_table">
+
+<tbody>
+<tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_left"><span class="ltx_tag ltx_tag_equation ltx_align_left">10.38.1</span></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math class="ltx_Math" altimg="E1.png" altimg-height="145px" altimg-valign="-29px" altimg-width="478px" alttext="\frac{\partial I_{\pm\nu}\left(z\right)}{\partial\nu}=\pm I_{\pm\nu}\left(z%
+\right)\ln\left(\tfrac{1}{2}z\right)\mp(\tfrac{1}{2}z)^{\pm\nu}\sum_{k=0}^{%
+\infty}\frac{\psi\left(k+1\pm\nu\right)}{\Gamma\left(k+1\pm\nu\right)}\frac{(%
+\frac{1}{4}z^{2})^{k}}{k!}," display="block"><mrow><mrow><mfrac><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mrow><msub><mi href="./10.25#E2" title="modified Bessel function of the first kind">I</mi><mrow><mo>±</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></mrow><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow></mfrac><mo>=</mo><mrow><mrow><mo>±</mo><mrow><mrow><msub><mi href="./10.25#E2" title="modified Bessel function of the first kind">I</mi><mrow><mo>±</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow><mo lspace="0.167em">⁢</mo><mrow><mi href="./4.2#E2" title="principal branch of logarithm function">ln</mi><mo>⁡</mo><mrow><mo>(</mo><mrow><mstyle displaystyle="false"><mfrac><mn>1</mn><mn>2</mn></mfrac></mstyle><mo>⁢</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow><mo>)</mo></mrow></mrow></mrow></mrow><mo>∓</mo><mrow><msup><mrow><mo stretchy="false">(</mo><mrow><mstyle displaystyle="false"><mfrac><mn>1</mn><mn>2</mn></mfrac></mstyle><mo>⁢</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow><mo stretchy="false">)</mo></mrow><mrow><mo>±</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow></msup><mo>⁢</mo><mrow><munderover><mo movablelimits="false">∑</mo><mrow><mi href="./10.1#t1.r2" title="nonnegative integer">k</mi><mo>=</mo><mn>0</mn></mrow><mi mathvariant="normal">∞</mi></munderover><mrow><mfrac><mrow><mi href="./5.2#E2" title="psi (or digamma) function">ψ</mi><mo>⁡</mo><mrow><mo>(</mo><mrow><mrow><mi href="./10.1#t1.r2" title="nonnegative integer">k</mi><mo>+</mo><mn>1</mn></mrow><mo>±</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow><mo>)</mo></mrow></mrow><mrow><mi href="./5.2#E1" mathvariant="normal" title="gamma function">Γ</mi><mo>⁡</mo><mrow><mo>(</mo><mrow><mrow><mi href="./10.1#t1.r2" title="nonnegative integer">k</mi><mo>+</mo><mn>1</mn></mrow><mo>±</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow><mo>)</mo></mrow></mrow></mfrac><mo>⁢</mo><mfrac><msup><mrow><mo stretchy="false">(</mo><mrow><mfrac><mn>1</mn><mn>4</mn></mfrac><mo>⁢</mo><msup><mi href="./10.1#t1.r4" title="complex variable">z</mi><mn>2</mn></msup></mrow><mo stretchy="false">)</mo></mrow><mi href="./10.1#t1.r2" title="nonnegative integer">k</mi></msup><mrow><mi href="./10.1#t1.r2" title="nonnegative integer">k</mi><mo href="./front/introduction#common.t1.r15" title="factorial (as in 𝑛!)">!</mo></mrow></mfrac></mrow></mrow></mrow></mrow></mrow><mo>,</mo></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+<tr><td class="ltx_align_right" colspan="4">
+<div id="E1.info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>Symbols:</dt>
+<dd>
+<a href="./5.2#E1" title="(5.2.1) ‣ Euler’s Integral ‣ §5.2(i) Gamma and Psi Functions ‣ §5.2 Definitions ‣ Properties ‣ Chapter 5 Gamma Function" class="ltx_ref"><math class="ltx_Math" altimg="m10.png" altimg-height="25px" altimg-valign="-7px" altimg-width="47px" alttext="\Gamma\left(\NVar{z}\right)" display="inline"><mrow><mi href="./5.2#E1" mathvariant="normal" title="gamma function">Γ</mi><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./5.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: gamma function</a>,
+<a href="./5.2#E2" title="(5.2.2) ‣ Euler’s Integral ‣ §5.2(i) Gamma and Psi Functions ‣ §5.2 Definitions ‣ Properties ‣ Chapter 5 Gamma Function" class="ltx_ref"><math class="ltx_Math" altimg="m27.png" altimg-height="25px" altimg-valign="-7px" altimg-width="49px" alttext="\psi\left(\NVar{z}\right)" display="inline"><mrow><mi href="./5.2#E2" title="psi (or digamma) function">ψ</mi><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./5.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: psi (or digamma) function</a>,
+<a href="./front/introduction#common.t1.r15" title="Common Notations and Definitions ‣ Mathematical Introduction" class="ltx_ref"><math class="ltx_Math" altimg="m5.png" altimg-height="18px" altimg-valign="-2px" altimg-width="10px" alttext="!" display="inline"><mo href="./front/introduction#common.t1.r15" title="factorial (as in 𝑛!)">!</mo></math>: factorial (as in <math class="ltx_Math" altimg="m30.png" altimg-height="18px" altimg-valign="-2px" altimg-width="23px" alttext="n!" display="inline"><mrow><mi>n</mi><mo href="./front/introduction#common.t1.r15" title="factorial (as in 𝑛!)">!</mo></mrow></math>)</a>,
+<a href="./10.25#E2" title="(10.25.2) ‣ §10.25(ii) Standard Solutions ‣ §10.25 Definitions ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m8.png" altimg-height="25px" altimg-valign="-7px" altimg-width="54px" alttext="I_{\NVar{\nu}}\left(\NVar{z}\right)" display="inline"><mrow><msub><mi href="./10.25#E2" title="modified Bessel function of the first kind">I</mi><mi class="ltx_nvar" href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: modified Bessel function of the first kind</a>,
+<a href="./4.2#E2" title="(4.2.2) ‣ §4.2(i) The Logarithm ‣ §4.2 Definitions ‣ Logarithm, Exponential, Powers ‣ Chapter 4 Elementary Functions" class="ltx_ref"><math class="ltx_Math" altimg="m16.png" altimg-height="18px" altimg-valign="-2px" altimg-width="36px" alttext="\ln\NVar{z}" display="inline"><mrow><mi href="./4.2#E2" title="principal branch of logarithm function">ln</mi><mo lspace="0.167em">⁡</mo><mi class="ltx_nvar" href="./4.1#t1.r4" title="complex variable">z</mi></mrow></math>: principal branch of logarithm function</a>,
+<a href="./1.5#E3" title="(1.5.3) ‣ §1.5(i) Partial Derivatives ‣ §1.5 Calculus of Two or More Variables ‣ Topics of Discussion ‣ Chapter 1 Algebraic and Analytic Methods" class="ltx_ref"><math class="ltx_Math" altimg="m13.png" altimg-height="31px" altimg-valign="-9px" altimg-width="29px" alttext="\frac{\partial\NVar{f}}{\partial\NVar{x}}" display="inline"><mfrac><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi class="ltx_nvar">f</mi></mrow><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi class="ltx_nvar">x</mi></mrow></mfrac></math>: partial derivative of <math class="ltx_Math" altimg="m28.png" altimg-height="22px" altimg-valign="-6px" altimg-width="17px" alttext="f" display="inline"><mi>f</mi></math> with respect to <math class="ltx_Math" altimg="m33.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="x" display="inline"><mi>x</mi></math></a>,
+<a href="./1.5#E3" title="(1.5.3) ‣ §1.5(i) Partial Derivatives ‣ §1.5 Calculus of Two or More Variables ‣ Topics of Discussion ‣ Chapter 1 Algebraic and Analytic Methods" class="ltx_ref"><math class="ltx_Math" altimg="m25.png" altimg-height="18px" altimg-valign="-2px" altimg-width="28px" alttext="\,\partial\NVar{x}" display="inline"><mrow><mo href="./1.5#E3" rspace="0em" title="partial differential of 𝑥">∂</mo><mi class="ltx_nvar">x</mi></mrow></math>: partial differential of <math class="ltx_Math" altimg="m33.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="x" display="inline"><mi>x</mi></math></a>,
+<a href="./10.1#t1.r2" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m29.png" altimg-height="18px" altimg-valign="-2px" altimg-width="16px" alttext="k" display="inline"><mi href="./10.1#t1.r2" title="nonnegative integer">k</mi></math>:  nonnegative integer</a>,
+<a href="./10.1#t1.r4" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m34.png" altimg-height="13px" altimg-valign="-2px" altimg-width="15px" alttext="z" display="inline"><mi href="./10.1#t1.r4" title="complex variable">z</mi></math>:  complex variable</a> and
+<a href="./10.1#t1.r5" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m21.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="\nu" display="inline"><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></math>:  complex parameter</a>
+</dd>
+<dt>A&amp;S Ref:</dt>
+<dd> <span class="ltx_origref"><span class="ltx_tag">9.6.42</span></span>
+</dd>
+<dt>Referenced by:</dt>
+<dd>
+<a href="./10.38#Px1.p1" title="Integer Values of 𝜈 ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.38</span></a>,
+<a href="./10.38#info" title="§10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.38</span></a>,
+<a href="./errata/#V1.0.17.I2.ix8" title="In Other Changes ‣ Version 1.0.17 (December 22, 2017) ‣ Errata" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Erratum (V1.0.17) for  Equations (<span class="ltx_text ltx_ref_tag">10.15.1</span>), (<span class="ltx_text ltx_ref_tag">10.38.1</span>)</span></a>
+</dd>
+<dt>Permalink:</dt>
+<dd><a href="./10.38.E1" title="" class="ltx_ref">http://dlmf.nist.gov/10.38.E1</a></dd>
+<dt>Encodings:</dt>
+<dd>
+<a href="./10.38.E1.tex">TeX</a>, <a href="./10.38.E1.pmml">pMML</a>, <a href="./10.38.E1.png">png</a>
+</dd>
+<dt>Addition (effective with 1.0.17):</dt>
+<dd>
+This equation has been generalized to include the additional case of
+<math class="ltx_Math" altimg="m14.png" altimg-height="25px" altimg-valign="-7px" altimg-width="118px" alttext="\ifrac{\partial I_{-\nu}\left(z\right)}{\partial\nu}" display="inline"><mrow><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mrow><msub><mi href="./10.25#E2" title="modified Bessel function of the first kind">I</mi><mrow><mo>−</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></mrow><mo href="./1.5#E3" lspace="0em" rspace="0em" stretchy="true" symmetric="true" title="partial derivative of 𝑓 with respect to 𝑥">/</mo><mrow><mo href="./1.5#E3" lspace="0em" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow></mrow></math> because it will help the user who wants
+to combine it with (<a href="./10.38#E2" title="(10.38.2) ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.38.2</span></a>).
+</dd>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10.38#info" title="§10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.38</span></a> and
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+</td></tr>
+</tbody>
+</table>
+<table id="E2" class="ltx_equation ltx_eqn_table">
+
+<tbody>
+<tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_left"><span class="ltx_tag ltx_tag_equation ltx_align_left">10.38.2</span></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math class="ltx_Math" altimg="E2.png" altimg-height="193px" altimg-valign="-22px" altimg-width="297px" alttext="\frac{\partial K_{\nu}\left(z\right)}{\partial\nu}=\tfrac{1}{2}\pi\csc\left(%
+\nu\pi\right)\*\left(\frac{\partial I_{-\nu}\left(z\right)}{\partial\nu}-\frac%
+{\partial I_{\nu}\left(z\right)}{\partial\nu}\right)-\pi\cot\left(\nu\pi\right%
+)K_{\nu}\left(z\right)," display="block"><mrow><mrow><mfrac><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mrow><msub><mi href="./10.25#E3" title="modified Bessel function of the second kind">K</mi><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></mrow><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow></mfrac><mo>=</mo><mrow><mrow><mstyle displaystyle="false"><mfrac><mn>1</mn><mn>2</mn></mfrac></mstyle><mo>⁢</mo><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi><mo lspace="0.167em">⁢</mo><mrow><mi href="./4.14#E5" title="cosecant function">csc</mi><mo>⁡</mo><mrow><mo>(</mo><mrow><mi href="./10.1#t1.r5" title="complex parameter">ν</mi><mo>⁢</mo><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi></mrow><mo>)</mo></mrow></mrow><mo>⁢</mo><mrow><mo>(</mo><mrow><mfrac><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mrow><msub><mi href="./10.25#E2" title="modified Bessel function of the first kind">I</mi><mrow><mo>−</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></mrow><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow></mfrac><mo>−</mo><mfrac><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mrow><msub><mi href="./10.25#E2" title="modified Bessel function of the first kind">I</mi><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></mrow><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow></mfrac></mrow><mo>)</mo></mrow></mrow><mo>−</mo><mrow><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi><mo lspace="0.167em">⁢</mo><mrow><mi href="./4.14#E7" title="cotangent function">cot</mi><mo>⁡</mo><mrow><mo>(</mo><mrow><mi href="./10.1#t1.r5" title="complex parameter">ν</mi><mo>⁢</mo><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi></mrow><mo>)</mo></mrow></mrow><mo>⁢</mo><mrow><msub><mi href="./10.25#E3" title="modified Bessel function of the second kind">K</mi><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></mrow></mrow></mrow><mo>,</mo></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+<tr class="ltx_eqn_row"><td class="ltx_eqn_cell ltx_align_right" colspan="4"><span class="ltx_constraint"><math class="ltx_Math" altimg="m22.png" altimg-height="21px" altimg-valign="-3px" altimg-width="55px" alttext="\nu\notin\mathbb{Z}" display="inline"><mrow><mi href="./10.1#t1.r5" title="complex parameter">ν</mi><mo href="./front/introduction#common.t1.r11" title="not an element of">∉</mo><mi href="./front/introduction#common.t2.r20" title="set of all integers">ℤ</mi></mrow></math>.</span></td></tr>
+<tr><td class="ltx_align_right" colspan="4">
+<div id="E2.info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>Symbols:</dt>
+<dd>
+<a href="./3.12#E1" title="(3.12.1) ‣ §3.12 Mathematical Constants ‣ Areas ‣ Chapter 3 Numerical Methods" class="ltx_ref"><math class="ltx_Math" altimg="m26.png" altimg-height="13px" altimg-valign="-2px" altimg-width="17px" alttext="\pi" display="inline"><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi></math>: the ratio of the circumference of a circle to its diameter</a>,
+<a href="./4.14#E5" title="(4.14.5) ‣ §4.14 Definitions and Periodicity ‣ Trigonometric Functions ‣ Chapter 4 Elementary Functions" class="ltx_ref"><math class="ltx_Math" altimg="m12.png" altimg-height="13px" altimg-valign="-2px" altimg-width="45px" alttext="\csc\NVar{z}" display="inline"><mrow><mi href="./4.14#E5" title="cosecant function">csc</mi><mo lspace="0.167em">⁡</mo><mi class="ltx_nvar" href="./4.1#t1.r4" title="complex variable">z</mi></mrow></math>: cosecant function</a>,
+<a href="./4.14#E7" title="(4.14.7) ‣ §4.14 Definitions and Periodicity ‣ Trigonometric Functions ‣ Chapter 4 Elementary Functions" class="ltx_ref"><math class="ltx_Math" altimg="m11.png" altimg-height="17px" altimg-valign="-2px" altimg-width="46px" alttext="\cot\NVar{z}" display="inline"><mrow><mi href="./4.14#E7" title="cotangent function">cot</mi><mo lspace="0.167em">⁡</mo><mi class="ltx_nvar" href="./4.1#t1.r4" title="complex variable">z</mi></mrow></math>: cotangent function</a>,
+<a href="./front/introduction#common.t2.r20" title="Common Notations and Definitions ‣ Mathematical Introduction" class="ltx_ref"><math class="ltx_Math" altimg="m17.png" altimg-height="18px" altimg-valign="-2px" altimg-width="18px" alttext="\mathbb{Z}" display="inline"><mi href="./front/introduction#common.t2.r20" title="set of all integers">ℤ</mi></math>: set of all integers</a>,
+<a href="./10.25#E2" title="(10.25.2) ‣ §10.25(ii) Standard Solutions ‣ §10.25 Definitions ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m8.png" altimg-height="25px" altimg-valign="-7px" altimg-width="54px" alttext="I_{\NVar{\nu}}\left(\NVar{z}\right)" display="inline"><mrow><msub><mi href="./10.25#E2" title="modified Bessel function of the first kind">I</mi><mi class="ltx_nvar" href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: modified Bessel function of the first kind</a>,
+<a href="./10.25#E3" title="(10.25.3) ‣ §10.25(ii) Standard Solutions ‣ §10.25 Definitions ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m9.png" altimg-height="25px" altimg-valign="-7px" altimg-width="62px" alttext="K_{\NVar{\nu}}\left(\NVar{z}\right)" display="inline"><mrow><msub><mi href="./10.25#E3" title="modified Bessel function of the second kind">K</mi><mi class="ltx_nvar" href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: modified Bessel function of the second kind</a>,
+<a href="./front/introduction#common.t1.r11" title="Common Notations and Definitions ‣ Mathematical Introduction" class="ltx_ref"><math class="ltx_Math" altimg="m19.png" altimg-height="21px" altimg-valign="-3px" altimg-width="18px" alttext="\notin" display="inline"><mo href="./front/introduction#common.t1.r11" title="not an element of">∉</mo></math>: not an element of</a>,
+<a href="./1.5#E3" title="(1.5.3) ‣ §1.5(i) Partial Derivatives ‣ §1.5 Calculus of Two or More Variables ‣ Topics of Discussion ‣ Chapter 1 Algebraic and Analytic Methods" class="ltx_ref"><math class="ltx_Math" altimg="m13.png" altimg-height="31px" altimg-valign="-9px" altimg-width="29px" alttext="\frac{\partial\NVar{f}}{\partial\NVar{x}}" display="inline"><mfrac><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi class="ltx_nvar">f</mi></mrow><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi class="ltx_nvar">x</mi></mrow></mfrac></math>: partial derivative of <math class="ltx_Math" altimg="m28.png" altimg-height="22px" altimg-valign="-6px" altimg-width="17px" alttext="f" display="inline"><mi>f</mi></math> with respect to <math class="ltx_Math" altimg="m33.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="x" display="inline"><mi>x</mi></math></a>,
+<a href="./1.5#E3" title="(1.5.3) ‣ §1.5(i) Partial Derivatives ‣ §1.5 Calculus of Two or More Variables ‣ Topics of Discussion ‣ Chapter 1 Algebraic and Analytic Methods" class="ltx_ref"><math class="ltx_Math" altimg="m25.png" altimg-height="18px" altimg-valign="-2px" altimg-width="28px" alttext="\,\partial\NVar{x}" display="inline"><mrow><mo href="./1.5#E3" rspace="0em" title="partial differential of 𝑥">∂</mo><mi class="ltx_nvar">x</mi></mrow></math>: partial differential of <math class="ltx_Math" altimg="m33.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="x" display="inline"><mi>x</mi></math></a>,
+<a href="./10.1#t1.r4" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m34.png" altimg-height="13px" altimg-valign="-2px" altimg-width="15px" alttext="z" display="inline"><mi href="./10.1#t1.r4" title="complex variable">z</mi></math>:  complex variable</a> and
+<a href="./10.1#t1.r5" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m21.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="\nu" display="inline"><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></math>:  complex parameter</a>
+</dd>
+<dt>A&amp;S Ref:</dt>
+<dd> <span class="ltx_origref"><span class="ltx_tag">9.6.43</span></span>
+</dd>
+<dt>Referenced by:</dt>
+<dd>
+<a href="./10.38#E1.info" title="In §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">(10.38.1)</span></a>,
+<a href="./10.38#Px1.p1" title="Integer Values of 𝜈 ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.38</span></a>,
+<a href="./10.38#info" title="§10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.38</span></a>
+</dd>
+<dt>Permalink:</dt>
+<dd><a href="./10.38.E2" title="" class="ltx_ref">http://dlmf.nist.gov/10.38.E2</a></dd>
+<dt>Encodings:</dt>
+<dd>
+<a href="./10.38.E2.tex">TeX</a>, <a href="./10.38.E2.pmml">pMML</a>, <a href="./10.38.E2.png">png</a>
+</dd>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10.38#info" title="§10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.38</span></a> and
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+</td></tr>
+</tbody>
+</table>
+</div>
+<section id="Px1" class="ltx_paragraph">
+<h2 class="ltx_title ltx_title_paragraph">Integer Values of <math class="ltx_Math" altimg="m21.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="\nu" display="inline"><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></math>
+</h2>
+<div id="Px1.info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10.38#info" title="§10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.38</span></a> and
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+
+<div id="Px1.p1" class="ltx_para">
+<table id="E3" class="ltx_equation ltx_eqn_table">
+
+<tbody>
+<tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_left"><span class="ltx_tag ltx_tag_equation ltx_align_left">10.38.3</span></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math class="ltx_Math" altimg="E3.png" altimg-height="134px" altimg-valign="-29px" altimg-width="563px" alttext="\left.(-1)^{n}\frac{\partial I_{\nu}\left(z\right)}{\partial\nu}\right|_{\nu=n%
+}=-K_{n}\left(z\right)+\frac{n!}{2(\frac{1}{2}z)^{n}}\sum_{k=0}^{n-1}(-1)^{k}%
+\frac{(\frac{1}{2}z)^{k}I_{k}\left(z\right)}{k!(n-k)}," display="block"><mrow><mrow><msub><mrow><mrow><msup><mrow><mo stretchy="false">(</mo><mrow><mo>−</mo><mn>1</mn></mrow><mo stretchy="false">)</mo></mrow><mi href="./10.1#t1.r1" title="integer">n</mi></msup><mo>⁢</mo><mfrac><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mrow><msub><mi href="./10.25#E2" title="modified Bessel function of the first kind">I</mi><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></mrow><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow></mfrac></mrow><mo>|</mo></mrow><mrow><mi href="./10.1#t1.r5" title="complex parameter">ν</mi><mo>=</mo><mi href="./10.1#t1.r1" title="integer">n</mi></mrow></msub><mo>=</mo><mrow><mrow><mo>−</mo><mrow><msub><mi href="./10.25#E3" title="modified Bessel function of the second kind">K</mi><mi href="./10.1#t1.r1" title="integer">n</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></mrow><mo>+</mo><mrow><mfrac><mrow><mi href="./10.1#t1.r1" title="integer">n</mi><mo href="./front/introduction#common.t1.r15" title="factorial (as in 𝑛!)">!</mo></mrow><mrow><mn>2</mn><mo>⁢</mo><msup><mrow><mo stretchy="false">(</mo><mrow><mfrac><mn>1</mn><mn>2</mn></mfrac><mo>⁢</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow><mo stretchy="false">)</mo></mrow><mi href="./10.1#t1.r1" title="integer">n</mi></msup></mrow></mfrac><mo>⁢</mo><mrow><munderover><mo movablelimits="false" rspace="0em">∑</mo><mrow><mi href="./10.1#t1.r2" title="nonnegative integer">k</mi><mo>=</mo><mn>0</mn></mrow><mrow><mi href="./10.1#t1.r1" title="integer">n</mi><mo>−</mo><mn>1</mn></mrow></munderover><mrow><msup><mrow><mo stretchy="false">(</mo><mrow><mo>−</mo><mn>1</mn></mrow><mo stretchy="false">)</mo></mrow><mi href="./10.1#t1.r2" title="nonnegative integer">k</mi></msup><mo>⁢</mo><mfrac><mrow><msup><mrow><mo stretchy="false">(</mo><mrow><mfrac><mn>1</mn><mn>2</mn></mfrac><mo>⁢</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow><mo stretchy="false">)</mo></mrow><mi href="./10.1#t1.r2" title="nonnegative integer">k</mi></msup><mo>⁢</mo><mrow><msub><mi href="./10.25#E2" title="modified Bessel function of the first kind">I</mi><mi href="./10.1#t1.r2" title="nonnegative integer">k</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></mrow><mrow><mrow><mi href="./10.1#t1.r2" title="nonnegative integer">k</mi><mo href="./front/introduction#common.t1.r15" title="factorial (as in 𝑛!)">!</mo></mrow><mo>⁢</mo><mrow><mo stretchy="false">(</mo><mrow><mi href="./10.1#t1.r1" title="integer">n</mi><mo>−</mo><mi href="./10.1#t1.r2" title="nonnegative integer">k</mi></mrow><mo stretchy="false">)</mo></mrow></mrow></mfrac></mrow></mrow></mrow></mrow></mrow><mo>,</mo></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+<tr><td class="ltx_align_right" colspan="4">
+<div id="E3.info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>Symbols:</dt>
+<dd>
+<a href="./front/introduction#common.t1.r15" title="Common Notations and Definitions ‣ Mathematical Introduction" class="ltx_ref"><math class="ltx_Math" altimg="m5.png" altimg-height="18px" altimg-valign="-2px" altimg-width="10px" alttext="!" display="inline"><mo href="./front/introduction#common.t1.r15" title="factorial (as in 𝑛!)">!</mo></math>: factorial (as in <math class="ltx_Math" altimg="m30.png" altimg-height="18px" altimg-valign="-2px" altimg-width="23px" alttext="n!" display="inline"><mrow><mi>n</mi><mo href="./front/introduction#common.t1.r15" title="factorial (as in 𝑛!)">!</mo></mrow></math>)</a>,
+<a href="./10.25#E2" title="(10.25.2) ‣ §10.25(ii) Standard Solutions ‣ §10.25 Definitions ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m8.png" altimg-height="25px" altimg-valign="-7px" altimg-width="54px" alttext="I_{\NVar{\nu}}\left(\NVar{z}\right)" display="inline"><mrow><msub><mi href="./10.25#E2" title="modified Bessel function of the first kind">I</mi><mi class="ltx_nvar" href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: modified Bessel function of the first kind</a>,
+<a href="./10.25#E3" title="(10.25.3) ‣ §10.25(ii) Standard Solutions ‣ §10.25 Definitions ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m9.png" altimg-height="25px" altimg-valign="-7px" altimg-width="62px" alttext="K_{\NVar{\nu}}\left(\NVar{z}\right)" display="inline"><mrow><msub><mi href="./10.25#E3" title="modified Bessel function of the second kind">K</mi><mi class="ltx_nvar" href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: modified Bessel function of the second kind</a>,
+<a href="./1.5#E3" title="(1.5.3) ‣ §1.5(i) Partial Derivatives ‣ §1.5 Calculus of Two or More Variables ‣ Topics of Discussion ‣ Chapter 1 Algebraic and Analytic Methods" class="ltx_ref"><math class="ltx_Math" altimg="m13.png" altimg-height="31px" altimg-valign="-9px" altimg-width="29px" alttext="\frac{\partial\NVar{f}}{\partial\NVar{x}}" display="inline"><mfrac><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi class="ltx_nvar">f</mi></mrow><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi class="ltx_nvar">x</mi></mrow></mfrac></math>: partial derivative of <math class="ltx_Math" altimg="m28.png" altimg-height="22px" altimg-valign="-6px" altimg-width="17px" alttext="f" display="inline"><mi>f</mi></math> with respect to <math class="ltx_Math" altimg="m33.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="x" display="inline"><mi>x</mi></math></a>,
+<a href="./1.5#E3" title="(1.5.3) ‣ §1.5(i) Partial Derivatives ‣ §1.5 Calculus of Two or More Variables ‣ Topics of Discussion ‣ Chapter 1 Algebraic and Analytic Methods" class="ltx_ref"><math class="ltx_Math" altimg="m25.png" altimg-height="18px" altimg-valign="-2px" altimg-width="28px" alttext="\,\partial\NVar{x}" display="inline"><mrow><mo href="./1.5#E3" rspace="0em" title="partial differential of 𝑥">∂</mo><mi class="ltx_nvar">x</mi></mrow></math>: partial differential of <math class="ltx_Math" altimg="m33.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="x" display="inline"><mi>x</mi></math></a>,
+<a href="./10.1#t1.r1" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m31.png" altimg-height="13px" altimg-valign="-2px" altimg-width="17px" alttext="n" display="inline"><mi href="./10.1#t1.r1" title="integer">n</mi></math>:  integer</a>,
+<a href="./10.1#t1.r2" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m29.png" altimg-height="18px" altimg-valign="-2px" altimg-width="16px" alttext="k" display="inline"><mi href="./10.1#t1.r2" title="nonnegative integer">k</mi></math>:  nonnegative integer</a>,
+<a href="./10.1#t1.r4" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m34.png" altimg-height="13px" altimg-valign="-2px" altimg-width="15px" alttext="z" display="inline"><mi href="./10.1#t1.r4" title="complex variable">z</mi></math>:  complex variable</a> and
+<a href="./10.1#t1.r5" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m21.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="\nu" display="inline"><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></math>:  complex parameter</a>
+</dd>
+<dt>A&amp;S Ref:</dt>
+<dd> <span class="ltx_origref"><span class="ltx_tag">9.6.44</span></span>
+</dd>
+<dt>Referenced by:</dt>
+<dd><a href="./10.38#info" title="§10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.38</span></a></dd>
+<dt>Permalink:</dt>
+<dd><a href="./10.38.E3" title="" class="ltx_ref">http://dlmf.nist.gov/10.38.E3</a></dd>
+<dt>Encodings:</dt>
+<dd>
+<a href="./10.38.E3.tex">TeX</a>, <a href="./10.38.E3.pmml">pMML</a>, <a href="./10.38.E3.png">png</a>
+</dd>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10.38#Px1.info" title="Integer Values of 𝜈 ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.38</span></a>,
+<a href="./10.38#info" title="§10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.38</span></a> and
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+</td></tr>
+</tbody>
+</table>
+<p class="ltx_p">For <math class="ltx_Math" altimg="m15.png" altimg-height="25px" altimg-valign="-7px" altimg-width="105px" alttext="\ifrac{\partial I_{\nu}\left(z\right)}{\partial\nu}" display="inline"><mrow><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mrow><msub><mi href="./10.25#E2" title="modified Bessel function of the first kind">I</mi><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></mrow><mo href="./1.5#E3" lspace="0em" rspace="0em" stretchy="true" symmetric="true" title="partial derivative of 𝑓 with respect to 𝑥">/</mo><mrow><mo href="./1.5#E3" lspace="0em" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow></mrow></math> at <math class="ltx_Math" altimg="m20.png" altimg-height="18px" altimg-valign="-4px" altimg-width="72px" alttext="\nu=-n" display="inline"><mrow><mi href="./10.1#t1.r5" title="complex parameter">ν</mi><mo>=</mo><mrow><mo>−</mo><mi href="./10.1#t1.r1" title="integer">n</mi></mrow></mrow></math> combine (<a href="./10.38#E1" title="(10.38.1) ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.38.1</span></a>), (<a href="./10.38#E2" title="(10.38.2) ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.38.2</span></a>), and (<a href="./10.38#E4" title="(10.38.4) ‣ Integer Values of 𝜈 ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.38.4</span></a>).</p>
+<table id="E4" class="ltx_equation ltx_eqn_table">
+
+<tbody>
+<tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_left"><span class="ltx_tag ltx_tag_equation ltx_align_left">10.38.4</span></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math class="ltx_Math" altimg="E4.png" altimg-height="77px" altimg-valign="-29px" altimg-width="500px" alttext="\left.\frac{\partial K_{\nu}\left(z\right)}{\partial\nu}\right|_{\nu=n}=\frac{%
+n!}{2(\frac{1}{2}z)^{n}}\sum_{k=0}^{n-1}\frac{(\frac{1}{2}z)^{k}K_{k}\left(z%
+\right)}{k!(n-k)}." display="block"><mrow><mrow><msub><mrow><mfrac><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mrow><msub><mi href="./10.25#E3" title="modified Bessel function of the second kind">K</mi><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></mrow><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow></mfrac><mo>|</mo></mrow><mrow><mi href="./10.1#t1.r5" title="complex parameter">ν</mi><mo>=</mo><mi href="./10.1#t1.r1" title="integer">n</mi></mrow></msub><mo>=</mo><mrow><mfrac><mrow><mi href="./10.1#t1.r1" title="integer">n</mi><mo href="./front/introduction#common.t1.r15" title="factorial (as in 𝑛!)">!</mo></mrow><mrow><mn>2</mn><mo>⁢</mo><msup><mrow><mo stretchy="false">(</mo><mrow><mfrac><mn>1</mn><mn>2</mn></mfrac><mo>⁢</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow><mo stretchy="false">)</mo></mrow><mi href="./10.1#t1.r1" title="integer">n</mi></msup></mrow></mfrac><mo>⁢</mo><mrow><munderover><mo movablelimits="false">∑</mo><mrow><mi href="./10.1#t1.r2" title="nonnegative integer">k</mi><mo>=</mo><mn>0</mn></mrow><mrow><mi href="./10.1#t1.r1" title="integer">n</mi><mo>−</mo><mn>1</mn></mrow></munderover><mfrac><mrow><msup><mrow><mo stretchy="false">(</mo><mrow><mfrac><mn>1</mn><mn>2</mn></mfrac><mo>⁢</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow><mo stretchy="false">)</mo></mrow><mi href="./10.1#t1.r2" title="nonnegative integer">k</mi></msup><mo>⁢</mo><mrow><msub><mi href="./10.25#E3" title="modified Bessel function of the second kind">K</mi><mi href="./10.1#t1.r2" title="nonnegative integer">k</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></mrow><mrow><mrow><mi href="./10.1#t1.r2" title="nonnegative integer">k</mi><mo href="./front/introduction#common.t1.r15" title="factorial (as in 𝑛!)">!</mo></mrow><mo>⁢</mo><mrow><mo stretchy="false">(</mo><mrow><mi href="./10.1#t1.r1" title="integer">n</mi><mo>−</mo><mi href="./10.1#t1.r2" title="nonnegative integer">k</mi></mrow><mo stretchy="false">)</mo></mrow></mrow></mfrac></mrow></mrow></mrow><mo lspace="0em">.</mo></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+<tr><td class="ltx_align_right" colspan="4">
+<div id="E4.info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>Symbols:</dt>
+<dd>
+<a href="./front/introduction#common.t1.r15" title="Common Notations and Definitions ‣ Mathematical Introduction" class="ltx_ref"><math class="ltx_Math" altimg="m5.png" altimg-height="18px" altimg-valign="-2px" altimg-width="10px" alttext="!" display="inline"><mo href="./front/introduction#common.t1.r15" title="factorial (as in 𝑛!)">!</mo></math>: factorial (as in <math class="ltx_Math" altimg="m30.png" altimg-height="18px" altimg-valign="-2px" altimg-width="23px" alttext="n!" display="inline"><mrow><mi>n</mi><mo href="./front/introduction#common.t1.r15" title="factorial (as in 𝑛!)">!</mo></mrow></math>)</a>,
+<a href="./10.25#E3" title="(10.25.3) ‣ §10.25(ii) Standard Solutions ‣ §10.25 Definitions ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m9.png" altimg-height="25px" altimg-valign="-7px" altimg-width="62px" alttext="K_{\NVar{\nu}}\left(\NVar{z}\right)" display="inline"><mrow><msub><mi href="./10.25#E3" title="modified Bessel function of the second kind">K</mi><mi class="ltx_nvar" href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: modified Bessel function of the second kind</a>,
+<a href="./1.5#E3" title="(1.5.3) ‣ §1.5(i) Partial Derivatives ‣ §1.5 Calculus of Two or More Variables ‣ Topics of Discussion ‣ Chapter 1 Algebraic and Analytic Methods" class="ltx_ref"><math class="ltx_Math" altimg="m13.png" altimg-height="31px" altimg-valign="-9px" altimg-width="29px" alttext="\frac{\partial\NVar{f}}{\partial\NVar{x}}" display="inline"><mfrac><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi class="ltx_nvar">f</mi></mrow><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi class="ltx_nvar">x</mi></mrow></mfrac></math>: partial derivative of <math class="ltx_Math" altimg="m28.png" altimg-height="22px" altimg-valign="-6px" altimg-width="17px" alttext="f" display="inline"><mi>f</mi></math> with respect to <math class="ltx_Math" altimg="m33.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="x" display="inline"><mi>x</mi></math></a>,
+<a href="./1.5#E3" title="(1.5.3) ‣ §1.5(i) Partial Derivatives ‣ §1.5 Calculus of Two or More Variables ‣ Topics of Discussion ‣ Chapter 1 Algebraic and Analytic Methods" class="ltx_ref"><math class="ltx_Math" altimg="m25.png" altimg-height="18px" altimg-valign="-2px" altimg-width="28px" alttext="\,\partial\NVar{x}" display="inline"><mrow><mo href="./1.5#E3" rspace="0em" title="partial differential of 𝑥">∂</mo><mi class="ltx_nvar">x</mi></mrow></math>: partial differential of <math class="ltx_Math" altimg="m33.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="x" display="inline"><mi>x</mi></math></a>,
+<a href="./10.1#t1.r1" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m31.png" altimg-height="13px" altimg-valign="-2px" altimg-width="17px" alttext="n" display="inline"><mi href="./10.1#t1.r1" title="integer">n</mi></math>:  integer</a>,
+<a href="./10.1#t1.r2" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m29.png" altimg-height="18px" altimg-valign="-2px" altimg-width="16px" alttext="k" display="inline"><mi href="./10.1#t1.r2" title="nonnegative integer">k</mi></math>:  nonnegative integer</a>,
+<a href="./10.1#t1.r4" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m34.png" altimg-height="13px" altimg-valign="-2px" altimg-width="15px" alttext="z" display="inline"><mi href="./10.1#t1.r4" title="complex variable">z</mi></math>:  complex variable</a> and
+<a href="./10.1#t1.r5" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m21.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="\nu" display="inline"><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></math>:  complex parameter</a>
+</dd>
+<dt>A&amp;S Ref:</dt>
+<dd> <span class="ltx_origref"><span class="ltx_tag">9.6.45</span></span>
+</dd>
+<dt>Referenced by:</dt>
+<dd><a href="./10.38#Px1.p1" title="Integer Values of 𝜈 ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.38</span></a></dd>
+<dt>Permalink:</dt>
+<dd><a href="./10.38.E4" title="" class="ltx_ref">http://dlmf.nist.gov/10.38.E4</a></dd>
+<dt>Encodings:</dt>
+<dd>
+<a href="./10.38.E4.tex">TeX</a>, <a href="./10.38.E4.pmml">pMML</a>, <a href="./10.38.E4.png">png</a>
+</dd>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10.38#Px1.info" title="Integer Values of 𝜈 ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.38</span></a>,
+<a href="./10.38#info" title="§10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.38</span></a> and
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+</td></tr>
+</tbody>
+</table>
+<table id="E5" class="ltx_equationgroup ltx_eqn_table">
+<tbody>
+<tr id="Ex1" class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td rowspan="2" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_left"><span class="ltx_tag ltx_tag_equationgroup ltx_align_left">10.38.5</span></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_td ltx_align_right ltx_eqn_cell"><math class="ltx_Math" altimg="m3.png" altimg-height="63px" altimg-valign="-23px" altimg-width="131px" alttext="\displaystyle\left.\frac{\partial I_{\nu}\left(z\right)}{\partial\nu}\right|_{%
+\nu=0}" display="inline"><msub><mrow><mstyle displaystyle="true"><mfrac><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mrow><msub><mi href="./10.25#E2" title="modified Bessel function of the first kind">I</mi><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></mrow><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow></mfrac></mstyle><mo>|</mo></mrow><mrow><mi href="./10.1#t1.r5" title="complex parameter">ν</mi><mo>=</mo><mn>0</mn></mrow></msub></math></td>
+<td class="ltx_td ltx_align_left ltx_eqn_cell"><math class="ltx_Math" altimg="m1.png" altimg-height="40px" altimg-valign="-7px" altimg-width="117px" alttext="\displaystyle=-K_{0}\left(z\right)," display="inline"><mrow><mrow><mi></mi><mo>=</mo><mrow><mo>−</mo><mrow><msub><mi href="./10.25#E3" title="modified Bessel function of the second kind">K</mi><mn>0</mn></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></mrow></mrow><mo>,</mo></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+<tr id="Ex2" class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_td ltx_align_right ltx_eqn_cell"><math class="ltx_Math" altimg="m4.png" altimg-height="63px" altimg-valign="-23px" altimg-width="139px" alttext="\displaystyle\left.\frac{\partial K_{\nu}\left(z\right)}{\partial\nu}\right|_{%
+\nu=0}" display="inline"><msub><mrow><mstyle displaystyle="true"><mfrac><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mrow><msub><mi href="./10.25#E3" title="modified Bessel function of the second kind">K</mi><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></mrow><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow></mfrac></mstyle><mo>|</mo></mrow><mrow><mi href="./10.1#t1.r5" title="complex parameter">ν</mi><mo>=</mo><mn>0</mn></mrow></msub></math></td>
+<td class="ltx_td ltx_align_left ltx_eqn_cell"><math class="ltx_Math" altimg="m2.png" altimg-height="19px" altimg-valign="-2px" altimg-width="45px" alttext="\displaystyle=0." display="inline"><mrow><mrow><mi></mi><mo>=</mo><mn>0</mn></mrow><mo lspace="0em">.</mo></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+<tr><td class="ltx_align_right" colspan="5">
+<div id="E5.info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>Symbols:</dt>
+<dd>
+<a href="./10.25#E2" title="(10.25.2) ‣ §10.25(ii) Standard Solutions ‣ §10.25 Definitions ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m8.png" altimg-height="25px" altimg-valign="-7px" altimg-width="54px" alttext="I_{\NVar{\nu}}\left(\NVar{z}\right)" display="inline"><mrow><msub><mi href="./10.25#E2" title="modified Bessel function of the first kind">I</mi><mi class="ltx_nvar" href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: modified Bessel function of the first kind</a>,
+<a href="./10.25#E3" title="(10.25.3) ‣ §10.25(ii) Standard Solutions ‣ §10.25 Definitions ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m9.png" altimg-height="25px" altimg-valign="-7px" altimg-width="62px" alttext="K_{\NVar{\nu}}\left(\NVar{z}\right)" display="inline"><mrow><msub><mi href="./10.25#E3" title="modified Bessel function of the second kind">K</mi><mi class="ltx_nvar" href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: modified Bessel function of the second kind</a>,
+<a href="./1.5#E3" title="(1.5.3) ‣ §1.5(i) Partial Derivatives ‣ §1.5 Calculus of Two or More Variables ‣ Topics of Discussion ‣ Chapter 1 Algebraic and Analytic Methods" class="ltx_ref"><math class="ltx_Math" altimg="m13.png" altimg-height="31px" altimg-valign="-9px" altimg-width="29px" alttext="\frac{\partial\NVar{f}}{\partial\NVar{x}}" display="inline"><mfrac><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi class="ltx_nvar">f</mi></mrow><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi class="ltx_nvar">x</mi></mrow></mfrac></math>: partial derivative of <math class="ltx_Math" altimg="m28.png" altimg-height="22px" altimg-valign="-6px" altimg-width="17px" alttext="f" display="inline"><mi>f</mi></math> with respect to <math class="ltx_Math" altimg="m33.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="x" display="inline"><mi>x</mi></math></a>,
+<a href="./1.5#E3" title="(1.5.3) ‣ §1.5(i) Partial Derivatives ‣ §1.5 Calculus of Two or More Variables ‣ Topics of Discussion ‣ Chapter 1 Algebraic and Analytic Methods" class="ltx_ref"><math class="ltx_Math" altimg="m25.png" altimg-height="18px" altimg-valign="-2px" altimg-width="28px" alttext="\,\partial\NVar{x}" display="inline"><mrow><mo href="./1.5#E3" rspace="0em" title="partial differential of 𝑥">∂</mo><mi class="ltx_nvar">x</mi></mrow></math>: partial differential of <math class="ltx_Math" altimg="m33.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="x" display="inline"><mi>x</mi></math></a>,
+<a href="./10.1#t1.r4" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m34.png" altimg-height="13px" altimg-valign="-2px" altimg-width="15px" alttext="z" display="inline"><mi href="./10.1#t1.r4" title="complex variable">z</mi></math>:  complex variable</a> and
+<a href="./10.1#t1.r5" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m21.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="\nu" display="inline"><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></math>:  complex parameter</a>
+</dd>
+<dt>A&amp;S Ref:</dt>
+<dd> <span class="ltx_origref"><span class="ltx_tag">9.6.46</span></span>
+</dd>
+<dt>Referenced by:</dt>
+<dd><a href="./10.38#info" title="§10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.38</span></a></dd>
+<dt>Permalink:</dt>
+<dd><a href="./10.38.E5" title="" class="ltx_ref">http://dlmf.nist.gov/10.38.E5</a></dd>
+<dt>Encodings:</dt>
+<dd>
+<a href="./10.38.E5a.tex">TeX</a>, <a href="./10.38.E5b.tex">TeX</a>, <a href="./10.38.E5a.pmml">pMML</a>, <a href="./10.38.E5b.pmml">pMML</a>, <a href="./10.38.E5a.png">png</a>, <a href="./10.38.E5b.png">png</a>
+</dd>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10.38#Px1.info" title="Integer Values of 𝜈 ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.38</span></a>,
+<a href="./10.38#info" title="§10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.38</span></a> and
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="Px2" class="ltx_paragraph">
+<h2 class="ltx_title ltx_title_paragraph">Half-Integer Values of <math class="ltx_Math" altimg="m21.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="\nu" display="inline"><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></math>
+</h2>
+<div id="Px2.info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10.38#info" title="§10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.38</span></a> and
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+
+<div id="Px2.p1" class="ltx_para">
+<p class="ltx_p">For the notations <math class="ltx_Math" altimg="m6.png" altimg-height="21px" altimg-valign="-5px" altimg-width="29px" alttext="E_{1}" display="inline"><msub><mi href="./6.2#E1" title="exponential integral">E</mi><mn href="./6.2#E1" title="exponential integral">1</mn></msub></math> and <math class="ltx_Math" altimg="m23.png" altimg-height="18px" altimg-valign="-2px" altimg-width="24px" alttext="\operatorname{Ei}" display="inline"><mi href="./6.2#i.p3" title="exponential integral">Ei</mi></math> see §<a href="./6.2#i" title="§6.2(i) Exponential and Logarithmic Integrals ‣ §6.2 Definitions and Interrelations ‣ Properties ‣ Chapter 6 Exponential, Logarithmic, Sine, and Cosine Integrals" class="ltx_ref"><span class="ltx_text ltx_ref_tag">6.2(i)</span></a>.
+When <math class="ltx_Math" altimg="m32.png" altimg-height="18px" altimg-valign="-3px" altimg-width="54px" alttext="x&gt;0" display="inline"><mrow><mi href="./10.1#t1.r3" title="real variable">x</mi><mo>&gt;</mo><mn>0</mn></mrow></math>,</p>
+<table id="E6" class="ltx_equation ltx_eqn_table">
+
+<tbody>
+<tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_left"><span class="ltx_tag ltx_tag_equation ltx_align_left">10.38.6</span></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math class="ltx_Math" altimg="E6.png" altimg-height="159px" altimg-valign="-28px" altimg-width="313px" alttext="\left.\frac{\partial I_{\nu}\left(x\right)}{\partial\nu}\right|_{\nu=\pm\frac{%
+1}{2}}=-\frac{1}{\sqrt{2\pi x}}\left(E_{1}\left(2x\right)e^{x}\pm\operatorname%
+{Ei}\left(2x\right)e^{-x}\right)," display="block"><mrow><mrow><msub><mrow><mfrac><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mrow><msub><mi href="./10.25#E2" title="modified Bessel function of the first kind">I</mi><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r3" title="real variable">x</mi><mo>)</mo></mrow></mrow></mrow><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow></mfrac><mo>|</mo></mrow><mrow><mi href="./10.1#t1.r5" title="complex parameter">ν</mi><mo>=</mo><mrow><mo>±</mo><mfrac><mn>1</mn><mn>2</mn></mfrac></mrow></mrow></msub><mo>=</mo><mrow><mo>−</mo><mrow><mfrac><mn>1</mn><msqrt><mrow><mn>2</mn><mo>⁢</mo><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi><mo>⁢</mo><mi href="./10.1#t1.r3" title="real variable">x</mi></mrow></msqrt></mfrac><mo>⁢</mo><mrow><mo>(</mo><mrow><mrow><mrow><msub><mi href="./6.2#E1" title="exponential integral">E</mi><mn href="./6.2#E1" title="exponential integral">1</mn></msub><mo>⁡</mo><mrow><mo>(</mo><mrow><mn>2</mn><mo>⁢</mo><mi href="./10.1#t1.r3" title="real variable">x</mi></mrow><mo>)</mo></mrow></mrow><mo>⁢</mo><msup><mi href="./4.2#E11" mathvariant="normal" title="base of natural logarithm">e</mi><mi href="./10.1#t1.r3" title="real variable">x</mi></msup></mrow><mo>±</mo><mrow><mrow><mi href="./6.2#i.p3" title="exponential integral">Ei</mi><mo>⁡</mo><mrow><mo>(</mo><mrow><mn>2</mn><mo>⁢</mo><mi href="./10.1#t1.r3" title="real variable">x</mi></mrow><mo>)</mo></mrow></mrow><mo>⁢</mo><msup><mi href="./4.2#E11" mathvariant="normal" title="base of natural logarithm">e</mi><mrow><mo>−</mo><mi href="./10.1#t1.r3" title="real variable">x</mi></mrow></msup></mrow></mrow><mo>)</mo></mrow></mrow></mrow></mrow><mo>,</mo></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+<tr><td class="ltx_align_right" colspan="4">
+<div id="E6.info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>Symbols:</dt>
+<dd>
+<a href="./3.12#E1" title="(3.12.1) ‣ §3.12 Mathematical Constants ‣ Areas ‣ Chapter 3 Numerical Methods" class="ltx_ref"><math class="ltx_Math" altimg="m26.png" altimg-height="13px" altimg-valign="-2px" altimg-width="17px" alttext="\pi" display="inline"><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi></math>: the ratio of the circumference of a circle to its diameter</a>,
+<a href="./4.2#E11" title="(4.2.11) ‣ §4.2(ii) Logarithms to a General Base 𝑎 ‣ §4.2 Definitions ‣ Logarithm, Exponential, Powers ‣ Chapter 4 Elementary Functions" class="ltx_ref"><math class="ltx_Math" altimg="m18.png" altimg-height="13px" altimg-valign="-2px" altimg-width="14px" alttext="\mathrm{e}" display="inline"><mi href="./4.2#E11" mathvariant="normal" title="base of natural logarithm">e</mi></math>: base of natural logarithm</a>,
+<a href="./6.2#E1" title="(6.2.1) ‣ §6.2(i) Exponential and Logarithmic Integrals ‣ §6.2 Definitions and Interrelations ‣ Properties ‣ Chapter 6 Exponential, Logarithmic, Sine, and Cosine Integrals" class="ltx_ref"><math class="ltx_Math" altimg="m7.png" altimg-height="25px" altimg-valign="-7px" altimg-width="59px" alttext="E_{1}\left(\NVar{z}\right)" display="inline"><mrow><msub><mi href="./6.2#E1" title="exponential integral">E</mi><mn href="./6.2#E1" title="exponential integral">1</mn></msub><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./6.1#p1.t1.r2" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: exponential integral</a>,
+<a href="./6.2#i.p3" title="§6.2(i) Exponential and Logarithmic Integrals ‣ §6.2 Definitions and Interrelations ‣ Properties ‣ Chapter 6 Exponential, Logarithmic, Sine, and Cosine Integrals" class="ltx_ref"><math class="ltx_Math" altimg="m24.png" altimg-height="25px" altimg-valign="-7px" altimg-width="56px" alttext="\operatorname{Ei}\left(\NVar{x}\right)" display="inline"><mrow><mi href="./6.2#i.p3" title="exponential integral">Ei</mi><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./6.1#p1.t1.r1" title="real variable">x</mi><mo>)</mo></mrow></mrow></math>: exponential integral</a>,
+<a href="./10.25#E2" title="(10.25.2) ‣ §10.25(ii) Standard Solutions ‣ §10.25 Definitions ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m8.png" altimg-height="25px" altimg-valign="-7px" altimg-width="54px" alttext="I_{\NVar{\nu}}\left(\NVar{z}\right)" display="inline"><mrow><msub><mi href="./10.25#E2" title="modified Bessel function of the first kind">I</mi><mi class="ltx_nvar" href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: modified Bessel function of the first kind</a>,
+<a href="./1.5#E3" title="(1.5.3) ‣ §1.5(i) Partial Derivatives ‣ §1.5 Calculus of Two or More Variables ‣ Topics of Discussion ‣ Chapter 1 Algebraic and Analytic Methods" class="ltx_ref"><math class="ltx_Math" altimg="m13.png" altimg-height="31px" altimg-valign="-9px" altimg-width="29px" alttext="\frac{\partial\NVar{f}}{\partial\NVar{x}}" display="inline"><mfrac><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi class="ltx_nvar">f</mi></mrow><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi class="ltx_nvar">x</mi></mrow></mfrac></math>: partial derivative of <math class="ltx_Math" altimg="m28.png" altimg-height="22px" altimg-valign="-6px" altimg-width="17px" alttext="f" display="inline"><mi>f</mi></math> with respect to <math class="ltx_Math" altimg="m33.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="x" display="inline"><mi>x</mi></math></a>,
+<a href="./1.5#E3" title="(1.5.3) ‣ §1.5(i) Partial Derivatives ‣ §1.5 Calculus of Two or More Variables ‣ Topics of Discussion ‣ Chapter 1 Algebraic and Analytic Methods" class="ltx_ref"><math class="ltx_Math" altimg="m25.png" altimg-height="18px" altimg-valign="-2px" altimg-width="28px" alttext="\,\partial\NVar{x}" display="inline"><mrow><mo href="./1.5#E3" rspace="0em" title="partial differential of 𝑥">∂</mo><mi class="ltx_nvar">x</mi></mrow></math>: partial differential of <math class="ltx_Math" altimg="m33.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="x" display="inline"><mi>x</mi></math></a>,
+<a href="./10.1#t1.r3" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m33.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="x" display="inline"><mi href="./10.1#t1.r3" title="real variable">x</mi></math>:  real variable</a> and
+<a href="./10.1#t1.r5" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m21.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="\nu" display="inline"><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></math>:  complex parameter</a>
+</dd>
+<dt>A&amp;S Ref:</dt>
+<dd> <span class="ltx_origref"><span class="ltx_tag">10.2.32 and 10.2.33</span> (both corrected)</span>
+</dd>
+<dt>Referenced by:</dt>
+<dd>
+<a href="./10.38#info" title="§10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.38</span></a>,
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+<dt>Permalink:</dt>
+<dd><a href="./10.38.E6" title="" class="ltx_ref">http://dlmf.nist.gov/10.38.E6</a></dd>
+<dt>Encodings:</dt>
+<dd>
+<a href="./10.38.E6.tex">TeX</a>, <a href="./10.38.E6.pmml">pMML</a>, <a href="./10.38.E6.png">png</a>
+</dd>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10.38#Px2.info" title="Half-Integer Values of 𝜈 ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.38</span></a>,
+<a href="./10.38#info" title="§10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.38</span></a> and
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+</td></tr>
+</tbody>
+</table>
+<table id="E7" class="ltx_equation ltx_eqn_table">
+
+<tbody>
+<tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_left"><span class="ltx_tag ltx_tag_equation ltx_align_left">10.38.7</span></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math class="ltx_Math" altimg="E7.png" altimg-height="125px" altimg-valign="-28px" altimg-width="328px" alttext="\left.\frac{\partial K_{\nu}\left(x\right)}{\partial\nu}\right|_{\nu=\pm\frac{%
+1}{2}}=\pm\sqrt{\frac{\pi}{2x}}E_{1}\left(2x\right)e^{x}." display="block"><mrow><mrow><msub><mrow><mfrac><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mrow><msub><mi href="./10.25#E3" title="modified Bessel function of the second kind">K</mi><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r3" title="real variable">x</mi><mo>)</mo></mrow></mrow></mrow><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow></mfrac><mo>|</mo></mrow><mrow><mi href="./10.1#t1.r5" title="complex parameter">ν</mi><mo>=</mo><mrow><mo>±</mo><mfrac><mn>1</mn><mn>2</mn></mfrac></mrow></mrow></msub><mo>=</mo><mrow><mo>±</mo><mrow><msqrt><mfrac><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi><mrow><mn>2</mn><mo>⁢</mo><mi href="./10.1#t1.r3" title="real variable">x</mi></mrow></mfrac></msqrt><mo>⁢</mo><mrow><msub><mi href="./6.2#E1" title="exponential integral">E</mi><mn href="./6.2#E1" title="exponential integral">1</mn></msub><mo>⁡</mo><mrow><mo>(</mo><mrow><mn>2</mn><mo>⁢</mo><mi href="./10.1#t1.r3" title="real variable">x</mi></mrow><mo>)</mo></mrow></mrow><mo>⁢</mo><msup><mi href="./4.2#E11" mathvariant="normal" title="base of natural logarithm">e</mi><mi href="./10.1#t1.r3" title="real variable">x</mi></msup></mrow></mrow></mrow><mo lspace="0em">.</mo></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+<tr><td class="ltx_align_right" colspan="4">
+<div id="E7.info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>Symbols:</dt>
+<dd>
+<a href="./3.12#E1" title="(3.12.1) ‣ §3.12 Mathematical Constants ‣ Areas ‣ Chapter 3 Numerical Methods" class="ltx_ref"><math class="ltx_Math" altimg="m26.png" altimg-height="13px" altimg-valign="-2px" altimg-width="17px" alttext="\pi" display="inline"><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi></math>: the ratio of the circumference of a circle to its diameter</a>,
+<a href="./4.2#E11" title="(4.2.11) ‣ §4.2(ii) Logarithms to a General Base 𝑎 ‣ §4.2 Definitions ‣ Logarithm, Exponential, Powers ‣ Chapter 4 Elementary Functions" class="ltx_ref"><math class="ltx_Math" altimg="m18.png" altimg-height="13px" altimg-valign="-2px" altimg-width="14px" alttext="\mathrm{e}" display="inline"><mi href="./4.2#E11" mathvariant="normal" title="base of natural logarithm">e</mi></math>: base of natural logarithm</a>,
+<a href="./6.2#E1" title="(6.2.1) ‣ §6.2(i) Exponential and Logarithmic Integrals ‣ §6.2 Definitions and Interrelations ‣ Properties ‣ Chapter 6 Exponential, Logarithmic, Sine, and Cosine Integrals" class="ltx_ref"><math class="ltx_Math" altimg="m7.png" altimg-height="25px" altimg-valign="-7px" altimg-width="59px" alttext="E_{1}\left(\NVar{z}\right)" display="inline"><mrow><msub><mi href="./6.2#E1" title="exponential integral">E</mi><mn href="./6.2#E1" title="exponential integral">1</mn></msub><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./6.1#p1.t1.r2" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: exponential integral</a>,
+<a href="./10.25#E3" title="(10.25.3) ‣ §10.25(ii) Standard Solutions ‣ §10.25 Definitions ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m9.png" altimg-height="25px" altimg-valign="-7px" altimg-width="62px" alttext="K_{\NVar{\nu}}\left(\NVar{z}\right)" display="inline"><mrow><msub><mi href="./10.25#E3" title="modified Bessel function of the second kind">K</mi><mi class="ltx_nvar" href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: modified Bessel function of the second kind</a>,
+<a href="./1.5#E3" title="(1.5.3) ‣ §1.5(i) Partial Derivatives ‣ §1.5 Calculus of Two or More Variables ‣ Topics of Discussion ‣ Chapter 1 Algebraic and Analytic Methods" class="ltx_ref"><math class="ltx_Math" altimg="m13.png" altimg-height="31px" altimg-valign="-9px" altimg-width="29px" alttext="\frac{\partial\NVar{f}}{\partial\NVar{x}}" display="inline"><mfrac><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi class="ltx_nvar">f</mi></mrow><mrow><mo href="./1.5#E3" rspace="0em" title="partial derivative of 𝑓 with respect to 𝑥">∂</mo><mi class="ltx_nvar">x</mi></mrow></mfrac></math>: partial derivative of <math class="ltx_Math" altimg="m28.png" altimg-height="22px" altimg-valign="-6px" altimg-width="17px" alttext="f" display="inline"><mi>f</mi></math> with respect to <math class="ltx_Math" altimg="m33.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="x" display="inline"><mi>x</mi></math></a>,
+<a href="./1.5#E3" title="(1.5.3) ‣ §1.5(i) Partial Derivatives ‣ §1.5 Calculus of Two or More Variables ‣ Topics of Discussion ‣ Chapter 1 Algebraic and Analytic Methods" class="ltx_ref"><math class="ltx_Math" altimg="m25.png" altimg-height="18px" altimg-valign="-2px" altimg-width="28px" alttext="\,\partial\NVar{x}" display="inline"><mrow><mo href="./1.5#E3" rspace="0em" title="partial differential of 𝑥">∂</mo><mi class="ltx_nvar">x</mi></mrow></math>: partial differential of <math class="ltx_Math" altimg="m33.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="x" display="inline"><mi>x</mi></math></a>,
+<a href="./10.1#t1.r3" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m33.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="x" display="inline"><mi href="./10.1#t1.r3" title="real variable">x</mi></math>:  real variable</a> and
+<a href="./10.1#t1.r5" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m21.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="\nu" display="inline"><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></math>:  complex parameter</a>
+</dd>
+<dt>A&amp;S Ref:</dt>
+<dd> <span class="ltx_origref"><span class="ltx_tag">10.2.34</span> (corrected)</span>
+</dd>
+<dt>Referenced by:</dt>
+<dd>
+<a href="./10.38#info" title="§10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.38</span></a>,
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+<dt>Permalink:</dt>
+<dd><a href="./10.38.E7" title="" class="ltx_ref">http://dlmf.nist.gov/10.38.E7</a></dd>
+<dt>Encodings:</dt>
+<dd>
+<a href="./10.38.E7.tex">TeX</a>, <a href="./10.38.E7.pmml">pMML</a>, <a href="./10.38.E7.png">png</a>
+</dd>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10.38#Px2.info" title="Half-Integer Values of 𝜈 ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.38</span></a>,
+<a href="./10.38#info" title="§10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.38</span></a> and
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+</td></tr>
+</tbody>
+</table>
+</div>
+<div id="Px2.p2" class="ltx_para">
+<p class="ltx_p">For further results see <cite class="ltx_cite ltx_citemacro_citet">Brychkov and Geddes (<a href="./bib/B#bib2640" title="On the derivatives of the Bessel and Struve functions with respect to the order" class="ltx_ref">2005</a>)</cite>.</p>
+</div>
+</section>
+</section>
+</div>
+<div class="ltx_page_footer">
+<div class="ltx_siblings">
+<a href="./10.37" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref" rel="prev"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.37 </span>Inequalities; Monotonicity</span></a><a href="./10.39" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref" rel="next"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.39 </span>Relations to Other Functions</span></a>
+</div>
+<div class="ltx_footer_links ltx_centering">
+<a href="./about/notices">© 2010–2026 NIST</a> / <a href="./about/notices#S2">Disclaimer</a> / <a href="/cdn-cgi/l/email-protection#a6e2eaebe08bc0c3c3c2c4c7c5cde6c8cfd5d288c1c9d0">Feedback</a>;
+ Version 1.2.6;
+Release date 2026-03-15.</div>
+<span id="pagesettings"></span>
+<div class="ltx_nist_logo"><a href="http://www.nist.gov/"><img src="./style/nistidc.png" width="500" alt="NIST"></a></div>
+<div class="ltx_nist_links ltx_align_right">
+<a href="https://www.nist.gov/privacy-policy">Site Privacy</a> <a href="https://www.nist.gov/oism/accessibility">Accessibility</a> <a href="https://www.nist.gov/privacy">Privacy Program</a> <a href="https://www.nist.gov/oism/copyrights">Copyrights</a> <a href="https://www.commerce.gov/vulnerability-disclosure-policy">Vulnerability Disclosure</a> <a href="https://www.nist.gov/no-fear-act-policy">No Fear Act Policy</a> <a href="https://www.nist.gov/foia">FOIA</a> <a href="https://www.nist.gov/environmental-policy-statement">Environmental Policy</a> <a href="https://www.nist.gov/summary-report-scientific-integrity">Scientific Integrity</a> <a href="https://www.nist.gov/nist-information-quality-standards">Information Quality Standards</a> <a href="https://www.commerce.gov/">Commerce.gov</a> <a href="http://www.science.gov/">Science.gov</a> <a href="http://www.usa.gov/">USA.gov</a>
+</div>
+</div>
+</div>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9fd009871c0882f6',t:'MTc3ODk5MzgwMw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

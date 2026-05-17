@@ -1,0 +1,840 @@
+
+
+DLMF: §10.49 Explicit Formulas ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions
+
+DLMF
+
+Index
+Notations
+Search
+Help?
+Citing
+Customize
+Annotate
+UnAnnotate
+
+About the Project
+
+10 Bessel FunctionsSpherical Bessel Functions10.48 Graphs10.50 Wronskians and Cross-Products
+
+§10.49 Explicit Formulas
+
+ⓘ
+
+Permalink:
+http://dlmf.nist.gov/10.49
+See also:
+Annotations for Ch.10
+
+Contents
+
+§10.49(i) Unmodified Functions
+§10.49(ii) Modified Functions
+§10.49(iii) Rayleigh’s Formulas
+§10.49(iv) Sums or Differences of Squares
+
+§10.49(i) Unmodified Functions
+
+ⓘ
+
+Keywords:
+
+explicit formulas, spherical Bessel functions, unmodified functions
+
+Notes:
+When ν=n+12 the asymptotic expansions
+(10.17.3)–(10.17.6) terminate, and as a consequence
+of the error bounds of §10.17(iv) they represent the left-hand
+sides exactly.
+Referenced by:
+
+§10.16,
+§10.49(ii),
+§10.61(v),
+§10.74(i),
+§11.4(i)
+
+Permalink:
+http://dlmf.nist.gov/10.49.i
+See also:
+Annotations for §10.49 and
+Ch.10
+
+Define ak⁡(ν) as in (10.17.1). Then
+
+10.49.1
+
+ak⁡(n+12)={(n+k)!2k⁢k!⁢(n−k)!,k=0,1,…,n,0,k=n+1,n+2,….
+
+ⓘ
+
+Symbols:
+
+!: factorial (as in n!),
+n: integer,
+k: nonnegative integer and
+ak⁡(ν): polynomial coefficient
+
+Referenced by:
+
+§10.49(ii),
+§10.50
+
+Permalink:
+http://dlmf.nist.gov/10.49.E1
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.49(i),
+§10.49 and
+Ch.10
+
+10.49.2
+
+𝗃n⁡(z)=sin⁡(z−12⁢n⁢π)⁢∑k=0⌊n/2⌋(−1)k⁢a2⁢k⁡(n+12)z2⁢k+1+cos⁡(z−12⁢n⁢π)⁢∑k=0⌊(n−1)/2⌋(−1)k⁢a2⁢k+1⁡(n+12)z2⁢k+2.
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+⌊x⌋: floor of x,
+sin⁡z: sine function,
+𝗃n⁡(z): spherical Bessel function of the first kind,
+n: integer,
+k: nonnegative integer,
+z: complex variable and
+ak⁡(ν): polynomial coefficient
+
+A&S Ref:
+ 10.1.8
+
+Referenced by:
+
+§10.50,
+§10.52(ii)
+
+Permalink:
+http://dlmf.nist.gov/10.49.E2
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.49(i),
+§10.49 and
+Ch.10
+
+10.49.3
+
+𝗃0⁡(z)
+=sin⁡zz,
+
+𝗃1⁡(z)
+=sin⁡zz2−cos⁡zz,
+
+𝗃2⁡(z)
+=(−1z+3z3)⁢sin⁡z−3z2⁢cos⁡z.
+
+ⓘ
+
+Symbols:
+
+cos⁡z: cosine function,
+sin⁡z: sine function,
+𝗃n⁡(z): spherical Bessel function of the first kind and
+z: complex variable
+
+A&S Ref:
+ 10.1.11 (corrected)
+
+Referenced by:
+
+§10.49(iii),
+§10.56
+
+Permalink:
+http://dlmf.nist.gov/10.49.E3
+Encodings:
+
+TeX, TeX, TeX, pMML, pMML, pMML, png, png, png
+
+See also:
+Annotations for §10.49(i),
+§10.49 and
+Ch.10
+
+10.49.4
+
+𝗒n⁡(z)=−cos⁡(z−12⁢n⁢π)⁢∑k=0⌊n/2⌋(−1)k⁢a2⁢k⁡(n+12)z2⁢k+1+sin⁡(z−12⁢n⁢π)⁢∑k=0⌊(n−1)/2⌋(−1)k⁢a2⁢k+1⁡(n+12)z2⁢k+2.
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+⌊x⌋: floor of x,
+sin⁡z: sine function,
+𝗒n⁡(z): spherical Bessel function of the second kind,
+n: integer,
+k: nonnegative integer,
+z: complex variable and
+ak⁡(ν): polynomial coefficient
+
+A&S Ref:
+ 10.1.9
+
+Referenced by:
+§10.52(ii)
+Permalink:
+http://dlmf.nist.gov/10.49.E4
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.49(i),
+§10.49 and
+Ch.10
+
+10.49.5
+
+𝗒0⁡(z)
+=−cos⁡zz,
+
+𝗒1⁡(z)
+=−cos⁡zz2−sin⁡zz,
+
+𝗒2⁡(z)
+=(1z−3z3)⁢cos⁡z−3z2⁢sin⁡z.
+
+ⓘ
+
+Symbols:
+
+cos⁡z: cosine function,
+sin⁡z: sine function,
+𝗒n⁡(z): spherical Bessel function of the second kind and
+z: complex variable
+
+A&S Ref:
+ 10.1.12 (corrected)
+
+Referenced by:
+
+§10.50,
+§10.56
+
+Permalink:
+http://dlmf.nist.gov/10.49.E5
+Encodings:
+
+TeX, TeX, TeX, pMML, pMML, pMML, png, png, png
+
+See also:
+Annotations for §10.49(i),
+§10.49 and
+Ch.10
+
+10.49.6
+
+𝗁n(1)⁡(z)
+=ei⁢z⁢∑k=0nik−n−1⁢ak⁡(n+12)zk+1,
+
+ⓘ
+
+Symbols:
+
+e: base of natural logarithm,
+i: imaginary unit,
+𝗁n(1)⁡(z): spherical Bessel function of the third kind,
+n: integer,
+k: nonnegative integer,
+z: complex variable and
+ak⁡(ν): polynomial coefficient
+
+A&S Ref:
+ 10.1.16
+
+Referenced by:
+§10.52(ii)
+Permalink:
+http://dlmf.nist.gov/10.49.E6
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.49(i),
+§10.49 and
+Ch.10
+
+10.49.7
+
+𝗁n(2)⁡(z)
+=e−i⁢z⁢∑k=0n(−i)k−n−1⁢ak⁡(n+12)zk+1.
+
+ⓘ
+
+Symbols:
+
+e: base of natural logarithm,
+i: imaginary unit,
+𝗁n(2)⁡(z): spherical Bessel function of the third kind,
+n: integer,
+k: nonnegative integer,
+z: complex variable and
+ak⁡(ν): polynomial coefficient
+
+A&S Ref:
+ 10.1.17 (corrected)
+
+Permalink:
+http://dlmf.nist.gov/10.49.E7
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.49(i),
+§10.49 and
+Ch.10
+
+§10.49(ii) Modified Functions
+
+ⓘ
+
+Keywords:
+
+Bessel polynomials, explicit formulas, modified functions, spherical Bessel functions
+
+Notes:
+Use the same method as for §10.49(i), or combine the results
+of §10.49(i) with (10.47.12) and
+(10.47.13).
+Referenced by:
+
+§10.39,
+§10.74(i),
+§11.4(i),
+§18.34(i),
+§18.34(iii),
+§3.5(viii)
+
+Permalink:
+http://dlmf.nist.gov/10.49.ii
+See also:
+Annotations for §10.49 and
+Ch.10
+
+Again, with ak⁡(n+12) as in (10.49.1),
+
+10.49.8
+
+𝗂n(1)⁡(z)=12⁢ez⁢∑k=0n(−1)k⁢ak⁡(n+12)zk+1+(−1)n+1⁢12⁢e−z⁢∑k=0nak⁡(n+12)zk+1.
+
+ⓘ
+
+Symbols:
+
+e: base of natural logarithm,
+𝗂n(1)⁡(z): modified spherical Bessel function,
+n: integer,
+k: nonnegative integer,
+z: complex variable and
+ak⁡(ν): polynomial coefficient
+
+A&S Ref:
+ 10.2.9 (modified)
+
+Referenced by:
+§10.52(ii)
+Permalink:
+http://dlmf.nist.gov/10.49.E8
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.49(ii),
+§10.49 and
+Ch.10
+
+10.49.9
+
+𝗂0(1)⁡(z)
+=sinh⁡zz,
+
+𝗂1(1)⁡(z)
+=−sinh⁡zz2+cosh⁡zz,
+
+𝗂2(1)⁡(z)
+=(1z+3z3)⁢sinh⁡z−3z2⁢cosh⁡z.
+
+ⓘ
+
+Symbols:
+
+cosh⁡z: hyperbolic cosine function,
+sinh⁡z: hyperbolic sine function,
+𝗂n(1)⁡(z): modified spherical Bessel function and
+z: complex variable
+
+A&S Ref:
+ 10.2.13
+
+Referenced by:
+§18.34(i)
+Permalink:
+http://dlmf.nist.gov/10.49.E9
+Encodings:
+
+TeX, TeX, TeX, pMML, pMML, pMML, png, png, png
+
+See also:
+Annotations for §10.49(ii),
+§10.49 and
+Ch.10
+
+10.49.10
+
+𝗂n(2)⁡(z)=12⁢ez⁢∑k=0n(−1)k⁢ak⁡(n+12)zk+1+(−1)n⁢12⁢e−z⁢∑k=0nak⁡(n+12)zk+1.
+
+ⓘ
+
+Symbols:
+
+e: base of natural logarithm,
+𝗂n(2)⁡(z): modified spherical Bessel function,
+n: integer,
+k: nonnegative integer,
+z: complex variable and
+ak⁡(ν): polynomial coefficient
+
+A&S Ref:
+ 10.2.10 (modified)
+
+Referenced by:
+§10.52(ii)
+Permalink:
+http://dlmf.nist.gov/10.49.E10
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.49(ii),
+§10.49 and
+Ch.10
+
+10.49.11
+
+𝗂0(2)⁡(z)
+=cosh⁡zz,
+
+𝗂1(2)⁡(z)
+=−cosh⁡zz2+sinh⁡zz,
+
+𝗂2(2)⁡(z)
+=(1z+3z3)⁢cosh⁡z−3z2⁢sinh⁡z.
+
+ⓘ
+
+Symbols:
+
+cosh⁡z: hyperbolic cosine function,
+sinh⁡z: hyperbolic sine function,
+𝗂n(2)⁡(z): modified spherical Bessel function and
+z: complex variable
+
+A&S Ref:
+ 10.2.14
+
+Permalink:
+http://dlmf.nist.gov/10.49.E11
+Encodings:
+
+TeX, TeX, TeX, pMML, pMML, pMML, png, png, png
+
+See also:
+Annotations for §10.49(ii),
+§10.49 and
+Ch.10
+
+10.49.12
+
+𝗄n⁡(z)=12⁢π⁢e−z⁢∑k=0nak⁡(n+12)zk+1.
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+𝗄n⁡(z): modified spherical Bessel function,
+n: integer,
+k: nonnegative integer,
+z: complex variable and
+ak⁡(ν): polynomial coefficient
+
+A&S Ref:
+ 10.2.15
+
+Referenced by:
+§10.52(ii)
+Permalink:
+http://dlmf.nist.gov/10.49.E12
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.49(ii),
+§10.49 and
+Ch.10
+
+10.49.13
+
+𝗄0⁡(z)
+=12⁢π⁢e−zz,
+
+𝗄1⁡(z)
+=12⁢π⁢e−z⁢(1z+1z2),
+
+𝗄2⁡(z)
+=12⁢π⁢e−z⁢(1z+3z2+3z3).
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+𝗄n⁡(z): modified spherical Bessel function and
+z: complex variable
+
+A&S Ref:
+ 10.2.17
+
+Permalink:
+http://dlmf.nist.gov/10.49.E13
+Encodings:
+
+TeX, TeX, TeX, pMML, pMML, pMML, png, png, png
+
+See also:
+Annotations for §10.49(ii),
+§10.49 and
+Ch.10
+
+∑k=0nak⁡(n+12)⁢zn−k is sometimes called the
+Bessel polynomial of degree n. For a survey of properties of these
+polynomials and their generalizations see Grosswald (1978). See also
+§18.34, de Bruin et al. (1981a, b), and
+Dunster (2001c).
+
+§10.49(iii) Rayleigh’s Formulas
+
+ⓘ
+
+Keywords:
+
+Rayleigh’s formulas, spherical Bessel functions
+
+Notes:
+For the first of(10.49.14) combine the second of
+(10.51.3), with n=0 and m=n, and the first of
+(10.49.3). Similarly for the other results.
+Permalink:
+http://dlmf.nist.gov/10.49.iii
+See also:
+Annotations for §10.49 and
+Ch.10
+
+10.49.14
+
+𝗃n⁡(z)
+=zn⁢(−1z⁢ddz)n⁢sin⁡zz,
+
+𝗒n⁡(z)
+=−zn⁢(−1z⁢ddz)n⁢cos⁡zz.
+
+ⓘ
+
+Symbols:
+
+cos⁡z: cosine function,
+dfdx: derivative of f with respect to x,
+sin⁡z: sine function,
+𝗃n⁡(z): spherical Bessel function of the first kind,
+𝗒n⁡(z): spherical Bessel function of the second kind,
+n: integer and
+z: complex variable
+
+A&S Ref:
+ 10.1.25, 10.1.26
+
+Referenced by:
+§10.49(iii)
+Permalink:
+http://dlmf.nist.gov/10.49.E14
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.49(iii),
+§10.49 and
+Ch.10
+
+10.49.15
+
+𝗂n(1)⁡(z)
+=zn⁢(1z⁢ddz)n⁡sinh⁡zz,
+
+𝗂n(2)⁡(z)
+=zn⁢(1z⁢ddz)n⁡cosh⁡zz.
+
+ⓘ
+
+Symbols:
+
+dfdx: derivative of f with respect to x,
+cosh⁡z: hyperbolic cosine function,
+sinh⁡z: hyperbolic sine function,
+𝗂n(1)⁡(z): modified spherical Bessel function,
+𝗂n(2)⁡(z): modified spherical Bessel function,
+n: integer and
+z: complex variable
+
+A&S Ref:
+ 10.2.24, 10.2 25
+
+Permalink:
+http://dlmf.nist.gov/10.49.E15
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.49(iii),
+§10.49 and
+Ch.10
+
+10.49.16
+
+𝗄n⁡(z)=(−1)n⁢12⁢π⁢zn⁢(1z⁢ddz)n⁡e−zz.
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+dfdx: derivative of f with respect to x,
+e: base of natural logarithm,
+𝗄n⁡(z): modified spherical Bessel function,
+n: integer and
+z: complex variable
+
+Permalink:
+http://dlmf.nist.gov/10.49.E16
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.49(iii),
+§10.49 and
+Ch.10
+
+§10.49(iv) Sums or Differences of Squares
+
+ⓘ
+
+Keywords:
+
+explicit formulas, spherical Bessel functions, sums or differences of squares
+
+Notes:
+From (10.18.6), (10.47.3), and
+(10.47.4), 𝗃n2⁡(z)+𝗒n2⁡(z)=(π/(2⁢z))⁢Mn+122⁡(z). Then apply
+(10.18.17).
+To derive (10.49.20) combine (10.47.12)
+and (10.49.18).
+Permalink:
+http://dlmf.nist.gov/10.49.iv
+See also:
+Annotations for §10.49 and
+Ch.10
+
+Denote
+
+10.49.17
+
+sk⁡(n+12)=(2⁢k)!⁢(n+k)!22⁢k⁢(k!)2⁢(n−k)!,
+
+k=0,1,…,n.
+
+ⓘ
+
+Defines:
+sk⁡(n) (locally)
+Symbols:
+
+!: factorial (as in n!),
+n: integer and
+k: nonnegative integer
+
+Permalink:
+http://dlmf.nist.gov/10.49.E17
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.49(iv),
+§10.49 and
+Ch.10
+
+Then
+
+10.49.18
+
+𝗃n2⁡(z)+𝗒n2⁡(z)=∑k=0nsk⁡(n+12)z2⁢k+2.
+
+ⓘ
+
+Symbols:
+
+𝗃n⁡(z): spherical Bessel function of the first kind,
+𝗒n⁡(z): spherical Bessel function of the second kind,
+n: integer,
+k: nonnegative integer,
+z: complex variable and
+sk⁡(n)
+
+A&S Ref:
+ 10.1.27
+
+Referenced by:
+§10.49(iv)
+Permalink:
+http://dlmf.nist.gov/10.49.E18
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.49(iv),
+§10.49 and
+Ch.10
+
+10.49.19
+
+𝗃02⁡(z)+𝗒02⁡(z)
+=z−2,
+
+𝗃12⁡(z)+𝗒12⁡(z)
+=z−2+z−4,
+
+𝗃22⁡(z)+𝗒22⁡(z)
+=z−2+3⁢z−4+9⁢z−6.
+
+ⓘ
+
+Symbols:
+
+𝗃n⁡(z): spherical Bessel function of the first kind,
+𝗒n⁡(z): spherical Bessel function of the second kind and
+z: complex variable
+
+A&S Ref:
+ 10.1.28--10.1.30
+
+Permalink:
+http://dlmf.nist.gov/10.49.E19
+Encodings:
+
+TeX, TeX, TeX, pMML, pMML, pMML, png, png, png
+
+See also:
+Annotations for §10.49(iv),
+§10.49 and
+Ch.10
+
+10.49.20
+
+(𝗂n(1)⁡(z))2−(𝗂n(2)⁡(z))2=(−1)n+1⁢∑k=0n(−1)k⁢sk⁡(n+12)z2⁢k+2.
+
+ⓘ
+
+Symbols:
+
+𝗂n(1)⁡(z): modified spherical Bessel function,
+𝗂n(2)⁡(z): modified spherical Bessel function,
+n: integer,
+k: nonnegative integer,
+z: complex variable and
+sk⁡(n)
+
+A&S Ref:
+ 10.2.26
+
+Referenced by:
+§10.49(iv)
+Permalink:
+http://dlmf.nist.gov/10.49.E20
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.49(iv),
+§10.49 and
+Ch.10
+
+10.49.21
+
+(𝗂0(1)⁡(z))2−(𝗂0(2)⁡(z))2
+=−z−2,
+
+(𝗂1(1)⁡(z))2−(𝗂1(2)⁡(z))2
+=z−2−z−4,
+
+(𝗂2(1)⁡(z))2−(𝗂2(2)⁡(z))2
+=−z−2+3⁢z−4−9⁢z−6.
+
+ⓘ
+
+Symbols:
+
+𝗂n(1)⁡(z): modified spherical Bessel function,
+𝗂n(2)⁡(z): modified spherical Bessel function and
+z: complex variable
+
+A&S Ref:
+ 10.2.27--10.2.29
+
+Permalink:
+http://dlmf.nist.gov/10.49.E21
+Encodings:
+
+TeX, TeX, TeX, pMML, pMML, pMML, png, png, png
+
+See also:
+Annotations for §10.49(iv),
+§10.49 and
+Ch.10
+
+10.48 Graphs10.50 Wronskians and Cross-Products
+
+© 2010–2026 NIST / Disclaimer / Feedback;
+ Version 1.2.6;
+Release date 2026-03-15.
+
+Site Privacy Accessibility Privacy Program Copyrights Vulnerability Disclosure No Fear Act Policy FOIA Environmental Policy Scientific Integrity Information Quality Standards Commerce.gov Science.gov USA.gov
+

@@ -1,0 +1,447 @@
+
+
+DLMF: §10.27 Connection Formulas ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions
+
+DLMF
+
+Index
+Notations
+Search
+Help?
+Citing
+Customize
+Annotate
+UnAnnotate
+
+About the Project
+
+10 Bessel FunctionsModified Bessel Functions10.26 Graphics10.28 Wronskians and Cross-Products
+
+§10.27 Connection Formulas
+
+ⓘ
+
+Keywords:
+
+connection formulas, modified Bessel functions
+
+Notes:
+For (10.27.1)–(10.27.6) and (10.27.8) see
+Olver (1997b, pp. 60–61 and 250–252),
+Watson (1944, pp. 77–79), and (10.11.5). For the other
+equations combine these results with (10.4.4), and also use
+(10.34.2) with m=1.
+Permalink:
+http://dlmf.nist.gov/10.27
+See also:
+Annotations for Ch.10
+
+Other solutions of (10.25.1) are I−ν⁡(z) and
+K−ν⁡(z).
+
+10.27.1
+
+I−n⁡(z)=In⁡(z),
+
+ⓘ
+
+Symbols:
+
+Iν⁡(z): modified Bessel function of the first kind,
+n: integer and
+z: complex variable
+
+A&S Ref:
+ 9.6.6
+
+Referenced by:
+
+§10.27,
+§10.31,
+§10.44(ii)
+
+Permalink:
+http://dlmf.nist.gov/10.27.E1
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.27 and
+Ch.10
+
+10.27.2
+
+I−ν⁡(z)=Iν⁡(z)+(2/π)⁢sin⁡(ν⁢π)⁢Kν⁡(z),
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+Iν⁡(z): modified Bessel function of the first kind,
+Kν⁡(z): modified Bessel function of the second kind,
+sin⁡z: sine function,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.2
+
+Permalink:
+http://dlmf.nist.gov/10.27.E2
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.27 and
+Ch.10
+
+10.27.3
+
+K−ν⁡(z)=Kν⁡(z).
+
+ⓘ
+
+Symbols:
+
+Kν⁡(z): modified Bessel function of the second kind,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.6
+
+Referenced by:
+
+§10.25(iii),
+§10.30(i),
+§10.31,
+§10.47(ii)
+
+Permalink:
+http://dlmf.nist.gov/10.27.E3
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.27 and
+Ch.10
+
+10.27.4
+
+Kν⁡(z)=12⁢π⁢I−ν⁡(z)−Iν⁡(z)sin⁡(ν⁢π).
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+Iν⁡(z): modified Bessel function of the first kind,
+Kν⁡(z): modified Bessel function of the second kind,
+sin⁡z: sine function,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.2
+
+Referenced by:
+
+§10.30(i),
+§10.31,
+§10.38,
+§10.45,
+§10.47(iv),
+§8.6(i)
+
+Permalink:
+http://dlmf.nist.gov/10.27.E4
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.27 and
+Ch.10
+
+When ν is an integer limiting values are taken:
+
+10.27.5
+
+Kn⁡(z)=(−1)n−12⁢(∂Iν⁡(z)∂ν|ν=n+∂Iν⁡(z)∂ν|ν=−n),
+
+n=0,±1,±2,….
+
+ⓘ
+
+Symbols:
+
+Iν⁡(z): modified Bessel function of the first kind,
+Kν⁡(z): modified Bessel function of the second kind,
+∂f∂x: partial derivative of f with respect to x,
+∂x: partial differential of x,
+n: integer,
+z: complex variable and
+ν: complex parameter
+
+Referenced by:
+§10.22(iv)
+Permalink:
+http://dlmf.nist.gov/10.27.E5
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.27 and
+Ch.10
+
+In terms of the solutions of (10.2.1),
+
+10.27.6
+
+Iν⁡(z)=e∓ν⁢π⁢i/2⁢Jν⁡(z⁢e±π⁢i/2),
+
+−π≤±ph⁡z≤12⁢π,
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+i: imaginary unit,
+Iν⁡(z): modified Bessel function of the first kind,
+ph: phase,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.3 (modified)
+
+Referenced by:
+
+§10.26(ii),
+§10.27,
+§10.27,
+§10.31,
+§10.33,
+§10.35,
+§10.39,
+§10.41(i),
+§10.42,
+§10.43(ii),
+§10.43(iv),
+§10.44(i),
+§10.44(ii),
+§10.44(iii),
+§10.47(iv),
+§10.67(i),
+§11.4(i)
+
+Permalink:
+http://dlmf.nist.gov/10.27.E6
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.27 and
+Ch.10
+
+10.27.7
+
+Iν⁡(z)=12⁢e∓ν⁢π⁢i/2⁢(Hν(1)⁡(z⁢e±π⁢i/2)+Hν(2)⁡(z⁢e±π⁢i/2)),
+
+−π≤±ph⁡z≤12⁢π.
+
+ⓘ
+
+Symbols:
+
+Hν(1)⁡(z): Bessel function of the third kind (or Hankel function),
+Hν(2)⁡(z): Bessel function of the third kind (or Hankel function),
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+i: imaginary unit,
+Iν⁡(z): modified Bessel function of the first kind,
+ph: phase,
+z: complex variable and
+ν: complex parameter
+
+Permalink:
+http://dlmf.nist.gov/10.27.E7
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.27 and
+Ch.10
+
+10.27.8
+
+Kν⁡(z)={12⁢π⁢i⁢eν⁢π⁢i/2⁢Hν(1)⁡(z⁢eπ⁢i/2),−π≤ph⁡z≤12⁢π,−12⁢π⁢i⁢e−ν⁢π⁢i/2⁢Hν(2)⁡(z⁢e−π⁢i/2),−12⁢π≤ph⁡z≤π.
+
+ⓘ
+
+Symbols:
+
+Hν(1)⁡(z): Bessel function of the third kind (or Hankel function),
+Hν(2)⁡(z): Bessel function of the third kind (or Hankel function),
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+i: imaginary unit,
+Kν⁡(z): modified Bessel function of the second kind,
+ph: phase,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.4
+
+Referenced by:
+
+§10.16,
+§10.26(ii),
+§10.27,
+§10.27,
+§10.32(ii),
+§10.39,
+§10.40(ii),
+§10.40(iii),
+§10.41(i),
+§10.42,
+§10.43(ii),
+§10.44(i),
+§10.44(ii),
+§10.44(iii),
+§10.47(iv),
+(9.7.16),
+§9.7(iii)
+
+Permalink:
+http://dlmf.nist.gov/10.27.E8
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.27 and
+Ch.10
+
+10.27.9
+
+π⁢i⁢Jν⁡(z)=e−ν⁢π⁢i/2⁢Kν⁡(z⁢e−π⁢i/2)−eν⁢π⁢i/2⁢Kν⁡(z⁢eπ⁢i/2),
+
+|ph⁡z|≤12⁢π.
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+i: imaginary unit,
+Kν⁡(z): modified Bessel function of the second kind,
+ph: phase,
+z: complex variable and
+ν: complex parameter
+
+Referenced by:
+§10.67(i)
+Permalink:
+http://dlmf.nist.gov/10.27.E9
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.27 and
+Ch.10
+
+10.27.10
+
+−π⁢Yν⁡(z)=e−ν⁢π⁢i/2⁢Kν⁡(z⁢e−π⁢i/2)+eν⁢π⁢i/2⁢Kν⁡(z⁢eπ⁢i/2),
+
+|ph⁡z|≤12⁢π.
+
+ⓘ
+
+Symbols:
+
+Yν⁡(z): Bessel function of the second kind,
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+i: imaginary unit,
+Kν⁡(z): modified Bessel function of the second kind,
+ph: phase,
+z: complex variable and
+ν: complex parameter
+
+Referenced by:
+§10.43(iv)
+Permalink:
+http://dlmf.nist.gov/10.27.E10
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.27 and
+Ch.10
+
+10.27.11
+
+Yν⁡(z)=e±(ν+1)⁢π⁢i/2⁢Iν⁡(z⁢e∓π⁢i/2)−(2/π)⁢e∓ν⁢π⁢i/2⁢Kν⁡(z⁢e∓π⁢i/2),
+
+−12⁢π≤±ph⁡z≤π.
+
+ⓘ
+
+Symbols:
+
+Yν⁡(z): Bessel function of the second kind,
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+i: imaginary unit,
+Iν⁡(z): modified Bessel function of the first kind,
+Kν⁡(z): modified Bessel function of the second kind,
+ph: phase,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.5 (modified)
+
+Referenced by:
+§11.6(i)
+Permalink:
+http://dlmf.nist.gov/10.27.E11
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.27 and
+Ch.10
+
+See also §10.34.
+
+Many properties of modified Bessel functions follow immediately from those of
+ordinary Bessel functions by application of
+(10.27.6)–(10.27.8).
+
+10.26 Graphics10.28 Wronskians and Cross-Products
+
+© 2010–2026 NIST / Disclaimer / Feedback;
+ Version 1.2.6;
+Release date 2026-03-15.
+
+Site Privacy Accessibility Privacy Program Copyrights Vulnerability Disclosure No Fear Act Policy FOIA Environmental Policy Scientific Integrity Information Quality Standards Commerce.gov Science.gov USA.gov
+

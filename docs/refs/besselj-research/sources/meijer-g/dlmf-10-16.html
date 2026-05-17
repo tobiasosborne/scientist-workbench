@@ -1,0 +1,861 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>DLMF: §10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions</title>
+<link rel="shortcut icon" href="./style/DLMF-16.png" type="image/png">
+<script type="text/javascript"><!--
+	var PATH="DLMF:/10.16";
+	var ROOT="./";
+      //--></script>
+<script type="text/javascript" src="./style/jquery.js"><!-- non-empty so ie6 will accept it --></script>
+<script type="text/javascript" src="./style/jquery.leaveNotice.js"><!-- non-empty so ie6 will accept it --></script>
+<script type="text/javascript" src="./style/DLMF.js"><!-- non-empty so ie6 will accept it --></script>
+<script async="" type="text/javascript" id="_fed_an_ua_tag" src="https://dap.digitalgov.gov/Universal-Federated-Analytics-Min.js?agency=DOC&amp;subagency=NIST&amp;pua=UA-37115410-44&amp;yt=true&amp;exts=ppsx,pps,f90,sch,rtf,wrl,txz,m1v,xlsm,msi,xsd,f,tif,eps,mpg,xml,pl,xlt,c"><!-- non-empty so ie6 will accept it --></script><script async="" src="https://www.googletagmanager.com/gtag/js?id=G-BZB64W4M0L"></script><script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-BZB64W4M0L');
+      </script>
+<link rel="stylesheet" type="text/css" href="./style/LaTeXML.css">
+<link rel="stylesheet" type="text/css" href="./style/DLMF.css">
+<link rel="stylesheet" type="text/css" href="./style/print.css" media="print">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="top" href="./" title="DLMF">
+<link rel="copyright" href="./about/notices" title="Copyright">
+<link rel="search" href="./search/search" title="Search">
+<link rel="help" class="ltx_help" href="./help/" title="Help">
+<link rel="up" href="./10#PT2" title="Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="up up" href="./10" title="Chapter 10 Bessel Functions">
+<link rel="start" href="./" title="">
+<link rel="prev" href="./10.15" title="§10.15 Derivatives with Respect to Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="next" href="./10.17" title="§10.17 Asymptotic Expansions for Large Argument ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.1" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.2" title="§10.2 Definitions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.3" title="§10.3 Graphics ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.4" title="§10.4 Connection Formulas ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.5" title="§10.5 Wronskians and Cross-Products ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.6" title="§10.6 Recurrence Relations and Derivatives ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.7" title="§10.7 Limiting Forms ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.8" title="§10.8 Power Series ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.9" title="§10.9 Integral Representations ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.10" title="§10.10 Continued Fractions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.11" title="§10.11 Analytic Continuation ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.12" title="§10.12 Generating Function and Associated Series ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.13" title="§10.13 Other Differential Equations ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.14" title="§10.14 Inequalities; Monotonicity ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.15" title="§10.15 Derivatives with Respect to Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.17" title="§10.17 Asymptotic Expansions for Large Argument ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.18" title="§10.18 Modulus and Phase Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.19" title="§10.19 Asymptotic Expansions for Large Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.20" title="§10.20 Uniform Asymptotic Expansions for Large Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.21" title="§10.21 Zeros ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.22" title="§10.22 Integrals ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.23" title="§10.23 Sums ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.24" title="§10.24 Functions of Imaginary Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.25" title="§10.25 Definitions ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.26" title="§10.26 Graphics ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.27" title="§10.27 Connection Formulas ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.28" title="§10.28 Wronskians and Cross-Products ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.29" title="§10.29 Recurrence Relations and Derivatives ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.30" title="§10.30 Limiting Forms ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.31" title="§10.31 Power Series ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.32" title="§10.32 Integral Representations ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.33" title="§10.33 Continued Fractions ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.34" title="§10.34 Analytic Continuation ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.35" title="§10.35 Generating Function and Associated Series ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.36" title="§10.36 Other Differential Equations ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.37" title="§10.37 Inequalities; Monotonicity ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.38" title="§10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.39" title="§10.39 Relations to Other Functions ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.40" title="§10.40 Asymptotic Expansions for Large Argument ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.41" title="§10.41 Asymptotic Expansions for Large Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.42" title="§10.42 Zeros ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.43" title="§10.43 Integrals ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.44" title="§10.44 Sums ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.45" title="§10.45 Functions of Imaginary Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.46" title="§10.46 Generalized and Incomplete Bessel Functions; Mittag-Leffler Function ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.47" title="§10.47 Definitions and Basic Properties ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.48" title="§10.48 Graphs ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.49" title="§10.49 Explicit Formulas ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.50" title="§10.50 Wronskians and Cross-Products ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.51" title="§10.51 Recurrence Relations and Derivatives ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.52" title="§10.52 Limiting Forms ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.53" title="§10.53 Power Series ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.54" title="§10.54 Integral Representations ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.55" title="§10.55 Continued Fractions ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.56" title="§10.56 Generating Functions ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.57" title="§10.57 Uniform Asymptotic Expansions for Large Order ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.58" title="§10.58 Zeros ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.59" title="§10.59 Integrals ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.60" title="§10.60 Sums ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.61" title="§10.61 Definitions and Basic Properties ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.62" title="§10.62 Graphs ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.63" title="§10.63 Recurrence Relations and Derivatives ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.64" title="§10.64 Integral Representations ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.65" title="§10.65 Power Series ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.66" title="§10.66 Expansions in Series of Bessel Functions ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.67" title="§10.67 Asymptotic Expansions for Large Argument ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.68" title="§10.68 Modulus and Phase Functions ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.69" title="§10.69 Uniform Asymptotic Expansions for Large Order ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.70" title="§10.70 Zeros ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.71" title="§10.71 Integrals ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.72" title="§10.72 Mathematical Applications ‣ Applications ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.73" title="§10.73 Physical Applications ‣ Applications ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.74" title="§10.74 Methods of Computation ‣ Computation ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.75" title="§10.75 Tables ‣ Computation ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.76" title="§10.76 Approximations ‣ Computation ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.77" title="§10.77 Software ‣ Computation ‣ Chapter 10 Bessel Functions">
+<link rel="document" href="./front/foreword" title="Foreword">
+<link rel="document" href="./front/preface" title="Preface">
+<link rel="document" href="./front/introduction" title="Mathematical Introduction">
+<link rel="chapter" href="./1" title="Chapter 1 Algebraic and Analytic Methods">
+<link rel="chapter" href="./2" title="Chapter 2 Asymptotic Approximations">
+<link rel="chapter" href="./3" title="Chapter 3 Numerical Methods">
+<link rel="chapter" href="./4" title="Chapter 4 Elementary Functions">
+<link rel="chapter" href="./5" title="Chapter 5 Gamma Function">
+<link rel="chapter" href="./6" title="Chapter 6 Exponential, Logarithmic, Sine, and Cosine Integrals">
+<link rel="chapter" href="./7" title="Chapter 7 Error Functions, Dawson’s and Fresnel Integrals">
+<link rel="chapter" href="./8" title="Chapter 8 Incomplete Gamma and Related Functions">
+<link rel="chapter" href="./9" title="Chapter 9 Airy and Related Functions">
+<link rel="chapter" href="./10" title="Chapter 10 Bessel Functions">
+<link rel="chapter" href="./11" title="Chapter 11 Struve and Related Functions">
+<link rel="chapter" href="./12" title="Chapter 12 Parabolic Cylinder Functions">
+<link rel="chapter" href="./13" title="Chapter 13 Confluent Hypergeometric Functions">
+<link rel="chapter" href="./14" title="Chapter 14 Legendre and Related Functions">
+<link rel="chapter" href="./15" title="Chapter 15 Hypergeometric Function">
+<link rel="chapter" href="./16" title="Chapter 16 Generalized Hypergeometric Functions and Meijer 𝐺-Function">
+<link rel="chapter" href="./17" title="Chapter 17 𝑞-Hypergeometric and Related Functions">
+<link rel="chapter" href="./18" title="Chapter 18 Orthogonal Polynomials">
+<link rel="chapter" href="./19" title="Chapter 19 Elliptic Integrals">
+<link rel="chapter" href="./20" title="Chapter 20 Theta Functions">
+<link rel="chapter" href="./21" title="Chapter 21 Multidimensional Theta Functions">
+<link rel="chapter" href="./22" title="Chapter 22 Jacobian Elliptic Functions">
+<link rel="chapter" href="./23" title="Chapter 23 Weierstrass Elliptic and Modular Functions">
+<link rel="chapter" href="./24" title="Chapter 24 Bernoulli and Euler Polynomials">
+<link rel="chapter" href="./25" title="Chapter 25 Zeta and Related Functions">
+<link rel="chapter" href="./26" title="Chapter 26 Combinatorial Analysis">
+<link rel="chapter" href="./27" title="Chapter 27 Functions of Number Theory">
+<link rel="chapter" href="./28" title="Chapter 28 Mathieu Functions and Hill’s Equation">
+<link rel="chapter" href="./29" title="Chapter 29 Lamé Functions">
+<link rel="chapter" href="./30" title="Chapter 30 Spheroidal Wave Functions">
+<link rel="chapter" href="./31" title="Chapter 31 Heun Functions">
+<link rel="chapter" href="./32" title="Chapter 32 Painlevé Transcendents">
+<link rel="chapter" href="./33" title="Chapter 33 Coulomb Functions">
+<link rel="chapter" href="./34" title="Chapter 34 3⁢𝑗,6⁢𝑗,9⁢𝑗 Symbols">
+<link rel="chapter" href="./35" title="Chapter 35 Functions of Matrix Argument">
+<link rel="chapter" href="./36" title="Chapter 36 Integrals with Coalescing Saddles">
+<link rel="bibliography" href="./bib/" title="Bibliography">
+<link rel="index" href="./idx/" title="Index">
+<link rel="glossary" href="./not/" title="Notations">
+<link rel="document" href="./lof/" title="List of Figures">
+<link rel="document" href="./lot/" title="List of Tables">
+<link rel="document" href="./software/" title="Software Index">
+<link rel="document" href="./errata/" title="Errata">
+<link rel="document" href="./help/" title="Need Help?">
+<link rel="document" href="./search/" title="Advanced Search">
+<link rel="document" href="./about/" title="About the Project">
+<meta name="keywords" lang="en" content="Bessel and Hankel functions, Bessel functions, Hankel functions, confluent hypergeometric functions, elementary functions, generalized hypergeometric functions, parabolic cylinder functions, relations to other functions">
+</head>
+<body class="color_default textfont_default titlefont_default fontsize_default navbar_default">
+<div class="ltx_page_navbar">
+<div class="ltx_page_navlogo"><a href="./" title="Digital Library of Mathematical Functions"><span>DLMF</span></a></div>
+<div class="ltx_page_navitems">
+<form method="get" action="./search/search">
+<ul>
+<li><a href="./idx/">Index</a></li>
+<li><a href="./not/">Notations</a></li>
+<li><small><input type="text" name="q" value="" size="6" class="ltx_page_navitem_search"><button type="submit">Search</button></small></li>
+<li><a href="./help/" class="ltx_help">Help?</a></li>
+<li><a href="./help/cite">Citing</a></li>
+<li><a href="./help/customize" class="ltx_customize">Customize</a></li>
+<li id="showinfo"><a href="" onclick="showInfo(); return false;" title="Show Annotations">Annotate</a></li>
+<li id="hideinfo"><a href="" onclick="hideInfo(); return false;">UnAnnotate</a></li>
+</ul>
+</form>
+</div>
+<div class="ltx_page_navsponsors">
+<div><a href="./about/" class="ltx_page_navabout">About the Project</a></div>
+</div>
+</div>
+<div class="ltx_page_main">
+<div class="ltx_page_header">
+<a href="./10" title="" class="ltx_ref" rel="up up"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10 </span>Bessel Functions</span></a><a href="./10#PT2" title="In Chapter 10 Bessel Functions" class="ltx_ref" rel="up"><span class="ltx_text ltx_ref_title">Bessel and Hankel Functions</span></a><a href="./10.15" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref" rel="prev"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.15 </span>Derivatives with Respect to Order</span></a><a href="./10.17" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref" rel="next"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.17 </span>Asymptotic Expansions for Large Argument</span></a>
+</div>
+<div class="ltx_page_content">
+<section class="ltx_section ltx_leqno">
+<h1 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">§10.16 </span>Relations to Other Functions</h1>
+<div id="info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>Notes:</dt>
+<dd>For (<a href="./10.16#E3" title="(10.16.3) ‣ Parabolic Cylinder Functions ‣ §10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.16.3</span></a>),
+(<a href="./10.16#E4" title="(10.16.4) ‣ Parabolic Cylinder Functions ‣ §10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.16.4</span></a>) see
+<cite class="ltx_cite ltx_citemacro_citet">Miller (<a href="./bib/M#bib1622" title="Tables of Weber Parabolic Cylinder Functions" class="ltx_ref">1955</a>, p. 43)</cite>. For
+(<a href="./10.16#E5" title="(10.16.5) ‣ Confluent Hypergeometric Functions ‣ §10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.16.5</span></a>) and
+(<a href="./10.16#E6" title="(10.16.6) ‣ Confluent Hypergeometric Functions ‣ §10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.16.6</span></a>)
+see <cite class="ltx_cite ltx_citemacro_citet">Olver (<a href="./bib/O#bib1809" title="Asymptotics and Special Functions" class="ltx_ref">1997b</a>, pp. 255, 259)</cite> and apply
+(<a href="./10.27#E8" title="(10.27.8) ‣ §10.27 Connection Formulas ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.27.8</span></a>). For
+(<a href="./10.16#E7" title="(10.16.7) ‣ Confluent Hypergeometric Functions ‣ §10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.16.7</span></a>) and
+(<a href="./10.16#E8" title="(10.16.8) ‣ Confluent Hypergeometric Functions ‣ §10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.16.8</span></a>) apply
+(<a href="./13.14#E4" title="(13.14.4) ‣ Standard Solutions ‣ §13.14(i) Differential Equation ‣ §13.14 Definitions and Basic Properties ‣ Whittaker Functions ‣ Chapter 13 Confluent Hypergeometric Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">13.14.4</span></a>) and
+(<a href="./13.14#E5" title="(13.14.5) ‣ Standard Solutions ‣ §13.14(i) Differential Equation ‣ §13.14 Definitions and Basic Properties ‣ Whittaker Functions ‣ Chapter 13 Confluent Hypergeometric Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">13.14.5</span></a>). For
+(<a href="./10.16#E9" title="(10.16.9) ‣ Generalized Hypergeometric Functions ‣ §10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.16.9</span></a>) combine
+(<a href="./10.2#E2" title="(10.2.2) ‣ Bessel Function of the First Kind ‣ §10.2(ii) Standard Solutions ‣ §10.2 Definitions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.2.2</span></a>) and
+(<a href="./16.2#E1" title="(16.2.1) ‣ §16.2(i) Generalized Hypergeometric Series ‣ §16.2 Definition and Analytic Properties ‣ Generalized Hypergeometric Functions ‣ Chapter 16 Generalized Hypergeometric Functions and Meijer 𝐺-Function" class="ltx_ref"><span class="ltx_text ltx_ref_tag">16.2.1</span></a>).</dd>
+<dt>Referenced by:</dt>
+<dd><a href="./errata/#V1.0.18.I2.ix2" title="In Other Changes ‣ Version 1.0.18 (March 27, 2018) ‣ Errata" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Erratum (V1.0.18) for  Paragraph <span class="ltx_text ltx_ref_title">Confluent Hypergeometric Functions</span> (in §<span class="ltx_text ltx_ref_tag">10.16</span>)</span></a></dd>
+<dt>Permalink:</dt>
+<dd><a href="./10.16" title="" class="ltx_ref">http://dlmf.nist.gov/10.16</a></dd>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+
+<section id="Px1" class="ltx_paragraph">
+<h2 class="ltx_title ltx_title_paragraph">Elementary Functions</h2>
+<div id="Px1.info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>Keywords:</dt>
+<dd>
+<a class="ltx_keyword" href="./search/search?q=Bessel%20functions">Bessel functions</a>, <a class="ltx_keyword" href="./search/search?q=Hankel%20functions">Hankel functions</a>, <a class="ltx_keyword" href="./search/search?q=elementary%20functions">elementary functions</a>, <a class="ltx_keyword" href="./search/search?q=relations%20to%20other%20functions">relations to other functions</a>
+</dd>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10.16#info" title="§10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a> and
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+
+<div id="Px1.p1" class="ltx_para">
+<table id="E1" class="ltx_equationgroup ltx_eqn_table">
+<tbody>
+<tr id="Ex1" class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td rowspan="2" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_left"><span class="ltx_tag ltx_tag_equationgroup ltx_align_left">10.16.1</span></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_td ltx_align_right ltx_eqn_cell"><math class="ltx_Math" altimg="m12.png" altimg-height="45px" altimg-valign="-12px" altimg-width="78px" alttext="\displaystyle J_{\frac{1}{2}}\left(z\right)" display="inline"><mrow><msub><mi href="./10.2#E2" title="Bessel function of the first kind">J</mi><mfrac><mn>1</mn><mn>2</mn></mfrac></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math></td>
+<td class="ltx_td ltx_align_left ltx_eqn_cell"><math class="ltx_Math" altimg="m7.png" altimg-height="109px" altimg-valign="-22px" altimg-width="154px" alttext="\displaystyle=Y_{-\frac{1}{2}}\left(z\right)=\left(\frac{2}{\pi z}\right)^{%
+\frac{1}{2}}\sin z," display="inline"><mrow><mrow><mi></mi><mo>=</mo><mrow><msub><mi href="./10.2#E3" title="Bessel function of the second kind">Y</mi><mrow><mo>−</mo><mfrac><mn>1</mn><mn>2</mn></mfrac></mrow></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow><mo>=</mo><mrow><msup><mrow><mo>(</mo><mstyle displaystyle="true"><mfrac><mn>2</mn><mrow><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi><mo>⁢</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow></mfrac></mstyle><mo>)</mo></mrow><mfrac><mn>1</mn><mn>2</mn></mfrac></msup><mo lspace="0.167em">⁢</mo><mrow><mi href="./4.14#E1" title="sine function">sin</mi><mo lspace="0.167em">⁡</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow></mrow></mrow><mo>,</mo></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+<tr id="Ex2" class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_td ltx_align_right ltx_eqn_cell"><math class="ltx_Math" altimg="m9.png" altimg-height="45px" altimg-valign="-12px" altimg-width="91px" alttext="\displaystyle J_{-\frac{1}{2}}\left(z\right)" display="inline"><mrow><msub><mi href="./10.2#E2" title="Bessel function of the first kind">J</mi><mrow><mo>−</mo><mfrac><mn>1</mn><mn>2</mn></mfrac></mrow></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math></td>
+<td class="ltx_td ltx_align_left ltx_eqn_cell"><math class="ltx_Math" altimg="m4.png" altimg-height="109px" altimg-valign="-22px" altimg-width="156px" alttext="\displaystyle=-Y_{\frac{1}{2}}\left(z\right)=\left(\frac{2}{\pi z}\right)^{%
+\frac{1}{2}}\cos z," display="inline"><mrow><mrow><mi></mi><mo>=</mo><mrow><mo>−</mo><mrow><msub><mi href="./10.2#E3" title="Bessel function of the second kind">Y</mi><mfrac><mn>1</mn><mn>2</mn></mfrac></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></mrow><mo>=</mo><mrow><msup><mrow><mo>(</mo><mstyle displaystyle="true"><mfrac><mn>2</mn><mrow><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi><mo>⁢</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow></mfrac></mstyle><mo>)</mo></mrow><mfrac><mn>1</mn><mn>2</mn></mfrac></msup><mo lspace="0.167em">⁢</mo><mrow><mi href="./4.14#E2" title="cosine function">cos</mi><mo lspace="0.167em">⁡</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow></mrow></mrow><mo>,</mo></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+<tr><td class="ltx_align_right" colspan="5">
+<div id="E1.info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>Symbols:</dt>
+<dd>
+<a href="./10.2#E2" title="(10.2.2) ‣ Bessel Function of the First Kind ‣ §10.2(ii) Standard Solutions ‣ §10.2 Definitions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m20.png" altimg-height="25px" altimg-valign="-7px" altimg-width="56px" alttext="J_{\NVar{\nu}}\left(\NVar{z}\right)" display="inline"><mrow><msub><mi href="./10.2#E2" title="Bessel function of the first kind">J</mi><mi class="ltx_nvar" href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: Bessel function of the first kind</a>,
+<a href="./10.2#E3" title="(10.2.3) ‣ Bessel Function of the Second Kind (Weber’s Function) ‣ §10.2(ii) Standard Solutions ‣ §10.2 Definitions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m30.png" altimg-height="25px" altimg-valign="-7px" altimg-width="57px" alttext="Y_{\NVar{\nu}}\left(\NVar{z}\right)" display="inline"><mrow><msub><mi href="./10.2#E3" title="Bessel function of the second kind">Y</mi><mi class="ltx_nvar" href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: Bessel function of the second kind</a>,
+<a href="./3.12#E1" title="(3.12.1) ‣ §3.12 Mathematical Constants ‣ Areas ‣ Chapter 3 Numerical Methods" class="ltx_ref"><math class="ltx_Math" altimg="m42.png" altimg-height="13px" altimg-valign="-2px" altimg-width="17px" alttext="\pi" display="inline"><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi></math>: the ratio of the circumference of a circle to its diameter</a>,
+<a href="./4.14#E2" title="(4.14.2) ‣ §4.14 Definitions and Periodicity ‣ Trigonometric Functions ‣ Chapter 4 Elementary Functions" class="ltx_ref"><math class="ltx_Math" altimg="m32.png" altimg-height="13px" altimg-valign="-2px" altimg-width="46px" alttext="\cos\NVar{z}" display="inline"><mrow><mi href="./4.14#E2" title="cosine function">cos</mi><mo lspace="0.167em">⁡</mo><mi class="ltx_nvar" href="./4.1#t1.r4" title="complex variable">z</mi></mrow></math>: cosine function</a>,
+<a href="./4.14#E1" title="(4.14.1) ‣ §4.14 Definitions and Periodicity ‣ Trigonometric Functions ‣ Chapter 4 Elementary Functions" class="ltx_ref"><math class="ltx_Math" altimg="m43.png" altimg-height="18px" altimg-valign="-2px" altimg-width="44px" alttext="\sin\NVar{z}" display="inline"><mrow><mi href="./4.14#E1" title="sine function">sin</mi><mo lspace="0.167em">⁡</mo><mi class="ltx_nvar" href="./4.1#t1.r4" title="complex variable">z</mi></mrow></math>: sine function</a> and
+<a href="./10.1#t1.r4" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m44.png" altimg-height="13px" altimg-valign="-2px" altimg-width="15px" alttext="z" display="inline"><mi href="./10.1#t1.r4" title="complex variable">z</mi></math>:  complex variable</a>
+</dd>
+<dt>A&amp;S Ref:</dt>
+<dd> <span class="ltx_origref"><span class="ltx_tag">10.1.11 and 10.1.12</span> (modified)</span>
+</dd>
+<dt>Referenced by:</dt>
+<dd>
+<a href="./1.18#Px9.p1" title="Example 2: Sine and Cosine Transforms, 𝑋=[0,∞) ‣ §1.18(vi) Continuous Spectra and Eigenfunction Expansions: Simple Cases ‣ §1.18 Linear Second Order Differential Operators and Eigenfunction Expansions ‣ Topics of Discussion ‣ Chapter 1 Algebraic and Analytic Methods" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§1.18(vi)</span></a>,
+<a href="./10.15#info" title="§10.15 Derivatives with Respect to Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.15</span></a>,
+<a href="./10.18#iii.info" title="§10.18(iii) Asymptotic Expansions for Large Argument ‣ §10.18 Modulus and Phase Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.18(iii)</span></a>,
+<a href="./10.59#info" title="§10.59 Integrals ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.59</span></a>
+</dd>
+<dt>Permalink:</dt>
+<dd><a href="./10.16.E1" title="" class="ltx_ref">http://dlmf.nist.gov/10.16.E1</a></dd>
+<dt>Encodings:</dt>
+<dd>
+<a href="./10.16.E1a.tex">TeX</a>, <a href="./10.16.E1b.tex">TeX</a>, <a href="./10.16.E1a.pmml">pMML</a>, <a href="./10.16.E1b.pmml">pMML</a>, <a href="./10.16.E1a.png">png</a>, <a href="./10.16.E1b.png">png</a>
+</dd>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10.16#Px1.info" title="Elementary Functions ‣ §10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a>,
+<a href="./10.16#info" title="§10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a> and
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+</td></tr>
+</tbody>
+</table>
+<table id="E2" class="ltx_equationgroup ltx_eqn_table">
+<tbody>
+<tr id="Ex3" class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td rowspan="2" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_left"><span class="ltx_tag ltx_tag_equationgroup ltx_align_left">10.16.2</span></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_td ltx_align_right ltx_eqn_cell"><math class="ltx_Math" altimg="m15.png" altimg-height="49px" altimg-valign="-15px" altimg-width="95px" alttext="\displaystyle{H^{(1)}_{\frac{1}{2}}}\left(z\right)" display="inline"><mrow><msubsup><mi href="./10.2#E5" title="Bessel function of the third kind (or Hankel function)">H</mi><mfrac><mn>1</mn><mn>2</mn></mfrac><mrow><mo href="./10.2#E5" stretchy="false" title="Bessel function of the third kind (or Hankel function)">(</mo><mn href="./10.2#E5" title="Bessel function of the third kind (or Hankel function)">1</mn><mo href="./10.2#E5" stretchy="false" title="Bessel function of the third kind (or Hankel function)">)</mo></mrow></msubsup><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math></td>
+<td class="ltx_td ltx_align_left ltx_eqn_cell"><math class="ltx_Math" altimg="m5.png" altimg-height="112px" altimg-valign="-22px" altimg-width="166px" alttext="\displaystyle=-i{H^{(1)}_{-\frac{1}{2}}}\left(z\right)=-i\left(\frac{2}{\pi z}%
+\right)^{\frac{1}{2}}e^{iz}," display="inline"><mrow><mrow><mi></mi><mo>=</mo><mrow><mo>−</mo><mrow><mi href="./1.9#E1" mathvariant="normal" title="imaginary unit">i</mi><mo>⁢</mo><mrow><msubsup><mi href="./10.2#E5" title="Bessel function of the third kind (or Hankel function)">H</mi><mrow><mo>−</mo><mfrac><mn>1</mn><mn>2</mn></mfrac></mrow><mrow><mo href="./10.2#E5" stretchy="false" title="Bessel function of the third kind (or Hankel function)">(</mo><mn href="./10.2#E5" title="Bessel function of the third kind (or Hankel function)">1</mn><mo href="./10.2#E5" stretchy="false" title="Bessel function of the third kind (or Hankel function)">)</mo></mrow></msubsup><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></mrow></mrow><mo>=</mo><mrow><mo>−</mo><mrow><mi href="./1.9#E1" mathvariant="normal" title="imaginary unit">i</mi><mo>⁢</mo><msup><mrow><mo>(</mo><mstyle displaystyle="true"><mfrac><mn>2</mn><mrow><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi><mo>⁢</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow></mfrac></mstyle><mo>)</mo></mrow><mfrac><mn>1</mn><mn>2</mn></mfrac></msup><mo>⁢</mo><msup><mi href="./4.2#E11" mathvariant="normal" title="base of natural logarithm">e</mi><mrow><mi href="./1.9#E1" mathvariant="normal" title="imaginary unit">i</mi><mo>⁢</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow></msup></mrow></mrow></mrow><mo>,</mo></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+<tr id="Ex4" class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_td ltx_align_right ltx_eqn_cell"><math class="ltx_Math" altimg="m16.png" altimg-height="49px" altimg-valign="-15px" altimg-width="95px" alttext="\displaystyle{H^{(2)}_{\frac{1}{2}}}\left(z\right)" display="inline"><mrow><msubsup><mi href="./10.2#E6" title="Bessel function of the third kind (or Hankel function)">H</mi><mfrac><mn>1</mn><mn>2</mn></mfrac><mrow><mo href="./10.2#E6" stretchy="false" title="Bessel function of the third kind (or Hankel function)">(</mo><mn href="./10.2#E6" title="Bessel function of the third kind (or Hankel function)">2</mn><mo href="./10.2#E6" stretchy="false" title="Bessel function of the third kind (or Hankel function)">)</mo></mrow></msubsup><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math></td>
+<td class="ltx_td ltx_align_left ltx_eqn_cell"><math class="ltx_Math" altimg="m8.png" altimg-height="112px" altimg-valign="-22px" altimg-width="163px" alttext="\displaystyle=i{H^{(2)}_{-\frac{1}{2}}}\left(z\right)=i\left(\frac{2}{\pi z}%
+\right)^{\frac{1}{2}}e^{-iz}." display="inline"><mrow><mrow><mi></mi><mo>=</mo><mrow><mi href="./1.9#E1" mathvariant="normal" title="imaginary unit">i</mi><mo>⁢</mo><mrow><msubsup><mi href="./10.2#E6" title="Bessel function of the third kind (or Hankel function)">H</mi><mrow><mo>−</mo><mfrac><mn>1</mn><mn>2</mn></mfrac></mrow><mrow><mo href="./10.2#E6" stretchy="false" title="Bessel function of the third kind (or Hankel function)">(</mo><mn href="./10.2#E6" title="Bessel function of the third kind (or Hankel function)">2</mn><mo href="./10.2#E6" stretchy="false" title="Bessel function of the third kind (or Hankel function)">)</mo></mrow></msubsup><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></mrow><mo>=</mo><mrow><mi href="./1.9#E1" mathvariant="normal" title="imaginary unit">i</mi><mo>⁢</mo><msup><mrow><mo>(</mo><mstyle displaystyle="true"><mfrac><mn>2</mn><mrow><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi><mo>⁢</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow></mfrac></mstyle><mo>)</mo></mrow><mfrac><mn>1</mn><mn>2</mn></mfrac></msup><mo>⁢</mo><msup><mi href="./4.2#E11" mathvariant="normal" title="base of natural logarithm">e</mi><mrow><mo>−</mo><mrow><mi href="./1.9#E1" mathvariant="normal" title="imaginary unit">i</mi><mo>⁢</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow></mrow></msup></mrow></mrow><mo lspace="0em">.</mo></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+<tr><td class="ltx_align_right" colspan="5">
+<div id="E2.info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>Symbols:</dt>
+<dd>
+<a href="./10.2#E5" title="(10.2.5) ‣ Bessel Functions of the Third Kind (Hankel Functions) ‣ §10.2(ii) Standard Solutions ‣ §10.2 Definitions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m45.png" altimg-height="31px" altimg-valign="-7px" altimg-width="76px" alttext="{H^{(1)}_{\NVar{\nu}}}\left(\NVar{z}\right)" display="inline"><mrow><msubsup><mi href="./10.2#E5" title="Bessel function of the third kind (or Hankel function)">H</mi><mi class="ltx_nvar" href="./10.1#t1.r5" title="complex parameter">ν</mi><mrow><mo href="./10.2#E5" stretchy="false" title="Bessel function of the third kind (or Hankel function)">(</mo><mn href="./10.2#E5" title="Bessel function of the third kind (or Hankel function)">1</mn><mo href="./10.2#E5" stretchy="false" title="Bessel function of the third kind (or Hankel function)">)</mo></mrow></msubsup><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: Bessel function of the third kind (or Hankel function)</a>,
+<a href="./10.2#E6" title="(10.2.6) ‣ Bessel Functions of the Third Kind (Hankel Functions) ‣ §10.2(ii) Standard Solutions ‣ §10.2 Definitions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m46.png" altimg-height="31px" altimg-valign="-7px" altimg-width="76px" alttext="{H^{(2)}_{\NVar{\nu}}}\left(\NVar{z}\right)" display="inline"><mrow><msubsup><mi href="./10.2#E6" title="Bessel function of the third kind (or Hankel function)">H</mi><mi class="ltx_nvar" href="./10.1#t1.r5" title="complex parameter">ν</mi><mrow><mo href="./10.2#E6" stretchy="false" title="Bessel function of the third kind (or Hankel function)">(</mo><mn href="./10.2#E6" title="Bessel function of the third kind (or Hankel function)">2</mn><mo href="./10.2#E6" stretchy="false" title="Bessel function of the third kind (or Hankel function)">)</mo></mrow></msubsup><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: Bessel function of the third kind (or Hankel function)</a>,
+<a href="./3.12#E1" title="(3.12.1) ‣ §3.12 Mathematical Constants ‣ Areas ‣ Chapter 3 Numerical Methods" class="ltx_ref"><math class="ltx_Math" altimg="m42.png" altimg-height="13px" altimg-valign="-2px" altimg-width="17px" alttext="\pi" display="inline"><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi></math>: the ratio of the circumference of a circle to its diameter</a>,
+<a href="./4.2#E11" title="(4.2.11) ‣ §4.2(ii) Logarithms to a General Base 𝑎 ‣ §4.2 Definitions ‣ Logarithm, Exponential, Powers ‣ Chapter 4 Elementary Functions" class="ltx_ref"><math class="ltx_Math" altimg="m38.png" altimg-height="13px" altimg-valign="-2px" altimg-width="14px" alttext="\mathrm{e}" display="inline"><mi href="./4.2#E11" mathvariant="normal" title="base of natural logarithm">e</mi></math>: base of natural logarithm</a>,
+<a href="./1.9#E1" title="(1.9.1) ‣ §1.9(i) Complex Numbers ‣ §1.9 Calculus of a Complex Variable ‣ Topics of Discussion ‣ Chapter 1 Algebraic and Analytic Methods" class="ltx_ref"><math class="ltx_Math" altimg="m39.png" altimg-height="18px" altimg-valign="-2px" altimg-width="10px" alttext="\mathrm{i}" display="inline"><mi href="./1.9#E1" mathvariant="normal" title="imaginary unit">i</mi></math>: imaginary unit</a> and
+<a href="./10.1#t1.r4" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m44.png" altimg-height="13px" altimg-valign="-2px" altimg-width="15px" alttext="z" display="inline"><mi href="./10.1#t1.r4" title="complex variable">z</mi></math>:  complex variable</a>
+</dd>
+<dt>Permalink:</dt>
+<dd><a href="./10.16.E2" title="" class="ltx_ref">http://dlmf.nist.gov/10.16.E2</a></dd>
+<dt>Encodings:</dt>
+<dd>
+<a href="./10.16.E2a.tex">TeX</a>, <a href="./10.16.E2b.tex">TeX</a>, <a href="./10.16.E2a.pmml">pMML</a>, <a href="./10.16.E2b.pmml">pMML</a>, <a href="./10.16.E2a.png">png</a>, <a href="./10.16.E2b.png">png</a>
+</dd>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10.16#Px1.info" title="Elementary Functions ‣ §10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a>,
+<a href="./10.16#info" title="§10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a> and
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+</td></tr>
+</tbody>
+</table>
+</div>
+<div id="Px1.p2" class="ltx_para">
+<p class="ltx_p">For these and general results when <math class="ltx_Math" altimg="m41.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="\nu" display="inline"><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></math> is half an odd integer see
+§§<a href="./10.47#ii" title="§10.47(ii) Standard Solutions ‣ §10.47 Definitions and Basic Properties ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.47(ii)</span></a> and <a href="./10.49#i" title="§10.49(i) Unmodified Functions ‣ §10.49 Explicit Formulas ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.49(i)</span></a>.</p>
+</div>
+</section>
+<section id="Px2" class="ltx_paragraph">
+<h2 class="ltx_title ltx_title_paragraph">Airy Functions</h2>
+<div id="Px2.info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10.16#info" title="§10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a> and
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+
+<div id="Px2.p1" class="ltx_para">
+<p class="ltx_p">See §§<a href="./9.6#i" title="§9.6(i) Airy Functions as Bessel Functions, Hankel Functions, and Modified Bessel Functions ‣ §9.6 Relations to Other Functions ‣ Airy Functions ‣ Chapter 9 Airy and Related Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">9.6(i)</span></a> and <a href="./9.6#ii" title="§9.6(ii) Bessel Functions, Hankel Functions, and Modified Bessel Functions as Airy Functions ‣ §9.6 Relations to Other Functions ‣ Airy Functions ‣ Chapter 9 Airy and Related Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">9.6(ii)</span></a>.</p>
+</div>
+</section>
+<section id="Px3" class="ltx_paragraph">
+<h2 class="ltx_title ltx_title_paragraph">Parabolic Cylinder Functions</h2>
+<div id="Px3.info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>Keywords:</dt>
+<dd>
+<a class="ltx_keyword" href="./search/search?q=Bessel%20functions">Bessel functions</a>, <a class="ltx_keyword" href="./search/search?q=parabolic%20cylinder%20functions">parabolic cylinder functions</a>, <a class="ltx_keyword" href="./search/search?q=relations%20to%20other%20functions">relations to other functions</a>
+</dd>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10.16#info" title="§10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a> and
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+
+<div id="Px3.p1" class="ltx_para">
+<p class="ltx_p">With the notation of §<a href="./12.14#i" title="§12.14(i) Introduction ‣ §12.14 The Function 𝑊(𝑎,𝑥) ‣ Properties ‣ Chapter 12 Parabolic Cylinder Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">12.14(i)</span></a>,</p>
+<table id="E3" class="ltx_equationgroup ltx_eqn_table">
+<tbody>
+<tr id="Ex5" class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td rowspan="2" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_left"><span class="ltx_tag ltx_tag_equationgroup ltx_align_left">10.16.3</span></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_td ltx_align_right ltx_eqn_cell"><math class="ltx_Math" altimg="m13.png" altimg-height="45px" altimg-valign="-12px" altimg-width="78px" alttext="\displaystyle J_{\frac{1}{4}}\left(z\right)" display="inline"><mrow><msub><mi href="./10.2#E2" title="Bessel function of the first kind">J</mi><mfrac><mn>1</mn><mn>4</mn></mfrac></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math></td>
+<td class="ltx_td ltx_align_left ltx_eqn_cell"><math class="ltx_Math" altimg="m1.png" altimg-height="121px" altimg-valign="-15px" altimg-width="282px" alttext="\displaystyle=-2^{-\frac{1}{4}}\pi^{-\frac{1}{2}}z^{-\frac{1}{4}}\left(W\left(%
+0,2z^{\frac{1}{2}}\right)-W\left(0,-2z^{\frac{1}{2}}\right)\right)," display="inline"><mrow><mrow><mi></mi><mo>=</mo><mrow><mo>−</mo><mrow><msup><mn>2</mn><mrow><mo>−</mo><mfrac><mn>1</mn><mn>4</mn></mfrac></mrow></msup><mo>⁢</mo><msup><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi><mrow><mo>−</mo><mfrac><mn>1</mn><mn>2</mn></mfrac></mrow></msup><mo>⁢</mo><msup><mi href="./10.1#t1.r4" title="complex variable">z</mi><mrow><mo>−</mo><mfrac><mn>1</mn><mn>4</mn></mfrac></mrow></msup><mo>⁢</mo><mrow><mo>(</mo><mrow><mrow><mi href="./12.14#i.p1" title="parabolic cylinder function">W</mi><mo>⁡</mo><mrow><mo>(</mo><mn>0</mn><mo>,</mo><mrow><mn>2</mn><mo>⁢</mo><msup><mi href="./10.1#t1.r4" title="complex variable">z</mi><mfrac><mn>1</mn><mn>2</mn></mfrac></msup></mrow><mo>)</mo></mrow></mrow><mo>−</mo><mrow><mi href="./12.14#i.p1" title="parabolic cylinder function">W</mi><mo>⁡</mo><mrow><mo>(</mo><mn>0</mn><mo>,</mo><mrow><mo>−</mo><mrow><mn>2</mn><mo>⁢</mo><msup><mi href="./10.1#t1.r4" title="complex variable">z</mi><mfrac><mn>1</mn><mn>2</mn></mfrac></msup></mrow></mrow><mo>)</mo></mrow></mrow></mrow><mo>)</mo></mrow></mrow></mrow></mrow><mo>,</mo></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+<tr id="Ex6" class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_td ltx_align_right ltx_eqn_cell"><math class="ltx_Math" altimg="m10.png" altimg-height="45px" altimg-valign="-12px" altimg-width="91px" alttext="\displaystyle J_{-\frac{1}{4}}\left(z\right)" display="inline"><mrow><msub><mi href="./10.2#E2" title="Bessel function of the first kind">J</mi><mrow><mo>−</mo><mfrac><mn>1</mn><mn>4</mn></mfrac></mrow></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math></td>
+<td class="ltx_td ltx_align_left ltx_eqn_cell"><math class="ltx_Math" altimg="m6.png" altimg-height="121px" altimg-valign="-15px" altimg-width="266px" alttext="\displaystyle=2^{-\frac{1}{4}}\pi^{-\frac{1}{2}}z^{-\frac{1}{4}}\left(W\left(0%
+,2z^{\frac{1}{2}}\right)+W\left(0,-2z^{\frac{1}{2}}\right)\right)." display="inline"><mrow><mrow><mi></mi><mo>=</mo><mrow><msup><mn>2</mn><mrow><mo>−</mo><mfrac><mn>1</mn><mn>4</mn></mfrac></mrow></msup><mo>⁢</mo><msup><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi><mrow><mo>−</mo><mfrac><mn>1</mn><mn>2</mn></mfrac></mrow></msup><mo>⁢</mo><msup><mi href="./10.1#t1.r4" title="complex variable">z</mi><mrow><mo>−</mo><mfrac><mn>1</mn><mn>4</mn></mfrac></mrow></msup><mo>⁢</mo><mrow><mo>(</mo><mrow><mrow><mi href="./12.14#i.p1" title="parabolic cylinder function">W</mi><mo>⁡</mo><mrow><mo>(</mo><mn>0</mn><mo>,</mo><mrow><mn>2</mn><mo>⁢</mo><msup><mi href="./10.1#t1.r4" title="complex variable">z</mi><mfrac><mn>1</mn><mn>2</mn></mfrac></msup></mrow><mo>)</mo></mrow></mrow><mo>+</mo><mrow><mi href="./12.14#i.p1" title="parabolic cylinder function">W</mi><mo>⁡</mo><mrow><mo>(</mo><mn>0</mn><mo>,</mo><mrow><mo>−</mo><mrow><mn>2</mn><mo>⁢</mo><msup><mi href="./10.1#t1.r4" title="complex variable">z</mi><mfrac><mn>1</mn><mn>2</mn></mfrac></msup></mrow></mrow><mo>)</mo></mrow></mrow></mrow><mo>)</mo></mrow></mrow></mrow><mo lspace="0em">.</mo></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+<tr><td class="ltx_align_right" colspan="5">
+<div id="E3.info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>Symbols:</dt>
+<dd>
+<a href="./10.2#E2" title="(10.2.2) ‣ Bessel Function of the First Kind ‣ §10.2(ii) Standard Solutions ‣ §10.2 Definitions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m20.png" altimg-height="25px" altimg-valign="-7px" altimg-width="56px" alttext="J_{\NVar{\nu}}\left(\NVar{z}\right)" display="inline"><mrow><msub><mi href="./10.2#E2" title="Bessel function of the first kind">J</mi><mi class="ltx_nvar" href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: Bessel function of the first kind</a>,
+<a href="./3.12#E1" title="(3.12.1) ‣ §3.12 Mathematical Constants ‣ Areas ‣ Chapter 3 Numerical Methods" class="ltx_ref"><math class="ltx_Math" altimg="m42.png" altimg-height="13px" altimg-valign="-2px" altimg-width="17px" alttext="\pi" display="inline"><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi></math>: the ratio of the circumference of a circle to its diameter</a>,
+<a href="./12.14#i.p1" title="§12.14(i) Introduction ‣ §12.14 The Function 𝑊(𝑎,𝑥) ‣ Properties ‣ Chapter 12 Parabolic Cylinder Functions" class="ltx_ref"><math class="ltx_Math" altimg="m27.png" altimg-height="25px" altimg-valign="-7px" altimg-width="78px" alttext="W\left(\NVar{a},\NVar{x}\right)" display="inline"><mrow><mi href="./12.14#i.p1" title="parabolic cylinder function">W</mi><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./12.1#p1.t1.r4" title="real or complex parameter">a</mi><mo>,</mo><mi class="ltx_nvar" href="./12.1#p1.t1.r1" title="real variable">x</mi><mo>)</mo></mrow></mrow></math>: parabolic cylinder function</a> and
+<a href="./10.1#t1.r4" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m44.png" altimg-height="13px" altimg-valign="-2px" altimg-width="15px" alttext="z" display="inline"><mi href="./10.1#t1.r4" title="complex variable">z</mi></math>:  complex variable</a>
+</dd>
+<dt>Referenced by:</dt>
+<dd><a href="./10.16#info" title="§10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a></dd>
+<dt>Permalink:</dt>
+<dd><a href="./10.16.E3" title="" class="ltx_ref">http://dlmf.nist.gov/10.16.E3</a></dd>
+<dt>Encodings:</dt>
+<dd>
+<a href="./10.16.E3a.tex">TeX</a>, <a href="./10.16.E3b.tex">TeX</a>, <a href="./10.16.E3a.pmml">pMML</a>, <a href="./10.16.E3b.pmml">pMML</a>, <a href="./10.16.E3a.png">png</a>, <a href="./10.16.E3b.png">png</a>
+</dd>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10.16#Px3.info" title="Parabolic Cylinder Functions ‣ §10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a>,
+<a href="./10.16#info" title="§10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a> and
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+</td></tr>
+</tbody>
+</table>
+<table id="E4" class="ltx_equationgroup ltx_eqn_table">
+<tbody>
+<tr id="Ex7" class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td rowspan="2" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_left"><span class="ltx_tag ltx_tag_equationgroup ltx_align_left">10.16.4</span></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_td ltx_align_right ltx_eqn_cell"><math class="ltx_Math" altimg="m14.png" altimg-height="45px" altimg-valign="-12px" altimg-width="78px" alttext="\displaystyle J_{\frac{3}{4}}\left(z\right)" display="inline"><mrow><msub><mi href="./10.2#E2" title="Bessel function of the first kind">J</mi><mfrac><mn>3</mn><mn>4</mn></mfrac></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math></td>
+<td class="ltx_td ltx_align_left ltx_eqn_cell"><math class="ltx_Math" altimg="m3.png" altimg-height="121px" altimg-valign="-15px" altimg-width="288px" alttext="\displaystyle=-2^{-\frac{1}{4}}\pi^{-\frac{1}{2}}z^{-\frac{3}{4}}\left(W'\left%
+(0,2z^{\frac{1}{2}}\right)-W'\left(0,-2z^{\frac{1}{2}}\right)\right)," display="inline"><mrow><mrow><mi></mi><mo>=</mo><mrow><mo>−</mo><mrow><msup><mn>2</mn><mrow><mo>−</mo><mfrac><mn>1</mn><mn>4</mn></mfrac></mrow></msup><mo>⁢</mo><msup><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi><mrow><mo>−</mo><mfrac><mn>1</mn><mn>2</mn></mfrac></mrow></msup><mo>⁢</mo><msup><mi href="./10.1#t1.r4" title="complex variable">z</mi><mrow><mo>−</mo><mfrac><mn>3</mn><mn>4</mn></mfrac></mrow></msup><mo>⁢</mo><mrow><mo>(</mo><mrow><mrow><msup><mi href="./12.14#i.p1" title="parabolic cylinder function">W</mi><mo>′</mo></msup><mo>⁡</mo><mrow><mo>(</mo><mn>0</mn><mo>,</mo><mrow><mn>2</mn><mo>⁢</mo><msup><mi href="./10.1#t1.r4" title="complex variable">z</mi><mfrac><mn>1</mn><mn>2</mn></mfrac></msup></mrow><mo>)</mo></mrow></mrow><mo>−</mo><mrow><msup><mi href="./12.14#i.p1" title="parabolic cylinder function">W</mi><mo>′</mo></msup><mo>⁡</mo><mrow><mo>(</mo><mn>0</mn><mo>,</mo><mrow><mo>−</mo><mrow><mn>2</mn><mo>⁢</mo><msup><mi href="./10.1#t1.r4" title="complex variable">z</mi><mfrac><mn>1</mn><mn>2</mn></mfrac></msup></mrow></mrow><mo>)</mo></mrow></mrow></mrow><mo>)</mo></mrow></mrow></mrow></mrow><mo>,</mo></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+<tr id="Ex8" class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_td ltx_align_right ltx_eqn_cell"><math class="ltx_Math" altimg="m11.png" altimg-height="45px" altimg-valign="-12px" altimg-width="91px" alttext="\displaystyle J_{-\frac{3}{4}}\left(z\right)" display="inline"><mrow><msub><mi href="./10.2#E2" title="Bessel function of the first kind">J</mi><mrow><mo>−</mo><mfrac><mn>3</mn><mn>4</mn></mfrac></mrow></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math></td>
+<td class="ltx_td ltx_align_left ltx_eqn_cell"><math class="ltx_Math" altimg="m2.png" altimg-height="121px" altimg-valign="-15px" altimg-width="288px" alttext="\displaystyle=-2^{-\frac{1}{4}}\pi^{-\frac{1}{2}}z^{-\frac{3}{4}}\left(W'\left%
+(0,2z^{\frac{1}{2}}\right)+W'\left(0,-2z^{\frac{1}{2}}\right)\right)." display="inline"><mrow><mrow><mi></mi><mo>=</mo><mrow><mo>−</mo><mrow><msup><mn>2</mn><mrow><mo>−</mo><mfrac><mn>1</mn><mn>4</mn></mfrac></mrow></msup><mo>⁢</mo><msup><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi><mrow><mo>−</mo><mfrac><mn>1</mn><mn>2</mn></mfrac></mrow></msup><mo>⁢</mo><msup><mi href="./10.1#t1.r4" title="complex variable">z</mi><mrow><mo>−</mo><mfrac><mn>3</mn><mn>4</mn></mfrac></mrow></msup><mo>⁢</mo><mrow><mo>(</mo><mrow><mrow><msup><mi href="./12.14#i.p1" title="parabolic cylinder function">W</mi><mo>′</mo></msup><mo>⁡</mo><mrow><mo>(</mo><mn>0</mn><mo>,</mo><mrow><mn>2</mn><mo>⁢</mo><msup><mi href="./10.1#t1.r4" title="complex variable">z</mi><mfrac><mn>1</mn><mn>2</mn></mfrac></msup></mrow><mo>)</mo></mrow></mrow><mo>+</mo><mrow><msup><mi href="./12.14#i.p1" title="parabolic cylinder function">W</mi><mo>′</mo></msup><mo>⁡</mo><mrow><mo>(</mo><mn>0</mn><mo>,</mo><mrow><mo>−</mo><mrow><mn>2</mn><mo>⁢</mo><msup><mi href="./10.1#t1.r4" title="complex variable">z</mi><mfrac><mn>1</mn><mn>2</mn></mfrac></msup></mrow></mrow><mo>)</mo></mrow></mrow></mrow><mo>)</mo></mrow></mrow></mrow></mrow><mo lspace="0em">.</mo></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+<tr><td class="ltx_align_right" colspan="5">
+<div id="E4.info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>Symbols:</dt>
+<dd>
+<a href="./10.2#E2" title="(10.2.2) ‣ Bessel Function of the First Kind ‣ §10.2(ii) Standard Solutions ‣ §10.2 Definitions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m20.png" altimg-height="25px" altimg-valign="-7px" altimg-width="56px" alttext="J_{\NVar{\nu}}\left(\NVar{z}\right)" display="inline"><mrow><msub><mi href="./10.2#E2" title="Bessel function of the first kind">J</mi><mi class="ltx_nvar" href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: Bessel function of the first kind</a>,
+<a href="./3.12#E1" title="(3.12.1) ‣ §3.12 Mathematical Constants ‣ Areas ‣ Chapter 3 Numerical Methods" class="ltx_ref"><math class="ltx_Math" altimg="m42.png" altimg-height="13px" altimg-valign="-2px" altimg-width="17px" alttext="\pi" display="inline"><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi></math>: the ratio of the circumference of a circle to its diameter</a>,
+<a href="./12.14#i.p1" title="§12.14(i) Introduction ‣ §12.14 The Function 𝑊(𝑎,𝑥) ‣ Properties ‣ Chapter 12 Parabolic Cylinder Functions" class="ltx_ref"><math class="ltx_Math" altimg="m27.png" altimg-height="25px" altimg-valign="-7px" altimg-width="78px" alttext="W\left(\NVar{a},\NVar{x}\right)" display="inline"><mrow><mi href="./12.14#i.p1" title="parabolic cylinder function">W</mi><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./12.1#p1.t1.r4" title="real or complex parameter">a</mi><mo>,</mo><mi class="ltx_nvar" href="./12.1#p1.t1.r1" title="real variable">x</mi><mo>)</mo></mrow></mrow></math>: parabolic cylinder function</a> and
+<a href="./10.1#t1.r4" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m44.png" altimg-height="13px" altimg-valign="-2px" altimg-width="15px" alttext="z" display="inline"><mi href="./10.1#t1.r4" title="complex variable">z</mi></math>:  complex variable</a>
+</dd>
+<dt>Referenced by:</dt>
+<dd><a href="./10.16#info" title="§10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a></dd>
+<dt>Permalink:</dt>
+<dd><a href="./10.16.E4" title="" class="ltx_ref">http://dlmf.nist.gov/10.16.E4</a></dd>
+<dt>Encodings:</dt>
+<dd>
+<a href="./10.16.E4a.tex">TeX</a>, <a href="./10.16.E4b.tex">TeX</a>, <a href="./10.16.E4a.pmml">pMML</a>, <a href="./10.16.E4b.pmml">pMML</a>, <a href="./10.16.E4a.png">png</a>, <a href="./10.16.E4b.png">png</a>
+</dd>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10.16#Px3.info" title="Parabolic Cylinder Functions ‣ §10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a>,
+<a href="./10.16#info" title="§10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a> and
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+</td></tr>
+</tbody>
+</table>
+<p class="ltx_p">Principal values on each side of these equations correspond.</p>
+</div>
+</section>
+<section id="Px4" class="ltx_paragraph">
+<h2 class="ltx_title ltx_title_paragraph">Confluent Hypergeometric Functions</h2>
+<div id="Px4.info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>Keywords:</dt>
+<dd>
+<a class="ltx_keyword" href="./search/search?q=Bessel%20and%20Hankel%20functions">Bessel and Hankel functions</a>, <a class="ltx_keyword" href="./search/search?q=Bessel%20functions">Bessel functions</a>, <a class="ltx_keyword" href="./search/search?q=Hankel%20functions">Hankel functions</a>, <a class="ltx_keyword" href="./search/search?q=confluent%20hypergeometric%20functions">confluent hypergeometric functions</a>, <a class="ltx_keyword" href="./search/search?q=relations%20to%20other%20functions">relations to other functions</a>
+</dd>
+<dt>Referenced by:</dt>
+<dd><a href="./errata/#V1.0.18.I2.ix2" title="In Other Changes ‣ Version 1.0.18 (March 27, 2018) ‣ Errata" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Erratum (V1.0.18) for  Paragraph <span class="ltx_text ltx_ref_title">Confluent Hypergeometric Functions</span> (in §<span class="ltx_text ltx_ref_tag">10.16</span>)</span></a></dd>
+<dt>Clarification (effective with 1.0.18):</dt>
+<dd>
+The confluent hypergeometric Whittaker functions in (<a href="./10.16#E7" title="(10.16.7) ‣ Confluent Hypergeometric Functions ‣ §10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.16.7</span></a>),
+(<a href="./10.16#E8" title="(10.16.8) ‣ Confluent Hypergeometric Functions ‣ §10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.16.8</span></a>), and the following sentence were incorrectly linked to
+the definitions of the
+Kummer confluent hypergeometric and parabolic cylinder functions.
+However, to the eye, the functions appeared correct.
+</dd>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10.16#info" title="§10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a> and
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+
+<div id="Px4.p1" class="ltx_para">
+<table id="E5" class="ltx_equation ltx_eqn_table">
+
+<tbody>
+<tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_left"><span class="ltx_tag ltx_tag_equation ltx_align_left">10.16.5</span></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math class="ltx_Math" altimg="E5.png" altimg-height="99px" altimg-valign="-21px" altimg-width="404px" alttext="J_{\nu}\left(z\right)=\frac{(\tfrac{1}{2}z)^{\nu}e^{\mp iz}}{\Gamma\left(\nu+1%
+\right)}M\left(\nu+\tfrac{1}{2},2\nu+1,\pm 2iz\right)," display="block"><mrow><mrow><mrow><msub><mi href="./10.2#E2" title="Bessel function of the first kind">J</mi><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow><mo>=</mo><mrow><mfrac><mrow><msup><mrow><mo stretchy="false">(</mo><mrow><mfrac><mn>1</mn><mn>2</mn></mfrac><mo>⁢</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow><mo stretchy="false">)</mo></mrow><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></msup><mo>⁢</mo><msup><mi href="./4.2#E11" mathvariant="normal" title="base of natural logarithm">e</mi><mrow><mo>∓</mo><mrow><mi href="./1.9#E1" mathvariant="normal" title="imaginary unit">i</mi><mo>⁢</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow></mrow></msup></mrow><mrow><mi href="./5.2#E1" mathvariant="normal" title="gamma function">Γ</mi><mo>⁡</mo><mrow><mo>(</mo><mrow><mi href="./10.1#t1.r5" title="complex parameter">ν</mi><mo>+</mo><mn>1</mn></mrow><mo>)</mo></mrow></mrow></mfrac><mo>⁢</mo><mrow><mi href="./13.2#E2" title="=₁𝐹₁(𝑎;𝑏;𝑧) Kummer confluent hypergeometric function">M</mi><mo>⁡</mo><mrow><mo>(</mo><mrow><mi href="./10.1#t1.r5" title="complex parameter">ν</mi><mo>+</mo><mstyle displaystyle="false"><mfrac><mn>1</mn><mn>2</mn></mfrac></mstyle></mrow><mo>,</mo><mrow><mrow><mn>2</mn><mo>⁢</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow><mo>+</mo><mn>1</mn></mrow><mo>,</mo><mrow><mo>±</mo><mrow><mn>2</mn><mo>⁢</mo><mi href="./1.9#E1" mathvariant="normal" title="imaginary unit">i</mi><mo>⁢</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow></mrow><mo>)</mo></mrow></mrow></mrow></mrow><mo>,</mo></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+<tr><td class="ltx_align_right" colspan="4">
+<div id="E5.info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>Symbols:</dt>
+<dd>
+<a href="./10.2#E2" title="(10.2.2) ‣ Bessel Function of the First Kind ‣ §10.2(ii) Standard Solutions ‣ §10.2 Definitions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m20.png" altimg-height="25px" altimg-valign="-7px" altimg-width="56px" alttext="J_{\NVar{\nu}}\left(\NVar{z}\right)" display="inline"><mrow><msub><mi href="./10.2#E2" title="Bessel function of the first kind">J</mi><mi class="ltx_nvar" href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: Bessel function of the first kind</a>,
+<a href="./5.2#E1" title="(5.2.1) ‣ Euler’s Integral ‣ §5.2(i) Gamma and Psi Functions ‣ §5.2 Definitions ‣ Properties ‣ Chapter 5 Gamma Function" class="ltx_ref"><math class="ltx_Math" altimg="m31.png" altimg-height="25px" altimg-valign="-7px" altimg-width="47px" alttext="\Gamma\left(\NVar{z}\right)" display="inline"><mrow><mi href="./5.2#E1" mathvariant="normal" title="gamma function">Γ</mi><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./5.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: gamma function</a>,
+<a href="./13.2#E2" title="(13.2.2) ‣ Standard Solutions ‣ §13.2(i) Differential Equation ‣ §13.2 Definitions and Basic Properties ‣ Kummer Functions ‣ Chapter 13 Confluent Hypergeometric Functions" class="ltx_ref"><math class="ltx_Math" altimg="m22.png" altimg-height="25px" altimg-valign="-7px" altimg-width="95px" alttext="M\left(\NVar{a},\NVar{b},\NVar{z}\right)" display="inline"><mrow><mi href="./13.2#E2" title="=₁𝐹₁(𝑎;𝑏;𝑧) Kummer confluent hypergeometric function">M</mi><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar">a</mi><mo>,</mo><mi class="ltx_nvar">b</mi><mo>,</mo><mi class="ltx_nvar" href="./13.1#p1.t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: <math class="ltx_Math" altimg="m18.png" altimg-height="25px" altimg-valign="-7px" altimg-width="127px" alttext="={{}_{1}F_{1}}\left(\NVar{a};\NVar{b};\NVar{z}\right)" display="inline"><mrow><mi></mi><mo>=</mo><mrow><mmultiscripts><mi href="./16.2" title="=𝑀(𝑎,𝑏,𝑧) notation for the Kummer confluent hypergeometric function">F</mi><mn href="./16.2" title="=𝑀(𝑎,𝑏,𝑧) notation for the Kummer confluent hypergeometric function">1</mn><mrow></mrow><mprescripts></mprescripts><mn href="./16.2" title="=𝑀(𝑎,𝑏,𝑧) notation for the Kummer confluent hypergeometric function">1</mn><mrow></mrow></mmultiscripts><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar">a</mi><mo>;</mo><mi class="ltx_nvar">b</mi><mo>;</mo><mi class="ltx_nvar" href="./13.1#p1.t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></mrow></math>
+Kummer confluent hypergeometric function</a>,
+<a href="./4.2#E11" title="(4.2.11) ‣ §4.2(ii) Logarithms to a General Base 𝑎 ‣ §4.2 Definitions ‣ Logarithm, Exponential, Powers ‣ Chapter 4 Elementary Functions" class="ltx_ref"><math class="ltx_Math" altimg="m38.png" altimg-height="13px" altimg-valign="-2px" altimg-width="14px" alttext="\mathrm{e}" display="inline"><mi href="./4.2#E11" mathvariant="normal" title="base of natural logarithm">e</mi></math>: base of natural logarithm</a>,
+<a href="./1.9#E1" title="(1.9.1) ‣ §1.9(i) Complex Numbers ‣ §1.9 Calculus of a Complex Variable ‣ Topics of Discussion ‣ Chapter 1 Algebraic and Analytic Methods" class="ltx_ref"><math class="ltx_Math" altimg="m39.png" altimg-height="18px" altimg-valign="-2px" altimg-width="10px" alttext="\mathrm{i}" display="inline"><mi href="./1.9#E1" mathvariant="normal" title="imaginary unit">i</mi></math>: imaginary unit</a>,
+<a href="./10.1#t1.r4" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m44.png" altimg-height="13px" altimg-valign="-2px" altimg-width="15px" alttext="z" display="inline"><mi href="./10.1#t1.r4" title="complex variable">z</mi></math>:  complex variable</a> and
+<a href="./10.1#t1.r5" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m41.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="\nu" display="inline"><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></math>:  complex parameter</a>
+</dd>
+<dt>A&amp;S Ref:</dt>
+<dd> <span class="ltx_origref"><span class="ltx_tag">9.1.69</span> (modified)</span>
+</dd>
+<dt>Referenced by:</dt>
+<dd>
+<a href="./10.16#info" title="§10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a>,
+<a href="./10.39#info" title="§10.39 Relations to Other Functions ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.39</span></a>
+</dd>
+<dt>Permalink:</dt>
+<dd><a href="./10.16.E5" title="" class="ltx_ref">http://dlmf.nist.gov/10.16.E5</a></dd>
+<dt>Encodings:</dt>
+<dd>
+<a href="./10.16.E5.tex">TeX</a>, <a href="./10.16.E5.pmml">pMML</a>, <a href="./10.16.E5.png">png</a>
+</dd>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10.16#Px4.info" title="Confluent Hypergeometric Functions ‣ §10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a>,
+<a href="./10.16#info" title="§10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a> and
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+</td></tr>
+</tbody>
+</table>
+<table id="E6" class="ltx_equation ltx_eqn_table">
+
+<tbody>
+<tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_left"><span class="ltx_tag ltx_tag_equation ltx_align_left">10.16.6</span></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math class="ltx_Math" altimg="E6.png" altimg-height="109px" altimg-valign="-28px" altimg-width="554px" alttext="\rselection{{H^{(1)}_{\nu}}\left(z\right)\\
+{H^{(2)}_{\nu}}\left(z\right)}=\mp 2\pi^{-\frac{1}{2}}ie^{\mp\nu\pi i}(2z)^{%
+\nu}\*e^{\pm iz}U\left(\nu+\tfrac{1}{2},2\nu+1,\mp 2iz\right)." display="block"><mrow><mrow><mrow><mtable displaystyle="true" rowspacing="0pt"><mtr><mtd><mrow><msubsup><mi href="./10.2#E5" title="Bessel function of the third kind (or Hankel function)">H</mi><mi href="./10.1#t1.r5" title="complex parameter">ν</mi><mrow><mo href="./10.2#E5" stretchy="false" title="Bessel function of the third kind (or Hankel function)">(</mo><mn href="./10.2#E5" title="Bessel function of the third kind (or Hankel function)">1</mn><mo href="./10.2#E5" stretchy="false" title="Bessel function of the third kind (or Hankel function)">)</mo></mrow></msubsup><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></mtd></mtr><mtr><mtd><mrow><msubsup><mi href="./10.2#E6" title="Bessel function of the third kind (or Hankel function)">H</mi><mi href="./10.1#t1.r5" title="complex parameter">ν</mi><mrow><mo href="./10.2#E6" stretchy="false" title="Bessel function of the third kind (or Hankel function)">(</mo><mn href="./10.2#E6" title="Bessel function of the third kind (or Hankel function)">2</mn><mo href="./10.2#E6" stretchy="false" title="Bessel function of the third kind (or Hankel function)">)</mo></mrow></msubsup><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></mtd></mtr></mtable><mo>}</mo></mrow><mo>=</mo><mrow><mo>∓</mo><mrow><mn>2</mn><mo>⁢</mo><msup><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi><mrow><mo>−</mo><mfrac><mn>1</mn><mn>2</mn></mfrac></mrow></msup><mo>⁢</mo><mi href="./1.9#E1" mathvariant="normal" title="imaginary unit">i</mi><mo>⁢</mo><msup><mi href="./4.2#E11" mathvariant="normal" title="base of natural logarithm">e</mi><mrow><mo>∓</mo><mrow><mi href="./10.1#t1.r5" title="complex parameter">ν</mi><mo>⁢</mo><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi><mo>⁢</mo><mi href="./1.9#E1" mathvariant="normal" title="imaginary unit">i</mi></mrow></mrow></msup><mo>⁢</mo><msup><mrow><mo stretchy="false">(</mo><mrow><mn>2</mn><mo>⁢</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow><mo stretchy="false">)</mo></mrow><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></msup><mo>⁢</mo><msup><mi href="./4.2#E11" mathvariant="normal" title="base of natural logarithm">e</mi><mrow><mo>±</mo><mrow><mi href="./1.9#E1" mathvariant="normal" title="imaginary unit">i</mi><mo>⁢</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow></mrow></msup><mo>⁢</mo><mrow><mi href="./13.2#E6" title="Kummer confluent hypergeometric function">U</mi><mo>⁡</mo><mrow><mo>(</mo><mrow><mi href="./10.1#t1.r5" title="complex parameter">ν</mi><mo>+</mo><mstyle displaystyle="false"><mfrac><mn>1</mn><mn>2</mn></mfrac></mstyle></mrow><mo>,</mo><mrow><mrow><mn>2</mn><mo>⁢</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow><mo>+</mo><mn>1</mn></mrow><mo>,</mo><mrow><mo>∓</mo><mrow><mn>2</mn><mo>⁢</mo><mi href="./1.9#E1" mathvariant="normal" title="imaginary unit">i</mi><mo>⁢</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow></mrow><mo>)</mo></mrow></mrow></mrow></mrow></mrow><mo lspace="0em">.</mo></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+<tr><td class="ltx_align_right" colspan="4">
+<div id="E6.info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>Symbols:</dt>
+<dd>
+<a href="./10.2#E5" title="(10.2.5) ‣ Bessel Functions of the Third Kind (Hankel Functions) ‣ §10.2(ii) Standard Solutions ‣ §10.2 Definitions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m45.png" altimg-height="31px" altimg-valign="-7px" altimg-width="76px" alttext="{H^{(1)}_{\NVar{\nu}}}\left(\NVar{z}\right)" display="inline"><mrow><msubsup><mi href="./10.2#E5" title="Bessel function of the third kind (or Hankel function)">H</mi><mi class="ltx_nvar" href="./10.1#t1.r5" title="complex parameter">ν</mi><mrow><mo href="./10.2#E5" stretchy="false" title="Bessel function of the third kind (or Hankel function)">(</mo><mn href="./10.2#E5" title="Bessel function of the third kind (or Hankel function)">1</mn><mo href="./10.2#E5" stretchy="false" title="Bessel function of the third kind (or Hankel function)">)</mo></mrow></msubsup><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: Bessel function of the third kind (or Hankel function)</a>,
+<a href="./10.2#E6" title="(10.2.6) ‣ Bessel Functions of the Third Kind (Hankel Functions) ‣ §10.2(ii) Standard Solutions ‣ §10.2 Definitions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m46.png" altimg-height="31px" altimg-valign="-7px" altimg-width="76px" alttext="{H^{(2)}_{\NVar{\nu}}}\left(\NVar{z}\right)" display="inline"><mrow><msubsup><mi href="./10.2#E6" title="Bessel function of the third kind (or Hankel function)">H</mi><mi class="ltx_nvar" href="./10.1#t1.r5" title="complex parameter">ν</mi><mrow><mo href="./10.2#E6" stretchy="false" title="Bessel function of the third kind (or Hankel function)">(</mo><mn href="./10.2#E6" title="Bessel function of the third kind (or Hankel function)">2</mn><mo href="./10.2#E6" stretchy="false" title="Bessel function of the third kind (or Hankel function)">)</mo></mrow></msubsup><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: Bessel function of the third kind (or Hankel function)</a>,
+<a href="./13.2#E6" title="(13.2.6) ‣ Standard Solutions ‣ §13.2(i) Differential Equation ‣ §13.2 Definitions and Basic Properties ‣ Kummer Functions ‣ Chapter 13 Confluent Hypergeometric Functions" class="ltx_ref"><math class="ltx_Math" altimg="m26.png" altimg-height="25px" altimg-valign="-7px" altimg-width="89px" alttext="U\left(\NVar{a},\NVar{b},\NVar{z}\right)" display="inline"><mrow><mi href="./13.2#E6" title="Kummer confluent hypergeometric function">U</mi><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar">a</mi><mo>,</mo><mi class="ltx_nvar">b</mi><mo>,</mo><mi class="ltx_nvar" href="./13.1#p1.t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: Kummer confluent hypergeometric function</a>,
+<a href="./3.12#E1" title="(3.12.1) ‣ §3.12 Mathematical Constants ‣ Areas ‣ Chapter 3 Numerical Methods" class="ltx_ref"><math class="ltx_Math" altimg="m42.png" altimg-height="13px" altimg-valign="-2px" altimg-width="17px" alttext="\pi" display="inline"><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi></math>: the ratio of the circumference of a circle to its diameter</a>,
+<a href="./4.2#E11" title="(4.2.11) ‣ §4.2(ii) Logarithms to a General Base 𝑎 ‣ §4.2 Definitions ‣ Logarithm, Exponential, Powers ‣ Chapter 4 Elementary Functions" class="ltx_ref"><math class="ltx_Math" altimg="m38.png" altimg-height="13px" altimg-valign="-2px" altimg-width="14px" alttext="\mathrm{e}" display="inline"><mi href="./4.2#E11" mathvariant="normal" title="base of natural logarithm">e</mi></math>: base of natural logarithm</a>,
+<a href="./1.9#E1" title="(1.9.1) ‣ §1.9(i) Complex Numbers ‣ §1.9 Calculus of a Complex Variable ‣ Topics of Discussion ‣ Chapter 1 Algebraic and Analytic Methods" class="ltx_ref"><math class="ltx_Math" altimg="m39.png" altimg-height="18px" altimg-valign="-2px" altimg-width="10px" alttext="\mathrm{i}" display="inline"><mi href="./1.9#E1" mathvariant="normal" title="imaginary unit">i</mi></math>: imaginary unit</a>,
+<a href="./10.1#t1.r4" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m44.png" altimg-height="13px" altimg-valign="-2px" altimg-width="15px" alttext="z" display="inline"><mi href="./10.1#t1.r4" title="complex variable">z</mi></math>:  complex variable</a> and
+<a href="./10.1#t1.r5" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m41.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="\nu" display="inline"><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></math>:  complex parameter</a>
+</dd>
+<dt>Referenced by:</dt>
+<dd>
+<a href="./10.16#info" title="§10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a>,
+<a href="./10.17#v.info" title="§10.17(v) Exponentially-Improved Expansions ‣ §10.17 Asymptotic Expansions for Large Argument ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.17(v)</span></a>
+</dd>
+<dt>Permalink:</dt>
+<dd><a href="./10.16.E6" title="" class="ltx_ref">http://dlmf.nist.gov/10.16.E6</a></dd>
+<dt>Encodings:</dt>
+<dd>
+<a href="./10.16.E6.tex">TeX</a>, <a href="./10.16.E6.pmml">pMML</a>, <a href="./10.16.E6.png">png</a>
+</dd>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10.16#Px4.info" title="Confluent Hypergeometric Functions ‣ §10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a>,
+<a href="./10.16#info" title="§10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a> and
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+</td></tr>
+</tbody>
+</table>
+<p class="ltx_p">For the functions <math class="ltx_Math" altimg="m21.png" altimg-height="18px" altimg-valign="-2px" altimg-width="27px" alttext="M" display="inline"><mi href="./13.2#E2" title="=₁𝐹₁(𝑎;𝑏;𝑧) Kummer confluent hypergeometric function">M</mi></math> and <math class="ltx_Math" altimg="m25.png" altimg-height="18px" altimg-valign="-2px" altimg-width="21px" alttext="U" display="inline"><mi href="./13.2#E6" title="Kummer confluent hypergeometric function">U</mi></math> see §<a href="./13.2#i" title="§13.2(i) Differential Equation ‣ §13.2 Definitions and Basic Properties ‣ Kummer Functions ‣ Chapter 13 Confluent Hypergeometric Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">13.2(i)</span></a>.</p>
+<table id="E7" class="ltx_equation ltx_eqn_table">
+
+<tbody>
+<tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_left"><span class="ltx_tag ltx_tag_equation ltx_align_left">10.16.7</span></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math class="ltx_Math" altimg="E7.png" altimg-height="99px" altimg-valign="-21px" altimg-width="380px" alttext="J_{\nu}\left(z\right)=\frac{e^{\mp(2\nu+1)\pi i/4}}{2^{2\nu}\Gamma\left(\nu+1%
+\right)}(2z)^{-\frac{1}{2}}M_{0,\nu}\left(\pm 2iz\right)," display="block"><mrow><mrow><mrow><msub><mi href="./10.2#E2" title="Bessel function of the first kind">J</mi><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow><mo>=</mo><mrow><mfrac><msup><mi href="./4.2#E11" mathvariant="normal" title="base of natural logarithm">e</mi><mrow><mo>∓</mo><mrow><mrow><mrow><mo stretchy="false">(</mo><mrow><mrow><mn>2</mn><mo>⁢</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow><mo>+</mo><mn>1</mn></mrow><mo stretchy="false">)</mo></mrow><mo>⁢</mo><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi><mo>⁢</mo><mi href="./1.9#E1" mathvariant="normal" title="imaginary unit">i</mi></mrow><mo>/</mo><mn>4</mn></mrow></mrow></msup><mrow><msup><mn>2</mn><mrow><mn>2</mn><mo>⁢</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow></msup><mo>⁢</mo><mrow><mi href="./5.2#E1" mathvariant="normal" title="gamma function">Γ</mi><mo>⁡</mo><mrow><mo>(</mo><mrow><mi href="./10.1#t1.r5" title="complex parameter">ν</mi><mo>+</mo><mn>1</mn></mrow><mo>)</mo></mrow></mrow></mrow></mfrac><mo>⁢</mo><msup><mrow><mo stretchy="false">(</mo><mrow><mn>2</mn><mo>⁢</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow><mo stretchy="false">)</mo></mrow><mrow><mo>−</mo><mfrac><mn>1</mn><mn>2</mn></mfrac></mrow></msup><mo>⁢</mo><mrow><msub><mi href="./13.14#E2" title="Whittaker confluent hypergeometric function">M</mi><mrow><mn>0</mn><mo href="./13.14#E2" title="Whittaker confluent hypergeometric function">,</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow></msub><mo>⁡</mo><mrow><mo>(</mo><mrow><mo>±</mo><mrow><mn>2</mn><mo>⁢</mo><mi href="./1.9#E1" mathvariant="normal" title="imaginary unit">i</mi><mo>⁢</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow></mrow><mo>)</mo></mrow></mrow></mrow></mrow><mo>,</mo></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+<tr class="ltx_eqn_row"><td class="ltx_eqn_cell ltx_align_right" colspan="4"><span class="ltx_constraint"><math class="ltx_Math" altimg="m17.png" altimg-height="22px" altimg-valign="-6px" altimg-width="185px" alttext="2\nu\neq-1,-2,-3,\dotsc" display="inline"><mrow><mrow><mn>2</mn><mo>⁢</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow><mo>≠</mo><mrow><mrow><mo>−</mo><mn>1</mn></mrow><mo>,</mo><mrow><mo>−</mo><mn>2</mn></mrow><mo>,</mo><mrow><mo>−</mo><mn>3</mn></mrow><mo>,</mo><mi mathvariant="normal">…</mi></mrow></mrow></math>,</span></td></tr>
+<tr><td class="ltx_align_right" colspan="4">
+<div id="E7.info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>Symbols:</dt>
+<dd>
+<a href="./10.2#E2" title="(10.2.2) ‣ Bessel Function of the First Kind ‣ §10.2(ii) Standard Solutions ‣ §10.2 Definitions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m20.png" altimg-height="25px" altimg-valign="-7px" altimg-width="56px" alttext="J_{\NVar{\nu}}\left(\NVar{z}\right)" display="inline"><mrow><msub><mi href="./10.2#E2" title="Bessel function of the first kind">J</mi><mi class="ltx_nvar" href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: Bessel function of the first kind</a>,
+<a href="./5.2#E1" title="(5.2.1) ‣ Euler’s Integral ‣ §5.2(i) Gamma and Psi Functions ‣ §5.2 Definitions ‣ Properties ‣ Chapter 5 Gamma Function" class="ltx_ref"><math class="ltx_Math" altimg="m31.png" altimg-height="25px" altimg-valign="-7px" altimg-width="47px" alttext="\Gamma\left(\NVar{z}\right)" display="inline"><mrow><mi href="./5.2#E1" mathvariant="normal" title="gamma function">Γ</mi><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./5.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: gamma function</a>,
+<a href="./13.14#E2" title="(13.14.2) ‣ Standard Solutions ‣ §13.14(i) Differential Equation ‣ §13.14 Definitions and Basic Properties ‣ Whittaker Functions ‣ Chapter 13 Confluent Hypergeometric Functions" class="ltx_ref"><math class="ltx_Math" altimg="m24.png" altimg-height="26px" altimg-valign="-8px" altimg-width="80px" alttext="M_{\NVar{\kappa},\NVar{\mu}}\left(\NVar{z}\right)" display="inline"><mrow><msub><mi href="./13.14#E2" title="Whittaker confluent hypergeometric function">M</mi><mrow><mi class="ltx_nvar">κ</mi><mo href="./13.14#E2" title="Whittaker confluent hypergeometric function">,</mo><mi class="ltx_nvar">μ</mi></mrow></msub><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./13.1#p1.t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: Whittaker confluent hypergeometric function</a>,
+<a href="./3.12#E1" title="(3.12.1) ‣ §3.12 Mathematical Constants ‣ Areas ‣ Chapter 3 Numerical Methods" class="ltx_ref"><math class="ltx_Math" altimg="m42.png" altimg-height="13px" altimg-valign="-2px" altimg-width="17px" alttext="\pi" display="inline"><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi></math>: the ratio of the circumference of a circle to its diameter</a>,
+<a href="./4.2#E11" title="(4.2.11) ‣ §4.2(ii) Logarithms to a General Base 𝑎 ‣ §4.2 Definitions ‣ Logarithm, Exponential, Powers ‣ Chapter 4 Elementary Functions" class="ltx_ref"><math class="ltx_Math" altimg="m38.png" altimg-height="13px" altimg-valign="-2px" altimg-width="14px" alttext="\mathrm{e}" display="inline"><mi href="./4.2#E11" mathvariant="normal" title="base of natural logarithm">e</mi></math>: base of natural logarithm</a>,
+<a href="./1.9#E1" title="(1.9.1) ‣ §1.9(i) Complex Numbers ‣ §1.9 Calculus of a Complex Variable ‣ Topics of Discussion ‣ Chapter 1 Algebraic and Analytic Methods" class="ltx_ref"><math class="ltx_Math" altimg="m39.png" altimg-height="18px" altimg-valign="-2px" altimg-width="10px" alttext="\mathrm{i}" display="inline"><mi href="./1.9#E1" mathvariant="normal" title="imaginary unit">i</mi></math>: imaginary unit</a>,
+<a href="./10.1#t1.r4" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m44.png" altimg-height="13px" altimg-valign="-2px" altimg-width="15px" alttext="z" display="inline"><mi href="./10.1#t1.r4" title="complex variable">z</mi></math>:  complex variable</a> and
+<a href="./10.1#t1.r5" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m41.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="\nu" display="inline"><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></math>:  complex parameter</a>
+</dd>
+<dt>Referenced by:</dt>
+<dd>
+<a href="./10.16#Px4.info" title="Confluent Hypergeometric Functions ‣ §10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a>,
+<a href="./10.16#info" title="§10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a>
+</dd>
+<dt>Permalink:</dt>
+<dd><a href="./10.16.E7" title="" class="ltx_ref">http://dlmf.nist.gov/10.16.E7</a></dd>
+<dt>Encodings:</dt>
+<dd>
+<a href="./10.16.E7.tex">TeX</a>, <a href="./10.16.E7.pmml">pMML</a>, <a href="./10.16.E7.png">png</a>
+</dd>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10.16#Px4.info" title="Confluent Hypergeometric Functions ‣ §10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a>,
+<a href="./10.16#info" title="§10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a> and
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+</td></tr>
+</tbody>
+</table>
+<table id="E8" class="ltx_equation ltx_eqn_table">
+
+<tbody>
+<tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_left"><span class="ltx_tag ltx_tag_equation ltx_align_left">10.16.8</span></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math class="ltx_Math" altimg="E8.png" altimg-height="166px" altimg-valign="-28px" altimg-width="302px" alttext="\rselection{{H^{(1)}_{\nu}}\left(z\right)\\
+{H^{(2)}_{\nu}}\left(z\right)}=e^{\mp(2\nu+1)\pi i/4}\left(\frac{2}{\pi z}%
+\right)^{\frac{1}{2}}W_{0,\nu}\left(\mp 2iz\right)." display="block"><mrow><mrow><mrow><mtable displaystyle="true" rowspacing="0pt"><mtr><mtd><mrow><msubsup><mi href="./10.2#E5" title="Bessel function of the third kind (or Hankel function)">H</mi><mi href="./10.1#t1.r5" title="complex parameter">ν</mi><mrow><mo href="./10.2#E5" stretchy="false" title="Bessel function of the third kind (or Hankel function)">(</mo><mn href="./10.2#E5" title="Bessel function of the third kind (or Hankel function)">1</mn><mo href="./10.2#E5" stretchy="false" title="Bessel function of the third kind (or Hankel function)">)</mo></mrow></msubsup><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></mtd></mtr><mtr><mtd><mrow><msubsup><mi href="./10.2#E6" title="Bessel function of the third kind (or Hankel function)">H</mi><mi href="./10.1#t1.r5" title="complex parameter">ν</mi><mrow><mo href="./10.2#E6" stretchy="false" title="Bessel function of the third kind (or Hankel function)">(</mo><mn href="./10.2#E6" title="Bessel function of the third kind (or Hankel function)">2</mn><mo href="./10.2#E6" stretchy="false" title="Bessel function of the third kind (or Hankel function)">)</mo></mrow></msubsup><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></mtd></mtr></mtable><mo>}</mo></mrow><mo>=</mo><mrow><msup><mi href="./4.2#E11" mathvariant="normal" title="base of natural logarithm">e</mi><mrow><mo>∓</mo><mrow><mrow><mrow><mo stretchy="false">(</mo><mrow><mrow><mn>2</mn><mo>⁢</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow><mo>+</mo><mn>1</mn></mrow><mo stretchy="false">)</mo></mrow><mo>⁢</mo><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi><mo>⁢</mo><mi href="./1.9#E1" mathvariant="normal" title="imaginary unit">i</mi></mrow><mo>/</mo><mn>4</mn></mrow></mrow></msup><mo>⁢</mo><msup><mrow><mo>(</mo><mfrac><mn>2</mn><mrow><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi><mo>⁢</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow></mfrac><mo>)</mo></mrow><mfrac><mn>1</mn><mn>2</mn></mfrac></msup><mo>⁢</mo><mrow><msub><mi href="./13.14#E3" title="Whittaker confluent hypergeometric function">W</mi><mrow><mn>0</mn><mo href="./13.14#E3" title="Whittaker confluent hypergeometric function">,</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow></msub><mo>⁡</mo><mrow><mo>(</mo><mrow><mo>∓</mo><mrow><mn>2</mn><mo>⁢</mo><mi href="./1.9#E1" mathvariant="normal" title="imaginary unit">i</mi><mo>⁢</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow></mrow><mo>)</mo></mrow></mrow></mrow></mrow><mo lspace="0em">.</mo></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+<tr><td class="ltx_align_right" colspan="4">
+<div id="E8.info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>Symbols:</dt>
+<dd>
+<a href="./10.2#E5" title="(10.2.5) ‣ Bessel Functions of the Third Kind (Hankel Functions) ‣ §10.2(ii) Standard Solutions ‣ §10.2 Definitions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m45.png" altimg-height="31px" altimg-valign="-7px" altimg-width="76px" alttext="{H^{(1)}_{\NVar{\nu}}}\left(\NVar{z}\right)" display="inline"><mrow><msubsup><mi href="./10.2#E5" title="Bessel function of the third kind (or Hankel function)">H</mi><mi class="ltx_nvar" href="./10.1#t1.r5" title="complex parameter">ν</mi><mrow><mo href="./10.2#E5" stretchy="false" title="Bessel function of the third kind (or Hankel function)">(</mo><mn href="./10.2#E5" title="Bessel function of the third kind (or Hankel function)">1</mn><mo href="./10.2#E5" stretchy="false" title="Bessel function of the third kind (or Hankel function)">)</mo></mrow></msubsup><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: Bessel function of the third kind (or Hankel function)</a>,
+<a href="./10.2#E6" title="(10.2.6) ‣ Bessel Functions of the Third Kind (Hankel Functions) ‣ §10.2(ii) Standard Solutions ‣ §10.2 Definitions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m46.png" altimg-height="31px" altimg-valign="-7px" altimg-width="76px" alttext="{H^{(2)}_{\NVar{\nu}}}\left(\NVar{z}\right)" display="inline"><mrow><msubsup><mi href="./10.2#E6" title="Bessel function of the third kind (or Hankel function)">H</mi><mi class="ltx_nvar" href="./10.1#t1.r5" title="complex parameter">ν</mi><mrow><mo href="./10.2#E6" stretchy="false" title="Bessel function of the third kind (or Hankel function)">(</mo><mn href="./10.2#E6" title="Bessel function of the third kind (or Hankel function)">2</mn><mo href="./10.2#E6" stretchy="false" title="Bessel function of the third kind (or Hankel function)">)</mo></mrow></msubsup><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: Bessel function of the third kind (or Hankel function)</a>,
+<a href="./13.14#E3" title="(13.14.3) ‣ Standard Solutions ‣ §13.14(i) Differential Equation ‣ §13.14 Definitions and Basic Properties ‣ Whittaker Functions ‣ Chapter 13 Confluent Hypergeometric Functions" class="ltx_ref"><math class="ltx_Math" altimg="m29.png" altimg-height="26px" altimg-valign="-8px" altimg-width="80px" alttext="W_{\NVar{\kappa},\NVar{\mu}}\left(\NVar{z}\right)" display="inline"><mrow><msub><mi href="./13.14#E3" title="Whittaker confluent hypergeometric function">W</mi><mrow><mi class="ltx_nvar">κ</mi><mo href="./13.14#E3" title="Whittaker confluent hypergeometric function">,</mo><mi class="ltx_nvar">μ</mi></mrow></msub><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./13.1#p1.t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: Whittaker confluent hypergeometric function</a>,
+<a href="./3.12#E1" title="(3.12.1) ‣ §3.12 Mathematical Constants ‣ Areas ‣ Chapter 3 Numerical Methods" class="ltx_ref"><math class="ltx_Math" altimg="m42.png" altimg-height="13px" altimg-valign="-2px" altimg-width="17px" alttext="\pi" display="inline"><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi></math>: the ratio of the circumference of a circle to its diameter</a>,
+<a href="./4.2#E11" title="(4.2.11) ‣ §4.2(ii) Logarithms to a General Base 𝑎 ‣ §4.2 Definitions ‣ Logarithm, Exponential, Powers ‣ Chapter 4 Elementary Functions" class="ltx_ref"><math class="ltx_Math" altimg="m38.png" altimg-height="13px" altimg-valign="-2px" altimg-width="14px" alttext="\mathrm{e}" display="inline"><mi href="./4.2#E11" mathvariant="normal" title="base of natural logarithm">e</mi></math>: base of natural logarithm</a>,
+<a href="./1.9#E1" title="(1.9.1) ‣ §1.9(i) Complex Numbers ‣ §1.9 Calculus of a Complex Variable ‣ Topics of Discussion ‣ Chapter 1 Algebraic and Analytic Methods" class="ltx_ref"><math class="ltx_Math" altimg="m39.png" altimg-height="18px" altimg-valign="-2px" altimg-width="10px" alttext="\mathrm{i}" display="inline"><mi href="./1.9#E1" mathvariant="normal" title="imaginary unit">i</mi></math>: imaginary unit</a>,
+<a href="./10.1#t1.r4" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m44.png" altimg-height="13px" altimg-valign="-2px" altimg-width="15px" alttext="z" display="inline"><mi href="./10.1#t1.r4" title="complex variable">z</mi></math>:  complex variable</a> and
+<a href="./10.1#t1.r5" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m41.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="\nu" display="inline"><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></math>:  complex parameter</a>
+</dd>
+<dt>Referenced by:</dt>
+<dd>
+<a href="./10.16#Px4.info" title="Confluent Hypergeometric Functions ‣ §10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a>,
+<a href="./10.16#info" title="§10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a>
+</dd>
+<dt>Permalink:</dt>
+<dd><a href="./10.16.E8" title="" class="ltx_ref">http://dlmf.nist.gov/10.16.E8</a></dd>
+<dt>Encodings:</dt>
+<dd>
+<a href="./10.16.E8.tex">TeX</a>, <a href="./10.16.E8.pmml">pMML</a>, <a href="./10.16.E8.png">png</a>
+</dd>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10.16#Px4.info" title="Confluent Hypergeometric Functions ‣ §10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a>,
+<a href="./10.16#info" title="§10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a> and
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+</td></tr>
+</tbody>
+</table>
+<p class="ltx_p">For the functions <math class="ltx_Math" altimg="m23.png" altimg-height="24px" altimg-valign="-8px" altimg-width="48px" alttext="M_{0,\nu}" display="inline"><msub><mi href="./13.14#E2" title="Whittaker confluent hypergeometric function">M</mi><mrow><mn>0</mn><mo href="./13.14#E2" title="Whittaker confluent hypergeometric function">,</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow></msub></math> and <math class="ltx_Math" altimg="m28.png" altimg-height="24px" altimg-valign="-8px" altimg-width="47px" alttext="W_{0,\nu}" display="inline"><msub><mi href="./13.14#E3" title="Whittaker confluent hypergeometric function">W</mi><mrow><mn>0</mn><mo href="./13.14#E3" title="Whittaker confluent hypergeometric function">,</mo><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></mrow></msub></math> see
+§<a href="./13.14#i" title="§13.14(i) Differential Equation ‣ §13.14 Definitions and Basic Properties ‣ Whittaker Functions ‣ Chapter 13 Confluent Hypergeometric Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">13.14(i)</span></a>.</p>
+</div>
+<div id="Px4.p2" class="ltx_para">
+<p class="ltx_p">In all cases principal branches correspond at least when
+<math class="ltx_Math" altimg="m52.png" altimg-height="29px" altimg-valign="-9px" altimg-width="110px" alttext="|\operatorname{ph}z|\leq\tfrac{1}{2}\pi" display="inline"><mrow><mrow><mo stretchy="false">|</mo><mrow><mi href="./1.9#E7" title="phase">ph</mi><mo lspace="0.167em">⁡</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow><mo stretchy="false">|</mo></mrow><mo>≤</mo><mrow><mfrac><mn>1</mn><mn>2</mn></mfrac><mo>⁢</mo><mi href="./3.12#E1" title="the ratio of the circumference of a circle to its diameter">π</mi></mrow></mrow></math>.</p>
+</div>
+</section>
+<section id="Px5" class="ltx_paragraph">
+<h2 class="ltx_title ltx_title_paragraph">Generalized Hypergeometric Functions</h2>
+<div id="Px5.info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>Keywords:</dt>
+<dd>
+<a class="ltx_keyword" href="./search/search?q=Bessel%20functions">Bessel functions</a>, <a class="ltx_keyword" href="./search/search?q=generalized%20hypergeometric%20functions">generalized hypergeometric functions</a>, <a class="ltx_keyword" href="./search/search?q=relations%20to%20other%20functions">relations to other functions</a>
+</dd>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10.16#info" title="§10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a> and
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+
+<div id="Px5.p1" class="ltx_para">
+<table id="E9" class="ltx_equation ltx_eqn_table">
+
+<tbody>
+<tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_left"><span class="ltx_tag ltx_tag_equation ltx_align_left">10.16.9</span></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math class="ltx_Math" altimg="E9.png" altimg-height="99px" altimg-valign="-21px" altimg-width="366px" alttext="J_{\nu}\left(z\right)=\frac{(\tfrac{1}{2}z)^{\nu}}{\Gamma\left(\nu+1\right)}{{%
+}_{0}F_{1}}\left(-;\nu+1;-\tfrac{1}{4}z^{2}\right)." display="block"><mrow><mrow><mrow><msub><mi href="./10.2#E2" title="Bessel function of the first kind">J</mi><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow><mo>=</mo><mrow><mfrac><msup><mrow><mo stretchy="false">(</mo><mrow><mfrac><mn>1</mn><mn>2</mn></mfrac><mo>⁢</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow><mo stretchy="false">)</mo></mrow><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></msup><mrow><mi href="./5.2#E1" mathvariant="normal" title="gamma function">Γ</mi><mo>⁡</mo><mrow><mo>(</mo><mrow><mi href="./10.1#t1.r5" title="complex parameter">ν</mi><mo>+</mo><mn>1</mn></mrow><mo>)</mo></mrow></mrow></mfrac><mo>⁢</mo><mrow><mmultiscripts><mi href="./16.2" title="alternatively {_𝑝}𝐹_𝑞(𝐚;𝐛;𝑧) or {_𝑝}𝐹_𝑞((𝐚¦𝐛);𝑧)generalized hypergeometric function">F</mi><mn>1</mn><mrow></mrow><mprescripts></mprescripts><mn>0</mn><mrow></mrow></mmultiscripts><mo>⁡</mo><mrow><mo>(</mo><mo lspace="0em" rspace="0em">−</mo><mo>;</mo><mrow><mi href="./10.1#t1.r5" title="complex parameter">ν</mi><mo>+</mo><mn>1</mn></mrow><mo>;</mo><mrow><mo>−</mo><mrow><mstyle displaystyle="false"><mfrac><mn>1</mn><mn>4</mn></mfrac></mstyle><mo>⁢</mo><msup><mi href="./10.1#t1.r4" title="complex variable">z</mi><mn>2</mn></msup></mrow></mrow><mo>)</mo></mrow></mrow></mrow></mrow><mo lspace="0em">.</mo></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+<tr><td class="ltx_align_right" colspan="4">
+<div id="E9.info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>Symbols:</dt>
+<dd>
+<a href="./10.2#E2" title="(10.2.2) ‣ Bessel Function of the First Kind ‣ §10.2(ii) Standard Solutions ‣ §10.2 Definitions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m20.png" altimg-height="25px" altimg-valign="-7px" altimg-width="56px" alttext="J_{\NVar{\nu}}\left(\NVar{z}\right)" display="inline"><mrow><msub><mi href="./10.2#E2" title="Bessel function of the first kind">J</mi><mi class="ltx_nvar" href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: Bessel function of the first kind</a>,
+<a href="./5.2#E1" title="(5.2.1) ‣ Euler’s Integral ‣ §5.2(i) Gamma and Psi Functions ‣ §5.2 Definitions ‣ Properties ‣ Chapter 5 Gamma Function" class="ltx_ref"><math class="ltx_Math" altimg="m31.png" altimg-height="25px" altimg-valign="-7px" altimg-width="47px" alttext="\Gamma\left(\NVar{z}\right)" display="inline"><mrow><mi href="./5.2#E1" mathvariant="normal" title="gamma function">Γ</mi><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./5.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: gamma function</a>,
+<a href="./16.2" title="§16.2 Definition and Analytic Properties ‣ Generalized Hypergeometric Functions ‣ Chapter 16 Generalized Hypergeometric Functions and Meijer 𝐺-Function" class="ltx_ref"><math class="ltx_Math" altimg="m49.png" altimg-height="26px" altimg-valign="-8px" altimg-width="254px" alttext="{{}_{\NVar{p}}F_{\NVar{q}}}\left(\NVar{a_{1},\dots,a_{p}};\NVar{b_{1},\dots,b_%
+{q}};\NVar{z}\right)" display="inline"><mrow><mmultiscripts><mi href="./16.2" title="alternatively {_𝑝}𝐹_𝑞(𝐚;𝐛;𝑧) or {_𝑝}𝐹_𝑞((𝐚¦𝐛);𝑧)generalized hypergeometric function">F</mi><mi class="ltx_nvar" href="./16.1#t1.r1" title="nonnegative integer">q</mi><mrow></mrow><mprescripts></mprescripts><mi class="ltx_nvar" href="./16.1#t1.r1" title="nonnegative integer">p</mi><mrow></mrow></mmultiscripts><mo>⁡</mo><mrow><mo>(</mo><mrow><msub><mi class="ltx_nvar" href="./16.1#t1.r5" title="real or complex parameters">a</mi><mn class="ltx_nvar">1</mn></msub><mo class="ltx_nvar">,</mo><mi class="ltx_nvar" mathvariant="normal">…</mi><mo class="ltx_nvar">,</mo><msub><mi class="ltx_nvar" href="./16.1#t1.r5" title="real or complex parameters">a</mi><mi class="ltx_nvar" href="./16.1#t1.r1" title="nonnegative integer">p</mi></msub></mrow><mo>;</mo><mrow><msub><mi class="ltx_nvar" href="./16.1#t1.r5" title="real or complex parameters">b</mi><mn class="ltx_nvar">1</mn></msub><mo class="ltx_nvar">,</mo><mi class="ltx_nvar" mathvariant="normal">…</mi><mo class="ltx_nvar">,</mo><msub><mi class="ltx_nvar" href="./16.1#t1.r5" title="real or complex parameters">b</mi><mi class="ltx_nvar" href="./16.1#t1.r1" title="nonnegative integer">q</mi></msub></mrow><mo>;</mo><mi class="ltx_nvar" href="./16.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>
+or <math class="ltx_Math" altimg="m51.png" altimg-height="42px" altimg-valign="-15px" altimg-width="149px" alttext="{{}_{\NVar{p}}F_{\NVar{q}}}\left({\NVar{a_{1},\dots,a_{p}}\atop\NVar{b_{1},%
+\dots,b_{q}}};\NVar{z}\right)" display="inline"><mrow><mmultiscripts><mi href="./16.2" title="alternatively {_𝑝}𝐹_𝑞(𝐚;𝐛;𝑧) or {_𝑝}𝐹_𝑞((𝐚¦𝐛);𝑧)generalized hypergeometric function">F</mi><mi class="ltx_nvar" href="./16.1#t1.r1" title="nonnegative integer">q</mi><mrow></mrow><mprescripts></mprescripts><mi class="ltx_nvar" href="./16.1#t1.r1" title="nonnegative integer">p</mi><mrow></mrow></mmultiscripts><mo>⁡</mo><mrow><mo>(</mo><mfrac linethickness="0pt"><mrow><msub><mi class="ltx_nvar" href="./16.1#t1.r5" title="real or complex parameters">a</mi><mn class="ltx_nvar">1</mn></msub><mo class="ltx_nvar">,</mo><mi class="ltx_nvar" mathvariant="normal">…</mi><mo class="ltx_nvar">,</mo><msub><mi class="ltx_nvar" href="./16.1#t1.r5" title="real or complex parameters">a</mi><mi class="ltx_nvar" href="./16.1#t1.r1" title="nonnegative integer">p</mi></msub></mrow><mrow><msub><mi class="ltx_nvar" href="./16.1#t1.r5" title="real or complex parameters">b</mi><mn class="ltx_nvar">1</mn></msub><mo class="ltx_nvar">,</mo><mi class="ltx_nvar" mathvariant="normal">…</mi><mo class="ltx_nvar">,</mo><msub><mi class="ltx_nvar" href="./16.1#t1.r5" title="real or complex parameters">b</mi><mi class="ltx_nvar" href="./16.1#t1.r1" title="nonnegative integer">q</mi></msub></mrow></mfrac><mo>;</mo><mi class="ltx_nvar" href="./16.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: alternatively <math class="ltx_Math" altimg="m48.png" altimg-height="26px" altimg-valign="-8px" altimg-width="110px" alttext="{{}_{\NVar{p}}F_{\NVar{q}}}\left(\NVar{\mathbf{a}};\NVar{\mathbf{b}};\NVar{z}\right)" display="inline"><mrow><mmultiscripts><mi href="./16.2" title="alternatively {_𝑝}𝐹_𝑞(𝐚;𝐛;𝑧) or {_𝑝}𝐹_𝑞((𝐚¦𝐛);𝑧)generalized hypergeometric function">F</mi><mi class="ltx_nvar" href="./16.1#t1.r1" title="nonnegative integer">q</mi><mrow></mrow><mprescripts></mprescripts><mi class="ltx_nvar" href="./16.1#t1.r1" title="nonnegative integer">p</mi><mrow></mrow></mmultiscripts><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar">𝐚</mi><mo>;</mo><mi class="ltx_nvar">𝐛</mi><mo>;</mo><mi class="ltx_nvar" href="./16.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math> or
+<math class="ltx_Math" altimg="m50.png" altimg-height="29px" altimg-valign="-9px" altimg-width="94px" alttext="{{}_{\NVar{p}}F_{\NVar{q}}}\left({\NVar{\mathbf{a}}\atop\NVar{\mathbf{b}}};%
+\NVar{z}\right)" display="inline"><mrow><mmultiscripts><mi href="./16.2" title="alternatively {_𝑝}𝐹_𝑞(𝐚;𝐛;𝑧) or {_𝑝}𝐹_𝑞((𝐚¦𝐛);𝑧)generalized hypergeometric function">F</mi><mi class="ltx_nvar" href="./16.1#t1.r1" title="nonnegative integer">q</mi><mrow></mrow><mprescripts></mprescripts><mi class="ltx_nvar" href="./16.1#t1.r1" title="nonnegative integer">p</mi><mrow></mrow></mmultiscripts><mo>⁡</mo><mrow><mo>(</mo><mfrac linethickness="0pt"><mi class="ltx_nvar">𝐚</mi><mi class="ltx_nvar">𝐛</mi></mfrac><mo>;</mo><mi class="ltx_nvar" href="./16.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>
+<br class="ltx_break">generalized hypergeometric function</a>,
+<a href="./10.1#t1.r4" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m44.png" altimg-height="13px" altimg-valign="-2px" altimg-width="15px" alttext="z" display="inline"><mi href="./10.1#t1.r4" title="complex variable">z</mi></math>:  complex variable</a> and
+<a href="./10.1#t1.r5" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m41.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="\nu" display="inline"><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></math>:  complex parameter</a>
+</dd>
+<dt>Referenced by:</dt>
+<dd><a href="./10.16#info" title="§10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a></dd>
+<dt>Permalink:</dt>
+<dd><a href="./10.16.E9" title="" class="ltx_ref">http://dlmf.nist.gov/10.16.E9</a></dd>
+<dt>Encodings:</dt>
+<dd>
+<a href="./10.16.E9.tex">TeX</a>, <a href="./10.16.E9.pmml">pMML</a>, <a href="./10.16.E9.png">png</a>
+</dd>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10.16#Px5.info" title="Generalized Hypergeometric Functions ‣ §10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a>,
+<a href="./10.16#info" title="§10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a> and
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+</td></tr>
+</tbody>
+</table>
+<p class="ltx_p">For <math class="ltx_Math" altimg="m47.png" altimg-height="21px" altimg-valign="-5px" altimg-width="36px" alttext="{{}_{0}F_{1}}" display="inline"><mmultiscripts><mi href="./16.2" title="alternatively {_𝑝}𝐹_𝑞(𝐚;𝐛;𝑧) or {_𝑝}𝐹_𝑞((𝐚¦𝐛);𝑧)generalized hypergeometric function">F</mi><mn>1</mn><mrow></mrow><mprescripts></mprescripts><mn>0</mn><mrow></mrow></mmultiscripts></math> see (<a href="./16.2#E1" title="(16.2.1) ‣ §16.2(i) Generalized Hypergeometric Series ‣ §16.2 Definition and Analytic Properties ‣ Generalized Hypergeometric Functions ‣ Chapter 16 Generalized Hypergeometric Functions and Meijer 𝐺-Function" class="ltx_ref"><span class="ltx_text ltx_ref_tag">16.2.1</span></a>).</p>
+</div>
+<div id="Px5.p2" class="ltx_para">
+<p class="ltx_p">With <math class="ltx_Math" altimg="m35.png" altimg-height="18px" altimg-valign="-2px" altimg-width="19px" alttext="\mathbf{F}" display="inline"><mi href="./15.2#E2" title="=₂𝐅₁(𝑎,𝑏;𝑐;𝑧) Olver’s hypergeometric function">𝐅</mi></math> as in §<a href="./15.2#i" title="§15.2(i) Gauss Series ‣ §15.2 Definitions and Analytical Properties ‣ Properties ‣ Chapter 15 Hypergeometric Function" class="ltx_ref"><span class="ltx_text ltx_ref_tag">15.2(i)</span></a>, and with <math class="ltx_Math" altimg="m44.png" altimg-height="13px" altimg-valign="-2px" altimg-width="15px" alttext="z" display="inline"><mi href="./10.1#t1.r4" title="complex variable">z</mi></math> and <math class="ltx_Math" altimg="m41.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="\nu" display="inline"><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></math>
+fixed,</p>
+<table id="E10" class="ltx_equation ltx_eqn_table">
+
+<tbody>
+<tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+<td rowspan="1" class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_left"><span class="ltx_tag ltx_tag_equation ltx_align_left">10.16.10</span></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+<td class="ltx_eqn_cell ltx_align_center"><math class="ltx_Math" altimg="E10.png" altimg-height="72px" altimg-valign="-9px" altimg-width="416px" alttext="J_{\nu}\left(z\right)=(\tfrac{1}{2}z)^{\nu}\lim\mathbf{F}\left(\lambda,\mu;\nu%
++1;-z^{2}/(4\lambda\mu)\right)," display="block"><mrow><mrow><mrow><msub><mi href="./10.2#E2" title="Bessel function of the first kind">J</mi><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow><mo>=</mo><mrow><msup><mrow><mo stretchy="false">(</mo><mrow><mstyle displaystyle="false"><mfrac><mn>1</mn><mn>2</mn></mfrac></mstyle><mo>⁢</mo><mi href="./10.1#t1.r4" title="complex variable">z</mi></mrow><mo stretchy="false">)</mo></mrow><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></msup><mo lspace="0.167em">⁢</mo><mrow><mo movablelimits="false" rspace="0.167em">lim</mo><mrow><mi href="./15.2#E2" title="=₂𝐅₁(𝑎,𝑏;𝑐;𝑧) Olver’s hypergeometric function">𝐅</mi><mo>⁡</mo><mrow><mo>(</mo><mi>λ</mi><mo>,</mo><mi>μ</mi><mo>;</mo><mrow><mi href="./10.1#t1.r5" title="complex parameter">ν</mi><mo>+</mo><mn>1</mn></mrow><mo>;</mo><mrow><mo>−</mo><mrow><msup><mi href="./10.1#t1.r4" title="complex variable">z</mi><mn>2</mn></msup><mo>/</mo><mrow><mo stretchy="false">(</mo><mrow><mn>4</mn><mo>⁢</mo><mi>λ</mi><mo>⁢</mo><mi>μ</mi></mrow><mo stretchy="false">)</mo></mrow></mrow></mrow><mo>)</mo></mrow></mrow></mrow></mrow></mrow><mo>,</mo></mrow></math></td>
+<td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+</tr>
+<tr><td class="ltx_align_right" colspan="4">
+<div id="E10.info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>Symbols:</dt>
+<dd>
+<a href="./10.2#E2" title="(10.2.2) ‣ Bessel Function of the First Kind ‣ §10.2(ii) Standard Solutions ‣ §10.2 Definitions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m20.png" altimg-height="25px" altimg-valign="-7px" altimg-width="56px" alttext="J_{\NVar{\nu}}\left(\NVar{z}\right)" display="inline"><mrow><msub><mi href="./10.2#E2" title="Bessel function of the first kind">J</mi><mi class="ltx_nvar" href="./10.1#t1.r5" title="complex parameter">ν</mi></msub><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./10.1#t1.r4" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: Bessel function of the first kind</a>,
+<a href="./15.2#E2" title="(15.2.2) ‣ §15.2(i) Gauss Series ‣ §15.2 Definitions and Analytical Properties ‣ Properties ‣ Chapter 15 Hypergeometric Function" class="ltx_ref"><math class="ltx_Math" altimg="m36.png" altimg-height="25px" altimg-valign="-7px" altimg-width="106px" alttext="\mathbf{F}\left(\NVar{a},\NVar{b};\NVar{c};\NVar{z}\right)" display="inline"><mrow><mi href="./15.2#E2" title="=₂𝐅₁(𝑎,𝑏;𝑐;𝑧) Olver’s hypergeometric function">𝐅</mi><mo>⁡</mo><mrow><mo>(</mo><mi class="ltx_nvar" href="./15.1#p1.t1.r3" title="real or complex parameter">a</mi><mo>,</mo><mi class="ltx_nvar" href="./15.1#p1.t1.r3" title="real or complex parameter">b</mi><mo>;</mo><mi class="ltx_nvar" href="./15.1#p1.t1.r3" title="real or complex parameter">c</mi><mo>;</mo><mi class="ltx_nvar" href="./15.1#p1.t1.r2" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math> or <math class="ltx_Math" altimg="m37.png" altimg-height="42px" altimg-valign="-15px" altimg-width="94px" alttext="\mathbf{F}\left({\NVar{a},\NVar{b}\atop\NVar{c}};\NVar{z}\right)" display="inline"><mrow><mi href="./15.2#E2" title="=₂𝐅₁(𝑎,𝑏;𝑐;𝑧) Olver’s hypergeometric function">𝐅</mi><mo>⁡</mo><mrow><mo>(</mo><mfrac linethickness="0pt"><mrow><mi class="ltx_nvar" href="./15.1#p1.t1.r3" title="real or complex parameter">a</mi><mo>,</mo><mi class="ltx_nvar" href="./15.1#p1.t1.r3" title="real or complex parameter">b</mi></mrow><mi class="ltx_nvar" href="./15.1#p1.t1.r3" title="real or complex parameter">c</mi></mfrac><mo>;</mo><mi class="ltx_nvar" href="./15.1#p1.t1.r2" title="complex variable">z</mi><mo>)</mo></mrow></mrow></math>: <math class="ltx_Math" altimg="m19.png" altimg-height="25px" altimg-valign="-7px" altimg-width="147px" alttext="={{}_{2}{\mathbf{F}}_{1}}\left(\NVar{a},\NVar{b};\NVar{c};\NVar{z}\right)" display="inline"><mrow><mi></mi><mo>=</mo><mrow><mmultiscripts><mi href="./16.2#E5" title="scaled (or Olver’s) generalized hypergeometric function">𝐅</mi><mn>1</mn><mrow></mrow><mprescripts></mprescripts><mn>2</mn><mrow></mrow></mmultiscripts><mo>⁡</mo><mrow><mo>(</mo><mrow><mi class="ltx_nvar" href="./15.1#p1.t1.r3" title="real or complex parameter">a</mi><mo>,</mo><mi class="ltx_nvar" href="./15.1#p1.t1.r3" title="real or complex parameter">b</mi></mrow><mo>;</mo><mi class="ltx_nvar" href="./15.1#p1.t1.r3" title="real or complex parameter">c</mi><mo>;</mo><mi class="ltx_nvar" href="./15.1#p1.t1.r2" title="complex variable">z</mi><mo>)</mo></mrow></mrow></mrow></math>
+Olver’s hypergeometric function</a>,
+<a href="./10.1#t1.r4" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m44.png" altimg-height="13px" altimg-valign="-2px" altimg-width="15px" alttext="z" display="inline"><mi href="./10.1#t1.r4" title="complex variable">z</mi></math>:  complex variable</a> and
+<a href="./10.1#t1.r5" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref"><math class="ltx_Math" altimg="m41.png" altimg-height="13px" altimg-valign="-2px" altimg-width="16px" alttext="\nu" display="inline"><mi href="./10.1#t1.r5" title="complex parameter">ν</mi></math>:  complex parameter</a>
+</dd>
+<dt>A&amp;S Ref:</dt>
+<dd> <span class="ltx_origref"><span class="ltx_tag">9.1.70</span> (modified)</span>
+</dd>
+<dt>Referenced by:</dt>
+<dd><a href="./10.39#info" title="§10.39 Relations to Other Functions ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.39</span></a></dd>
+<dt>Permalink:</dt>
+<dd><a href="./10.16.E10" title="" class="ltx_ref">http://dlmf.nist.gov/10.16.E10</a></dd>
+<dt>Encodings:</dt>
+<dd>
+<a href="./10.16.E10.tex">TeX</a>, <a href="./10.16.E10.pmml">pMML</a>, <a href="./10.16.E10.png">png</a>
+</dd>
+<dt>See also:</dt>
+<dd>Annotations for <a href="./10.16#Px5.info" title="Generalized Hypergeometric Functions ‣ §10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a>,
+<a href="./10.16#info" title="§10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§10.16</span></a> and
+<a href="./10#info" title="Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Ch.10</span></a>
+</dd>
+</dl>
+</div>
+</div>
+</td></tr>
+</tbody>
+</table>
+<p class="ltx_p">as <math class="ltx_Math" altimg="m33.png" altimg-height="18px" altimg-valign="-2px" altimg-width="16px" alttext="\lambda" display="inline"><mi>λ</mi></math> and <math class="ltx_Math" altimg="m40.png" altimg-height="17px" altimg-valign="-6px" altimg-width="70px" alttext="\mu\to\infty" display="inline"><mrow><mi>μ</mi><mo stretchy="false">→</mo><mi mathvariant="normal">∞</mi></mrow></math> in <math class="ltx_Math" altimg="m34.png" altimg-height="18px" altimg-valign="-2px" altimg-width="19px" alttext="\mathbb{C}" display="inline"><mi href="./front/introduction#common.t1.r1" title="complex plane">ℂ</mi></math>. For this result see
+<cite class="ltx_cite ltx_citemacro_citet">Watson (<a href="./bib/W#bib2380" title="A Treatise on the Theory of Bessel Functions" class="ltx_ref">1944</a>, §5.7)</cite>.</p>
+</div>
+</section>
+</section>
+</div>
+<div class="ltx_page_footer">
+<div class="ltx_siblings">
+<a href="./10.15" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref" rel="prev"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.15 </span>Derivatives with Respect to Order</span></a><a href="./10.17" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref" rel="next"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.17 </span>Asymptotic Expansions for Large Argument</span></a>
+</div>
+<div class="ltx_footer_links ltx_centering">
+<a href="./about/notices">© 2010–2026 NIST</a> / <a href="./about/notices#S2">Disclaimer</a> / <a href="/cdn-cgi/l/email-protection#8cc8c0c1caa1eae9e9e8eeedefe7cce2e5fff8a2ebe3fa">Feedback</a>;
+ Version 1.2.6;
+Release date 2026-03-15.</div>
+<span id="pagesettings"></span>
+<div class="ltx_nist_logo"><a href="http://www.nist.gov/"><img src="./style/nistidc.png" width="500" alt="NIST"></a></div>
+<div class="ltx_nist_links ltx_align_right">
+<a href="https://www.nist.gov/privacy-policy">Site Privacy</a> <a href="https://www.nist.gov/oism/accessibility">Accessibility</a> <a href="https://www.nist.gov/privacy">Privacy Program</a> <a href="https://www.nist.gov/oism/copyrights">Copyrights</a> <a href="https://www.commerce.gov/vulnerability-disclosure-policy">Vulnerability Disclosure</a> <a href="https://www.nist.gov/no-fear-act-policy">No Fear Act Policy</a> <a href="https://www.nist.gov/foia">FOIA</a> <a href="https://www.nist.gov/environmental-policy-statement">Environmental Policy</a> <a href="https://www.nist.gov/summary-report-scientific-integrity">Scientific Integrity</a> <a href="https://www.nist.gov/nist-information-quality-standards">Information Quality Standards</a> <a href="https://www.commerce.gov/">Commerce.gov</a> <a href="http://www.science.gov/">Science.gov</a> <a href="http://www.usa.gov/">USA.gov</a>
+</div>
+</div>
+</div>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9fd00c538f3543f9',t:'MTc3ODk5MzkxOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

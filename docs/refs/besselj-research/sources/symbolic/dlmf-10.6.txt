@@ -1,0 +1,482 @@
+
+
+DLMF: §10.6 Recurrence Relations and Derivatives ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions
+
+DLMF
+
+Index
+Notations
+Search
+Help?
+Citing
+Customize
+Annotate
+UnAnnotate
+
+About the Project
+
+10 Bessel FunctionsBessel and Hankel Functions10.5 Wronskians and Cross-Products10.7 Limiting Forms
+
+§10.6 Recurrence Relations and Derivatives
+
+ⓘ
+
+Permalink:
+http://dlmf.nist.gov/10.6
+See also:
+Annotations for Ch.10
+
+Contents
+
+§10.6(i) Recurrence Relations
+§10.6(ii) Derivatives
+§10.6(iii) Cross-Products
+
+§10.6(i) Recurrence Relations
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Hankel functions, cylinder functions, recurrence relations
+
+Notes:
+For (10.6.1) and (10.6.2) see
+Olver (1997b, pp. 58–59, 240–242) or
+Watson (1944, pp. 45, 66, 73–74). (10.6.3) are
+special cases, and (10.6.4), (10.6.5) follow by
+straightforward substitution.
+Referenced by:
+
+Erratum (V1.1.3) for Subsections 10.6(i), 10.29(i),
+Erratum (V1.1.3) for References
+
+Permalink:
+http://dlmf.nist.gov/10.6.i
+Addition (effective with 1.1.3):
+
+A sentence was added just below (10.6.5) regarding results on modified
+quotients of the form z⁢𝒞ν±1⁡(z)/𝒞ν⁡(z).
+
+See also:
+Annotations for §10.6 and
+Ch.10
+
+With 𝒞ν⁡(z) defined as in §10.2(ii),
+
+10.6.1
+
+𝒞ν−1⁡(z)+𝒞ν+1⁡(z)
+=(2⁢ν/z)⁢𝒞ν⁡(z),
+
+𝒞ν−1⁡(z)−𝒞ν+1⁡(z)
+=2⁢𝒞ν′⁡(z).
+
+ⓘ
+
+Symbols:
+
+𝒞ν⁡(z): cylinder function,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.1.27
+
+Referenced by:
+
+§10.51(i),
+§10.6(i),
+§10.6(ii),
+§10.63(i),
+§10.74(iv)
+
+Permalink:
+http://dlmf.nist.gov/10.6.E1
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.6(i),
+§10.6 and
+Ch.10
+
+10.6.2
+
+𝒞ν′⁡(z)
+=𝒞ν−1⁡(z)−(ν/z)⁢𝒞ν⁡(z),
+
+𝒞ν′⁡(z)
+=−𝒞ν+1⁡(z)+(ν/z)⁢𝒞ν⁡(z).
+
+ⓘ
+
+Symbols:
+
+𝒞ν⁡(z): cylinder function,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.1.27
+
+Referenced by:
+
+§10.21(ii),
+§10.22(i),
+§10.22(ii),
+§10.5,
+§10.51(i),
+§10.6(i),
+§10.63(i),
+§10.63(ii),
+§10.74(vi)
+
+Permalink:
+http://dlmf.nist.gov/10.6.E2
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.6(i),
+§10.6 and
+Ch.10
+
+10.6.3
+
+J0′⁡(z)
+=−J1⁡(z),
+Y0′⁡(z)
+=−Y1⁡(z),
+
+H0(1)′⁡(z)
+=−H1(1)⁡(z),
+H0(2)′⁡(z)
+=−H1(2)⁡(z).
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Yν⁡(z): Bessel function of the second kind,
+Hν(1)⁡(z): Bessel function of the third kind (or Hankel function),
+Hν(2)⁡(z): Bessel function of the third kind (or Hankel function) and
+z: complex variable
+
+A&S Ref:
+ 9.1.28
+
+Referenced by:
+§10.6(i)
+Permalink:
+http://dlmf.nist.gov/10.6.E3
+Encodings:
+
+TeX, TeX, TeX, TeX, pMML, pMML, pMML, pMML, png, png, png, png
+
+See also:
+Annotations for §10.6(i),
+§10.6 and
+Ch.10
+
+If fν⁡(z)=zp⁢𝒞ν⁡(λ⁢zq), where p,q, and
+λ (≠0) are real or complex constants, then
+
+10.6.4
+
+fν−1⁡(z)+fν+1⁡(z)
+=(2⁢ν/λ)⁢z−q⁢fν⁡(z),
+
+(p+ν⁢q)⁢fν−1⁡(z)+(p−ν⁢q)⁢fν+1⁡(z)
+=(2⁢ν/λ)⁢z1−q⁢fν′⁡(z).
+
+ⓘ
+
+Symbols:
+
+z: complex variable,
+ν: complex parameter and
+fν⁡(z)
+
+A&S Ref:
+ 9.1.29
+
+Referenced by:
+§10.6(i)
+Permalink:
+http://dlmf.nist.gov/10.6.E4
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.6(i),
+§10.6 and
+Ch.10
+
+10.6.5
+
+z⁢fν′⁡(z)
+=λ⁢q⁢zq⁢fν−1⁡(z)+(p−ν⁢q)⁢fν⁡(z),
+
+z⁢fν′⁡(z)
+=−λ⁢q⁢zq⁢fν+1⁡(z)+(p+ν⁢q)⁢fν⁡(z).
+
+ⓘ
+
+Symbols:
+
+z: complex variable,
+ν: complex parameter and
+fν⁡(z)
+
+A&S Ref:
+ 9.1.29
+
+Referenced by:
+
+§10.6(i),
+Erratum (V1.1.3) for Subsections 10.6(i), 10.29(i)
+
+Permalink:
+http://dlmf.nist.gov/10.6.E5
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.6(i),
+§10.6 and
+Ch.10
+
+For results on modified quotients of the form z⁢𝒞ν±1⁡(z)/𝒞ν⁡(z) see
+Onoe (1955) and Onoe (1956).
+
+§10.6(ii) Derivatives
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Hankel functions, cylinder functions, derivatives, explicit forms
+
+Notes:
+For (10.6.6) see Watson (1944, pp. 46). For
+(10.6.7) use induction combined with the second of
+(10.6.1).
+Permalink:
+http://dlmf.nist.gov/10.6.ii
+See also:
+Annotations for §10.6 and
+Ch.10
+
+For k=0,1,2,…,
+
+10.6.6
+
+(1z⁢ddz)k⁡(zν⁢𝒞ν⁡(z))
+=zν−k⁢𝒞ν−k⁡(z),
+
+(1z⁢ddz)k⁡(z−ν⁢𝒞ν⁡(z))
+=(−1)k⁢z−ν−k⁢𝒞ν+k⁡(z).
+
+ⓘ
+
+Symbols:
+
+𝒞ν⁡(z): cylinder function,
+dfdx: derivative of f with respect to x,
+k: nonnegative integer,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.1.30
+
+Referenced by:
+§10.6(ii)
+Permalink:
+http://dlmf.nist.gov/10.6.E6
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.6(ii),
+§10.6 and
+Ch.10
+
+10.6.7
+
+𝒞ν(k)⁡(z)=12k⁢∑n=0k(−1)n⁢(kn)⁢𝒞ν−k+2⁢n⁡(z).
+
+ⓘ
+
+Symbols:
+
+(mn): binomial coefficient,
+𝒞ν⁡(z): cylinder function,
+n: integer,
+k: nonnegative integer,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.1.31
+
+Referenced by:
+§10.6(ii)
+Permalink:
+http://dlmf.nist.gov/10.6.E7
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.6(ii),
+§10.6 and
+Ch.10
+
+§10.6(iii) Cross-Products
+
+ⓘ
+
+Keywords:
+
+Bessel functions, cross-products, recurrence relations
+
+Notes:
+See Goodwin (1949a).
+Permalink:
+http://dlmf.nist.gov/10.6.iii
+See also:
+Annotations for §10.6 and
+Ch.10
+
+Let
+
+10.6.8
+
+pν
+=Jν⁡(a)⁢Yν⁡(b)−Jν⁡(b)⁢Yν⁡(a),
+
+qν
+=Jν⁡(a)⁢Yν′⁡(b)−Jν′⁡(b)⁢Yν⁡(a),
+
+rν
+=Jν′⁡(a)⁢Yν⁡(b)−Jν⁡(b)⁢Yν′⁡(a),
+
+sν
+=Jν′⁡(a)⁢Yν′⁡(b)−Jν′⁡(b)⁢Yν′⁡(a),
+
+ⓘ
+
+Defines:
+
+pν: cross-product (locally),
+qν: cross-product (locally),
+rν: cross-product (locally) and
+sν: cross-product (locally)
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Yν⁡(z): Bessel function of the second kind and
+ν: complex parameter
+
+A&S Ref:
+ 9.1.32
+
+Permalink:
+http://dlmf.nist.gov/10.6.E8
+Encodings:
+
+TeX, TeX, TeX, TeX, pMML, pMML, pMML, pMML, png, png, png, png
+
+See also:
+Annotations for §10.6(iii),
+§10.6 and
+Ch.10
+
+where a and b are independent of ν. Then
+
+10.6.9
+
+pν+1−pν−1
+=−2⁢νa⁢qν−2⁢νb⁢rν,
+
+qν+1+rν
+=νa⁢pν−ν+1b⁢pν+1,
+
+rν+1+qν
+=νb⁢pν−ν+1a⁢pν+1,
+
+sν
+=12⁢pν+1+12⁢pν−1−ν2a⁢b⁢pν,
+
+ⓘ
+
+Symbols:
+
+ν: complex parameter,
+pν: cross-product,
+qν: cross-product,
+rν: cross-product and
+sν: cross-product
+
+A&S Ref:
+ 9.1.33
+
+Permalink:
+http://dlmf.nist.gov/10.6.E9
+Encodings:
+
+TeX, TeX, TeX, TeX, pMML, pMML, pMML, pMML, png, png, png, png
+
+See also:
+Annotations for §10.6(iii),
+§10.6 and
+Ch.10
+
+and
+
+10.6.10
+
+pν⁢sν−qν⁢rν=4/(π2⁢a⁢b).
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+ν: complex parameter,
+pν: cross-product,
+qν: cross-product,
+rν: cross-product and
+sν: cross-product
+
+A&S Ref:
+ 9.1.34
+
+Permalink:
+http://dlmf.nist.gov/10.6.E10
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.6(iii),
+§10.6 and
+Ch.10
+
+10.5 Wronskians and Cross-Products10.7 Limiting Forms
+
+© 2010–2026 NIST / Disclaimer / Feedback;
+ Version 1.2.6;
+Release date 2026-03-15.
+
+Site Privacy Accessibility Privacy Program Copyrights Vulnerability Disclosure No Fear Act Policy FOIA Environmental Policy Scientific Integrity Information Quality Standards Commerce.gov Science.gov USA.gov
+

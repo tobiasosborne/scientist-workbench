@@ -1,0 +1,10 @@
+ERROR: ArgumentError: Package SpecialFunctions not found in current path.
+- Run `import Pkg; Pkg.add("SpecialFunctions")` to install the SpecialFunctions package.
+Stacktrace:
+ [1] macro expansion
+   @ ./loading.jl:2403 [inlined]
+ [2] macro expansion
+   @ ./lock.jl:376 [inlined]
+ [3] __require(into::Module, mod::Symbol)
+   @ Base ./loading.jl:2386
+ [4] require(into::Module, mod::Symbol)
