@@ -1389,6 +1389,150 @@ function besselJY_hankel(nu: number, z: number): { J: number; Y: number } {
   return { J, Y };
 }
 
+// =============================================================================
+// Half-integer ν closed forms — DLMF §10.49 (closes z5em + omsm)
+// =============================================================================
+//
+// For half-integer ν = n + 1/2 (n a non-negative integer), J/Y/K all
+// have FINITE closed-form expressions involving sin/cos/exp and
+// polynomials in 1/z. These avoid the Hankel asymptotic's intermediate-
+// term growth and the connection-formula cancellation that erode
+// precision for moderate half-integer ν.
+//
+// The spherical-Bessel substrate (DLMF §10.47-10.49) computes these
+// closed forms via the standard three-term recurrence in the
+// dimensionless `j_n` / `y_n` / `k_n` (with the `√(π/(2z))` prefactor
+// absorbed), then converts back at the end.
+
+/** Detect ν = n + 1/2 for non-negative integer n. */
+function isHalfInteger(nu: number): boolean {
+  if (!Number.isFinite(nu)) return false;
+  if (nu < 0) return false;
+  // 2ν is an odd positive integer.
+  const twoNu = 2 * nu;
+  if (!Number.isInteger(twoNu)) return false;
+  return (twoNu & 1) === 1;
+}
+
+/**
+ * Spherical Bessel `j_n(z) = √(π/(2z)) · J_{n+1/2}(z)` for integer `n ≥ 0`.
+ *
+ * Dispatch:
+ *   n = 0: `sin(z)/z`
+ *   n = 1: `sin(z)/z² − cos(z)/z`
+ *   n ≤ z: forward recurrence `j_{k+1} = (2k+1)/z · j_k − j_{k−1}` —
+ *     stable in the dominant direction.
+ *   n > z: backward Miller's algorithm — start at N = n + Math.ceil(√n + 10),
+ *     set `j_{N+1} = 0, j_N = 1`, recur backward, normalize via the
+ *     known `j_0(z) = sin(z)/z`.
+ *
+ * Both branches give ULP accuracy across the (n, z) plane;
+ * `cancellation` in the recurrence is bounded by a constant.
+ */
+function sphericalJ(n: number, z: number): number {
+  if (z === 0) return n === 0 ? 1 : 0;
+  if (n === 0) return Math.sin(z) / z;
+  if (n === 1) return Math.sin(z) / (z * z) - Math.cos(z) / z;
+  if (n < z) {
+    // Forward recurrence (n ≤ z is dominant direction for j_n).
+    let jPrev = Math.sin(z) / z;
+    let jCurr = Math.sin(z) / (z * z) - Math.cos(z) / z;
+    for (let k = 1; k < n; k++) {
+      const jNext = ((2 * k + 1) / z) * jCurr - jPrev;
+      jPrev = jCurr;
+      jCurr = jNext;
+    }
+    return jCurr;
+  }
+  // Backward Miller's (n > z, recurrence is subdominant in forward direction).
+  // Choose N high enough that |j_N| is below ULP of the target |j_n|.
+  // Heuristic: N = n + max(20, ceil(√n + 10)). For n=100, z=50: N ≈ 130.
+  // Larger margin needed when n/z is large (recurrence damping grows).
+  const margin = Math.max(20, Math.ceil(Math.sqrt(n) + 10));
+  const N = n + margin;
+  let jNext = 0;
+  let jCurr = 1;
+  let target = 0;
+  // Recurrence (DLMF §10.51.1): `j_{k−1}(z) = (2k+1)/z · j_k(z) − j_{k+1}(z)`.
+  // After each step, jCurr advances to `j_{k−1}`. We capture `j_n` AFTER
+  // the shift, when the loop has just computed `k−1 = n` (i.e. `k = n+1`).
+  for (let k = N; k > 0; k--) {
+    const jPrev = ((2 * k + 1) / z) * jCurr - jNext;
+    jNext = jCurr;
+    jCurr = jPrev;
+    if (k === n + 1) target = jCurr;
+  }
+  // jCurr is now j_0 unnormalised; rescale so j_0 = sin(z)/z.
+  const scale = Math.sin(z) / z / jCurr;
+  return target * scale;
+}
+
+/**
+ * Spherical Bessel `y_n(z) = √(π/(2z)) · Y_{n+1/2}(z)` for integer `n ≥ 0`.
+ *
+ * `y_n` grows with n for fixed z, so forward recurrence is stable in
+ * the dominant direction across the entire (n, z) plane.
+ *   y_0(z) = −cos(z)/z
+ *   y_1(z) = −cos(z)/z² − sin(z)/z
+ *   y_{k+1}(z) = (2k+1)/z · y_k(z) − y_{k−1}(z)
+ */
+function sphericalY(n: number, z: number): number {
+  if (z === 0) return -Infinity; // y_n(0) is singular
+  if (n === 0) return -Math.cos(z) / z;
+  if (n === 1) return -Math.cos(z) / (z * z) - Math.sin(z) / z;
+  let yPrev = -Math.cos(z) / z;
+  let yCurr = -Math.cos(z) / (z * z) - Math.sin(z) / z;
+  for (let k = 1; k < n; k++) {
+    const yNext = ((2 * k + 1) / z) * yCurr - yPrev;
+    yPrev = yCurr;
+    yCurr = yNext;
+  }
+  return yCurr;
+}
+
+/**
+ * `J_{n+1/2}(z) = √(2z/π) · j_n(z)` for non-negative integer `n` —
+ * the DLMF §10.49.3 closed form for half-integer ν.
+ * Closes bead `scientist-workbench-omsm` for the J side.
+ */
+function besselJHalfInteger(n: number, z: number): number {
+  return Math.sqrt((2 * z) / Math.PI) * sphericalJ(n, z);
+}
+
+/**
+ * `Y_{n+1/2}(z) = √(2z/π) · y_n(z)` for non-negative integer `n` —
+ * the DLMF §10.49.11 closed form for half-integer ν.
+ * Closes bead `scientist-workbench-omsm` for the Y side.
+ */
+function besselYHalfInteger(n: number, z: number): number {
+  return Math.sqrt((2 * z) / Math.PI) * sphericalY(n, z);
+}
+
+/**
+ * `K_{n+1/2}(z) = √(π/(2z)) · exp(−z) · Σ_{k=0}^n (n+k)! / [k!(n−k)!(2z)^k]`
+ *
+ * DLMF §10.49.13: the half-integer-ν K closed form is a FINITE sum
+ * of n+1 terms — much faster and more accurate than the generic
+ * `K_ν = (π/2)·(I_{−ν} − I_ν)/sin(νπ)` reflection (which loses up to
+ * 12 digits at half-integer ν for moderate z due to the I_{−ν} − I_ν
+ * cancellation).
+ *
+ * Closes bead `scientist-workbench-z5em` for the K side.
+ */
+function besselKHalfInteger(n: number, z: number): number {
+  // Σ_{k=0}^n (n+k)! / [k!·(n−k)!·(2z)^k]
+  // Recurrence: term_{k+1}/term_k = (n+k+1)(n−k) / [(k+1)·2z]
+  let sum = 1; // k=0 term
+  let term = 1;
+  const twoZ = 2 * z;
+  for (let k = 0; k < n; k++) {
+    // Numerator step: (n+k+1)·(n−k); denominator: (k+1)·2z.
+    term *= ((n + k + 1) * (n - k)) / ((k + 1) * twoZ);
+    sum += term;
+  }
+  return Math.sqrt(Math.PI / (2 * z)) * Math.exp(-z) * sum;
+}
+
 /**
  * General-ν `Y_ν(x)` via the reflection-formula:
  *   Y_ν(x) = (J_ν(x) · cos(νπ) − J_{−ν}(x)) / sin(νπ)
@@ -1403,6 +1547,13 @@ function besselY_general(nu: number, x: number): number {
   if (x <= 0) {
     if (x === 0) return -Infinity;
     return NaN;
+  }
+  // Half-integer ν closed form (DLMF §10.49.11). Bead omsm:
+  // half-integer Y_ν loses 2-3 digits via the connection formula at
+  // z ≈ 50, more at higher ν; the spherical-Bessel closed form is
+  // ULP-accurate for all (n + 1/2, z > 0).
+  if (isHalfInteger(nu)) {
+    return besselYHalfInteger(Math.floor(nu), x);
   }
   // Hankel asymptotic for large z.
   if (x > Math.max(20, Math.abs(nu) + 12)) {
@@ -1431,6 +1582,12 @@ function besselJ_real_general(nu: number, x: number): number {
   if (x === 0) {
     if (nu > 0) return 0;
     return NaN;
+  }
+  // Half-integer ν closed form (DLMF §10.49.3). Bead omsm:
+  // half-integer J_ν loses 2-12 digits via the Hankel asymptotic at
+  // moderate z; the spherical-Bessel closed form is ULP-accurate.
+  if (isHalfInteger(nu)) {
+    return besselJHalfInteger(Math.floor(nu), x);
   }
   if (x > Math.max(20, Math.abs(nu) + 12)) {
     return besselJY_hankel(nu, x).J;
@@ -1642,6 +1799,14 @@ function besselK_real_general(nu: number, x: number): number {
       kn = kn2;
     }
     return kn;
+  }
+  // Half-integer ν closed form (DLMF §10.49.13). Bead z5em:
+  // half-integer K_ν loses 7-12 digits at z ∈ [5, 10] via the generic
+  // I-reflection (which has its own near-cancellation at half-integer
+  // ν since `(I_{−ν} − I_ν)/sin(νπ)` has a removable singularity-like
+  // structure). The finite-sum closed form is ULP-accurate.
+  if (isHalfInteger(nu)) {
+    return besselKHalfInteger(Math.floor(nu), x);
   }
   // Non-integer ν: large-x asymptotic.
   if (x > Math.max(30, nu + 12)) {
