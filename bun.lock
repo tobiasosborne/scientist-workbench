@@ -308,6 +308,9 @@
         "@workbench/protocol": "workspace:*",
         "@workbench/quadrature": "workspace:*",
       },
+      "devDependencies": {
+        "@workbench/bigfloat": "workspace:*",
+      },
     },
     "tools/integrate-ode-ivp": {
       "name": "@workbench/tool-integrate-ode-ivp",
@@ -379,6 +382,15 @@
     },
     "tools/linalg-svd": {
       "name": "@workbench/tool-linalg-svd",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/contract": "workspace:*",
+        "@workbench/linalg-core": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+      },
+    },
+    "tools/linalg-svd-complex": {
+      "name": "@workbench/tool-linalg-svd-complex",
       "version": "0.1.0",
       "dependencies": {
         "@workbench/contract": "workspace:*",
@@ -582,6 +594,20 @@
         "@workbench/contract": "workspace:*",
         "@workbench/protocol": "workspace:*",
         "@workbench/solve": "workspace:*",
+      },
+    },
+    "tools/special-eval": {
+      "name": "@workbench/tool-special-eval",
+      "version": "0.1.0",
+      "dependencies": {
+        "@workbench/bigfloat": "workspace:*",
+        "@workbench/contract": "workspace:*",
+        "@workbench/protocol": "workspace:*",
+        "@workbench/quadrature": "workspace:*",
+      },
+      "devDependencies": {
+        "@workbench/cas-core": "workspace:*",
+        "@workbench/meijer-core": "workspace:*",
       },
     },
     "tools/sturm-controlled": {
@@ -790,6 +816,8 @@
 
     "@workbench/tool-linalg-svd": ["@workbench/tool-linalg-svd@workspace:tools/linalg-svd"],
 
+    "@workbench/tool-linalg-svd-complex": ["@workbench/tool-linalg-svd-complex@workspace:tools/linalg-svd-complex"],
+
     "@workbench/tool-linsolve-q": ["@workbench/tool-linsolve-q@workspace:tools/linsolve-q"],
 
     "@workbench/tool-lp-solve": ["@workbench/tool-lp-solve@workspace:tools/lp-solve"],
@@ -831,6 +859,8 @@
     "@workbench/tool-sdp-solve": ["@workbench/tool-sdp-solve@workspace:tools/sdp-solve"],
 
     "@workbench/tool-solve": ["@workbench/tool-solve@workspace:tools/solve"],
+
+    "@workbench/tool-special-eval": ["@workbench/tool-special-eval@workspace:tools/special-eval"],
 
     "@workbench/tool-sturm-controlled": ["@workbench/tool-sturm-controlled@workspace:tools/sturm-controlled"],
 
