@@ -169,3 +169,46 @@ cause; a verifier re-profile would only paper over it.
   (the from-paper port discipline).
 - worklog 112 (`cone-core` substrate + §5 scaling), worklog 113
   (`cone-solve` tool + the bench-grading finding that forced this ADR).
+
+## F. v0.2 — Stabilised Type-I Anderson (AA-I-S-m)
+
+The v0.2 lever the original §A flagged as future-work has landed.
+`packages/cone-core/src/anderson-type-i.ts` ports **AA-I-S-m**, the
+globally-convergent Type-I algorithm of Zhang-O'Donoghue-Boyd 2018
+(Algorithm 3, arXiv:1808.03971, p. 13). It bundles three structural
+modifications of the bare AA-I-m method, all three required for
+Theorem 6's global-convergence guarantee on non-expansive fixed-point
+maps: (1) **Powell-type regularisation** of the inverse-Jacobian
+rank-one update (eq 10–13), keeping `|det(B_k)| ≥ θ̄^{m_k}`;
+(2) **Gram-Schmidt restart** (eq 14), dropping the window on either
+saturation or a strong-linear-independence violation `‖ŝ_{k-1}‖ <
+τ ‖s_{k-1}‖`; and (3) **residual-decrease safeguarding** with a
+KM-averaged fall-back `f_α(x) = (1-α)x + α f(x)` whenever the current
+`‖g_k‖` exceeds the schedule `D · Ū · (n_AA+1)^{−(1+ε)}`. Ground truth
+file `docs/ground-truth/convex/anderson-acceleration.md` §§6–7
+transcribes the paper line by line; the port is by-paper, never by-`scs.c`
+(ADR-0030 §E).
+
+The selector wire is `tools/cone-solve --accelerator=type-ii|type-i`,
+a typed enum flag per ADR-0011's flag-declaration discipline (`F.enum`,
+defaulting to `type-ii`). The substrate-level dispatcher
+`makeAndersonFromSpec(spec)` in `packages/cone-core/src/anderson.ts`
+maps the tool's flag choice into an `AndersonSpec` union (`{kind:
+"type-ii", memory}` or `{kind: "type-i"} & AndersonISpec` with the
+five paper-default hyper-parameters from `DEFAULT_ANDERSON_I_SPEC`).
+`SCSOpts` gains a parallel `accelerator?: AndersonSpec` field next to
+the v0.1 `andersonMemory`; the two are mutually exclusive (CLAUDE.md
+Rule 1 — pick one knob). The bench instrument is
+`bench/cone-solve/profile-lp-netlib.ts --accelerator=type-i`, which
+mirrors the tool flag and threads it to the corpus bridge via the
+`CANDIDATE_FLAGS=accelerator=type-i` env var (ADR-0037 §C
+measurement protocol). The corpus bridge `benchmarks/lp-netlib/
+run-candidate.ts` was extended with a 15-line `CANDIDATE_FLAGS`
+parser that forwards the flags to `wb.run(tool, value, flags)`.
+
+The default stays `type-ii` deliberately: the existing `cone-solve`
+goldens are byte-identical to v0.1 behaviour, and the flip of the
+default to `type-i` is a separate ADR that depends on a future bench
+measurement of the v0.1→v0.2 optimal-rate gain on a representative
+corpus slice (lp-netlib at minimum; SOC/PSD corpora once those tools
+ship). Until that measurement lands, `type-ii` is the no-flag answer.

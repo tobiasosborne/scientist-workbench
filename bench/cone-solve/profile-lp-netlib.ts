@@ -55,7 +55,13 @@
 // graded path — the profile measures the same tool the bench would.
 //
 // Usage:
-//   bun bench/cone-solve/profile-lp-netlib.ts [--max-iter=N] [--timeout-ms=N] [--only=id,id,…]
+//   bun bench/cone-solve/profile-lp-netlib.ts [--max-iter=N] [--timeout-ms=N] [--only=id,id,…] [--accelerator=type-ii|type-i]
+//
+// The `--accelerator` flag (ADR-0036 §F) mirrors `tools/cone-solve`'s
+// own flag: select between the v0.1 AA-II (default) and the v0.2
+// AA-I-S-m globalised path. Threaded to the corpus bridge via the
+// `CANDIDATE_FLAGS` environment variable, which `run-candidate.ts`
+// parses and passes to `wb.run` as the third (flags) argument.
 //
 // Determinism: `cone-solve` is `numerical: true` (ADR-0015) — the
 // per-case status / iterations / achieved_precision are bit-identical
@@ -99,9 +105,24 @@ function listFlag(name: string): string[] | undefined {
     .filter((s) => s.length > 0);
 }
 
+function enumFlag<T extends string>(
+  name: string,
+  values: readonly T[],
+  fallback: T,
+): T {
+  const hit = process.argv.find((a) => a.startsWith(`--${name}=`));
+  if (hit === undefined) return fallback;
+  const v = hit.slice(name.length + 3);
+  if (!values.includes(v as T)) {
+    throw new Error(`--${name} must be one of ${values.join("|")}; got '${v}'`);
+  }
+  return v as T;
+}
+
 const MAX_ITER = intFlag("max-iter", 50_000);
 const TIMEOUT_MS = intFlag("timeout-ms", 60_000);
 const ONLY = listFlag("only");
+const ACCELERATOR = enumFlag("accelerator", ["type-ii", "type-i"] as const, "type-ii");
 const PRECISION = 1e-6; // the cone-solve contract (ADR-0030 §B), not negotiable here
 
 // ── golden + oracle consensus ───────────────────────────────────────────────
@@ -237,12 +258,23 @@ async function runCase(rc: RawCase): Promise<Row> {
   const rawInput = { ...rc.input, precision: PRECISION, max_iter: MAX_ITER };
 
   const t0 = performance.now();
+  // CANDIDATE_FLAGS is the env-var protocol the corpus bridge accepts
+  // for passing tool flags through to `wb.run(tool, value, flags)`.
+  // Format: `key1=value1,key2=value2,…` (ADR-0036 §F bench wiring).
+  // Here we forward only the accelerator flag; the bridge tolerates
+  // an unknown key with a clean throw.
+  const candidateFlags = `accelerator=${ACCELERATOR}`;
   const proc = Bun.spawn(["bun", "run", RUN_CANDIDATE], {
     stdin: "pipe",
     stdout: "pipe",
     stderr: "pipe",
     cwd: WORKBENCH_ROOT,
-    env: { ...process.env, CANDIDATE_TOOL: "cone-solve", WORKBENCH_ROOT },
+    env: {
+      ...process.env,
+      CANDIDATE_TOOL: "cone-solve",
+      CANDIDATE_FLAGS: candidateFlags,
+      WORKBENCH_ROOT,
+    },
   });
   proc.stdin.write(JSON.stringify(rawInput));
   await proc.stdin.end();
@@ -321,7 +353,7 @@ if (ONLY && cases.length !== ONLY.length) {
 
 process.stderr.write(
   `cone-solve × lp-netlib — universal-tier profile @ precision=${PRECISION}, ` +
-    `max_iter=${MAX_ITER}, timeout=${TIMEOUT_MS}ms` +
+    `max_iter=${MAX_ITER}, timeout=${TIMEOUT_MS}ms, accelerator=${ACCELERATOR}` +
     (ONLY ? `, only=${ONLY.join(",")}` : "") +
     `\n`,
 );
@@ -396,7 +428,9 @@ const overClaimed = rows.filter(
 );
 
 process.stdout.write("\n");
-process.stdout.write(`profile @ precision=${PRECISION}, max_iter=${MAX_ITER}\n`);
+process.stdout.write(
+  `profile @ precision=${PRECISION}, max_iter=${MAX_ITER}, accelerator=${ACCELERATOR}\n`,
+);
 process.stdout.write(
   `  optimal   ${optimal.length}/${rows.length}  (reached the 1e-6 ceiling within budget)\n`,
 );

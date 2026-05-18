@@ -122,23 +122,39 @@ import {
   type Value,
   type RecordValue,
 } from "@workbench/protocol";
-import { defineTool, runTool } from "@workbench/contract";
+import { defineTool, F, runTool } from "@workbench/contract";
 import {
   type Candidate,
   type Cone,
   type ConeProblem,
   type SCSResult,
+  type AndersonSpec,
   ConeError,
   nonNeg,
   scsSolve,
   zero,
   DEFAULT_SCS_OPTS,
+  DEFAULT_ANDERSON_I_SPEC,
 } from "@workbench/cone-core";
 import { matrixFromRows } from "@workbench/linalg-core";
 
 const NAME = "cone-solve";
 const VERSION = "0.1.0";
 const METHOD_TAG = "scs";
+
+// -----------------------------------------------------------------------------
+// Accelerator selector flag (ADR-0036 §F)
+// -----------------------------------------------------------------------------
+//
+// The `--accelerator` flag selects between the v0.1 Type-II AA (the
+// classical Walker-Ni method) and the v0.2 Type-I AA-I-S-m (Zhang-
+// O'Donoghue-Boyd's Powell-regularised + GS-restart + KM-safeguarded
+// algorithm — ground truth file §7). Default `type-ii` so existing
+// goldens stay byte-identical; the flip to `type-i` happens in a
+// future ADR once the lp-netlib bench measures the win.
+
+const ACCELERATOR_VALUES = ["type-ii", "type-i"] as const;
+type AcceleratorChoice = (typeof ACCELERATOR_VALUES)[number];
 
 // -----------------------------------------------------------------------------
 // Wire schema — ADR-0030 §C input / §D output
@@ -756,9 +772,10 @@ function encodeResult(
 // The fn body
 // -----------------------------------------------------------------------------
 
-function fn(input: RecordValue, _flags: Record<string, never>): Value {
-  void _flags;
-
+function fn(
+  input: RecordValue,
+  flags: { accelerator: AcceleratorChoice },
+): Value {
   const decoded = decodeInput(input);
   if (isRefusal(decoded)) return refusalValue(decoded);
 
@@ -804,12 +821,27 @@ function fn(input: RecordValue, _flags: Record<string, never>): Value {
     return residual <= decoded.precision;
   };
 
+  // Build the `accelerator` spec from the typed flag. `type-ii` keeps
+  // back-compat with the v0.1 default (a memory-window AA-II); `type-i`
+  // selects the AA-I-S-m v0.2 path (ADR-0036 §F) with the paper's
+  // default hyper-parameters from `DEFAULT_ANDERSON_I_SPEC`.
+  //
+  // Mutual exclusion (CLAUDE.md Rule 1): we set `accelerator` explicitly
+  // *only* for `type-i` — for `type-ii` we leave it unset and let
+  // `andersonMemory` carry the choice, preserving byte-identical
+  // SCSOpts for the back-compat path. `scsSolve` rejects passing both.
+  const acceleratorSpec: AndersonSpec | undefined =
+    flags.accelerator === "type-i"
+      ? { kind: "type-i", ...DEFAULT_ANDERSON_I_SPEC }
+      : undefined;
+
   const result = scsSolve(translated.problem, {
     precision: decoded.precision,
     maxIter: decoded.maxIter,
     alpha: DEFAULT_SCS_OPTS.alpha,
     andersonMemory: DEFAULT_SCS_OPTS.andersonMemory,
     convergenceTest,
+    ...(acceleratorSpec !== undefined ? { accelerator: acceleratorSpec } : {}),
   });
 
   return encodeResult(result, translated, decoded, []);
@@ -881,6 +913,30 @@ const examples = [
       }),
     ),
   },
+  {
+    description:
+      "1-D LP with --accelerator=type-i (ADR-0036 §F AA-I-S-m path) — same optimum",
+    input: record({
+      minimize: record({ c: f64List([1]) }),
+      subjectTo: record({
+        Ax_eq_b: record({ A: list([f64List([1])]), b: f64List([1]) }),
+        cones: list([coneExpr("NonNegCone", [0])]),
+      }),
+    }),
+    flags: { accelerator: "type-i" as const },
+    output: record({
+      status: str("optimal"),
+      x: f64List([1]),
+      dual: f64List([1]),
+      slack: f64List([0]),
+      objective: float64FromNumber(1),
+      achieved_precision: float64FromNumber(0),
+      iterations: int(1n),
+      method: str(METHOD_TAG),
+      condition_estimate: float64FromNumber(0),
+      warnings: list([]),
+    }),
+  },
 ];
 
 const invariants = [
@@ -927,6 +983,15 @@ const invariants = [
       "`cone-solve/unsupported-cone` envelope, never a wrong-shaped answer.",
     machine_checkable: true,
   },
+  {
+    name: "accelerator-choice-agrees-on-the-optimum",
+    statement:
+      "On a feasible LP both `--accelerator=type-ii` (default) and " +
+      "`--accelerator=type-i` (ADR-0036 §F AA-I-S-m) return the same primal " +
+      "optimum within `achieved_precision` — acceleration changes the speed, " +
+      "never the answer (the determinism contract for the choice flag).",
+    machine_checkable: true,
+  },
 ];
 
 // -----------------------------------------------------------------------------
@@ -947,7 +1012,7 @@ function smokeTest(): void {
       cones: list([coneExpr("NonNegCone", [0, 1])]),
     }),
   });
-  const out = fn(lp, {}) as RecordValue;
+  const out = fn(lp, { accelerator: "type-ii" }) as RecordValue;
   const status = (out.fields["status"] as { kind: "string"; value: string }).value;
   if (status !== "optimal") {
     throw new Error(`cone-solve --test: LP returned status=${status}, expected "optimal"`);
@@ -1034,7 +1099,7 @@ function smokeTest(): void {
     minimize: record({ c: f64List([1, 0, 0]) }),
     subjectTo: record({ cones: list([coneExpr("SOCone", [0, 1, 2])]) }),
   });
-  const socOut = fn(socIn, {});
+  const socOut = fn(socIn, { accelerator: "type-ii" });
   if (socOut.kind !== "tagged" || socOut.tag !== "cone-solve/unsupported-cone") {
     throw new Error(
       `cone-solve --test: SOCone input gave kind=${socOut.kind}, expected tagged cone-solve/unsupported-cone`,
@@ -1049,10 +1114,47 @@ function smokeTest(): void {
       cones: list([coneExpr("NonNegCone", [0])]),
     }),
   });
-  const qpOut = fn(qpIn, {});
+  const qpOut = fn(qpIn, { accelerator: "type-ii" });
   if (qpOut.kind !== "tagged" || qpOut.tag !== "cone-solve/quadratic-objective") {
     throw new Error(
       `cone-solve --test: Q input gave kind=${qpOut.kind}, expected tagged cone-solve/quadratic-objective`,
+    );
+  }
+
+  // (4) accelerator-choice-agrees-on-the-optimum invariant: the same LP
+  // solved with `--accelerator=type-i` must return the same primal
+  // optimum within precision. AA-I-S-m is the ADR-0036 §F path; if it
+  // *diverged* on a feasible LP, this assertion would catch it.
+  const outAAI = fn(lp, { accelerator: "type-i" }) as RecordValue;
+  const statusAAI = (outAAI.fields["status"] as { kind: "string"; value: string }).value;
+  if (statusAAI !== "optimal") {
+    throw new Error(
+      `cone-solve --test: type-i path returned status=${statusAAI}, expected "optimal"`,
+    );
+  }
+  const objAAIv = outAAI.fields["objective"];
+  if (objAAIv === undefined || objAAIv.kind !== "float64") {
+    throw new Error("cone-solve --test: type-i optimal result is missing the objective field");
+  }
+  const objAAI = float64ToNumber(objAAIv);
+  if (Math.abs(objAAI - 3) > 1e-5) {
+    throw new Error(
+      `cone-solve --test: type-i LP objective ${objAAI} differs from 3 by more than 1e-5 ` +
+        `— accelerator-choice-agrees-on-the-optimum invariant violated (ADR-0036 §F)`,
+    );
+  }
+  const xAAI = (outAAI.fields["x"] as { kind: "list"; items: Value[] }).items.map((v) =>
+    float64ToNumber(v as { kind: "float64"; bits: string }),
+  );
+  if (
+    xAAI.length !== 2 ||
+    Math.abs(xAAI[0]! - x[0]!) > 1e-5 ||
+    Math.abs(xAAI[1]! - x[1]!) > 1e-5
+  ) {
+    throw new Error(
+      `cone-solve --test: type-i recovered x=${JSON.stringify(xAAI)} differs from ` +
+        `type-ii x=${JSON.stringify(x)} by more than 1e-5 — accelerator-choice-agrees-on-the-optimum ` +
+        `invariant violated (ADR-0036 §F)`,
     );
   }
 }
@@ -1061,6 +1163,15 @@ export const def = defineTool({
   name: NAME,
   version: VERSION,
   schema: { input: inputSchema, output: outputSchema },
+  flags: {
+    accelerator: F.enum(
+      ACCELERATOR_VALUES,
+      "Anderson-acceleration variant: 'type-ii' (Walker-Ni; v0.1 default, " +
+        "shipped goldens-preserving) or 'type-i' (AA-I-S-m with Powell + " +
+        "GS-restart + KM-safeguard; ADR-0036 §F).",
+      { default: "type-ii" as const },
+    ),
+  },
   examples,
   invariants,
   numerical: true,

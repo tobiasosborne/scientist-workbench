@@ -59,7 +59,20 @@ export {
 
 export { equilibrate, applyScaling } from "./scaling.js";
 
-export { type AndersonAccelerator, makeAnderson } from "./anderson.js";
+export {
+  type AndersonAccelerator,
+  type AndersonSpec,
+  type AnyAccelerator,
+  makeAnderson,
+  makeAndersonFromSpec,
+} from "./anderson.js";
+export {
+  type AndersonAcceleratorI,
+  type AndersonISpec,
+  DEFAULT_ANDERSON_I_SPEC,
+  makeAndersonI,
+  phiPowell,
+} from "./anderson-type-i.js";
 
 export {
   type SCSOpts,

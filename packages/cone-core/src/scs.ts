@@ -48,7 +48,7 @@ import {
   recoverPrimalDual,
 } from "./hsde.js";
 import { applyScaling, equilibrate } from "./scaling.js";
-import { makeAnderson } from "./anderson.js";
+import { type AndersonSpec, makeAnderson, makeAndersonFromSpec } from "./anderson.js";
 
 // -----------------------------------------------------------------------------
 // Options and result
@@ -93,8 +93,26 @@ export interface SCSOpts {
    * slow linear tail. Default `10`. `0` disables acceleration and
    * recovers the exact plain-SCS trajectory — kept for the determinism
    * cross-check and for testing the un-accelerated path.
+   *
+   * **Back-compat knob.** This is the v0.1 selection surface. The v0.2
+   * lever is the parallel `accelerator` field below, which carries the
+   * full `AndersonSpec` discriminated union (including the Type-I
+   * AA-I-S-m algorithm, ADR-0036 §F). Callers may use *either* knob but
+   * not both: `scsSolve` throws `ConeError` if both `andersonMemory`
+   * (set to a non-default value) and `accelerator` are passed together
+   * — CLAUDE.md Rule 1, no silent precedence rules.
    */
   readonly andersonMemory: number;
+  /**
+   * The v0.2 accelerator selector (ADR-0036 §F). When set, *overrides*
+   * the v0.1 `andersonMemory` knob and dispatches via
+   * `makeAndersonFromSpec` to either AA-II (memory-window only), the
+   * AA-I-S-m globalised Type-I path (Powell + GS-restart + KM
+   * safeguard), or no acceleration. Default unset; when unset,
+   * `scsSolve` builds an AA-II accelerator from `andersonMemory` as in
+   * v0.1.
+   */
+  readonly accelerator?: AndersonSpec;
   /**
    * Optional **consumer-form convergence test** (ADR-0030 addendum, bead
    * `oxuk`). When supplied, this predicate — not the paper's §3.5
@@ -457,6 +475,20 @@ export function scsSolve(problem: ConeProblem, opts: SCSOpts = DEFAULT_SCS_OPTS)
       `scsSolve: andersonMemory must be a non-negative integer, got ${opts.andersonMemory}`,
     );
   }
+  // Mutual-exclusion check (CLAUDE.md Rule 1): the caller picks one
+  // selection knob. If `accelerator` is set, `andersonMemory` must be
+  // the default sentinel value (`DEFAULT_SCS_OPTS.andersonMemory`). A
+  // non-default `andersonMemory` together with an explicit `accelerator`
+  // is ambiguous — silently picking one would hide an intent mismatch.
+  if (
+    opts.accelerator !== undefined &&
+    opts.andersonMemory !== DEFAULT_SCS_OPTS.andersonMemory
+  ) {
+    throw new ConeError(
+      `scsSolve: pass either andersonMemory or accelerator, not both ` +
+        `(got andersonMemory=${opts.andersonMemory}, accelerator.kind=${opts.accelerator.kind})`,
+    );
+  }
   if (opts.convergenceTest !== undefined && typeof opts.convergenceTest !== "function") {
     throw new ConeError(
       `scsSolve: convergenceTest must be a function when supplied, got ${typeof opts.convergenceTest}`,
@@ -529,13 +561,45 @@ export function scsSolve(problem: ConeProblem, opts: SCSOpts = DEFAULT_SCS_OPTS)
   z[N - 1] = 1;
   z[2 * N - 1] = 1;
 
-  const aa = makeAnderson(opts.andersonMemory);
+  // Build the accelerator. If `opts.accelerator` is set, dispatch via
+  // it (ADR-0036 §F); otherwise default to AA-II with the v0.1
+  // `andersonMemory` knob (ADR-0036 §C). The dispatched accelerator
+  // carries the algorithm choice; the iteration loop below branches on
+  // `aa.kind` once and uses the matching `next` signature.
+  const aa = opts.accelerator !== undefined
+    ? makeAndersonFromSpec(opts.accelerator)
+    : ({ kind: "ii", aa: makeAnderson(opts.andersonMemory) } as const);
+
+  // AA-I needs the previous accepted iterate and the previous trial
+  // iterate, both with their `f`-images, between calls. We track the
+  // trial iterate as `zTrial` (initially equal to the seed `z`); after
+  // each iteration the accelerator returns `xTrialNext` for the next
+  // call.
+  let zTrial: Float64Array = z.slice();
+
   let lastCandidate: Candidate | undefined;
 
   // ── iterate: φ-step then Anderson-accelerate (ADR-0036) ──────────────────
   for (let k = 1; k <= opts.maxIter; k++) {
-    const Gz = scsStep(z);
-    z = aa.next(z, Gz);
+    if (aa.kind === "i") {
+      // AA-I-S-m. Caller's contract per `AndersonAcceleratorI`:
+      //   xAccepted = z (current accepted iterate)
+      //   xTrial    = zTrial (current trial iterate, from prev call)
+      // Caller computes f at both. This is the "extra g(·) evaluation
+      // per iteration" cost called out in ADR-0036 §F / ground-truth §7.4.
+      const Gz = scsStep(z);
+      const Gtrial = zTrial === z ? Gz : scsStep(zTrial);
+      const step = aa.aa.next(z, Gz, zTrial, Gtrial);
+      z = step.xNext;
+      zTrial = step.xTrialNext;
+    } else if (aa.kind === "ii") {
+      // AA-II (v0.1 path). One φ-evaluation per iteration.
+      const Gz = scsStep(z);
+      z = aa.aa.next(z, Gz);
+    } else {
+      // No acceleration — plain SCS.
+      z = scsStep(z);
+    }
 
     // A non-finite iterate is unrecoverable — ill-conditioning beyond
     // rescue (the accelerator's own safeguard already rejects a
