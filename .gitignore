@@ -32,3 +32,4 @@ docs/ground-truth/**/sagemath/
 # Each invocation makes a `run-<random>/user.ts` and cleans it up; a
 # crashed run can leave one behind — never something to commit.
 tools/sturm-trace/.scratch/
+.work/
