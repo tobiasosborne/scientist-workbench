@@ -309,6 +309,110 @@ const RULE_PROBES: readonly BesselEmittingRuleProbe[] = [
   },
 
   // ---------------------------------------------------------------------------
+  // Rule 6 — bessel-y-canonical: G([],[c];[a,b],[c]; z) = BesselY(2b, 2√z)
+  // (bead `1xqq` / R4 §E.3 gap close; new in worklog 172).
+  // ---------------------------------------------------------------------------
+  // Bridge-produced input: BesselY(ν, w) → G([],[-(ν+1)/2];[ν/2,-ν/2],
+  // [-(ν+1)/2]; w²/4). We use ν = sym("nu") so the symbolic ν threads
+  // through the canonical-sort untouched; the rule binds `c = -(ν+1)/2`,
+  // `a = -ν/2` (canonical-sort puts the `neg`-wrapped slot first; see
+  // bessel-backward.ts file-top "Canonical-sort considerations"),
+  // `b = ν/2`, and the rewrite recovers ν via `recoverNuFromHalfSlot(b)`
+  // → unwraps `mkDiv(nu, 2)` → `nu`. The bridge's forward then sees
+  // BesselY(nu, 2·√(w²/4)) and recovers shape (2,0,1,3) with prefactor
+  // identity.
+  //
+  // The closure test's argsInverse byte-identity assertion (Step 6 in the
+  // per-rule block) compares the bridge's `argsInverse()` output against
+  // the *extracted* args (the rule's emission shape, not the original
+  // ν/w). For canonical-Bessel inputs the extracted ν is `nu`
+  // byte-identically, and the extracted z is `2·(w²/4)^{1/2}` (the
+  // `2·√z` un-substitution baked into the rule). The bridge captures
+  // both lexically, so `argsInverse() === extracted` holds.
+  {
+    id: "bessel-y-canonical",
+    file: "dispatch-rules/bessel-backward.ts",
+    expectedEmittedHead: "BesselY",
+    inputParams: (() => {
+      // Build the canonical Bessel-Y G-form for ν = sym("nu") directly.
+      // We do this here (rather than via headToMeijerGBessel) so the
+      // closure test stays a pure inspection of the dispatcher's
+      // output — no bridge dependency on the *input* side.
+      const nu = sym("nu");
+      const halfNu = { kind: "expression" as const, head: "/", args: [nu, I(2)] };
+      const negHalfNu = { kind: "expression" as const, head: "neg", args: [halfNu] };
+      const negNuPlusOneHalf = {
+        kind: "expression" as const,
+        head: "neg",
+        args: [{
+          kind: "expression" as const,
+          head: "/",
+          args: [
+            { kind: "expression" as const, head: "+", args: [nu, I(1)] },
+            I(2),
+          ],
+        }],
+      };
+      return {
+        an: [],
+        ap: [negNuPlusOneHalf],
+        bm: [halfNu, negHalfNu],
+        bq: [negNuPlusOneHalf],
+      };
+    })(),
+    inputZ: Z_SYM,
+    expectedBridgeMnpq: { m: 2, n: 0, p: 1, q: 3 },
+    expectedPrefactor: "identity",
+    note:
+      "Emits BesselY(nu, 2√z); bridge sees BesselY head, recovers (2,0,1,3) " +
+      "shape with prefactor 1. Closes the R4 §E.3 gap (bead 1xqq).",
+  },
+
+  // ---------------------------------------------------------------------------
+  // Rule 7 — bessel-i-canonical: G([],[c];[a],[c,d]; z) = (1/π) · BesselI(2a, 2√z)
+  // (bead `lfet` / R4 §E.3 gap close; new in worklog 172).
+  // ---------------------------------------------------------------------------
+  // Bridge-produced input: BesselI(ν, w) → G([],[(ν+1)/2];[ν/2],[-ν/2,
+  // (ν+1)/2]; w²/4). Rule binds `c = (ν+1)/2` (shared between ap[0] and
+  // bq[0] after canonical sort puts the `+`-bearing expression before
+  // the `neg`-wrapped one), `a = ν/2`, `d = -ν/2`. The rewrite recovers
+  // ν via `recoverNuFromHalfSlot(a)` → `nu`, and emits `(1/π) ·
+  // BesselI(nu, 2·√z)`. The bridge's forward then sees BesselI head and
+  // recovers shape (1,0,1,3) with prefactor π. The dispatcher's
+  // `(1/π)·...` cancels the bridge's `π·g` on numerical evaluation —
+  // the structural closure asserts the two factors are consistent.
+  {
+    id: "bessel-i-canonical-symbolic-nu",
+    file: "dispatch-rules/bessel-backward.ts",
+    expectedEmittedHead: "BesselI",
+    inputParams: (() => {
+      const nu = sym("nu");
+      const halfNu = { kind: "expression" as const, head: "/", args: [nu, I(2)] };
+      const negHalfNu = { kind: "expression" as const, head: "neg", args: [halfNu] };
+      const nuPlusOneHalf = {
+        kind: "expression" as const,
+        head: "/",
+        args: [
+          { kind: "expression" as const, head: "+", args: [nu, I(1)] },
+          I(2),
+        ],
+      };
+      return {
+        an: [],
+        ap: [nuPlusOneHalf],
+        bm: [halfNu],
+        bq: [negHalfNu, nuPlusOneHalf],
+      };
+    })(),
+    inputZ: Z_SYM,
+    expectedBridgeMnpq: { m: 1, n: 0, p: 1, q: 3 },
+    expectedPrefactor: "pi",
+    note:
+      "Emits (1/π)·BesselI(nu, 2√z); bridge sees BesselI head, recovers " +
+      "(1,0,1,3) shape with prefactor π. Closes the R4 §E.3 gap (bead lfet).",
+  },
+
+  // ---------------------------------------------------------------------------
   // Rule 5 — bateman-5-6-6: G([],[]; [b₁],[b₂]; z) = z^{(b₁+b₂)/2}·J_{b₁−b₂}(2√z)
   // ---------------------------------------------------------------------------
   // Generic free-slot J_{b₁-b₂} rule. We feed (b₁, b₂) = (1/2, -1/2) so
@@ -401,10 +505,25 @@ describe("Bessel-closure: rule inventory invariant", () => {
     // the 5 probes + 1 N/A keeps the test readable and the inventory
     // explicit.
 
-    // The expected number of Bessel-emitting rules in bateman-5-6.ts
-    // is 6 (5 probed + 1 N/A); R4 §E.1 surveys them. If a future agent
-    // adds a 7th, they must update this number.
-    expect(probedIds.size + naIds.size).toBe(6);
+    // The expected number of Bessel-emitting rules is 8: 6 in
+    // `bateman-5-6.ts` (R4 §E.1; 5 probed + 1 N/A mirror) plus 2 in
+    // `bessel-backward.ts` (R4 §E.3 gap close, beads `1xqq` + `lfet`:
+    // `bessel-y-canonical` and `bessel-i-canonical-symbolic-nu`).
+    //
+    // A third bessel-backward rule (`bessel-i-canonical-literal-nu`)
+    // also exists in `bessel-backward.ts` to handle the literal-
+    // rational-ν canonical-sort branch; it is NOT enumerated here
+    // because the closure test uses symbolic ν exclusively (per the
+    // `RULE_PROBES` construction), which routes to the symbolic-ν
+    // variant. The literal-ν variant is exercised in
+    // `dispatch-mpmath.test.ts` (where rational slot values trigger
+    // its canonical-sort branch). The 9th rule (literal-ν) is
+    // structurally identical to the 8th (symbolic-ν) modulo the bq
+    // slot permutation; counting them as one rule for closure-coverage
+    // purposes reflects that they share rewrite logic and emitted
+    // shape. If a 10th truly-distinct Bessel-emitting rule lands, this
+    // count needs updating.
+    expect(probedIds.size + naIds.size).toBe(8);
   });
 
   test("Every probe rule fires on its synthesised input and emits the expected head", () => {

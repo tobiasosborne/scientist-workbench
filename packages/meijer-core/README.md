@@ -72,7 +72,12 @@ Public API:
 `meijergSymbolic(params, z) → DispatchResult` walks a curated table
 of reduction rules organised one-file-per-source under
 `src/dispatch-rules/`. v0.1 ships ≥30 rules from Bateman §5.6 pp.
-215–222 plus DLMF §16.17–§16.18; the bulk of the rule corpus
+215–222 plus DLMF §16.17–§16.18, plus the Erf-family forward bridges
+(`erf-forward-form-a.ts` / `erfi-forward.ts` / `erfc-forward.ts`,
+ADR-0040), plus the BesselY / BesselI canonical-form backward rules
+(`bessel-backward.ts`, R4 §E.3 / beads `1xqq` + `lfet`) that close
+the dispatcher's Bessel-family symbolic-recognition gap left open by
+v0.1's Bateman-only Bessel coverage. The bulk of the rule corpus
 (~1300 rules from PBM Vol 3 §8.4 + Mathai 1993 + Wolfram Functions
 Site) lands in follow-up beads under `hv0.6.*`.
 

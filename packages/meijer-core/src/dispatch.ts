@@ -71,6 +71,7 @@ import type {
 } from "./dispatch-types.js";
 
 import { RULES as BATEMAN_5_6 } from "./dispatch-rules/bateman-5-6.js";
+import { RULES as BESSEL_BACKWARD } from "./dispatch-rules/bessel-backward.js";
 import { RULES as DLMF_16_18 } from "./dispatch-rules/dlmf-16-18.js";
 import { RULES as ERF_FORWARD_FORM_A } from "./dispatch-rules/erf-forward-form-a.js";
 import { RULES as ERFC_FORWARD } from "./dispatch-rules/erfc-forward.js";
@@ -97,6 +98,15 @@ export const ALL_RULES: readonly ReductionRule[] = [
   ...ERF_FORWARD_FORM_A,
   ...ERFI_FORWARD,
   ...ERFC_FORWARD,
+  // Bessel-Y / Bessel-I canonical-form backward rules (beads `1xqq` /
+  // `lfet`, R4 §E.3 gap close). Sit before DLMF/Bateman so the
+  // canonical-Bessel shapes don't fall through to `no-known-reduction`;
+  // their (m,n,p,q) tuples (2,0,1,3) and (1,0,1,3) are NOT covered by
+  // any DLMF/Bateman rule today, so ordering is for future-proofing
+  // rather than current-disambiguation. See
+  // `dispatch-rules/bessel-backward.ts` for the slot-match algebra and
+  // soundness contract.
+  ...BESSEL_BACKWARD,
   ...DLMF_16_18, // DLMF first — primary contemporary index
   ...BATEMAN_5_6, // Bateman §5.6 for the pre-DLMF starter rules
 ];
