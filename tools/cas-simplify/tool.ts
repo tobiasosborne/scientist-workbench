@@ -21,7 +21,7 @@ import { defineTool, runTool } from "@workbench/contract";
 import { casSimplify, SIMPLIFY_TAG } from "@workbench/cas-core";
 
 const NAME = "cas-simplify";
-const VERSION = "0.4.0";  // ADR-0013: rational functions in lowest terms
+const VERSION = "0.5.0";  // bead bfwt: Erf-family identity table + Erfc+Erf=1 sum-collapse
 
 // cas-simplify is honest about its breadth: it accepts any Value (it
 // will recursively simplify arithmetic subterms wherever they appear,

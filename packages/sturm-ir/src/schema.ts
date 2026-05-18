@@ -42,6 +42,16 @@
 // matched`). P5 (no gates, no qubits) is enforced as a structural
 // type property at the workbench layer — strictly more than at the
 // TS source layer where lint can be bypassed.
+//
+// The closure simultaneously enforces the **coherent-control
+// restriction** named in ADR-0038: only `ry` and `rz` declare a
+// third `controls` arg in their `S.expression(…)` tuples. A Value
+// like `expr("observe", [int(0n), str("r"), list([int(1n)])])` — an
+// `observe` with three args, smuggling controls — fails because the
+// `observe` alternative is declared with arity 2. This is Layer 1
+// (schema closure) of ADR-0038's four-layer enforcement; the other
+// three are in `nodes.ts` (builder API + decoder arity) and
+// `wellformed.ts` (cases-arm recursive analogue).
 
 import { S, str, type Schema, type Value } from "@workbench/protocol";
 

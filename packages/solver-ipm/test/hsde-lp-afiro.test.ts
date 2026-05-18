@@ -5,25 +5,28 @@
 // something is fundamentally broken.
 
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
 import { solveHsdeLp, lpFromCanonical, type CanonicalLp } from "../src/index.js";
+import { loadSuite } from "./corpus.js";
 
-const corpus = JSON.parse(
-  readFileSync(
-    "/home/tobias/Projects/scientist-workbench-corpus/benchmarks/lp-netlib/golden/inputs.json",
-    "utf-8",
-  ),
-);
+const suite = loadSuite<CanonicalLp>("lp-netlib");
 
-const cases: { id: string; input: CanonicalLp }[] = corpus.cases;
-const afiro = cases.find((c) => c.id === "afiro")!;
-
-describe("afiro NETLIB LP via HSDE", () => {
-  test("solves to optimality near -464.75314", () => {
-    const res = solveHsdeLp(lpFromCanonical(afiro.input));
-    expect(res.status).toBe("optimal");
-    expect(Math.abs(res.primalObj - -464.7531428571429)).toBeLessThan(1e-4);
-    expect(res.tau).toBeGreaterThan(1e-6);
-    expect(res.kappa / res.tau).toBeLessThan(1e-3);
+// Corpus-missing handling follows the `corpus.ts` convention (skip with a
+// clear reason), matching `netlib.test.ts` / `lp-small.test.ts`.
+if (suite === null) {
+  describe.skip("afiro NETLIB LP via HSDE (corpus not found)", () => {
+    test("set WORKBENCH_CORPUS or place scientist-workbench-corpus alongside the workbench", () => {});
   });
-});
+} else {
+  const afiro = suite.cases.find((c) => c.id === "afiro");
+
+  describe("afiro NETLIB LP via HSDE", () => {
+    test("solves to optimality near -464.75314", () => {
+      expect(afiro).toBeDefined();
+      const res = solveHsdeLp(lpFromCanonical(afiro!.input));
+      expect(res.status).toBe("optimal");
+      expect(Math.abs(res.primalObj - -464.7531428571429)).toBeLessThan(1e-4);
+      expect(res.tau).toBeGreaterThan(1e-6);
+      expect(res.kappa / res.tau).toBeLessThan(1e-3);
+    });
+  });
+}

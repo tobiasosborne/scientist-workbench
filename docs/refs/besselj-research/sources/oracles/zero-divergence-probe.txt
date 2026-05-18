@@ -1,0 +1,10 @@
+=== L7 J_0 at first zero ===
+  mpmath @ 60 dps: J_0(z_root) = -1.70614154616396485995009750937e-50
+  scipy float64:   j0(z_root)  = -9.586882554916807e-17
+  scipy float64:   jv(0,zr)    = 0.0
+  diff scipy vs mpmath: -9.586882554916807e-17
+
+  Just OFF the root by 0.01:
+  mpmath @60 dps:  J_0(zr+0.01)= -0.00518062458774058908
+  scipy float64:   j0(zr+0.01) = -0.005180624587740599
+  relative err: 2.0090899619499747e-15

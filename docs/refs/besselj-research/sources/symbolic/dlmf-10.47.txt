@@ -1,0 +1,784 @@
+
+
+DLMF: §10.47 Definitions and Basic Properties ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions
+
+DLMF
+
+Index
+Notations
+Search
+Help?
+Citing
+Customize
+Annotate
+UnAnnotate
+
+About the Project
+
+10 Bessel FunctionsSpherical Bessel Functions10.46 Generalized and Incomplete Bessel Functions; Mittag-Leffler Function10.48 Graphs
+
+§10.47 Definitions and Basic Properties
+
+ⓘ
+
+Referenced by:
+
+§10.1,
+§10.47(i)
+
+Permalink:
+http://dlmf.nist.gov/10.47
+See also:
+Annotations for Ch.10
+
+Contents
+
+§10.47(i) Differential Equations
+§10.47(ii) Standard Solutions
+§10.47(iii) Numerically Satisfactory Pairs of Solutions
+§10.47(iv) Interrelations
+§10.47(v) Reflection Formulas
+
+§10.47(i) Differential Equations
+
+ⓘ
+
+Keywords:
+
+differential equations, singularities, spherical Bessel functions
+
+Referenced by:
+
+§29.18(i),
+Notation for the Special Functions
+
+Permalink:
+http://dlmf.nist.gov/10.47.i
+See also:
+Annotations for §10.47 and
+Ch.10
+
+10.47.1
+
+z2⁢d2wdz2+2⁢z⁢dwdz+(z2−n⁢(n+1))⁢w=0,
+
+ⓘ
+
+Symbols:
+
+dfdx: derivative of f with respect to x,
+n: integer and
+z: complex variable
+
+A&S Ref:
+ 10.1.1
+
+Referenced by:
+
+§10.47(ii),
+§10.47(i),
+§10.47(iii),
+§30.2(iii)
+
+Permalink:
+http://dlmf.nist.gov/10.47.E1
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.47(i),
+§10.47 and
+Ch.10
+
+10.47.2
+
+z2⁢d2wdz2+2⁢z⁢dwdz−(z2+n⁢(n+1))⁢w=0.
+
+ⓘ
+
+Symbols:
+
+dfdx: derivative of f with respect to x,
+n: integer and
+z: complex variable
+
+A&S Ref:
+ 10.2.1
+
+Referenced by:
+
+§10.47(ii),
+§10.47(i),
+§10.47(iii)
+
+Permalink:
+http://dlmf.nist.gov/10.47.E2
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.47(i),
+§10.47 and
+Ch.10
+
+Here, and throughout the remainder of
+§§10.47–10.60, n is a nonnegative integer.
+(This is in contrast to other treatments of spherical Bessel functions,
+including Abramowitz and Stegun (1964, Chapter 10), in which n can be any
+integer. However, there is a gain in symmetry, without any loss of generality
+in applications, on restricting n≥0.)
+
+Equations (10.47.1) and (10.47.2) each have a regular
+singularity at z=0 with indices n, −n−1, and an irregular singularity at
+z=∞ of rank 1; compare §§2.7(i)–2.7(ii).
+
+§10.47(ii) Standard Solutions
+
+ⓘ
+
+Keywords:
+
+differential equations, spherical Bessel functions, standard solutions
+
+Notes:
+For (10.47.3)–(10.47.9) use
+(10.2.3), (10.4.6), (10.27.3).
+Referenced by:
+
+§1.17(ii),
+§10.16,
+§10.39,
+1st item,
+§33.5(ii),
+§33.9(i),
+§6.10(ii),
+§7.6(ii),
+§8.21(vi),
+§8.7,
+Notation for the Special Functions
+
+Permalink:
+http://dlmf.nist.gov/10.47.ii
+See also:
+Annotations for §10.47 and
+Ch.10
+
+Equation (10.47.1)
+
+ⓘ
+
+Keywords:
+
+definitions, of the first, second, and third kinds, spherical Bessel functions
+
+See also:
+Annotations for §10.47(ii),
+§10.47 and
+Ch.10
+
+10.47.3
+
+𝗃n⁡(z)=12⁢π/z⁢Jn+12⁡(z)=(−1)n⁢12⁢π/z⁢Y−n−12⁡(z),
+
+ⓘ
+
+Defines:
+𝗃n⁡(z): spherical Bessel function of the first kind
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Yν⁡(z): Bessel function of the second kind,
+π: the ratio of the circumference of a circle to its diameter,
+n: integer and
+z: complex variable
+
+A&S Ref:
+ 10.1.15
+
+Referenced by:
+
+§10.47(ii),
+§10.47(iv),
+§10.47(v),
+§10.49(iv),
+§10.51(i),
+§10.53,
+§10.54,
+§10.57,
+§10.57,
+§10.59,
+§10.59,
+§10.60(ii),
+§11.4(i),
+§33.9(i)
+
+Permalink:
+http://dlmf.nist.gov/10.47.E3
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.47(ii),
+§10.47(ii),
+§10.47 and
+Ch.10
+
+10.47.4
+
+𝗒n⁡(z)=12⁢π/z⁢Yn+12⁡(z)=(−1)n+1⁢12⁢π/z⁢J−n−12⁡(z),
+
+ⓘ
+
+Defines:
+𝗒n⁡(z): spherical Bessel function of the second kind
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Yν⁡(z): Bessel function of the second kind,
+π: the ratio of the circumference of a circle to its diameter,
+n: integer and
+z: complex variable
+
+Referenced by:
+
+§10.49(iv),
+§10.53,
+§10.60(ii)
+
+Permalink:
+http://dlmf.nist.gov/10.47.E4
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.47(ii),
+§10.47(ii),
+§10.47 and
+Ch.10
+
+10.47.5
+
+𝗁n(1)⁡(z)=12⁢π/z⁢Hn+12(1)⁡(z)=(−1)n+1⁢i⁢12⁢π/z⁢H−n−12(1)⁡(z),
+
+ⓘ
+
+Defines:
+𝗁n(1)⁡(z): spherical Bessel function of the third kind
+Symbols:
+
+Hν(1)⁡(z): Bessel function of the third kind (or Hankel function),
+π: the ratio of the circumference of a circle to its diameter,
+i: imaginary unit,
+n: integer and
+z: complex variable
+
+Referenced by:
+§10.51(i)
+Permalink:
+http://dlmf.nist.gov/10.47.E5
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.47(ii),
+§10.47(ii),
+§10.47 and
+Ch.10
+
+10.47.6
+
+𝗁n(2)⁡(z)=12⁢π/z⁢Hn+12(2)⁡(z)=(−1)n⁢i⁢12⁢π/z⁢H−n−12(2)⁡(z).
+
+ⓘ
+
+Defines:
+𝗁n(2)⁡(z): spherical Bessel function of the third kind
+Symbols:
+
+Hν(2)⁡(z): Bessel function of the third kind (or Hankel function),
+π: the ratio of the circumference of a circle to its diameter,
+i: imaginary unit,
+n: integer and
+z: complex variable
+
+Permalink:
+http://dlmf.nist.gov/10.47.E6
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.47(ii),
+§10.47(ii),
+§10.47 and
+Ch.10
+
+𝗃n⁡(z) and 𝗒n⁡(z) are the spherical Bessel
+functions of the first and second kinds, respectively; 𝗁n(1)⁡(z)
+and 𝗁n(2)⁡(z) are the spherical Bessel functions of the
+third kind.
+
+Equation (10.47.2)
+
+ⓘ
+
+Keywords:
+
+analytic properties, definitions, modified, spherical Bessel functions
+
+See also:
+Annotations for §10.47(ii),
+§10.47 and
+Ch.10
+
+10.47.7
+
+𝗂n(1)⁡(z)
+=12⁢π/z⁢In+12⁡(z)
+
+ⓘ
+
+Defines:
+𝗂n(1)⁡(z): modified spherical Bessel function
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+Iν⁡(z): modified Bessel function of the first kind,
+n: integer and
+z: complex variable
+
+A&S Ref:
+ 10.2.2 (modified)
+
+Referenced by:
+
+§10.51(ii),
+§10.53,
+§10.57,
+§11.4(i),
+§7.6(ii)
+
+Permalink:
+http://dlmf.nist.gov/10.47.E7
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.47(ii),
+§10.47(ii),
+§10.47 and
+Ch.10
+
+10.47.8
+
+𝗂n(2)⁡(z)
+=12⁢π/z⁢I−n−12⁡(z)
+
+ⓘ
+
+Defines:
+𝗂n(2)⁡(z): modified spherical Bessel function
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+Iν⁡(z): modified Bessel function of the first kind,
+n: integer and
+z: complex variable
+
+A&S Ref:
+ 10.2.2 (modified)
+
+Permalink:
+http://dlmf.nist.gov/10.47.E8
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.47(ii),
+§10.47(ii),
+§10.47 and
+Ch.10
+
+10.47.9
+
+𝗄n⁡(z)=12⁢π/z⁢Kn+12⁡(z)=12⁢π/z⁢K−n−12⁡(z).
+
+ⓘ
+
+Defines:
+𝗄n⁡(z): modified spherical Bessel function
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+Kν⁡(z): modified Bessel function of the second kind,
+n: integer and
+z: complex variable
+
+Referenced by:
+
+§10.47(ii),
+§10.47(iv),
+§10.47(v),
+§10.51(ii),
+§10.54,
+§10.57,
+§10.59,
+(18.34.2)
+
+Permalink:
+http://dlmf.nist.gov/10.47.E9
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.47(ii),
+§10.47(ii),
+§10.47 and
+Ch.10
+
+𝗂n(1)⁡(z), 𝗂n(2)⁡(z), and 𝗄n⁡(z)
+are the modified spherical Bessel functions.
+
+Many properties of 𝗃n⁡(z), 𝗒n⁡(z),
+𝗁n(1)⁡(z), 𝗁n(2)⁡(z), 𝗂n(1)⁡(z),
+𝗂n(2)⁡(z), and 𝗄n⁡(z) follow straightforwardly
+from the above definitions and results given in preceding sections of this
+chapter. For example, z−n⁢𝗃n⁡(z), zn+1⁢𝗒n⁡(z),
+zn+1⁢𝗁n(1)⁡(z), zn+1⁢𝗁n(2)⁡(z),
+z−n⁢𝗂n(1)⁡(z), zn+1⁢𝗂n(2)⁡(z), and
+zn+1⁢𝗄n⁡(z) are all entire functions of z.
+
+§10.47(iii) Numerically Satisfactory Pairs of Solutions
+
+ⓘ
+
+Keywords:
+
+differential equations, numerically satisfactory solutions, spherical Bessel functions
+
+Notes:
+Use §10.52.
+Permalink:
+http://dlmf.nist.gov/10.47.iii
+See also:
+Annotations for §10.47 and
+Ch.10
+
+For (10.47.1) numerically satisfactory pairs of solutions are
+given by Table 10.2.1 with the symbols J, Y,
+H, and ν replaced by 𝗃, 𝗒, 𝗁,
+and n, respectively.
+
+For (10.47.2) numerically satisfactory pairs of solutions are
+𝗂n(1)⁡(z) and 𝗄n⁡(z) in the right half of the
+z-plane, and 𝗂n(1)⁡(z) and 𝗄n⁡(−z) in the left
+half of the z-plane.
+
+§10.47(iv) Interrelations
+
+ⓘ
+
+Keywords:
+
+interrelations, spherical Bessel functions
+
+Notes:
+Use (10.4.3), (10.27.4), (10.27.6),
+(10.27.8), and the definitions
+(10.47.3)–(10.47.9).
+Referenced by:
+§10.60(ii)
+Permalink:
+http://dlmf.nist.gov/10.47.iv
+See also:
+Annotations for §10.47 and
+Ch.10
+
+10.47.10
+
+𝗁n(1)⁡(z)
+=𝗃n⁡(z)+i⁢𝗒n⁡(z),
+
+𝗁n(2)⁡(z)
+=𝗃n⁡(z)−i⁢𝗒n⁡(z).
+
+ⓘ
+
+Symbols:
+
+i: imaginary unit,
+𝗃n⁡(z): spherical Bessel function of the first kind,
+𝗒n⁡(z): spherical Bessel function of the second kind,
+𝗁n(1)⁡(z): spherical Bessel function of the third kind,
+𝗁n(2)⁡(z): spherical Bessel function of the third kind,
+n: integer and
+z: complex variable
+
+Referenced by:
+§10.53
+Permalink:
+http://dlmf.nist.gov/10.47.E10
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.47(iv),
+§10.47 and
+Ch.10
+
+10.47.11
+
+𝗄n⁡(z)=(−1)n+1⁢12⁢π⁢(𝗂n(1)⁡(z)−𝗂n(2)⁡(z)).
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+𝗂n(1)⁡(z): modified spherical Bessel function,
+𝗂n(2)⁡(z): modified spherical Bessel function,
+𝗄n⁡(z): modified spherical Bessel function,
+n: integer and
+z: complex variable
+
+A&S Ref:
+ 10.2.4 (modified)
+
+Referenced by:
+
+§10.47(v),
+§10.53,
+§10.56,
+§10.57
+
+Permalink:
+http://dlmf.nist.gov/10.47.E11
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.47(iv),
+§10.47 and
+Ch.10
+
+10.47.12
+
+𝗂n(1)⁡(z)
+=i−n⁢𝗃n⁡(i⁢z),
+
+𝗂n(2)⁡(z)
+=i−n−1⁢𝗒n⁡(i⁢z).
+
+ⓘ
+
+Symbols:
+
+i: imaginary unit,
+𝗂n(1)⁡(z): modified spherical Bessel function,
+𝗂n(2)⁡(z): modified spherical Bessel function,
+𝗃n⁡(z): spherical Bessel function of the first kind,
+𝗒n⁡(z): spherical Bessel function of the second kind,
+n: integer and
+z: complex variable
+
+Referenced by:
+
+§10.49(ii),
+§10.49(iv),
+§10.50,
+§10.56,
+§10.60(i)
+
+Permalink:
+http://dlmf.nist.gov/10.47.E12
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.47(iv),
+§10.47 and
+Ch.10
+
+10.47.13
+
+𝗄n⁡(z)=−12⁢π⁢in⁢𝗁n(1)⁡(i⁢z)=−12⁢π⁢i−n⁢𝗁n(2)⁡(−i⁢z).
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+i: imaginary unit,
+𝗄n⁡(z): modified spherical Bessel function,
+𝗁n(1)⁡(z): spherical Bessel function of the third kind,
+𝗁n(2)⁡(z): spherical Bessel function of the third kind,
+n: integer and
+z: complex variable
+
+Referenced by:
+
+§10.49(ii),
+§10.60(i)
+
+Permalink:
+http://dlmf.nist.gov/10.47.E13
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.47(iv),
+§10.47 and
+Ch.10
+
+§10.47(v) Reflection Formulas
+
+ⓘ
+
+Keywords:
+
+reflection formulas, spherical Bessel functions
+
+Notes:
+Use (10.11.1), (10.11.2), (10.34.1),
+with m=1 in each case, and the definitions
+(10.47.3)–(10.47.9). For (10.47.17)
+use (10.47.11) and (10.47.16).
+Permalink:
+http://dlmf.nist.gov/10.47.v
+See also:
+Annotations for §10.47 and
+Ch.10
+
+10.47.14
+
+𝗃n⁡(−z)
+=(−1)n⁢𝗃n⁡(z),
+𝗒n⁡(−z)
+=(−1)n+1⁢𝗒n⁡(z),
+
+ⓘ
+
+Symbols:
+
+𝗃n⁡(z): spherical Bessel function of the first kind,
+𝗒n⁡(z): spherical Bessel function of the second kind,
+n: integer and
+z: complex variable
+
+Referenced by:
+§10.59
+Permalink:
+http://dlmf.nist.gov/10.47.E14
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.47(v),
+§10.47 and
+Ch.10
+
+10.47.15
+
+𝗁n(1)⁡(−z)
+=(−1)n⁢𝗁n(2)⁡(z),
+𝗁n(2)⁡(−z)
+=(−1)n⁢𝗁n(1)⁡(z).
+
+ⓘ
+
+Symbols:
+
+𝗁n(1)⁡(z): spherical Bessel function of the third kind,
+𝗁n(2)⁡(z): spherical Bessel function of the third kind,
+n: integer and
+z: complex variable
+
+Permalink:
+http://dlmf.nist.gov/10.47.E15
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.47(v),
+§10.47 and
+Ch.10
+
+10.47.16
+
+𝗂n(1)⁡(−z)
+=(−1)n⁢𝗂n(1)⁡(z),
+𝗂n(2)⁡(−z)
+=(−1)n+1⁢𝗂n(2)⁡(z),
+
+ⓘ
+
+Symbols:
+
+𝗂n(1)⁡(z): modified spherical Bessel function,
+𝗂n(2)⁡(z): modified spherical Bessel function,
+n: integer and
+z: complex variable
+
+Referenced by:
+§10.47(v)
+Permalink:
+http://dlmf.nist.gov/10.47.E16
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.47(v),
+§10.47 and
+Ch.10
+
+10.47.17
+
+𝗄n⁡(−z)=−12⁢π⁢(𝗂n(1)⁡(z)+𝗂n(2)⁡(z)).
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+𝗂n(1)⁡(z): modified spherical Bessel function,
+𝗂n(2)⁡(z): modified spherical Bessel function,
+𝗄n⁡(z): modified spherical Bessel function,
+n: integer and
+z: complex variable
+
+Referenced by:
+§10.47(v)
+Permalink:
+http://dlmf.nist.gov/10.47.E17
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.47(v),
+§10.47 and
+Ch.10
+
+10.46 Generalized and Incomplete Bessel Functions; Mittag-Leffler Function10.48 Graphs
+
+© 2010–2026 NIST / Disclaimer / Feedback;
+ Version 1.2.6;
+Release date 2026-03-15.
+
+Site Privacy Accessibility Privacy Program Copyrights Vulnerability Disclosure No Fear Act Policy FOIA Environmental Policy Scientific Integrity Information Quality Standards Commerce.gov Science.gov USA.gov
+

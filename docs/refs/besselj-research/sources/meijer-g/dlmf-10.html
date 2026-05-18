@@ -1,0 +1,392 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>DLMF: Chapter 10 Bessel Functions</title>
+<link rel="shortcut icon" href="./style/DLMF-16.png" type="image/png">
+<script type="text/javascript"><!--
+	var PATH="DLMF:/10";
+	var ROOT="./";
+      //--></script>
+<script type="text/javascript" src="./style/jquery.js"><!-- non-empty so ie6 will accept it --></script>
+<script type="text/javascript" src="./style/jquery.leaveNotice.js"><!-- non-empty so ie6 will accept it --></script>
+<script type="text/javascript" src="./style/DLMF.js"><!-- non-empty so ie6 will accept it --></script>
+<script async="" type="text/javascript" id="_fed_an_ua_tag" src="https://dap.digitalgov.gov/Universal-Federated-Analytics-Min.js?agency=DOC&amp;subagency=NIST&amp;pua=UA-37115410-44&amp;yt=true&amp;exts=ppsx,pps,f90,sch,rtf,wrl,txz,m1v,xlsm,msi,xsd,f,tif,eps,mpg,xml,pl,xlt,c"><!-- non-empty so ie6 will accept it --></script><script async="" src="https://www.googletagmanager.com/gtag/js?id=G-BZB64W4M0L"></script><script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-BZB64W4M0L');
+      </script>
+<link rel="stylesheet" type="text/css" href="./style/LaTeXML.css">
+<link rel="stylesheet" type="text/css" href="./style/DLMF.css">
+<link rel="stylesheet" type="text/css" href="./style/print.css" media="print">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="top" href="./" title="DLMF">
+<link rel="copyright" href="./about/notices" title="Copyright">
+<link rel="search" href="./search/search" title="Search">
+<link rel="help" class="ltx_help" href="./help/" title="Help">
+<link rel="start" href="./" title="">
+<link rel="prev" href="./9.20" title="§9.20 Software ‣ Computation ‣ Chapter 9 Airy and Related Functions">
+<link rel="next" href="./10.1" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions">
+<link rel="document" href="./front/foreword" title="Foreword">
+<link rel="document" href="./front/preface" title="Preface">
+<link rel="document" href="./front/introduction" title="Mathematical Introduction">
+<link rel="chapter" href="./1" title="Chapter 1 Algebraic and Analytic Methods">
+<link rel="chapter" href="./2" title="Chapter 2 Asymptotic Approximations">
+<link rel="chapter" href="./3" title="Chapter 3 Numerical Methods">
+<link rel="chapter" href="./4" title="Chapter 4 Elementary Functions">
+<link rel="chapter" href="./5" title="Chapter 5 Gamma Function">
+<link rel="chapter" href="./6" title="Chapter 6 Exponential, Logarithmic, Sine, and Cosine Integrals">
+<link rel="chapter" href="./7" title="Chapter 7 Error Functions, Dawson’s and Fresnel Integrals">
+<link rel="chapter" href="./8" title="Chapter 8 Incomplete Gamma and Related Functions">
+<link rel="chapter" href="./9" title="Chapter 9 Airy and Related Functions">
+<link rel="chapter" href="./11" title="Chapter 11 Struve and Related Functions">
+<link rel="chapter" href="./12" title="Chapter 12 Parabolic Cylinder Functions">
+<link rel="chapter" href="./13" title="Chapter 13 Confluent Hypergeometric Functions">
+<link rel="chapter" href="./14" title="Chapter 14 Legendre and Related Functions">
+<link rel="chapter" href="./15" title="Chapter 15 Hypergeometric Function">
+<link rel="chapter" href="./16" title="Chapter 16 Generalized Hypergeometric Functions and Meijer 𝐺-Function">
+<link rel="chapter" href="./17" title="Chapter 17 𝑞-Hypergeometric and Related Functions">
+<link rel="chapter" href="./18" title="Chapter 18 Orthogonal Polynomials">
+<link rel="chapter" href="./19" title="Chapter 19 Elliptic Integrals">
+<link rel="chapter" href="./20" title="Chapter 20 Theta Functions">
+<link rel="chapter" href="./21" title="Chapter 21 Multidimensional Theta Functions">
+<link rel="chapter" href="./22" title="Chapter 22 Jacobian Elliptic Functions">
+<link rel="chapter" href="./23" title="Chapter 23 Weierstrass Elliptic and Modular Functions">
+<link rel="chapter" href="./24" title="Chapter 24 Bernoulli and Euler Polynomials">
+<link rel="chapter" href="./25" title="Chapter 25 Zeta and Related Functions">
+<link rel="chapter" href="./26" title="Chapter 26 Combinatorial Analysis">
+<link rel="chapter" href="./27" title="Chapter 27 Functions of Number Theory">
+<link rel="chapter" href="./28" title="Chapter 28 Mathieu Functions and Hill’s Equation">
+<link rel="chapter" href="./29" title="Chapter 29 Lamé Functions">
+<link rel="chapter" href="./30" title="Chapter 30 Spheroidal Wave Functions">
+<link rel="chapter" href="./31" title="Chapter 31 Heun Functions">
+<link rel="chapter" href="./32" title="Chapter 32 Painlevé Transcendents">
+<link rel="chapter" href="./33" title="Chapter 33 Coulomb Functions">
+<link rel="chapter" href="./34" title="Chapter 34 3⁢𝑗,6⁢𝑗,9⁢𝑗 Symbols">
+<link rel="chapter" href="./35" title="Chapter 35 Functions of Matrix Argument">
+<link rel="chapter" href="./36" title="Chapter 36 Integrals with Coalescing Saddles">
+<link rel="bibliography" href="./bib/" title="Bibliography">
+<link rel="index" href="./idx/" title="Index">
+<link rel="glossary" href="./not/" title="Notations">
+<link rel="document" href="./lof/" title="List of Figures">
+<link rel="document" href="./lot/" title="List of Tables">
+<link rel="document" href="./software/" title="Software Index">
+<link rel="document" href="./errata/" title="Errata">
+<link rel="document" href="./help/" title="Need Help?">
+<link rel="document" href="./search/" title="Advanced Search">
+<link rel="document" href="./about/" title="About the Project">
+<link rel="section" href="./10.1" title="§10.1 Special Notation ‣ Notation ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.2" title="§10.2 Definitions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.3" title="§10.3 Graphics ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.4" title="§10.4 Connection Formulas ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.5" title="§10.5 Wronskians and Cross-Products ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.6" title="§10.6 Recurrence Relations and Derivatives ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.7" title="§10.7 Limiting Forms ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.8" title="§10.8 Power Series ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.9" title="§10.9 Integral Representations ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.10" title="§10.10 Continued Fractions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.11" title="§10.11 Analytic Continuation ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.12" title="§10.12 Generating Function and Associated Series ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.13" title="§10.13 Other Differential Equations ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.14" title="§10.14 Inequalities; Monotonicity ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.15" title="§10.15 Derivatives with Respect to Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.16" title="§10.16 Relations to Other Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.17" title="§10.17 Asymptotic Expansions for Large Argument ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.18" title="§10.18 Modulus and Phase Functions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.19" title="§10.19 Asymptotic Expansions for Large Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.20" title="§10.20 Uniform Asymptotic Expansions for Large Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.21" title="§10.21 Zeros ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.22" title="§10.22 Integrals ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.23" title="§10.23 Sums ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.24" title="§10.24 Functions of Imaginary Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.25" title="§10.25 Definitions ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.26" title="§10.26 Graphics ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.27" title="§10.27 Connection Formulas ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.28" title="§10.28 Wronskians and Cross-Products ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.29" title="§10.29 Recurrence Relations and Derivatives ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.30" title="§10.30 Limiting Forms ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.31" title="§10.31 Power Series ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.32" title="§10.32 Integral Representations ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.33" title="§10.33 Continued Fractions ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.34" title="§10.34 Analytic Continuation ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.35" title="§10.35 Generating Function and Associated Series ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.36" title="§10.36 Other Differential Equations ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.37" title="§10.37 Inequalities; Monotonicity ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.38" title="§10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.39" title="§10.39 Relations to Other Functions ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.40" title="§10.40 Asymptotic Expansions for Large Argument ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.41" title="§10.41 Asymptotic Expansions for Large Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.42" title="§10.42 Zeros ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.43" title="§10.43 Integrals ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.44" title="§10.44 Sums ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.45" title="§10.45 Functions of Imaginary Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.46" title="§10.46 Generalized and Incomplete Bessel Functions; Mittag-Leffler Function ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.47" title="§10.47 Definitions and Basic Properties ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.48" title="§10.48 Graphs ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.49" title="§10.49 Explicit Formulas ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.50" title="§10.50 Wronskians and Cross-Products ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.51" title="§10.51 Recurrence Relations and Derivatives ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.52" title="§10.52 Limiting Forms ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.53" title="§10.53 Power Series ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.54" title="§10.54 Integral Representations ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.55" title="§10.55 Continued Fractions ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.56" title="§10.56 Generating Functions ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.57" title="§10.57 Uniform Asymptotic Expansions for Large Order ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.58" title="§10.58 Zeros ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.59" title="§10.59 Integrals ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.60" title="§10.60 Sums ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.61" title="§10.61 Definitions and Basic Properties ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.62" title="§10.62 Graphs ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.63" title="§10.63 Recurrence Relations and Derivatives ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.64" title="§10.64 Integral Representations ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.65" title="§10.65 Power Series ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.66" title="§10.66 Expansions in Series of Bessel Functions ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.67" title="§10.67 Asymptotic Expansions for Large Argument ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.68" title="§10.68 Modulus and Phase Functions ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.69" title="§10.69 Uniform Asymptotic Expansions for Large Order ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.70" title="§10.70 Zeros ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.71" title="§10.71 Integrals ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.72" title="§10.72 Mathematical Applications ‣ Applications ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.73" title="§10.73 Physical Applications ‣ Applications ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.74" title="§10.74 Methods of Computation ‣ Computation ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.75" title="§10.75 Tables ‣ Computation ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.76" title="§10.76 Approximations ‣ Computation ‣ Chapter 10 Bessel Functions">
+<link rel="section" href="./10.77" title="§10.77 Software ‣ Computation ‣ Chapter 10 Bessel Functions">
+<link rel="author" href="./about/bio/FWJOlver" title="F. W. J. Olver">
+<link rel="author" href="./about/bio/LCMaximon" title="L. C. Maximon">
+<meta name="keywords" lang="en" content="Bessel functions, Hankel functions, Kelvin functions, computation, differential equations, modified Bessel functions, modified spherical Bessel functions, spherical Bessel functions">
+</head>
+<body class="color_default textfont_default titlefont_default fontsize_default navbar_default">
+<div class="ltx_page_navbar">
+<div class="ltx_page_navlogo"><a href="./" title="Digital Library of Mathematical Functions"><span>DLMF</span></a></div>
+<div class="ltx_page_navitems">
+<form method="get" action="./search/search">
+<ul>
+<li><a href="./idx/">Index</a></li>
+<li><a href="./not/">Notations</a></li>
+<li><small><input type="text" name="q" value="" size="6" class="ltx_page_navitem_search"><button type="submit">Search</button></small></li>
+<li><a href="./help/" class="ltx_help">Help?</a></li>
+<li><a href="./help/cite">Citing</a></li>
+<li><a href="./help/customize" class="ltx_customize">Customize</a></li>
+<li id="showinfo"><a href="" onclick="showInfo(); return false;" title="Show Annotations">Annotate</a></li>
+<li id="hideinfo"><a href="" onclick="hideInfo(); return false;">UnAnnotate</a></li>
+</ul>
+</form>
+</div>
+<div class="ltx_page_navsponsors">
+<div><a href="./about/" class="ltx_page_navabout">About the Project</a></div>
+</div>
+</div>
+<div class="ltx_page_main">
+<div class="ltx_page_content">
+<section class="ltx_chapter ltx_leqno">
+<h1 class="ltx_title ltx_title_chapter">
+<span class="ltx_tag ltx_tag_chapter">Chapter 10 </span>Bessel Functions</h1>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="./about/bio/FWJOlver">F. W. J. Olver</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">Institute for Physical Science and Technology
+and Department of Mathematics,
+University of Maryland, College Park, Maryland.
+</span></span></span>
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><a href="./about/bio/LCMaximon">L. C. Maximon</a>
+</span><span class="ltx_author_notes">
+<span class="ltx_contact ltx_role_affiliation">Center for Nuclear Studies,
+Department of Physics, The George Washington University,
+Washington, D.C.
+</span></span></span>
+</div>
+<div id="info" class="ltx_metadata ltx_info">
+<span href="" class="ltx_infoicon ltx_icon" title="Show Annotations"><span class="ltx_font_bold">ⓘ</span></span>
+<div class="ltx_infocontent">
+<dl>
+<dt>Acknowledgements:</dt>
+<dd class="ltx_acknowledgements">This chapter is based in part on
+<cite class="ltx_cite ltx_citemacro_citet">Abramowitz and Stegun (<a href="./bib/#bib24" title="Handbook of Mathematical Functions with Formulas, Graphs, and Mathematical Tables" class="ltx_ref">1964</a>, Chapters 9, 10, and 11)</cite> by F. W. J. Olver,
+H. A. Antosiewicz, and Y. L. Luke, respectively. The authors are pleased to
+acknowledge assistance of Martin E. Muldoon with §§<a href="./10.21" title="§10.21 Zeros ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.21</span></a> and
+<a href="./10.42" title="§10.42 Zeros ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.42</span></a>, Adri Olde Daalhuis with the verification of
+Eqs. (<a href="./10.15#E6" title="(10.15.6) ‣ Half-Integer Values of 𝜈 ‣ §10.15 Derivatives with Respect to Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.15.6</span></a>)–(<a href="./10.15#E9" title="(10.15.9) ‣ Half-Integer Values of 𝜈 ‣ §10.15 Derivatives with Respect to Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.15.9</span></a>), (<a href="./10.38#E6" title="(10.38.6) ‣ Half-Integer Values of 𝜈 ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.38.6</span></a>), (<a href="./10.38#E7" title="(10.38.7) ‣ Half-Integer Values of 𝜈 ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.38.7</span></a>),
+(<a href="./10.60#E7" title="(10.60.7) ‣ §10.60(iii) Other Series ‣ §10.60 Sums ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.60.7</span></a>)–(<a href="./10.60#E9" title="(10.60.9) ‣ §10.60(iii) Other Series ‣ §10.60 Sums ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.60.9</span></a>), and (<a href="./10.61#E9" title="(10.61.9) ‣ §10.61(v) Orders ±{1/2} ‣ §10.61 Definitions and Basic Properties ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.61.9</span></a>)–(<a href="./10.61#E12" title="(10.61.12) ‣ §10.61(v) Orders ±{1/2} ‣ §10.61 Definitions and Basic Properties ‣ Kelvin Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.61.12</span></a>),
+Peter Paule and Frédéric Chyzak for the
+verification of Eqs. (<a href="./10.15#E6" title="(10.15.6) ‣ Half-Integer Values of 𝜈 ‣ §10.15 Derivatives with Respect to Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.15.6</span></a>)–(<a href="./10.15#E9" title="(10.15.9) ‣ Half-Integer Values of 𝜈 ‣ §10.15 Derivatives with Respect to Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.15.9</span></a>),
+(<a href="./10.38#E6" title="(10.38.6) ‣ Half-Integer Values of 𝜈 ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.38.6</span></a>), (<a href="./10.38#E7" title="(10.38.7) ‣ Half-Integer Values of 𝜈 ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.38.7</span></a>), (<a href="./10.56#E1" title="(10.56.1) ‣ §10.56 Generating Functions ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.56.1</span></a>)–(<a href="./10.56#E5" title="(10.56.5) ‣ §10.56 Generating Functions ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.56.5</span></a>),
+(<a href="./10.60#E4" title="(10.60.4) ‣ §10.60(ii) Duplication Formulas ‣ §10.60 Sums ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.60.4</span></a>), (<a href="./10.60#E6" title="(10.60.6) ‣ §10.60(ii) Duplication Formulas ‣ §10.60 Sums ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.60.6</span></a>),
+(<a href="./10.60#E10" title="(10.60.10) ‣ §10.60(iii) Other Series ‣ §10.60 Sums ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.60.10</span></a>), and (<a href="./10.60#E11" title="(10.60.11) ‣ §10.60(iii) Other Series ‣ §10.60 Sums ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.60.11</span></a>) by application of computer
+algebra, Nico Temme with the verification of
+Eqs. (<a href="./10.15#E6" title="(10.15.6) ‣ Half-Integer Values of 𝜈 ‣ §10.15 Derivatives with Respect to Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.15.6</span></a>)–(<a href="./10.15#E9" title="(10.15.9) ‣ Half-Integer Values of 𝜈 ‣ §10.15 Derivatives with Respect to Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.15.9</span></a>), (<a href="./10.38#E6" title="(10.38.6) ‣ Half-Integer Values of 𝜈 ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.38.6</span></a>),
+and (<a href="./10.38#E7" title="(10.38.7) ‣ Half-Integer Values of 𝜈 ‣ §10.38 Derivatives with Respect to Order ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.38.7</span></a>), and Roderick Wong with the verification of
+§§<a href="./10.22#v" title="§10.22(v) Hankel Transform ‣ §10.22 Integrals ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.22(v)</span></a> and <a href="./10.43#v" title="§10.43(v) Kontorovich–Lebedev Transform ‣ §10.43 Integrals ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref"><span class="ltx_text ltx_ref_tag">10.43(v)</span></a>.</dd>
+<dt>Notes:</dt>
+<dd>The main references used in writing this chapter are <cite class="ltx_cite ltx_citemacro_citet">Watson (<a href="./bib/W#bib2380" title="A Treatise on the Theory of Bessel Functions" class="ltx_ref">1944</a>)</cite>
+and <cite class="ltx_cite ltx_citemacro_citet">Olver (<a href="./bib/O#bib1809" title="Asymptotics and Special Functions" class="ltx_ref">1997b</a>)</cite>.</dd>
+<dt>Referenced by:</dt>
+<dd>
+<a href="./3.10#Px2.p3" title="Quotient-Difference Algorithm ‣ §3.10(ii) Relations to Power Series ‣ §3.10 Continued Fractions ‣ Areas ‣ Chapter 3 Numerical Methods" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§3.10(ii)</span></a>,
+<a href="./about/news/#S1.I1.i7.p1" title="In Recent News ‣ DLMF Project News ‣ About the Project" class="ltx_ref"><span class="ltx_text ltx_ref_tag">New Associate Editors for the DLMF</span></a>,
+<a href="./about/bio/DDominici#S0.I1.ix2.p1" title="Profile Diego Dominici ‣ About the Project" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_text ltx_font_italic">Profile<span class="ltx_text"> </span></span>Diego Dominici</span></a>,
+<a href="./about/bio/FWJOlver#S0.I1.ix5.p1" title="Profile Frank W. J. Olver ‣ About the Project" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_text ltx_font_italic">Profile<span class="ltx_text"> </span></span>Frank W. J. Olver</span></a>,
+<a href="./about/bio/GNemes#S0.I1.ix4.p1" title="Profile Gergő Nemes ‣ About the Project" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_text ltx_font_italic">Profile<span class="ltx_text"> </span></span>Gergő Nemes</span></a>,
+<a href="./about/bio/LCMaximon#S0.I1.ix1.p1" title="Profile Leonard C. Maximon ‣ About the Project" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_text ltx_font_italic">Profile<span class="ltx_text"> </span></span>Leonard C. Maximon</span></a>,
+<a href="./about/staff#S2.I1.ix15.p1" title="Chapter Authors ‣ Project Staff ‣ About the Project" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§</span> ‣ <span class="ltx_text ltx_ref_title">Chapter Authors</span></a>,
+<a href="./about/staff#S2.I1.ix17.p1" title="Chapter Authors ‣ Project Staff ‣ About the Project" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§</span> ‣ <span class="ltx_text ltx_ref_title">Chapter Authors</span></a>,
+<a href="./about/staff#S4.I1.ix14.p1" title="Associate Editors ‣ Project Staff ‣ About the Project" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§</span> ‣ <span class="ltx_text ltx_ref_title">Associate Editors</span></a>,
+<a href="./about/staff#S4.I1.ix5.p1" title="Associate Editors ‣ Project Staff ‣ About the Project" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§</span> ‣ <span class="ltx_text ltx_ref_title">Associate Editors</span></a>,
+<a href="./errata/#V1.1.6.I1.ix1" title="In Errata ‣ Version 1.1.6 (June 30, 2022) ‣ Errata" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Erratum (V1.1.6) for  Chapters <span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_text">10 </span>Bessel Functions</span>, <span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_text">18 </span>Orthogonal Polynomials</span>, <span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_text">34 </span>3<span class="ltx_text ltx_font_italic">j</span>, 6<span class="ltx_text ltx_font_italic">j</span>, 9<span class="ltx_text ltx_font_italic">j</span> Symbols</span></span></a>,
+<a href="./errata/#V1.1.6.I1.ix2" title="In Errata ‣ Version 1.1.6 (June 30, 2022) ‣ Errata" class="ltx_ref"><span class="ltx_text ltx_ref_tag">Erratum (V1.1.6) for  Chapters <span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_text">1 </span>Algebraic and Analytic Methods</span>, <span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_text">10 </span>Bessel Functions</span>, <span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_text">14 </span>Legendre and Related Functions</span>, <span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_text">18 </span>Orthogonal Polynomials</span>, <span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_text">29 </span>Lamé Functions</span></span></a>,
+<a href="./errata/#V1.2.0.p3" title="Version 1.2.0 (March 27, 2024) ‣ Errata" class="ltx_ref"><span class="ltx_text ltx_ref_title">Version 1.2.0 (March 27, 2024)</span></a>,
+<a href="./software/#S1.t1.r38" title="Software Cross Index ‣ Software Index" class="ltx_ref"><span class="ltx_text ltx_ref_tag">§</span> ‣ <span class="ltx_text ltx_ref_title">Software Cross Index</span></a>
+</dd>
+<dt>Permalink:</dt>
+<dd><a href="./10" title="" class="ltx_ref">http://dlmf.nist.gov/10</a></dd>
+</dl>
+</div>
+</div>
+
+<div class="ltx_gallery">
+    <span style="height:100px">  </span>
+    <span style="height:100px">  </span>
+  </div>
+<div class="ltx_page_columns">
+<div class="ltx_page_column1">
+<ul class="ltx_toclist ltx_toclist_chapter">
+<li id="PT1" class="ltx_tocentry">
+<span class="ltx_text">Notation</span>
+<ol class="ltx_toclist ltx_toclist_part">
+<li class="ltx_tocentry"><a href="./10.1" title="In Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.1 </span>Special Notation</span></a></li>
+</ol>
+</li>
+<li id="PT2" class="ltx_tocentry">
+<span class="ltx_text">Bessel and Hankel Functions</span>
+<ol class="ltx_toclist ltx_toclist_part">
+<li class="ltx_tocentry"><a href="./10.2" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.2 </span>Definitions</span></a></li>
+<li class="ltx_tocentry"><a href="./10.3" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.3 </span>Graphics</span></a></li>
+<li class="ltx_tocentry"><a href="./10.4" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.4 </span>Connection Formulas</span></a></li>
+<li class="ltx_tocentry"><a href="./10.5" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.5 </span>Wronskians and Cross-Products</span></a></li>
+<li class="ltx_tocentry"><a href="./10.6" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.6 </span>Recurrence Relations and Derivatives</span></a></li>
+<li class="ltx_tocentry"><a href="./10.7" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.7 </span>Limiting Forms</span></a></li>
+<li class="ltx_tocentry"><a href="./10.8" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.8 </span>Power Series</span></a></li>
+<li class="ltx_tocentry"><a href="./10.9" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.9 </span>Integral Representations</span></a></li>
+<li class="ltx_tocentry"><a href="./10.10" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.10 </span>Continued Fractions</span></a></li>
+<li class="ltx_tocentry"><a href="./10.11" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.11 </span>Analytic Continuation</span></a></li>
+<li class="ltx_tocentry"><a href="./10.12" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.12 </span>Generating Function and Associated Series</span></a></li>
+<li class="ltx_tocentry"><a href="./10.13" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.13 </span>Other Differential Equations</span></a></li>
+<li class="ltx_tocentry"><a href="./10.14" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.14 </span>Inequalities; Monotonicity</span></a></li>
+<li class="ltx_tocentry"><a href="./10.15" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.15 </span>Derivatives with Respect to Order</span></a></li>
+<li class="ltx_tocentry"><a href="./10.16" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.16 </span>Relations to Other Functions</span></a></li>
+<li class="ltx_tocentry"><a href="./10.17" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.17 </span>Asymptotic Expansions for Large Argument</span></a></li>
+<li class="ltx_tocentry"><a href="./10.18" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.18 </span>Modulus and Phase Functions</span></a></li>
+<li class="ltx_tocentry"><a href="./10.19" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.19 </span>Asymptotic Expansions for Large Order</span></a></li>
+<li class="ltx_tocentry"><a href="./10.20" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.20 </span>Uniform Asymptotic Expansions for Large Order</span></a></li>
+<li class="ltx_tocentry"><a href="./10.21" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.21 </span>Zeros</span></a></li>
+<li class="ltx_tocentry"><a href="./10.22" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.22 </span>Integrals</span></a></li>
+<li class="ltx_tocentry"><a href="./10.23" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.23 </span>Sums</span></a></li>
+<li class="ltx_tocentry"><a href="./10.24" title="In Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.24 </span>Functions of Imaginary Order</span></a></li>
+</ol>
+</li>
+<li id="PT3" class="ltx_tocentry">
+<span class="ltx_text">Modified Bessel Functions</span>
+<ol class="ltx_toclist ltx_toclist_part">
+<li class="ltx_tocentry"><a href="./10.25" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.25 </span>Definitions</span></a></li>
+<li class="ltx_tocentry"><a href="./10.26" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.26 </span>Graphics</span></a></li>
+<li class="ltx_tocentry"><a href="./10.27" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.27 </span>Connection Formulas</span></a></li>
+<li class="ltx_tocentry"><a href="./10.28" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.28 </span>Wronskians and Cross-Products</span></a></li>
+<li class="ltx_tocentry"><a href="./10.29" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.29 </span>Recurrence Relations and Derivatives</span></a></li>
+<li class="ltx_tocentry"><a href="./10.30" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.30 </span>Limiting Forms</span></a></li>
+<li class="ltx_tocentry"><a href="./10.31" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.31 </span>Power Series</span></a></li>
+<li class="ltx_tocentry"><a href="./10.32" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.32 </span>Integral Representations</span></a></li>
+<li class="ltx_tocentry"><a href="./10.33" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.33 </span>Continued Fractions</span></a></li>
+<li class="ltx_tocentry"><a href="./10.34" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.34 </span>Analytic Continuation</span></a></li>
+<li class="ltx_tocentry"><a href="./10.35" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.35 </span>Generating Function and Associated Series</span></a></li>
+<li class="ltx_tocentry"><a href="./10.36" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.36 </span>Other Differential Equations</span></a></li>
+<li class="ltx_tocentry"><a href="./10.37" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.37 </span>Inequalities; Monotonicity</span></a></li>
+<li class="ltx_tocentry"><a href="./10.38" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.38 </span>Derivatives with Respect to Order</span></a></li>
+<li class="ltx_tocentry"><a href="./10.39" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.39 </span>Relations to Other Functions</span></a></li>
+<li class="ltx_tocentry"><a href="./10.40" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.40 </span>Asymptotic Expansions for Large Argument</span></a></li>
+<li class="ltx_tocentry"><a href="./10.41" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.41 </span>Asymptotic Expansions for Large Order</span></a></li>
+<li class="ltx_tocentry"><a href="./10.42" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.42 </span>Zeros</span></a></li>
+<li class="ltx_tocentry"><a href="./10.43" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.43 </span>Integrals</span></a></li>
+<li class="ltx_tocentry"><a href="./10.44" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.44 </span>Sums</span></a></li>
+<li class="ltx_tocentry"><a href="./10.45" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.45 </span>Functions of Imaginary Order</span></a></li>
+<li class="ltx_tocentry"><a href="./10.46" title="In Modified Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.46 </span>Generalized and Incomplete Bessel Functions; Mittag-Leffler Function</span></a></li>
+</ol>
+</li>
+</ul>
+</div>
+<div class="ltx_page_column2">
+<ul class="ltx_toclist ltx_toclist_chapter">
+<li id="PT4" class="ltx_tocentry">
+<span class="ltx_text">Spherical Bessel Functions</span>
+<ol class="ltx_toclist ltx_toclist_part">
+<li class="ltx_tocentry"><a href="./10.47" title="In Spherical Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.47 </span>Definitions and Basic Properties</span></a></li>
+<li class="ltx_tocentry"><a href="./10.48" title="In Spherical Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.48 </span>Graphs</span></a></li>
+<li class="ltx_tocentry"><a href="./10.49" title="In Spherical Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.49 </span>Explicit Formulas</span></a></li>
+<li class="ltx_tocentry"><a href="./10.50" title="In Spherical Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.50 </span>Wronskians and Cross-Products</span></a></li>
+<li class="ltx_tocentry"><a href="./10.51" title="In Spherical Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.51 </span>Recurrence Relations and Derivatives</span></a></li>
+<li class="ltx_tocentry"><a href="./10.52" title="In Spherical Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.52 </span>Limiting Forms</span></a></li>
+<li class="ltx_tocentry"><a href="./10.53" title="In Spherical Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.53 </span>Power Series</span></a></li>
+<li class="ltx_tocentry"><a href="./10.54" title="In Spherical Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.54 </span>Integral Representations</span></a></li>
+<li class="ltx_tocentry"><a href="./10.55" title="In Spherical Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.55 </span>Continued Fractions</span></a></li>
+<li class="ltx_tocentry"><a href="./10.56" title="In Spherical Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.56 </span>Generating Functions</span></a></li>
+<li class="ltx_tocentry"><a href="./10.57" title="In Spherical Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.57 </span>Uniform Asymptotic Expansions for Large Order</span></a></li>
+<li class="ltx_tocentry"><a href="./10.58" title="In Spherical Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.58 </span>Zeros</span></a></li>
+<li class="ltx_tocentry"><a href="./10.59" title="In Spherical Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.59 </span>Integrals</span></a></li>
+<li class="ltx_tocentry"><a href="./10.60" title="In Spherical Bessel Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.60 </span>Sums</span></a></li>
+</ol>
+</li>
+<li id="PT5" class="ltx_tocentry">
+<span class="ltx_text">Kelvin Functions</span>
+<ol class="ltx_toclist ltx_toclist_part">
+<li class="ltx_tocentry"><a href="./10.61" title="In Kelvin Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.61 </span>Definitions and Basic Properties</span></a></li>
+<li class="ltx_tocentry"><a href="./10.62" title="In Kelvin Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.62 </span>Graphs</span></a></li>
+<li class="ltx_tocentry"><a href="./10.63" title="In Kelvin Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.63 </span>Recurrence Relations and Derivatives</span></a></li>
+<li class="ltx_tocentry"><a href="./10.64" title="In Kelvin Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.64 </span>Integral Representations</span></a></li>
+<li class="ltx_tocentry"><a href="./10.65" title="In Kelvin Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.65 </span>Power Series</span></a></li>
+<li class="ltx_tocentry"><a href="./10.66" title="In Kelvin Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.66 </span>Expansions in Series of Bessel Functions</span></a></li>
+<li class="ltx_tocentry"><a href="./10.67" title="In Kelvin Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.67 </span>Asymptotic Expansions for Large Argument</span></a></li>
+<li class="ltx_tocentry"><a href="./10.68" title="In Kelvin Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.68 </span>Modulus and Phase Functions</span></a></li>
+<li class="ltx_tocentry"><a href="./10.69" title="In Kelvin Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.69 </span>Uniform Asymptotic Expansions for Large Order</span></a></li>
+<li class="ltx_tocentry"><a href="./10.70" title="In Kelvin Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.70 </span>Zeros</span></a></li>
+<li class="ltx_tocentry"><a href="./10.71" title="In Kelvin Functions ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.71 </span>Integrals</span></a></li>
+</ol>
+</li>
+<li id="PT6" class="ltx_tocentry">
+<span class="ltx_text">Applications</span>
+<ol class="ltx_toclist ltx_toclist_part">
+<li class="ltx_tocentry"><a href="./10.72" title="In Applications ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.72 </span>Mathematical Applications</span></a></li>
+<li class="ltx_tocentry"><a href="./10.73" title="In Applications ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.73 </span>Physical Applications</span></a></li>
+</ol>
+</li>
+<li id="PT7" class="ltx_tocentry">
+<span class="ltx_text">Computation</span>
+<ol class="ltx_toclist ltx_toclist_part">
+<li class="ltx_tocentry"><a href="./10.74" title="In Computation ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.74 </span>Methods of Computation</span></a></li>
+<li class="ltx_tocentry"><a href="./10.75" title="In Computation ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.75 </span>Tables</span></a></li>
+<li class="ltx_tocentry"><a href="./10.76" title="In Computation ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.76 </span>Approximations</span></a></li>
+<li class="ltx_tocentry"><a href="./10.77" title="In Computation ‣ Chapter 10 Bessel Functions" class="ltx_ref ltx_toc"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.77 </span>Software</span></a></li>
+</ol>
+</li>
+</ul>
+</div>
+</div>
+</section>
+</div>
+<div class="ltx_page_footer">
+<div class="ltx_siblings">
+<a href="./9.20" title="In Computation ‣ Chapter 9 Airy and Related Functions" class="ltx_ref" rel="prev"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">9.20 </span>Software</span></a><a href="./10.1" title="In Notation ‣ Chapter 10 Bessel Functions" class="ltx_ref" rel="next"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">10.1 </span>Special Notation</span></a>
+</div>
+<div class="ltx_footer_links ltx_centering">
+<a href="./about/notices">© 2010–2026 NIST</a> / <a href="./about/notices#S2">Disclaimer</a> / <a href="/cdn-cgi/l/email-protection#a1e5edece78cc7c4c4c5c3c0c2cae1cfc8d2d58fc6ced7">Feedback</a>;
+ Version 1.2.6;
+Release date 2026-03-15.</div>
+<span id="pagesettings"></span>
+<div class="ltx_nist_logo"><a href="http://www.nist.gov/"><img src="./style/nistidc.png" width="500" alt="NIST"></a></div>
+<div class="ltx_nist_links ltx_align_right">
+<a href="https://www.nist.gov/privacy-policy">Site Privacy</a> <a href="https://www.nist.gov/oism/accessibility">Accessibility</a> <a href="https://www.nist.gov/privacy">Privacy Program</a> <a href="https://www.nist.gov/oism/copyrights">Copyrights</a> <a href="https://www.commerce.gov/vulnerability-disclosure-policy">Vulnerability Disclosure</a> <a href="https://www.nist.gov/no-fear-act-policy">No Fear Act Policy</a> <a href="https://www.nist.gov/foia">FOIA</a> <a href="https://www.nist.gov/environmental-policy-statement">Environmental Policy</a> <a href="https://www.nist.gov/summary-report-scientific-integrity">Scientific Integrity</a> <a href="https://www.nist.gov/nist-information-quality-standards">Information Quality Standards</a> <a href="https://www.commerce.gov/">Commerce.gov</a> <a href="http://www.science.gov/">Science.gov</a> <a href="http://www.usa.gov/">USA.gov</a>
+</div>
+</div>
+</div>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9fd00c609c69c595',t:'MTc3ODk5MzkyMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

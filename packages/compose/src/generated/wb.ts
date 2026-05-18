@@ -26,8 +26,11 @@ import { def as algNumArithDef } from "../../../../tools/alg-num-arith/tool.js";
 import { def as casDiffDef } from "../../../../tools/cas-diff/tool.js";
 import { def as casSimplifyDef } from "../../../../tools/cas-simplify/tool.js";
 import { def as casVerifyDef } from "../../../../tools/cas-verify/tool.js";
+import { def as choiIsoDef } from "../../../../tools/choi-iso/tool.js";
+import { def as coneSolveDef } from "../../../../tools/cone-solve/tool.js";
 import { def as entropySourceDef } from "../../../../tools/entropy-source/tool.js";
 import { def as exprParseDef } from "../../../../tools/expr-parse/tool.js";
+import { def as fidelityDef } from "../../../../tools/fidelity/tool.js";
 import { def as groebnerBasisDef } from "../../../../tools/groebner-basis/tool.js";
 import { def as hypergeometricPfqDef } from "../../../../tools/hypergeometric-pfq/tool.js";
 import { def as integrate1dDef } from "../../../../tools/integrate-1d/tool.js";
@@ -35,9 +38,11 @@ import { def as integrateOdeIvpDef } from "../../../../tools/integrate-ode-ivp/t
 import { def as integrateOdeStiffDef } from "../../../../tools/integrate-ode-stiff/tool.js";
 import { def as integrateOdeSymplecticDef } from "../../../../tools/integrate-ode-symplectic/tool.js";
 import { def as linalgEighDef } from "../../../../tools/linalg-eigh/tool.js";
+import { def as linalgEighComplexDef } from "../../../../tools/linalg-eigh-complex/tool.js";
 import { def as linalgQrDef } from "../../../../tools/linalg-qr/tool.js";
 import { def as linalgSolveDef } from "../../../../tools/linalg-solve/tool.js";
 import { def as linalgSvdDef } from "../../../../tools/linalg-svd/tool.js";
+import { def as linalgSvdComplexDef } from "../../../../tools/linalg-svd-complex/tool.js";
 import { def as linsolveQDef } from "../../../../tools/linsolve-q/tool.js";
 import { def as lpSolveDef } from "../../../../tools/lp-solve/tool.js";
 import { def as meijerGDef } from "../../../../tools/meijer-g/tool.js";
@@ -49,13 +54,17 @@ import { def as modPowDef } from "../../../../tools/mod-pow/tool.js";
 import { def as nttDef } from "../../../../tools/ntt/tool.js";
 import { def as optimizeLbfgsProjectedDef } from "../../../../tools/optimize-lbfgs-projected/tool.js";
 import { def as oracleDef } from "../../../../tools/oracle/tool.js";
+import { def as partialTraceDef } from "../../../../tools/partial-trace/tool.js";
+import { def as partialTransposeDef } from "../../../../tools/partial-transpose/tool.js";
 import { def as polyFactorDef } from "../../../../tools/poly-factor/tool.js";
 import { def as polyRootsDef } from "../../../../tools/poly-roots/tool.js";
+import { def as purityDef } from "../../../../tools/purity/tool.js";
 import { def as realRootIsolateDef } from "../../../../tools/real-root-isolate/tool.js";
 import { def as registryListDef } from "../../../../tools/registry-list/tool.js";
 import { def as registrySearchDef } from "../../../../tools/registry-search/tool.js";
 import { def as sdpSolveDef } from "../../../../tools/sdp-solve/tool.js";
 import { def as solveDef } from "../../../../tools/solve/tool.js";
+import { def as specialEvalDef } from "../../../../tools/special-eval/tool.js";
 import { def as sturmControlledDef } from "../../../../tools/sturm-controlled/tool.js";
 import { def as sturmEquivalentDef } from "../../../../tools/sturm-equivalent/tool.js";
 import { def as sturmExecuteDef } from "../../../../tools/sturm-execute/tool.js";
@@ -64,14 +73,21 @@ import { def as sturmSampleDef } from "../../../../tools/sturm-sample/tool.js";
 import { def as sturmSimplifyDef } from "../../../../tools/sturm-simplify/tool.js";
 import { def as sturmTensorDef } from "../../../../tools/sturm-tensor/tool.js";
 import { def as sturmThenDef } from "../../../../tools/sturm-then/tool.js";
+import { def as sturmTraceDef } from "../../../../tools/sturm-trace/tool.js";
+import { def as tensorProductDef } from "../../../../tools/tensor-product/tool.js";
+import { def as traceDistanceDef } from "../../../../tools/trace-distance/tool.js";
+import { def as traceNormDef } from "../../../../tools/trace-norm/tool.js";
 
 export interface TypedWorkbench extends Workbench {
   algNumArith(input: InputOf<typeof algNumArithDef>, flags?: FlagsArgOf<typeof algNumArithDef>): Promise<OutputOf<typeof algNumArithDef>>;
   casDiff(input: InputOf<typeof casDiffDef>, flags?: FlagsArgOf<typeof casDiffDef>): Promise<OutputOf<typeof casDiffDef>>;
   casSimplify(input: InputOf<typeof casSimplifyDef>, flags?: FlagsArgOf<typeof casSimplifyDef>): Promise<OutputOf<typeof casSimplifyDef>>;
   casVerify(input: InputOf<typeof casVerifyDef>, flags?: FlagsArgOf<typeof casVerifyDef>): Promise<OutputOf<typeof casVerifyDef>>;
+  choiIso(input: InputOf<typeof choiIsoDef>, flags?: FlagsArgOf<typeof choiIsoDef>): Promise<OutputOf<typeof choiIsoDef>>;
+  coneSolve(input: InputOf<typeof coneSolveDef>, flags?: FlagsArgOf<typeof coneSolveDef>): Promise<OutputOf<typeof coneSolveDef>>;
   entropySource(input: InputOf<typeof entropySourceDef>, flags?: FlagsArgOf<typeof entropySourceDef>): Promise<OutputOf<typeof entropySourceDef>>;
   exprParse(input: InputOf<typeof exprParseDef>, flags?: FlagsArgOf<typeof exprParseDef>): Promise<OutputOf<typeof exprParseDef>>;
+  fidelity(input: InputOf<typeof fidelityDef>, flags?: FlagsArgOf<typeof fidelityDef>): Promise<OutputOf<typeof fidelityDef>>;
   groebnerBasis(input: InputOf<typeof groebnerBasisDef>, flags?: FlagsArgOf<typeof groebnerBasisDef>): Promise<OutputOf<typeof groebnerBasisDef>>;
   hypergeometricPfq(input: InputOf<typeof hypergeometricPfqDef>, flags?: FlagsArgOf<typeof hypergeometricPfqDef>): Promise<OutputOf<typeof hypergeometricPfqDef>>;
   integrate1d(input: InputOf<typeof integrate1dDef>, flags?: FlagsArgOf<typeof integrate1dDef>): Promise<OutputOf<typeof integrate1dDef>>;
@@ -79,9 +95,11 @@ export interface TypedWorkbench extends Workbench {
   integrateOdeStiff(input: InputOf<typeof integrateOdeStiffDef>, flags?: FlagsArgOf<typeof integrateOdeStiffDef>): Promise<OutputOf<typeof integrateOdeStiffDef>>;
   integrateOdeSymplectic(input: InputOf<typeof integrateOdeSymplecticDef>, flags?: FlagsArgOf<typeof integrateOdeSymplecticDef>): Promise<OutputOf<typeof integrateOdeSymplecticDef>>;
   linalgEigh(input: InputOf<typeof linalgEighDef>, flags?: FlagsArgOf<typeof linalgEighDef>): Promise<OutputOf<typeof linalgEighDef>>;
+  linalgEighComplex(input: InputOf<typeof linalgEighComplexDef>, flags?: FlagsArgOf<typeof linalgEighComplexDef>): Promise<OutputOf<typeof linalgEighComplexDef>>;
   linalgQr(input: InputOf<typeof linalgQrDef>, flags?: FlagsArgOf<typeof linalgQrDef>): Promise<OutputOf<typeof linalgQrDef>>;
   linalgSolve(input: InputOf<typeof linalgSolveDef>, flags?: FlagsArgOf<typeof linalgSolveDef>): Promise<OutputOf<typeof linalgSolveDef>>;
   linalgSvd(input: InputOf<typeof linalgSvdDef>, flags?: FlagsArgOf<typeof linalgSvdDef>): Promise<OutputOf<typeof linalgSvdDef>>;
+  linalgSvdComplex(input: InputOf<typeof linalgSvdComplexDef>, flags?: FlagsArgOf<typeof linalgSvdComplexDef>): Promise<OutputOf<typeof linalgSvdComplexDef>>;
   linsolveQ(input: InputOf<typeof linsolveQDef>, flags?: FlagsArgOf<typeof linsolveQDef>): Promise<OutputOf<typeof linsolveQDef>>;
   lpSolve(input: InputOf<typeof lpSolveDef>, flags?: FlagsArgOf<typeof lpSolveDef>): Promise<OutputOf<typeof lpSolveDef>>;
   meijerG(input: InputOf<typeof meijerGDef>, flags?: FlagsArgOf<typeof meijerGDef>): Promise<OutputOf<typeof meijerGDef>>;
@@ -93,13 +111,17 @@ export interface TypedWorkbench extends Workbench {
   ntt(input: InputOf<typeof nttDef>, flags?: FlagsArgOf<typeof nttDef>): Promise<OutputOf<typeof nttDef>>;
   optimizeLbfgsProjected(input: InputOf<typeof optimizeLbfgsProjectedDef>, flags?: FlagsArgOf<typeof optimizeLbfgsProjectedDef>): Promise<OutputOf<typeof optimizeLbfgsProjectedDef>>;
   oracle(input: InputOf<typeof oracleDef>, flags?: FlagsArgOf<typeof oracleDef>): Promise<OutputOf<typeof oracleDef>>;
+  partialTrace(input: InputOf<typeof partialTraceDef>, flags?: FlagsArgOf<typeof partialTraceDef>): Promise<OutputOf<typeof partialTraceDef>>;
+  partialTranspose(input: InputOf<typeof partialTransposeDef>, flags?: FlagsArgOf<typeof partialTransposeDef>): Promise<OutputOf<typeof partialTransposeDef>>;
   polyFactor(input: InputOf<typeof polyFactorDef>, flags?: FlagsArgOf<typeof polyFactorDef>): Promise<OutputOf<typeof polyFactorDef>>;
   polyRoots(input: InputOf<typeof polyRootsDef>, flags?: FlagsArgOf<typeof polyRootsDef>): Promise<OutputOf<typeof polyRootsDef>>;
+  purity(input: InputOf<typeof purityDef>, flags?: FlagsArgOf<typeof purityDef>): Promise<OutputOf<typeof purityDef>>;
   realRootIsolate(input: InputOf<typeof realRootIsolateDef>, flags?: FlagsArgOf<typeof realRootIsolateDef>): Promise<OutputOf<typeof realRootIsolateDef>>;
   registryList(input: InputOf<typeof registryListDef>, flags?: FlagsArgOf<typeof registryListDef>): Promise<OutputOf<typeof registryListDef>>;
   registrySearch(input: InputOf<typeof registrySearchDef>, flags?: FlagsArgOf<typeof registrySearchDef>): Promise<OutputOf<typeof registrySearchDef>>;
   sdpSolve(input: InputOf<typeof sdpSolveDef>, flags?: FlagsArgOf<typeof sdpSolveDef>): Promise<OutputOf<typeof sdpSolveDef>>;
   solve(input: InputOf<typeof solveDef>, flags?: FlagsArgOf<typeof solveDef>): Promise<OutputOf<typeof solveDef>>;
+  specialEval(input: InputOf<typeof specialEvalDef>, flags?: FlagsArgOf<typeof specialEvalDef>): Promise<OutputOf<typeof specialEvalDef>>;
   sturmControlled(input: InputOf<typeof sturmControlledDef>, flags?: FlagsArgOf<typeof sturmControlledDef>): Promise<OutputOf<typeof sturmControlledDef>>;
   sturmEquivalent(input: InputOf<typeof sturmEquivalentDef>, flags?: FlagsArgOf<typeof sturmEquivalentDef>): Promise<OutputOf<typeof sturmEquivalentDef>>;
   sturmExecute(input: InputOf<typeof sturmExecuteDef>, flags?: FlagsArgOf<typeof sturmExecuteDef>): Promise<OutputOf<typeof sturmExecuteDef>>;
@@ -108,6 +130,10 @@ export interface TypedWorkbench extends Workbench {
   sturmSimplify(input: InputOf<typeof sturmSimplifyDef>, flags?: FlagsArgOf<typeof sturmSimplifyDef>): Promise<OutputOf<typeof sturmSimplifyDef>>;
   sturmTensor(input: InputOf<typeof sturmTensorDef>, flags?: FlagsArgOf<typeof sturmTensorDef>): Promise<OutputOf<typeof sturmTensorDef>>;
   sturmThen(input: InputOf<typeof sturmThenDef>, flags?: FlagsArgOf<typeof sturmThenDef>): Promise<OutputOf<typeof sturmThenDef>>;
+  sturmTrace(input: InputOf<typeof sturmTraceDef>, flags?: FlagsArgOf<typeof sturmTraceDef>): Promise<OutputOf<typeof sturmTraceDef>>;
+  tensorProduct(input: InputOf<typeof tensorProductDef>, flags?: FlagsArgOf<typeof tensorProductDef>): Promise<OutputOf<typeof tensorProductDef>>;
+  traceDistance(input: InputOf<typeof traceDistanceDef>, flags?: FlagsArgOf<typeof traceDistanceDef>): Promise<OutputOf<typeof traceDistanceDef>>;
+  traceNorm(input: InputOf<typeof traceNormDef>, flags?: FlagsArgOf<typeof traceNormDef>): Promise<OutputOf<typeof traceNormDef>>;
 }
 
 export function typed(workbench: Workbench): TypedWorkbench {
@@ -133,11 +159,20 @@ export function typed(workbench: Workbench): TypedWorkbench {
     casVerify(input, flags) {
       return workbench.run("cas-verify", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof casVerifyDef>>;
     },
+    choiIso(input, flags) {
+      return workbench.run("choi-iso", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof choiIsoDef>>;
+    },
+    coneSolve(input, flags) {
+      return workbench.run("cone-solve", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof coneSolveDef>>;
+    },
     entropySource(input, flags) {
       return workbench.run("entropy-source", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof entropySourceDef>>;
     },
     exprParse(input, flags) {
       return workbench.run("expr-parse", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof exprParseDef>>;
+    },
+    fidelity(input, flags) {
+      return workbench.run("fidelity", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof fidelityDef>>;
     },
     groebnerBasis(input, flags) {
       return workbench.run("groebner-basis", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof groebnerBasisDef>>;
@@ -160,6 +195,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     linalgEigh(input, flags) {
       return workbench.run("linalg-eigh", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof linalgEighDef>>;
     },
+    linalgEighComplex(input, flags) {
+      return workbench.run("linalg-eigh-complex", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof linalgEighComplexDef>>;
+    },
     linalgQr(input, flags) {
       return workbench.run("linalg-qr", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof linalgQrDef>>;
     },
@@ -168,6 +206,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     },
     linalgSvd(input, flags) {
       return workbench.run("linalg-svd", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof linalgSvdDef>>;
+    },
+    linalgSvdComplex(input, flags) {
+      return workbench.run("linalg-svd-complex", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof linalgSvdComplexDef>>;
     },
     linsolveQ(input, flags) {
       return workbench.run("linsolve-q", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof linsolveQDef>>;
@@ -202,11 +243,20 @@ export function typed(workbench: Workbench): TypedWorkbench {
     oracle(input, flags) {
       return workbench.run("oracle", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof oracleDef>>;
     },
+    partialTrace(input, flags) {
+      return workbench.run("partial-trace", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof partialTraceDef>>;
+    },
+    partialTranspose(input, flags) {
+      return workbench.run("partial-transpose", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof partialTransposeDef>>;
+    },
     polyFactor(input, flags) {
       return workbench.run("poly-factor", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof polyFactorDef>>;
     },
     polyRoots(input, flags) {
       return workbench.run("poly-roots", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof polyRootsDef>>;
+    },
+    purity(input, flags) {
+      return workbench.run("purity", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof purityDef>>;
     },
     realRootIsolate(input, flags) {
       return workbench.run("real-root-isolate", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof realRootIsolateDef>>;
@@ -222,6 +272,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     },
     solve(input, flags) {
       return workbench.run("solve", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof solveDef>>;
+    },
+    specialEval(input, flags) {
+      return workbench.run("special-eval", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof specialEvalDef>>;
     },
     sturmControlled(input, flags) {
       return workbench.run("sturm-controlled", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof sturmControlledDef>>;
@@ -247,6 +300,18 @@ export function typed(workbench: Workbench): TypedWorkbench {
     sturmThen(input, flags) {
       return workbench.run("sturm-then", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof sturmThenDef>>;
     },
+    sturmTrace(input, flags) {
+      return workbench.run("sturm-trace", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof sturmTraceDef>>;
+    },
+    tensorProduct(input, flags) {
+      return workbench.run("tensor-product", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof tensorProductDef>>;
+    },
+    traceDistance(input, flags) {
+      return workbench.run("trace-distance", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof traceDistanceDef>>;
+    },
+    traceNorm(input, flags) {
+      return workbench.run("trace-norm", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof traceNormDef>>;
+    },
   };
 }
 
@@ -259,8 +324,11 @@ export const defs = {
   casDiff: casDiffDef,
   casSimplify: casSimplifyDef,
   casVerify: casVerifyDef,
+  choiIso: choiIsoDef,
+  coneSolve: coneSolveDef,
   entropySource: entropySourceDef,
   exprParse: exprParseDef,
+  fidelity: fidelityDef,
   groebnerBasis: groebnerBasisDef,
   hypergeometricPfq: hypergeometricPfqDef,
   integrate1d: integrate1dDef,
@@ -268,9 +336,11 @@ export const defs = {
   integrateOdeStiff: integrateOdeStiffDef,
   integrateOdeSymplectic: integrateOdeSymplecticDef,
   linalgEigh: linalgEighDef,
+  linalgEighComplex: linalgEighComplexDef,
   linalgQr: linalgQrDef,
   linalgSolve: linalgSolveDef,
   linalgSvd: linalgSvdDef,
+  linalgSvdComplex: linalgSvdComplexDef,
   linsolveQ: linsolveQDef,
   lpSolve: lpSolveDef,
   meijerG: meijerGDef,
@@ -282,13 +352,17 @@ export const defs = {
   ntt: nttDef,
   optimizeLbfgsProjected: optimizeLbfgsProjectedDef,
   oracle: oracleDef,
+  partialTrace: partialTraceDef,
+  partialTranspose: partialTransposeDef,
   polyFactor: polyFactorDef,
   polyRoots: polyRootsDef,
+  purity: purityDef,
   realRootIsolate: realRootIsolateDef,
   registryList: registryListDef,
   registrySearch: registrySearchDef,
   sdpSolve: sdpSolveDef,
   solve: solveDef,
+  specialEval: specialEvalDef,
   sturmControlled: sturmControlledDef,
   sturmEquivalent: sturmEquivalentDef,
   sturmExecute: sturmExecuteDef,
@@ -297,4 +371,8 @@ export const defs = {
   sturmSimplify: sturmSimplifyDef,
   sturmTensor: sturmTensorDef,
   sturmThen: sturmThenDef,
+  sturmTrace: sturmTraceDef,
+  tensorProduct: tensorProductDef,
+  traceDistance: traceDistanceDef,
+  traceNorm: traceNormDef,
 } as const;

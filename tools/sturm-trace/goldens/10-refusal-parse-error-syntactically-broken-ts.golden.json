@@ -1,0 +1,1 @@
+{"fields":{"input":{"fields":{"source":{"kind":"string","value":"export default () => %%notvalid%% ;\n"}},"kind":"record"},"output":{"kind":"tagged","payload":{"fields":{"message":{"kind":"string","value":"import failed: Unexpected %"}},"kind":"record"},"tag":"sturm-trace/parse-error"}},"kind":"record"}

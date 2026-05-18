@@ -1,0 +1,3591 @@
+{
+  "manifest_version": 1,
+  "generated_at": "2026-05-16T21:03:03.948Z",
+  "bead": "scientist-workbench-1f8r",
+  "oracle_id": "scipy",
+  "oracle_version": "1.17.0",
+  "numpy_version": "1.26.4",
+  "python_version": "3.12.3 (main, Mar 23 2026, 19:04:32) [GCC 13.3.0]",
+  "platform": {
+    "arch": "x64",
+    "os": "linux",
+    "runtime": "bun-1.3.13"
+  },
+  "corpus_bead": "scientist-workbench-9sqr",
+  "corpus_manifest_version": 1,
+  "corpus_generated_at": "2026-05-16T00:00:00Z",
+  "totals": {
+    "records": 271,
+    "real": 166,
+    "complex": 105
+  },
+  "results": [
+    {
+      "id": "T1-erf-001",
+      "head": "Erf",
+      "tier": "T1",
+      "output": "0.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.087917
+    },
+    {
+      "id": "T1-erf-002",
+      "head": "Erf",
+      "tier": "T1",
+      "output": "0.0011283787909692363",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.029152
+    },
+    {
+      "id": "T1-erf-003",
+      "head": "Erf",
+      "tier": "T1",
+      "output": "0.1124629160182849",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.015234
+    },
+    {
+      "id": "T1-erf-004",
+      "head": "Erf",
+      "tier": "T1",
+      "output": "0.5204998778130465",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.0104
+    },
+    {
+      "id": "T1-erf-005",
+      "head": "Erf",
+      "tier": "T1",
+      "output": "0.7651427114549945",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.010389
+    },
+    {
+      "id": "T1-erf-006",
+      "head": "Erf",
+      "tier": "T1",
+      "output": "0.3776330197115558",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.010187
+    },
+    {
+      "id": "T1-erf-007",
+      "head": "Erf",
+      "tier": "T1",
+      "output": "0.27523248741905915",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.009806
+    },
+    {
+      "id": "T1-erf-008",
+      "head": "Erf",
+      "tier": "T1",
+      "output": "0.07729363496503425",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.009632
+    },
+    {
+      "id": "T1-erf-009",
+      "head": "Erf",
+      "tier": "T1",
+      "output": "0.48261715737057553",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.009496
+    },
+    {
+      "id": "T1-erf-010",
+      "head": "Erf",
+      "tier": "T1",
+      "output": "0.7590236226711348",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.010874
+    },
+    {
+      "id": "T1-erf-011",
+      "head": "Erf",
+      "tier": "T1",
+      "output": "0.5649744696374209",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008768
+    },
+    {
+      "id": "T1-erf-012",
+      "head": "Erf",
+      "tier": "T1",
+      "output": "0.7282458942811534",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008205
+    },
+    {
+      "id": "T1-erf-013",
+      "head": "Erf",
+      "tier": "T1",
+      "output": "0.29350572410701276",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008779
+    },
+    {
+      "id": "T1-erf-014",
+      "head": "Erf",
+      "tier": "T1",
+      "output": "0.5028820918665291",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008444
+    },
+    {
+      "id": "T1-erf-015",
+      "head": "Erf",
+      "tier": "T1",
+      "output": "0.7257769851501035",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008431
+    },
+    {
+      "id": "T1-erfc-016",
+      "head": "Erfc",
+      "tier": "T1",
+      "output": "1.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.011996
+    },
+    {
+      "id": "T1-erfc-017",
+      "head": "Erfc",
+      "tier": "T1",
+      "output": "0.9988716212090307",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.010327
+    },
+    {
+      "id": "T1-erfc-018",
+      "head": "Erfc",
+      "tier": "T1",
+      "output": "0.8875370839817152",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008451
+    },
+    {
+      "id": "T1-erfc-019",
+      "head": "Erfc",
+      "tier": "T1",
+      "output": "0.4795001221869535",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.007653
+    },
+    {
+      "id": "T1-erfc-020",
+      "head": "Erfc",
+      "tier": "T1",
+      "output": "0.23485728854500554",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008479
+    },
+    {
+      "id": "T1-erfc-021",
+      "head": "Erfc",
+      "tier": "T1",
+      "output": "0.9808155589233396",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008043
+    },
+    {
+      "id": "T1-erfc-022",
+      "head": "Erfc",
+      "tier": "T1",
+      "output": "0.8971002446537204",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008482
+    },
+    {
+      "id": "T1-erfc-023",
+      "head": "Erfc",
+      "tier": "T1",
+      "output": "0.9676465388447648",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008108
+    },
+    {
+      "id": "T1-erfc-024",
+      "head": "Erfc",
+      "tier": "T1",
+      "output": "0.8762058204435477",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008511
+    },
+    {
+      "id": "T1-erfc-025",
+      "head": "Erfc",
+      "tier": "T1",
+      "output": "0.9699180060464884",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008352
+    },
+    {
+      "id": "T1-erfc-026",
+      "head": "Erfc",
+      "tier": "T1",
+      "output": "0.6667932543924054",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008005
+    },
+    {
+      "id": "T1-erfc-027",
+      "head": "Erfc",
+      "tier": "T1",
+      "output": "0.8139726428633026",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008229
+    },
+    {
+      "id": "T1-erfc-028",
+      "head": "Erfc",
+      "tier": "T1",
+      "output": "0.6311919318849748",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008252
+    },
+    {
+      "id": "T1-erfc-029",
+      "head": "Erfc",
+      "tier": "T1",
+      "output": "0.5881366961091499",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.007844
+    },
+    {
+      "id": "T1-erfc-030",
+      "head": "Erfc",
+      "tier": "T1",
+      "output": "0.24176093423557665",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.009713
+    },
+    {
+      "id": "T2-erf-001",
+      "head": "Erf",
+      "tier": "T2",
+      "output": "0.7672256612328953",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008446
+    },
+    {
+      "id": "T2-erf-002",
+      "head": "Erf",
+      "tier": "T2",
+      "output": "0.9229001282564582",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.011725
+    },
+    {
+      "id": "T2-erf-003",
+      "head": "Erf",
+      "tier": "T2",
+      "output": "0.9999466876886117",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.014427
+    },
+    {
+      "id": "T2-erf-004",
+      "head": "Erf",
+      "tier": "T2",
+      "output": "0.9999999845827421",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.009179
+    },
+    {
+      "id": "T2-erf-005",
+      "head": "Erf",
+      "tier": "T2",
+      "output": "1.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.007488
+    },
+    {
+      "id": "T2-erf-006",
+      "head": "Erf",
+      "tier": "T2",
+      "output": "0.9990980182475079",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.009209
+    },
+    {
+      "id": "T2-erf-007",
+      "head": "Erf",
+      "tier": "T2",
+      "output": "0.9999999820526486",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008886
+    },
+    {
+      "id": "T2-erf-008",
+      "head": "Erf",
+      "tier": "T2",
+      "output": "0.9997713526399279",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008547
+    },
+    {
+      "id": "T2-erf-009",
+      "head": "Erf",
+      "tier": "T2",
+      "output": "0.9772573656881844",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008672
+    },
+    {
+      "id": "T2-erf-010",
+      "head": "Erf",
+      "tier": "T2",
+      "output": "0.999999999999606",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.024033
+    },
+    {
+      "id": "T2-erf-011",
+      "head": "Erf",
+      "tier": "T2",
+      "output": "0.9999999999999993",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.009332
+    },
+    {
+      "id": "T2-erf-012",
+      "head": "Erf",
+      "tier": "T2",
+      "output": "0.8025339992209686",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.009162
+    },
+    {
+      "id": "T2-erf-013",
+      "head": "Erf",
+      "tier": "T2",
+      "output": "0.993644150647208",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.009137
+    },
+    {
+      "id": "T2-erfc-014",
+      "head": "Erfc",
+      "tier": "T2",
+      "output": "0.23277433876710474",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008722
+    },
+    {
+      "id": "T2-erfc-015",
+      "head": "Erfc",
+      "tier": "T2",
+      "output": "0.07709987174354177",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008058
+    },
+    {
+      "id": "T2-erfc-016",
+      "head": "Erfc",
+      "tier": "T2",
+      "output": "5.3312311388322815e-05",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.018688
+    },
+    {
+      "id": "T2-erfc-017",
+      "head": "Erfc",
+      "tier": "T2",
+      "output": "1.541725790028002e-08",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.011146
+    },
+    {
+      "id": "T2-erfc-018",
+      "head": "Erfc",
+      "tier": "T2",
+      "output": "2.1519736712498913e-17",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.010974
+    },
+    {
+      "id": "T2-erfc-019",
+      "head": "Erfc",
+      "tier": "T2",
+      "output": "4.131912708534018e-13",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.012549
+    },
+    {
+      "id": "T2-erfc-020",
+      "head": "Erfc",
+      "tier": "T2",
+      "output": "1.3993243909586527e-06",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.010605
+    },
+    {
+      "id": "T2-erfc-021",
+      "head": "Erfc",
+      "tier": "T2",
+      "output": "0.00011424762200385423",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.009836
+    },
+    {
+      "id": "T2-erfc-022",
+      "head": "Erfc",
+      "tier": "T2",
+      "output": "0.03881012490892023",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.00912
+    },
+    {
+      "id": "T2-erfc-023",
+      "head": "Erfc",
+      "tier": "T2",
+      "output": "2.2533419112871484e-07",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.010175
+    },
+    {
+      "id": "T2-erfc-024",
+      "head": "Erfc",
+      "tier": "T2",
+      "output": "6.164791659831416e-16",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.010734
+    },
+    {
+      "id": "T2-erfc-025",
+      "head": "Erfc",
+      "tier": "T2",
+      "output": "4.389783378314547e-15",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.0102
+    },
+    {
+      "id": "T2-erfc-026",
+      "head": "Erfc",
+      "tier": "T2",
+      "output": "0.024249471924081233",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.009342
+    },
+    {
+      "id": "T2-erfcx-027",
+      "head": "Erfcx",
+      "tier": "T2",
+      "output": "0.47436807202658127",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.02334
+    },
+    {
+      "id": "T2-erfcx-028",
+      "head": "Erfcx",
+      "tier": "T2",
+      "output": "0.3678229164523611",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.009642
+    },
+    {
+      "id": "T2-erfcx-029",
+      "head": "Erfcx",
+      "tier": "T2",
+      "output": "0.18710637671147068",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.010045
+    },
+    {
+      "id": "T2-erfcx-030",
+      "head": "Erfcx",
+      "tier": "T2",
+      "output": "0.1369994576250614",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008382
+    },
+    {
+      "id": "T2-erfcx-031",
+      "head": "Erfcx",
+      "tier": "T2",
+      "output": "0.09277656780053836",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008056
+    },
+    {
+      "id": "T2-erfcx-032",
+      "head": "Erfcx",
+      "tier": "T2",
+      "output": "0.23851859392583852",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.009175
+    },
+    {
+      "id": "T2-erfcx-033",
+      "head": "Erfcx",
+      "tier": "T2",
+      "output": "0.11075760766350895",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008897
+    },
+    {
+      "id": "T2-erfcx-034",
+      "head": "Erfcx",
+      "tier": "T2",
+      "output": "0.09788872890822223",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.007796
+    },
+    {
+      "id": "T2-erfcx-035",
+      "head": "Erfcx",
+      "tier": "T2",
+      "output": "0.20722586571440854",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008805
+    },
+    {
+      "id": "T2-erfcx-036",
+      "head": "Erfcx",
+      "tier": "T2",
+      "output": "0.09553058345911625",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.009568
+    },
+    {
+      "id": "T2-erfcx-037",
+      "head": "Erfcx",
+      "tier": "T2",
+      "output": "0.4290279876594151",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008185
+    },
+    {
+      "id": "T2-erfcx-038",
+      "head": "Erfcx",
+      "tier": "T2",
+      "output": "0.1667261990806375",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.00871
+    },
+    {
+      "id": "T2-erfcx-039",
+      "head": "Erfcx",
+      "tier": "T2",
+      "output": "0.10257484090996037",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.009513
+    },
+    {
+      "id": "T3-erfc-001",
+      "head": "Erfc",
+      "tier": "T3",
+      "output": "2.1519474983945363e-17",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.010806
+    },
+    {
+      "id": "T3-erfc-002",
+      "head": "Erfc",
+      "tier": "T3",
+      "output": "2.0884875837625446e-45",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.011853
+    },
+    {
+      "id": "T3-erfc-003",
+      "head": "Erfc",
+      "tier": "T3",
+      "output": "1.4408661379436945e-54",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.010571
+    },
+    {
+      "id": "T3-erfc-004",
+      "head": "Erfc",
+      "tier": "T3",
+      "output": "5.395865611607901e-176",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.012854
+    },
+    {
+      "id": "T3-erfc-005",
+      "head": "Erfc",
+      "tier": "T3",
+      "output": "0.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.019742
+    },
+    {
+      "id": "T3-erfc-006",
+      "head": "Erfc",
+      "tier": "T3",
+      "output": "0.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008319
+    },
+    {
+      "id": "T3-erfc-007",
+      "head": "Erfc",
+      "tier": "T3",
+      "output": "1.0342623949060136e-41",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.011924
+    },
+    {
+      "id": "T3-erfc-008",
+      "head": "Erfc",
+      "tier": "T3",
+      "output": "1.3389570585578293e-50",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.012528
+    },
+    {
+      "id": "T3-erfc-009",
+      "head": "Erfc",
+      "tier": "T3",
+      "output": "9.249888671198216e-116",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.013361
+    },
+    {
+      "id": "T3-erfc-010",
+      "head": "Erfc",
+      "tier": "T3",
+      "output": "0.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.007768
+    },
+    {
+      "id": "T3-erfc-011",
+      "head": "Erfc",
+      "tier": "T3",
+      "output": "6.879942786555215e-69",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.011195
+    },
+    {
+      "id": "T3-erfc-012",
+      "head": "Erfc",
+      "tier": "T3",
+      "output": "1.4242479798334687e-26",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.010795
+    },
+    {
+      "id": "T3-erfc-013",
+      "head": "Erfc",
+      "tier": "T3",
+      "output": "1.6829590704730597e-115",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.012501
+    },
+    {
+      "id": "T3-erfc-014",
+      "head": "Erfc",
+      "tier": "T3",
+      "output": "1.5454914294673567e-229",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.017596
+    },
+    {
+      "id": "T3-erfc-015",
+      "head": "Erfc",
+      "tier": "T3",
+      "output": "2.440927096179325e-188",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.014303
+    },
+    {
+      "id": "T3-erfcx-016",
+      "head": "Erfcx",
+      "tier": "T3",
+      "output": "0.09277655274018726",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.009487
+    },
+    {
+      "id": "T3-erfcx-017",
+      "head": "Erfcx",
+      "tier": "T3",
+      "output": "0.05614099274382259",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008658
+    },
+    {
+      "id": "T3-erfcx-018",
+      "head": "Erfcx",
+      "tier": "T3",
+      "output": "0.051080594758088446",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008215
+    },
+    {
+      "id": "T3-erfcx-019",
+      "head": "Erfcx",
+      "tier": "T3",
+      "output": "0.028174348741051323",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.010083
+    },
+    {
+      "id": "T3-erfcx-020",
+      "head": "Erfcx",
+      "tier": "T3",
+      "output": "0.020136801964214277",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008015
+    },
+    {
+      "id": "T3-erfcx-021",
+      "head": "Erfcx",
+      "tier": "T3",
+      "output": "0.06108321199434431",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008599
+    },
+    {
+      "id": "T3-erfcx-022",
+      "head": "Erfcx",
+      "tier": "T3",
+      "output": "0.06495256782547174",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008017
+    },
+    {
+      "id": "T3-erfcx-023",
+      "head": "Erfcx",
+      "tier": "T3",
+      "output": "0.025796584623253873",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.00788
+    },
+    {
+      "id": "T3-erfcx-024",
+      "head": "Erfcx",
+      "tier": "T3",
+      "output": "0.02497626217809734",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008534
+    },
+    {
+      "id": "T3-erfcx-025",
+      "head": "Erfcx",
+      "tier": "T3",
+      "output": "0.020324112818234243",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.00899
+    },
+    {
+      "id": "T3-erfcx-026",
+      "head": "Erfcx",
+      "tier": "T3",
+      "output": "0.023906585252053417",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008411
+    },
+    {
+      "id": "T3-erfcx-027",
+      "head": "Erfcx",
+      "tier": "T3",
+      "output": "0.025566163531040586",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008006
+    },
+    {
+      "id": "T3-erfcx-028",
+      "head": "Erfcx",
+      "tier": "T3",
+      "output": "0.029150603708461204",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008873
+    },
+    {
+      "id": "T3-erfcx-029",
+      "head": "Erfcx",
+      "tier": "T3",
+      "output": "0.031079946957512955",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008146
+    },
+    {
+      "id": "T3-erfcx-030",
+      "head": "Erfcx",
+      "tier": "T3",
+      "output": "0.027345532224121068",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.014125
+    },
+    {
+      "id": "T4-erfi-001",
+      "head": "Erfi",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "-0.0"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.074697
+    },
+    {
+      "id": "T4-erfi-002",
+      "head": "Erfi",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "0.5204998778130465"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.044096
+    },
+    {
+      "id": "T4-erfi-003",
+      "head": "Erfi",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "0.8427007929497149"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.022423
+    },
+    {
+      "id": "T4-erfi-004",
+      "head": "Erfi",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "0.9999779095030014"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.017762
+    },
+    {
+      "id": "T4-erfi-005",
+      "head": "Erfi",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "1.0"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.016358
+    },
+    {
+      "id": "T4-erfi-006",
+      "head": "Erfi",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "1.0"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.016702
+    },
+    {
+      "id": "T4-erfi-007",
+      "head": "Erfi",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "1.0"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.016564
+    },
+    {
+      "id": "T4-erfi-008",
+      "head": "Erfi",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "0.9998084814645274"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.017719
+    },
+    {
+      "id": "T4-erfi-009",
+      "head": "Erfi",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "1.0"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.017979
+    },
+    {
+      "id": "T4-erfi-010",
+      "head": "Erfi",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "1.0"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.015228
+    },
+    {
+      "id": "T4-erfi-011",
+      "head": "Erfi",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "1.0"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.015246
+    },
+    {
+      "id": "T4-erfi-012",
+      "head": "Erfi",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "1.0"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.016176
+    },
+    {
+      "id": "T4-erfi-013",
+      "head": "Erfi",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "1.0"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.015958
+    },
+    {
+      "id": "T4-erfi-014",
+      "head": "Erfi",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "1.0"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.014816
+    },
+    {
+      "id": "T4-erfi-015",
+      "head": "Erfi",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "1.0"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.026631
+    },
+    {
+      "id": "T4-erf-016",
+      "head": "Erf",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "0.0"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.020543
+    },
+    {
+      "id": "T4-erf-017",
+      "head": "Erf",
+      "tier": "T4",
+      "output": {
+        "re": "1.1102230246251565e-16",
+        "im": "0.6149520946965109"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.025447
+    },
+    {
+      "id": "T4-erf-018",
+      "head": "Erf",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "1.6504257587975428"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.017222
+    },
+    {
+      "id": "T4-erf-019",
+      "head": "Erf",
+      "tier": "T4",
+      "output": {
+        "re": "-2.220446049250313e-16",
+        "im": "1629.9946226015657"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.01986
+    },
+    {
+      "id": "T4-erf-020",
+      "head": "Erf",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "1.52430742270867e+42"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.017295
+    },
+    {
+      "id": "T4-erf-021",
+      "head": "Erf",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "Infinity"
+      },
+      "method": "scipy.special.erf-overflow-fallback",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.027537
+    },
+    {
+      "id": "T4-erf-022",
+      "head": "Erf",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "4.1631356187359516e+272"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.023141
+    },
+    {
+      "id": "T4-erf-023",
+      "head": "Erf",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "1.1820978750444084e+27"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.017925
+    },
+    {
+      "id": "T4-erf-024",
+      "head": "Erf",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "3.7370680419550414e+37"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.016814
+    },
+    {
+      "id": "T4-erf-025",
+      "head": "Erf",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "5.879613222989994e+71"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.023374
+    },
+    {
+      "id": "T4-erf-026",
+      "head": "Erf",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "7.07183549254073e+94"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.025354
+    },
+    {
+      "id": "T4-erf-027",
+      "head": "Erf",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "1.1709632842722826e+18"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.018886
+    },
+    {
+      "id": "T4-erf-028",
+      "head": "Erf",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "235303.94831751118"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.017198
+    },
+    {
+      "id": "T4-erf-029",
+      "head": "Erf",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "1.439871850733884e+157"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.019178
+    },
+    {
+      "id": "T4-erf-030",
+      "head": "Erf",
+      "tier": "T4",
+      "output": {
+        "re": "0.0",
+        "im": "2.0169218734588057"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.016094
+    },
+    {
+      "id": "T5-erf-001",
+      "head": "Erf",
+      "tier": "T5",
+      "output": {
+        "re": "191473832.34837812",
+        "im": "794895688.6760534"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.024638
+    },
+    {
+      "id": "T5-erf-002",
+      "head": "Erf",
+      "tier": "T5",
+      "output": {
+        "re": "1.0318480267633643",
+        "im": "-0.09356459905184641"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.023035
+    },
+    {
+      "id": "T5-erf-003",
+      "head": "Erf",
+      "tier": "T5",
+      "output": {
+        "re": "-1.0",
+        "im": "1.2317645683084258e-30"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.020205
+    },
+    {
+      "id": "T5-erf-004",
+      "head": "Erf",
+      "tier": "T5",
+      "output": {
+        "re": "-83877738.97965503",
+        "im": "-81475935.19823335"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.019284
+    },
+    {
+      "id": "T5-erf-005",
+      "head": "Erf",
+      "tier": "T5",
+      "output": {
+        "re": "-3.6803788990945506e+86",
+        "im": "-3.279729822436446e+86"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.021006
+    },
+    {
+      "id": "T5-erf-006",
+      "head": "Erf",
+      "tier": "T5",
+      "output": {
+        "re": "1.2253901491267025",
+        "im": "1.020176936253047"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.018526
+    },
+    {
+      "id": "T5-erf-007",
+      "head": "Erf",
+      "tier": "T5",
+      "output": {
+        "re": "0.885625833371164",
+        "im": "-0.015366629037033775"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.018814
+    },
+    {
+      "id": "T5-erf-008",
+      "head": "Erf",
+      "tier": "T5",
+      "output": {
+        "re": "0.20277346554578735",
+        "im": "-0.07935423476576514"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.018226
+    },
+    {
+      "id": "T5-erf-009",
+      "head": "Erf",
+      "tier": "T5",
+      "output": {
+        "re": "1.0",
+        "im": "4.377416395744183e-34"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.018745
+    },
+    {
+      "id": "T5-erf-010",
+      "head": "Erf",
+      "tier": "T5",
+      "output": {
+        "re": "-18204083221.21207",
+        "im": "-29665733090.88117"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.018557
+    },
+    {
+      "id": "T5-erf-011",
+      "head": "Erf",
+      "tier": "T5",
+      "output": {
+        "re": "-0.9999999661585511",
+        "im": "-4.3615424725340663e-08"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.019192
+    },
+    {
+      "id": "T5-erf-012",
+      "head": "Erf",
+      "tier": "T5",
+      "output": {
+        "re": "351.4467587590143",
+        "im": "10494.108057137659"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.017871
+    },
+    {
+      "id": "T5-erf-013",
+      "head": "Erf",
+      "tier": "T5",
+      "output": {
+        "re": "0.999999999933161",
+        "im": "1.1226385849611176e-11"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.02362
+    },
+    {
+      "id": "T5-erf-014",
+      "head": "Erf",
+      "tier": "T5",
+      "output": {
+        "re": "1.027464069125311",
+        "im": "-0.00856570469200855"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.019328
+    },
+    {
+      "id": "T5-erf-015",
+      "head": "Erf",
+      "tier": "T5",
+      "output": {
+        "re": "1.0",
+        "im": "5.068338649903887e-58"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.019178
+    },
+    {
+      "id": "T5-erfc-016",
+      "head": "Erfc",
+      "tier": "T5",
+      "output": {
+        "re": "-1.3130985808401112e+88",
+        "im": "-2.4599686282229358e+88"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.034924
+    },
+    {
+      "id": "T5-erfc-017",
+      "head": "Erfc",
+      "tier": "T5",
+      "output": {
+        "re": "5.192634512424723e+65",
+        "im": "-9.393379646737116e+65"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.023347
+    },
+    {
+      "id": "T5-erfc-018",
+      "head": "Erfc",
+      "tier": "T5",
+      "output": {
+        "re": "2.1121007927379556e+38",
+        "im": "-2.3553377821034534e+37"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.020579
+    },
+    {
+      "id": "T5-erfc-019",
+      "head": "Erfc",
+      "tier": "T5",
+      "output": {
+        "re": "2.0000000465672216",
+        "im": "9.78297161069798e-09"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.019592
+    },
+    {
+      "id": "T5-erfc-020",
+      "head": "Erfc",
+      "tier": "T5",
+      "output": {
+        "re": "1.9999999997047415",
+        "im": "-1.323966220313752e-10"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.017911
+    },
+    {
+      "id": "T5-erfc-021",
+      "head": "Erfc",
+      "tier": "T5",
+      "output": {
+        "re": "5539156.670367743",
+        "im": "7114403.967553597"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.018496
+    },
+    {
+      "id": "T5-erfc-022",
+      "head": "Erfc",
+      "tier": "T5",
+      "output": {
+        "re": "8.661718918908263e-83",
+        "im": "-6.379340234427348e-82"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.022725
+    },
+    {
+      "id": "T5-erfc-023",
+      "head": "Erfc",
+      "tier": "T5",
+      "output": {
+        "re": "-2.2031176862366538e+45",
+        "im": "-2.5441437906261104e+45"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.019644
+    },
+    {
+      "id": "T5-erfc-024",
+      "head": "Erfc",
+      "tier": "T5",
+      "output": {
+        "re": "5.628571934622145e+32",
+        "im": "2.6061686226475496e+32"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.018921
+    },
+    {
+      "id": "T5-erfc-025",
+      "head": "Erfc",
+      "tier": "T5",
+      "output": {
+        "re": "14.724922922437035",
+        "im": "-1.4117940578238803"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.018407
+    },
+    {
+      "id": "T5-erfc-026",
+      "head": "Erfc",
+      "tier": "T5",
+      "output": {
+        "re": "-107469826158646.31",
+        "im": "-7283860738981.426"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.017149
+    },
+    {
+      "id": "T5-erfc-027",
+      "head": "Erfc",
+      "tier": "T5",
+      "output": {
+        "re": "2.6074725680837183e-11",
+        "im": "-1.7102755703032343e-11"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.017612
+    },
+    {
+      "id": "T5-erfc-028",
+      "head": "Erfc",
+      "tier": "T5",
+      "output": {
+        "re": "-1.2522035776741107",
+        "im": "1.1669354502280054"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.018317
+    },
+    {
+      "id": "T5-erfc-029",
+      "head": "Erfc",
+      "tier": "T5",
+      "output": {
+        "re": "21.80082340774229",
+        "im": "7.66387456012776"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.02264
+    },
+    {
+      "id": "T5-erfc-030",
+      "head": "Erfc",
+      "tier": "T5",
+      "output": {
+        "re": "-5.645144548203106e-06",
+        "im": "-3.093853305195e-06"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.020349
+    },
+    {
+      "id": "T5-erfi-031",
+      "head": "Erfi",
+      "tier": "T5",
+      "output": {
+        "re": "3.358799232841525e+60",
+        "im": "-2.299754602132095e+61"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.028267
+    },
+    {
+      "id": "T5-erfi-032",
+      "head": "Erfi",
+      "tier": "T5",
+      "output": {
+        "re": "-5.2205144791712863e+76",
+        "im": "-4.141362507417534e+76"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.029671
+    },
+    {
+      "id": "T5-erfi-033",
+      "head": "Erfi",
+      "tier": "T5",
+      "output": {
+        "re": "0.0014115086058008241",
+        "im": "-1.0015762559549128"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.022801
+    },
+    {
+      "id": "T5-erfi-034",
+      "head": "Erfi",
+      "tier": "T5",
+      "output": {
+        "re": "1.210205411577832e-34",
+        "im": "1.0"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.020954
+    },
+    {
+      "id": "T5-erfi-035",
+      "head": "Erfi",
+      "tier": "T5",
+      "output": {
+        "re": "2.217656286738469e-12",
+        "im": "-0.9999999999848379"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.021451
+    },
+    {
+      "id": "T5-erfi-036",
+      "head": "Erfi",
+      "tier": "T5",
+      "output": {
+        "re": "-351139.5178361598",
+        "im": "14312.373083335871"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.021298
+    },
+    {
+      "id": "T5-erfi-037",
+      "head": "Erfi",
+      "tier": "T5",
+      "output": {
+        "re": "-9.069373270438006e-18",
+        "im": "1.0000000000000002"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.023768
+    },
+    {
+      "id": "T5-erfi-038",
+      "head": "Erfi",
+      "tier": "T5",
+      "output": {
+        "re": "0.588937404613707",
+        "im": "1.2959654494951751"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.019685
+    },
+    {
+      "id": "T5-erfi-039",
+      "head": "Erfi",
+      "tier": "T5",
+      "output": {
+        "re": "-3.599970087299922",
+        "im": "-1.475023686363949"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.018106
+    },
+    {
+      "id": "T5-erfi-040",
+      "head": "Erfi",
+      "tier": "T5",
+      "output": {
+        "re": "5.178655700963681e-44",
+        "im": "1.0"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.020134
+    },
+    {
+      "id": "T5-erfi-041",
+      "head": "Erfi",
+      "tier": "T5",
+      "output": {
+        "re": "3.7676948669371224e+59",
+        "im": "-1.8163098770687573e+59"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.022693
+    },
+    {
+      "id": "T5-erfi-042",
+      "head": "Erfi",
+      "tier": "T5",
+      "output": {
+        "re": "0.2200856896675834",
+        "im": "0.36828451466543444"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.021198
+    },
+    {
+      "id": "T5-erfi-043",
+      "head": "Erfi",
+      "tier": "T5",
+      "output": {
+        "re": "-0.00023598040385416517",
+        "im": "0.9995250178354129"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.021063
+    },
+    {
+      "id": "T5-erfi-044",
+      "head": "Erfi",
+      "tier": "T5",
+      "output": {
+        "re": "5.774304700755436e+22",
+        "im": "-3.1118793161145854e+22"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.021633
+    },
+    {
+      "id": "T5-erfi-045",
+      "head": "Erfi",
+      "tier": "T5",
+      "output": {
+        "re": "2.5727113100469524e-41",
+        "im": "-1.0"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.02096
+    },
+    {
+      "id": "T6-erf-001",
+      "head": "Erf",
+      "tier": "T6",
+      "output": "0.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008399
+    },
+    {
+      "id": "T6-erf-002",
+      "head": "Erf",
+      "tier": "T6",
+      "output": "-0.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008055
+    },
+    {
+      "id": "T6-erf-003",
+      "head": "Erf",
+      "tier": "T6",
+      "output": "1.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008458
+    },
+    {
+      "id": "T6-erf-004",
+      "head": "Erf",
+      "tier": "T6",
+      "output": "-1.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.007564
+    },
+    {
+      "id": "T6-erf-005",
+      "head": "Erf",
+      "tier": "T6",
+      "output": "0.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.006331
+    },
+    {
+      "id": "T6-erf-006",
+      "head": "Erf",
+      "tier": "T6",
+      "output": "0.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.006245
+    },
+    {
+      "id": "T6-erf-007",
+      "head": "Erf",
+      "tier": "T6",
+      "output": "1.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.010418
+    },
+    {
+      "id": "T6-erf-008",
+      "head": "Erf",
+      "tier": "T6",
+      "output": "NaN",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.006597
+    },
+    {
+      "id": "T6-erfc-009",
+      "head": "Erfc",
+      "tier": "T6",
+      "output": "1.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.006458
+    },
+    {
+      "id": "T6-erfc-010",
+      "head": "Erfc",
+      "tier": "T6",
+      "output": "1.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.006319
+    },
+    {
+      "id": "T6-erfc-011",
+      "head": "Erfc",
+      "tier": "T6",
+      "output": "0.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.006763
+    },
+    {
+      "id": "T6-erfc-012",
+      "head": "Erfc",
+      "tier": "T6",
+      "output": "2.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.007912
+    },
+    {
+      "id": "T6-erfc-013",
+      "head": "Erfc",
+      "tier": "T6",
+      "output": "1.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.006341
+    },
+    {
+      "id": "T6-erfc-014",
+      "head": "Erfc",
+      "tier": "T6",
+      "output": "1.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.006134
+    },
+    {
+      "id": "T6-erfc-015",
+      "head": "Erfc",
+      "tier": "T6",
+      "output": "0.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008823
+    },
+    {
+      "id": "T6-erfc-016",
+      "head": "Erfc",
+      "tier": "T6",
+      "output": "NaN",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.00603
+    },
+    {
+      "id": "T6-erfcx-017",
+      "head": "Erfcx",
+      "tier": "T6",
+      "output": "1.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.006106
+    },
+    {
+      "id": "T6-erfcx-018",
+      "head": "Erfcx",
+      "tier": "T6",
+      "output": "1.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.006079
+    },
+    {
+      "id": "T6-erfcx-019",
+      "head": "Erfcx",
+      "tier": "T6",
+      "output": "0.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.006008
+    },
+    {
+      "id": "T6-erfcx-020",
+      "head": "Erfcx",
+      "tier": "T6",
+      "output": "Infinity",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.006482
+    },
+    {
+      "id": "T6-erfcx-021",
+      "head": "Erfcx",
+      "tier": "T6",
+      "output": "1.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.00627
+    },
+    {
+      "id": "T6-erfcx-022",
+      "head": "Erfcx",
+      "tier": "T6",
+      "output": "1.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.005633
+    },
+    {
+      "id": "T6-erfcx-023",
+      "head": "Erfcx",
+      "tier": "T6",
+      "output": "3.138408733985445e-309",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.01671
+    },
+    {
+      "id": "T6-erfcx-024",
+      "head": "Erfcx",
+      "tier": "T6",
+      "output": "NaN",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.006961
+    },
+    {
+      "id": "T6-erfi-025",
+      "head": "Erfi",
+      "tier": "T6",
+      "output": "0.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.010745
+    },
+    {
+      "id": "T6-erfi-026",
+      "head": "Erfi",
+      "tier": "T6",
+      "output": "-0.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.007949
+    },
+    {
+      "id": "T6-erfi-027",
+      "head": "Erfi",
+      "tier": "T6",
+      "output": "Infinity",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.006314
+    },
+    {
+      "id": "T6-erfi-028",
+      "head": "Erfi",
+      "tier": "T6",
+      "output": "-Infinity",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.005796
+    },
+    {
+      "id": "T6-erfi-029",
+      "head": "Erfi",
+      "tier": "T6",
+      "output": "0.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.016673
+    },
+    {
+      "id": "T6-erfi-030",
+      "head": "Erfi",
+      "tier": "T6",
+      "output": "0.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.007045
+    },
+    {
+      "id": "T6-erfi-031",
+      "head": "Erfi",
+      "tier": "T6",
+      "output": "Infinity",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.009234
+    },
+    {
+      "id": "T6-erfi-032",
+      "head": "Erfi",
+      "tier": "T6",
+      "output": "NaN",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.006478
+    },
+    {
+      "id": "T7-erfc-001",
+      "head": "Erfc",
+      "tier": "T7",
+      "output": {
+        "re": "-Infinity",
+        "im": "NaN"
+      },
+      "method": "scipy.special.erfc-overflow-fallback",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.027778
+    },
+    {
+      "id": "T7-erfc-002",
+      "head": "Erfc",
+      "tier": "T7",
+      "output": {
+        "re": "-1.6474656552553558e+41",
+        "im": "1.2639859776131677e+41"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.02217
+    },
+    {
+      "id": "T7-erfc-003",
+      "head": "Erfc",
+      "tier": "T7",
+      "output": {
+        "re": "NaN",
+        "im": "Infinity"
+      },
+      "method": "scipy.special.erfc-overflow-fallback",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.020284
+    },
+    {
+      "id": "T7-erfc-004",
+      "head": "Erfc",
+      "tier": "T7",
+      "output": {
+        "re": "-1158.5599674407636",
+        "im": "-1039.469922219564"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.019102
+    },
+    {
+      "id": "T7-erfc-005",
+      "head": "Erfc",
+      "tier": "T7",
+      "output": {
+        "re": "0.8474644476546609",
+        "im": "1.6389800512382966"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.018073
+    },
+    {
+      "id": "T7-erfc-006",
+      "head": "Erfc",
+      "tier": "T7",
+      "output": {
+        "re": "1352.7482876467411",
+        "im": "136.13530338465756"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.017565
+    },
+    {
+      "id": "T7-erfc-007",
+      "head": "Erfc",
+      "tier": "T7",
+      "output": {
+        "re": "1352.7482876467411",
+        "im": "136.13530338465756"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.016793
+    },
+    {
+      "id": "T7-erfc-008",
+      "head": "Erfc",
+      "tier": "T7",
+      "output": {
+        "re": "1.6348443575092693e+171",
+        "im": "1.1507529896617345e+171"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.025156
+    },
+    {
+      "id": "T7-erfc-009",
+      "head": "Erfc",
+      "tier": "T7",
+      "output": {
+        "re": "-4.4994158116329204e+41",
+        "im": "8.080796101180046e+41"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.024528
+    },
+    {
+      "id": "T7-erfc-010",
+      "head": "Erfc",
+      "tier": "T7",
+      "output": {
+        "re": "1.6348443575092693e+171",
+        "im": "1.1507529896617345e+171"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.02366
+    },
+    {
+      "id": "T7-erfc-011",
+      "head": "Erfc",
+      "tier": "T7",
+      "output": {
+        "re": "-Infinity",
+        "im": "NaN"
+      },
+      "method": "scipy.special.erfc-overflow-fallback",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.017959
+    },
+    {
+      "id": "T7-erfc-012",
+      "head": "Erfc",
+      "tier": "T7",
+      "output": {
+        "re": "-1350.7482876467407",
+        "im": "-136.1353033846604"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.017104
+    },
+    {
+      "id": "T7-erfc-013",
+      "head": "Erfc",
+      "tier": "T7",
+      "output": {
+        "re": "1.6474656552553525e+41",
+        "im": "1.263985977613221e+41"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.018584
+    },
+    {
+      "id": "T7-erfc-014",
+      "head": "Erfc",
+      "tier": "T7",
+      "output": {
+        "re": "4706359884.02438",
+        "im": "-5610447328.789442"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.017271
+    },
+    {
+      "id": "T7-erfc-015",
+      "head": "Erfc",
+      "tier": "T7",
+      "output": {
+        "re": "0.9999999999983207",
+        "im": "-1629.9946226015677"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.018193
+    },
+    {
+      "id": "T7-erfcx-016",
+      "head": "Erfcx",
+      "tier": "T7",
+      "output": {
+        "re": "1.1534795563600022e-18",
+        "im": "-0.018816784868660726"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.018871
+    },
+    {
+      "id": "T7-erfcx-017",
+      "head": "Erfcx",
+      "tier": "T7",
+      "output": {
+        "re": "-0.0028630132362417187",
+        "im": "0.056631579252365144"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.01789
+    },
+    {
+      "id": "T7-erfcx-018",
+      "head": "Erfcx",
+      "tier": "T7",
+      "output": {
+        "re": "-0.001415188800982553",
+        "im": "0.028209219474529278"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.015922
+    },
+    {
+      "id": "T7-erfcx-019",
+      "head": "Erfcx",
+      "tier": "T7",
+      "output": {
+        "re": "1.38879512374759e-11",
+        "im": "0.11524596183093738"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.022932
+    },
+    {
+      "id": "T7-erfcx-020",
+      "head": "Erfcx",
+      "tier": "T7",
+      "output": {
+        "re": "0.011842653395269393",
+        "im": "0.20057465003987596"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.017993
+    },
+    {
+      "id": "T7-erfcx-021",
+      "head": "Erfcx",
+      "tier": "T7",
+      "output": {
+        "re": "0.001880595086969116",
+        "im": "0.01872236281945612"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.014983
+    },
+    {
+      "id": "T7-erfcx-022",
+      "head": "Erfcx",
+      "tier": "T7",
+      "output": {
+        "re": "3.507827812907798e-18",
+        "im": "0.05670539423288759"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.016377
+    },
+    {
+      "id": "T7-erfcx-023",
+      "head": "Erfcx",
+      "tier": "T7",
+      "output": {
+        "re": "-0.006016002912828096",
+        "im": "-0.11507430925387407"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.016104
+    },
+    {
+      "id": "T7-erfcx-024",
+      "head": "Erfcx",
+      "tier": "T7",
+      "output": {
+        "re": "-0.006016002912828096",
+        "im": "-0.11507430925387407"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.015097
+    },
+    {
+      "id": "T7-erfcx-025",
+      "head": "Erfcx",
+      "tier": "T7",
+      "output": {
+        "re": "0.005717961946229567",
+        "im": "-0.05641039072249123"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.015188
+    },
+    {
+      "id": "T7-erfcx-026",
+      "head": "Erfcx",
+      "tier": "T7",
+      "output": {
+        "re": "-0.0028630132362417187",
+        "im": "-0.056631579252365144"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.02072
+    },
+    {
+      "id": "T7-erfcx-027",
+      "head": "Erfcx",
+      "tier": "T7",
+      "output": {
+        "re": "0.011842653395269393",
+        "im": "0.20057465003987596"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.016907
+    },
+    {
+      "id": "T7-erfcx-028",
+      "head": "Erfcx",
+      "tier": "T7",
+      "output": {
+        "re": "0.000123409804086694",
+        "im": "-0.20115731703760065"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.016148
+    },
+    {
+      "id": "T7-erfcx-029",
+      "head": "Erfcx",
+      "tier": "T7",
+      "output": {
+        "re": "1.1534795563600022e-18",
+        "im": "-0.018816784868660726"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.015044
+    },
+    {
+      "id": "T7-erfcx-030",
+      "head": "Erfcx",
+      "tier": "T7",
+      "output": {
+        "re": "0.005717961946229567",
+        "im": "-0.05641039072249123"
+      },
+      "method": "scipy.special.wofz-Faddeeva-Johnson",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.014947
+    },
+    {
+      "id": "T8-inverseerf-001",
+      "head": "InverseErf",
+      "tier": "T8",
+      "output": "-2.326753765513524",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.060755
+    },
+    {
+      "id": "T8-inverseerf-002",
+      "head": "InverseErf",
+      "tier": "T8",
+      "output": "-1.3171503349811073",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.011329
+    },
+    {
+      "id": "T8-inverseerf-003",
+      "head": "InverseErf",
+      "tier": "T8",
+      "output": "-0.8134198475993359",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.009645
+    },
+    {
+      "id": "T8-inverseerf-004",
+      "head": "InverseErf",
+      "tier": "T8",
+      "output": "-0.4769362762044699",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008042
+    },
+    {
+      "id": "T8-inverseerf-005",
+      "head": "InverseErf",
+      "tier": "T8",
+      "output": "0.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.006409
+    },
+    {
+      "id": "T8-inverseerf-006",
+      "head": "InverseErf",
+      "tier": "T8",
+      "output": "0.4769362762044699",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.007633
+    },
+    {
+      "id": "T8-inverseerf-007",
+      "head": "InverseErf",
+      "tier": "T8",
+      "output": "0.8134198475993359",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008817
+    },
+    {
+      "id": "T8-inverseerf-008",
+      "head": "InverseErf",
+      "tier": "T8",
+      "output": "1.3171503349811073",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.010066
+    },
+    {
+      "id": "T8-inverseerf-009",
+      "head": "InverseErf",
+      "tier": "T8",
+      "output": "2.326753765513524",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008186
+    },
+    {
+      "id": "T8-inverseerf-010",
+      "head": "InverseErf",
+      "tier": "T8",
+      "output": "-0.8473508333441692",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008717
+    },
+    {
+      "id": "T8-inverseerf-011",
+      "head": "InverseErf",
+      "tier": "T8",
+      "output": "0.21644143121992482",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.00867
+    },
+    {
+      "id": "T8-inverseerf-012",
+      "head": "InverseErf",
+      "tier": "T8",
+      "output": "0.979136261874723",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.009006
+    },
+    {
+      "id": "T8-inverseerf-013",
+      "head": "InverseErf",
+      "tier": "T8",
+      "output": "-0.2278358683615948",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.014352
+    },
+    {
+      "id": "T8-inverseerf-014",
+      "head": "InverseErf",
+      "tier": "T8",
+      "output": "0.4141470238826096",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008857
+    },
+    {
+      "id": "T8-inverseerf-015",
+      "head": "InverseErf",
+      "tier": "T8",
+      "output": "-0.7480916017153687",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.009158
+    },
+    {
+      "id": "T8-inverseerf-016",
+      "head": "InverseErf",
+      "tier": "T8",
+      "output": "1.4392298670669401",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008554
+    },
+    {
+      "id": "T8-inverseerf-017",
+      "head": "InverseErf",
+      "tier": "T8",
+      "output": "-0.13039898351896706",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008552
+    },
+    {
+      "id": "T8-inverseerfc-018",
+      "head": "InverseErfc",
+      "tier": "T8",
+      "output": "10.592090169527365",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.027796
+    },
+    {
+      "id": "T8-inverseerfc-019",
+      "head": "InverseErfc",
+      "tier": "T8",
+      "output": "4.572824967389486",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.010641
+    },
+    {
+      "id": "T8-inverseerfc-020",
+      "head": "InverseErfc",
+      "tier": "T8",
+      "output": "1.3171503349861309",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008195
+    },
+    {
+      "id": "T8-inverseerfc-021",
+      "head": "InverseErfc",
+      "tier": "T8",
+      "output": "1.1630871536766743",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.009518
+    },
+    {
+      "id": "T8-inverseerfc-022",
+      "head": "InverseErfc",
+      "tier": "T8",
+      "output": "0.4769362762044699",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.009823
+    },
+    {
+      "id": "T8-inverseerfc-023",
+      "head": "InverseErfc",
+      "tier": "T8",
+      "output": "0.08885599049425769",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008825
+    },
+    {
+      "id": "T8-inverseerfc-024",
+      "head": "InverseErfc",
+      "tier": "T8",
+      "output": "-0.0",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008045
+    },
+    {
+      "id": "T8-inverseerfc-025",
+      "head": "InverseErfc",
+      "tier": "T8",
+      "output": "-0.4769362762044699",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.007816
+    },
+    {
+      "id": "T8-inverseerfc-026",
+      "head": "InverseErfc",
+      "tier": "T8",
+      "output": "-1.3171503349861309",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.007984
+    },
+    {
+      "id": "T8-inverseerfc-027",
+      "head": "InverseErfc",
+      "tier": "T8",
+      "output": "-2.3267537655135464",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008678
+    },
+    {
+      "id": "T8-inverseerfc-028",
+      "head": "InverseErfc",
+      "tier": "T8",
+      "output": "-0.12648040355255144",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.009979
+    },
+    {
+      "id": "T8-inverseerfc-029",
+      "head": "InverseErfc",
+      "tier": "T8",
+      "output": "0.1853192472616631",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008204
+    },
+    {
+      "id": "T8-inverseerfc-030",
+      "head": "InverseErfc",
+      "tier": "T8",
+      "output": "0.3655278612596041",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008629
+    },
+    {
+      "id": "T8-inverseerfc-031",
+      "head": "InverseErfc",
+      "tier": "T8",
+      "output": "-0.1805081871340091",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008572
+    },
+    {
+      "id": "T8-inverseerfc-032",
+      "head": "InverseErfc",
+      "tier": "T8",
+      "output": "-0.3798952793757936",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008341
+    },
+    {
+      "id": "T8-inverseerfc-033",
+      "head": "InverseErfc",
+      "tier": "T8",
+      "output": "0.23639010730038035",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.00835
+    },
+    {
+      "id": "T8-inverseerfc-034",
+      "head": "InverseErfc",
+      "tier": "T8",
+      "output": "-0.4665722717154524",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008109
+    },
+    {
+      "id": "T8-inverseerfc-035",
+      "head": "InverseErfc",
+      "tier": "T8",
+      "output": "-1.017552737404668",
+      "method": "scipy.special-cephes",
+      "achieved_precision": 53,
+      "oracle_id": "scipy",
+      "oracle_version": "1.17.0",
+      "numpy_version": "1.26.4",
+      "elapsed_ms": 0.008581
+    }
+  ]
+}

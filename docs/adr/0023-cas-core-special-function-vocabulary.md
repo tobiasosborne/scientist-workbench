@@ -135,6 +135,28 @@ its source. The honest refusal is correct (PRD §6.1; ADR-0003
 boundary-class) — agents see `tagged "cas-diff/out-of-scope"` with the
 head name in the payload, and route around or refuse upstream.
 
+### Amendment — 2026-05-16 (ADR-0040 §"Decision 6"; bead `m114`)
+
+The closed vocabulary table grew **27 → 28** by admitting `Erfi`, the
+imaginary error function `erfi(z) := -i · erf(i·z)` (DLMF §7.10). The
+discovery surfaced during ADR-0040's R4 Meijer-G bridge research: the
+canonical G-form table for the Erf family treats `Erf`, `Erfc`, and
+`Erfi` symmetrically (all three share the parameter tuple `an=[1/2],
+ap=[], bm=[0], bq=[-1/2]`; only the z-argument sign distinguishes them),
+and admitting `Erfi` is a prerequisite for the bidirectional bridge.
+`Erfi` is single-argument (`{shape: "fixed", count: 1}`), entire on `C`
+(no branch-cut bookkeeping), and ships with its closed-form derivative
+`d/dz erfi(z) = (2/√π) · exp(z²)` (DLMF §7.10.2) — joining the v0.1
+differentiable subset alongside `Erf` and `Erfc`. The diff-rule output
+stays in the elementary vocabulary (`exp`, `^`, `*`, `/`) so the result
+is itself recursively differentiable. Per ADR-0040 §"Why ADR-0023 amends
+rather than a new vocabulary ADR", this amendment was the right
+granularity: a single closed-form head with a single diff rule and a
+single Meijer-G representation — no design controversy, no
+list-parameter ambiguity. Inverse-erf vocabulary heads (`InverseErf`,
+`InverseErfc`) are deferred to a future ADR with a concrete consumer
+(probability tail-quantile work would motivate them).
+
 ## What we will not decide here
 
 * **Numerical evaluation of these heads.** Per-head `evalAt(args,
@@ -233,3 +255,31 @@ purely additive.
 - Documentation lockstep (Law 2): `packages/cas-core/README.md`,
   `tools/cas-diff/README.md`, main `README.md` catalog row,
   worklog shard 074.
+
+### Amendment 2 — 2026-05-17 (ADR-0041 §"Decision 6"; bead `vsvl`)
+
+The vocabulary admits four additional heads at the substrate
+prototype-2 landing (Bessel family per ADR-0041 §"Decision 6"):
+`HankelH1`, `HankelH2`, `SphericalBesselJ`, `SphericalBesselY`. All
+fixed-2 arity. Total head count 28 → 32. Each passes the Erfi
+precedent test (Amendment 1 above): substrate-level pattern tables
+dispatch on the head non-redundantly. Hankel needs first-class status
+because Hankel's expansion (DLMF §10.17.5) is the canonical numeric-
+evaluation path in the upper / lower half-plane — decomposing via
+`J_ν + i·Y_ν` would lose precision through catastrophic cancellation
+between large `Y_ν` and `i·J_ν`. Spherical Bessel needs first-class
+status because the load-bearing physics consumers (Mie scattering,
+quantum partial-wave decomposition, gravitational-wave spherical-
+harmonic expansions) express results as `j_n(kr)` directly. All four
+ship closed-form diff rules: cylinder-Bessel + Hankel share the
+symmetric three-term recurrence (DLMF §10.6.1; `ruleBesselFirstKind`
+fans four heads through one body) and spherical Bessel uses the
+asymmetric ascent recurrence (DLMF §10.51.2; new
+`ruleSphericalBesselFirstKind`). `SphericalBesselI` and
+`SphericalBesselK` are deferred pending a clean resolution of the
+DLMF §10.47.7-8 `i^{(1)}` / `i^{(2)}` convention ambiguity (filed as
+P3 follow-up; the cas-core AST cannot represent "this is one of two
+distinct spherical-modified-Bessel functions" without a tag-
+disambiguator the substrate doesn't yet support). See
+`docs/refs/besselj-research/R1-symbolic-identities.md` §13 for the
+per-head Erfi-precedent justification.

@@ -1,0 +1,1008 @@
+
+
+DLMF: §10.23 Sums ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions
+
+DLMF
+
+Index
+Notations
+Search
+Help?
+Citing
+Customize
+Annotate
+UnAnnotate
+
+About the Project
+
+10 Bessel FunctionsBessel and Hankel Functions10.22 Integrals10.24 Functions of Imaginary Order
+
+§10.23 Sums
+
+ⓘ
+
+Permalink:
+http://dlmf.nist.gov/10.23
+See also:
+Annotations for Ch.10
+
+Contents
+
+§10.23(i) Multiplication Theorem
+§10.23(ii) Addition Theorems
+§10.23(iii) Series Expansions of Arbitrary Functions
+§10.23(iv) Compendia
+
+§10.23(i) Multiplication Theorem
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Hankel functions, cylinder functions, multiplication theorem, sums
+
+Notes:
+See Watson (1944, §5.22).
+Permalink:
+http://dlmf.nist.gov/10.23.i
+See also:
+Annotations for §10.23 and
+Ch.10
+
+10.23.1
+
+𝒞ν⁡(λ⁢z)=λ±ν⁢∑k=0∞(∓1)k⁢(λ2−1)k⁢(12⁢z)kk!⁢𝒞ν±k⁡(z),
+
+|λ2−1|<1.
+
+ⓘ
+
+Symbols:
+
+𝒞ν⁡(z): cylinder function,
+!: factorial (as in n!),
+k: nonnegative integer,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.1.74
+
+Referenced by:
+
+§10.44(i),
+§10.66
+
+Permalink:
+http://dlmf.nist.gov/10.23.E1
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.23(i),
+§10.23 and
+Ch.10
+
+If 𝒞=J and the upper signs are taken, then the restriction
+on λ is unnecessary.
+
+§10.23(ii) Addition Theorems
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Hankel functions, addition theorems, cylinder functions, sums
+
+Notes:
+For (10.23.7) and (10.23.8) see
+Watson (1944, §§11.3, 11.4). (10.23.2) is obtained
+from (10.23.7) by taking χ=0 and α=0,π.
+Referenced by:
+
+§10.60(i),
+§28.27,
+Erratum (V1.0.7) for Usability
+
+Permalink:
+http://dlmf.nist.gov/10.23.ii
+Addition (effective with 1.0.7):
+
+The cross-reference to §10.12 after (10.23.9) has been added.
+
+Suggested 2012-12-28 by Alexander Barnett
+
+See also:
+Annotations for §10.23 and
+Ch.10
+
+Neumann’s Addition Theorem
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Neumann’s addition theorem
+
+See also:
+Annotations for §10.23(ii),
+§10.23 and
+Ch.10
+
+10.23.2
+
+𝒞ν⁡(u±v)=∑k=−∞∞𝒞ν∓k⁡(u)⁢Jk⁡(v),
+
+|v|<|u|.
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+𝒞ν⁡(z): cylinder function,
+k: nonnegative integer and
+ν: complex parameter
+
+A&S Ref:
+ 9.1.75
+
+Referenced by:
+
+§10.23(iii),
+§10.23(ii),
+§10.44(ii),
+§10.66
+
+Permalink:
+http://dlmf.nist.gov/10.23.E2
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.23(ii),
+§10.23(ii),
+§10.23 and
+Ch.10
+
+The restriction |v|<|u| is unnecessary when 𝒞=J and
+ν is an integer. Special cases are:
+
+10.23.3
+
+J02⁡(z)+2⁢∑k=1∞Jk2⁡(z)=1,
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+k: nonnegative integer and
+z: complex variable
+
+A&S Ref:
+ 9.1.76
+
+Referenced by:
+§10.22(ii)
+Permalink:
+http://dlmf.nist.gov/10.23.E3
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.23(ii),
+§10.23(ii),
+§10.23 and
+Ch.10
+
+10.23.4
+
+∑k=02⁢n(−1)k⁢Jk⁡(z)⁢J2⁢n−k⁡(z)+2⁢∑k=1∞Jk⁡(z)⁢J2⁢n+k⁡(z)=0,
+
+n≥1,
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+n: integer,
+k: nonnegative integer and
+z: complex variable
+
+A&S Ref:
+ 9.1.77
+
+Permalink:
+http://dlmf.nist.gov/10.23.E4
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.23(ii),
+§10.23(ii),
+§10.23 and
+Ch.10
+
+10.23.5
+
+∑k=0nJk⁡(z)⁢Jn−k⁡(z)+2⁢∑k=1∞(−1)k⁢Jk⁡(z)⁢Jn+k⁡(z)=Jn⁡(2⁢z).
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+n: integer,
+k: nonnegative integer and
+z: complex variable
+
+A&S Ref:
+ 9.1.78
+
+Permalink:
+http://dlmf.nist.gov/10.23.E5
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.23(ii),
+§10.23(ii),
+§10.23 and
+Ch.10
+
+Graf’s and Gegenbauer’s Addition Theorems
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Gegenbauer’s addition theorem, Graf’s addition theorem
+
+See also:
+Annotations for §10.23(ii),
+§10.23 and
+Ch.10
+
+Define
+
+10.23.6
+
+w
+=u2+v2−2⁢u⁢v⁢cos⁡α,
+
+u−v⁢cos⁡α
+=w⁢cos⁡χ,
+
+v⁢sin⁡α
+=w⁢sin⁡χ,
+
+ⓘ
+
+Symbols:
+
+cos⁡z: cosine function and
+sin⁡z: sine function
+
+Permalink:
+http://dlmf.nist.gov/10.23.E6
+Encodings:
+
+TeX, TeX, TeX, pMML, pMML, pMML, png, png, png
+
+See also:
+Annotations for §10.23(ii),
+§10.23(ii),
+§10.23 and
+Ch.10
+
+the branches being continuous and chosen so that w→u and χ→0 as
+v→0. If u, v are real and positive and 0≤α≤π, then
+w and χ are real and nonnegative, and the geometrical relationship is
+shown in Figure 10.23.1.
+
+Figure 10.23.1: Graf’s and Gegenbauer’s addition theorems.
+
+Magnify
+
+ⓘ
+
+Referenced by:
+§10.23(ii)
+Permalink:
+http://dlmf.nist.gov/10.23.F1
+Encodings:
+
+pdf, png
+
+See also:
+Annotations for §10.23(ii),
+§10.23(ii),
+§10.23 and
+Ch.10
+
+10.23.7
+
+𝒞ν⁡(w)⁢cossin⁢(ν⁢χ)=∑k=−∞∞𝒞ν+k⁡(u)⁢Jk⁡(v)⁢cossin⁢(k⁢α),
+
+|v⁢e±i⁢α|<|u|.
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+cos⁡z: cosine function,
+𝒞ν⁡(z): cylinder function,
+e: base of natural logarithm,
+i: imaginary unit,
+sin⁡z: sine function,
+k: nonnegative integer and
+ν: complex parameter
+
+A&S Ref:
+ 9.1.79
+
+Referenced by:
+
+§10.23(ii),
+§10.23(iii),
+§10.23(ii),
+§10.44(ii)
+
+Permalink:
+http://dlmf.nist.gov/10.23.E7
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.23(ii),
+§10.23(ii),
+§10.23 and
+Ch.10
+
+10.23.8
+
+𝒞ν⁡(w)wν=2ν⁢Γ⁡(ν)⁢∑k=0∞(ν+k)⁢𝒞ν+k⁡(u)uν⁢Jν+k⁡(v)vν⁢Ck(ν)⁡(cos⁡α),
+
+ν≠0,−1,…, |v⁢e±i⁢α|<|u|,
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Γ⁡(z): gamma function,
+cos⁡z: cosine function,
+𝒞ν⁡(z): cylinder function,
+e: base of natural logarithm,
+i: imaginary unit,
+Cn(λ)⁡(x): ultraspherical (or Gegenbauer) polynomial,
+k: nonnegative integer and
+ν: complex parameter
+
+A&S Ref:
+ 9.1.80
+
+Referenced by:
+
+§10.23(ii),
+§10.23(ii),
+§10.23(ii),
+§10.44(ii),
+§10.60(i),
+§10.60(ii)
+
+Permalink:
+http://dlmf.nist.gov/10.23.E8
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.23(ii),
+§10.23(ii),
+§10.23 and
+Ch.10
+
+where Ck(ν)⁡(cos⁡α) is Gegenbauer’s polynomial
+(§18.3). The restriction |v⁢e±i⁢α|<|u| is
+unnecessary in (10.23.7) when 𝒞=J and ν
+is an integer, and in (10.23.8) when 𝒞=J.
+
+The degenerate form of (10.23.8) when u=∞ is given by
+
+10.23.9
+
+ei⁢v⁢cos⁡α=Γ⁡(ν)(12⁢v)ν⁢∑k=0∞(ν+k)⁢ik⁢Jν+k⁡(v)⁢Ck(ν)⁡(cos⁡α),
+
+ν≠0,−1,….
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Γ⁡(z): gamma function,
+cos⁡z: cosine function,
+e: base of natural logarithm,
+i: imaginary unit,
+Cn(λ)⁡(x): ultraspherical (or Gegenbauer) polynomial,
+k: nonnegative integer and
+ν: complex parameter
+
+A&S Ref:
+ 9.1.81
+
+Referenced by:
+§10.23(ii)
+Permalink:
+http://dlmf.nist.gov/10.23.E9
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.23(ii),
+§10.23(ii),
+§10.23 and
+Ch.10
+
+See also §10.12.
+
+Partial Fractions
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Hankel functions, addition theorems, expansions in partial fractions, sums
+
+See also:
+Annotations for §10.23(ii),
+§10.23 and
+Ch.10
+
+For expansions of products of Bessel functions of the first kind in partial
+fractions see Rogers (2005).
+
+§10.23(iii) Series Expansions of Arbitrary Functions
+
+ⓘ
+
+Keywords:
+
+Bessel functions, expansions in series of, expansions in series of Bessel functions, sums
+
+Notes:
+For (10.23.10)–(10.23.13) see
+Watson (1944, § 16.11). For
+(10.23.15)–(10.23.17) see
+Watson (1944, pp. 64, 67, 71, 138). For (10.23.21) see
+Temme (1996b, p. 247).
+Referenced by:
+§11.4(iv)
+Permalink:
+http://dlmf.nist.gov/10.23.iii
+See also:
+Annotations for §10.23 and
+Ch.10
+
+Neumann’s Expansion
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Neumann’s expansion, Neumann’s polynomial
+
+See also:
+Annotations for §10.23(iii),
+§10.23 and
+Ch.10
+
+10.23.10
+
+f⁡(z)=a0⁢J0⁡(z)+2⁢∑k=1∞ak⁢Jk⁡(z),
+
+|z|<c,
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+k: nonnegative integer,
+z: complex variable,
+ak and
+f⁡(t)
+
+A&S Ref:
+ 9.1.82
+
+Referenced by:
+§10.23(iii)
+Permalink:
+http://dlmf.nist.gov/10.23.E10
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.23(iii),
+§10.23(iii),
+§10.23 and
+Ch.10
+
+where c is the distance of the nearest singularity of the analytic function
+f⁡(z) from z=0,
+
+10.23.11
+
+ak=12⁢π⁢i⁢∫|t|=c′f⁡(t)⁢Ok⁡(t)⁢dt,
+
+0<c′<c,
+
+ⓘ
+
+Defines:
+ak (locally)
+Symbols:
+
+On⁡(x): Neumann’s polynomial,
+π: the ratio of the circumference of a circle to its diameter,
+dx: differential of x,
+i: imaginary unit,
+∫: integral,
+k: nonnegative integer,
+z: complex variable and
+f⁡(t)
+
+A&S Ref:
+ 9.1.83
+
+Referenced by:
+Erratum (V1.1.2) for Equation (10.23.11)
+Permalink:
+http://dlmf.nist.gov/10.23.E11
+Encodings:
+
+TeX, pMML, png
+
+Errata (effective with 1.1.2):
+
+Originally the contour of integration written incorrectly as |z|=c′,
+has been corrected to be |t|=c′.
+
+Reported 2021-03-22 by Mark Dunster
+
+See also:
+Annotations for §10.23(iii),
+§10.23(iii),
+§10.23 and
+Ch.10
+
+and Ok⁡(t) is Neumann’s polynomial, defined by the generating
+function:
+
+10.23.12
+
+1t−z=J0⁡(z)⁢O0⁡(t)+2⁢∑k=1∞Jk⁡(z)⁢Ok⁡(t),
+
+|z|<|t|.
+
+ⓘ
+
+Defines:
+On⁡(x): Neumann’s polynomial
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+n: integer,
+k: nonnegative integer,
+x: real variable and
+z: complex variable
+
+A&S Ref:
+ 9.1.84
+
+Permalink:
+http://dlmf.nist.gov/10.23.E12
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.23(iii),
+§10.23(iii),
+§10.23 and
+Ch.10
+
+On⁡(t) is a polynomial of degree n+1 in 1/t:O0⁡(t)=1/t and
+
+10.23.13
+
+On⁡(t)=14⁢∑k=0⌊n/2⌋(n−k−1)!⁢nk!⁢(2t)n−2⁢k+1,
+
+n=1,2,….
+
+ⓘ
+
+Symbols:
+
+On⁡(x): Neumann’s polynomial,
+!: factorial (as in n!),
+⌊x⌋: floor of x,
+n: integer and
+k: nonnegative integer
+
+A&S Ref:
+ 9.1.85
+
+Referenced by:
+§10.23(iii)
+Permalink:
+http://dlmf.nist.gov/10.23.E13
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.23(iii),
+§10.23(iii),
+§10.23 and
+Ch.10
+
+For the more general form of expansion
+
+10.23.14
+
+zν⁢f⁡(z)=a0⁢Jν⁡(z)+2⁢∑k=1∞ak⁢Jν+k⁡(z)
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+k: nonnegative integer,
+z: complex variable,
+ν: complex parameter,
+ak and
+f⁡(t)
+
+A&S Ref:
+ 9.1.86
+
+Permalink:
+http://dlmf.nist.gov/10.23.E14
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.23(iii),
+§10.23(iii),
+§10.23 and
+Ch.10
+
+see Watson (1944, §16.13), and for further generalizations see
+Watson (1944, Chapter 16) and Erdélyi et al. (1953b, §7.10.1).
+
+Examples
+
+ⓘ
+
+See also:
+Annotations for §10.23(iii),
+§10.23 and
+Ch.10
+
+10.23.15
+
+(12⁢z)ν=∑k=0∞(ν+2⁢k)⁢Γ⁡(ν+k)k!⁢Jν+2⁢k⁡(z),
+
+ν≠0,−1,−2,…,
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Γ⁡(z): gamma function,
+!: factorial (as in n!),
+k: nonnegative integer,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.1.87
+
+Referenced by:
+
+§10.22(ii),
+§10.23(iii),
+§10.44(iii),
+§10.74(iv)
+
+Permalink:
+http://dlmf.nist.gov/10.23.E15
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.23(iii),
+§10.23(iii),
+§10.23 and
+Ch.10
+
+10.23.16
+
+Y0⁡(z)=2π⁢(ln⁡(12⁢z)+γ)⁢J0⁡(z)−4π⁢∑k=1∞(−1)k⁢J2⁢k⁡(z)k,
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Yν⁡(z): Bessel function of the second kind,
+γ: Euler’s constant,
+π: the ratio of the circumference of a circle to its diameter,
+ln⁡z: principal branch of logarithm function,
+k: nonnegative integer and
+z: complex variable
+
+A&S Ref:
+ 9.1.89
+
+Permalink:
+http://dlmf.nist.gov/10.23.E16
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.23(iii),
+§10.23(iii),
+§10.23 and
+Ch.10
+
+10.23.17
+
+Yn⁡(z)=−n!⁢(12⁢z)−nπ⁢∑k=0n−1(12⁢z)k⁢Jk⁡(z)k!⁢(n−k)+2π⁢(ln⁡(12⁢z)−ψ⁡(n+1))⁢Jn⁡(z)−2π⁢∑k=1∞(−1)k⁢(n+2⁢k)⁢Jn+2⁢k⁡(z)k⁢(n+k),
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Yν⁡(z): Bessel function of the second kind,
+π: the ratio of the circumference of a circle to its diameter,
+ψ⁡(z): psi (or digamma) function,
+!: factorial (as in n!),
+ln⁡z: principal branch of logarithm function,
+n: integer,
+k: nonnegative integer and
+z: complex variable
+
+A&S Ref:
+ 9.1.88
+
+Referenced by:
+
+§10.23(iii),
+§10.44(iii)
+
+Permalink:
+http://dlmf.nist.gov/10.23.E17
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.23(iii),
+§10.23(iii),
+§10.23 and
+Ch.10
+
+where γ is Euler’s constant and
+ψ⁡(n+1)=Γ′⁡(n+1)/Γ⁡(n+1) (§5.2).
+
+Other examples are provided by (10.12.1)–(10.12.6),
+(10.23.2), and (10.23.7).
+
+Fourier–Bessel Expansion
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Fourier–Bessel expansion
+
+See also:
+Annotations for §10.23(iii),
+§10.23 and
+Ch.10
+
+Assume f⁡(t) satisfies
+
+10.23.18
+
+∫01t12⁢|f⁡(t)|⁢dt<∞,
+
+ⓘ
+
+Symbols:
+
+dx: differential of x,
+∫: integral and
+f⁡(t)
+
+Permalink:
+http://dlmf.nist.gov/10.23.E18
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.23(iii),
+§10.23(iii),
+§10.23 and
+Ch.10
+
+and define
+
+10.23.19
+
+am=2(Jν+1⁡(jν,m))2⁢∫01t⁢f⁡(t)⁢Jν⁡(jν,m⁢t)⁢dt,
+
+ν≥−12,
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+dx: differential of x,
+∫: integral,
+jν,m: zeros of the Bessel function Jν⁡(x),
+m: integer,
+ν: complex parameter,
+ak and
+f⁡(t)
+
+Referenced by:
+§10.74(vii)
+Permalink:
+http://dlmf.nist.gov/10.23.E19
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.23(iii),
+§10.23(iii),
+§10.23 and
+Ch.10
+
+where jν,m is as in §10.21(i). If 0<x<1, then
+
+10.23.20
+
+12⁢f⁡(x−)+12⁢f⁡(x+)=∑m=1∞am⁢Jν⁡(jν,m⁢x),
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+m: integer,
+x: real variable,
+ν: complex parameter,
+ak and
+f⁡(t)
+
+Permalink:
+http://dlmf.nist.gov/10.23.E20
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.23(iii),
+§10.23(iii),
+§10.23 and
+Ch.10
+
+provided that f⁡(t) is of bounded variation (§1.4(v)) on an
+interval [a,b] with 0<a<x<b<1. This result is proved in
+Watson (1944, Chapter 18) and further information is provided in
+this reference, including the behavior of the series near x=0 and x=1.
+
+As an example,
+
+10.23.21
+
+xν=∑m=1∞2⁢Jν⁡(jν,m⁢x)jν,m⁢Jν+1⁡(jν,m),
+
+ν>0,0≤x<1.
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+jν,m: zeros of the Bessel function Jν⁡(x),
+m: integer,
+x: real variable and
+ν: complex parameter
+
+Referenced by:
+§10.23(iii)
+Permalink:
+http://dlmf.nist.gov/10.23.E21
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.23(iii),
+§10.23(iii),
+§10.23 and
+Ch.10
+
+(Note that when x=1 the left-hand side is 1 and the right-hand side is 0.)
+
+Other Series Expansions
+
+ⓘ
+
+Keywords:
+
+Bessel functions, expansions in series of Bessel functions, sums
+
+See also:
+Annotations for §10.23(iii),
+§10.23 and
+Ch.10
+
+For other types of expansions of arbitrary functions in series of Bessel
+functions, see Watson (1944, Chapters 17–19) and
+Erdélyi et al. (1953b, §§ 7.10.2–7.10.4). See also
+Schäfke (1960, 1961b).
+
+§10.23(iv) Compendia
+
+ⓘ
+
+Keywords:
+
+Bessel functions, compendia, expansions in series of, sums
+
+Permalink:
+http://dlmf.nist.gov/10.23.iv
+See also:
+Annotations for §10.23 and
+Ch.10
+
+For collections of sums of series involving Bessel or Hankel functions see
+Erdélyi et al. (1953b, §7.15), Gradshteyn and Ryzhik (2015, §§8.51–8.53),
+Hansen (1975), Luke (1969b, §9.4),
+Prudnikov et al. (1986b, pp. 651–691 and 697–700),
+and Wheelon (1968, pp. 48–51).
+
+10.22 Integrals10.24 Functions of Imaginary Order
+
+© 2010–2026 NIST / Disclaimer / Feedback;
+ Version 1.2.6;
+Release date 2026-03-15.
+
+Site Privacy Accessibility Privacy Program Copyrights Vulnerability Disclosure No Fear Act Policy FOIA Environmental Policy Scientific Integrity Information Quality Standards Commerce.gov Science.gov USA.gov
+

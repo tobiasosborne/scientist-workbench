@@ -1,0 +1,2611 @@
+
+
+DLMF: §10.21 Zeros ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions
+
+DLMF
+
+Index
+Notations
+Search
+Help?
+Citing
+Customize
+Annotate
+UnAnnotate
+
+About the Project
+
+10 Bessel FunctionsBessel and Hankel Functions10.20 Uniform Asymptotic Expansions for Large Order10.22 Integrals
+
+§10.21 Zeros
+
+ⓘ
+
+Referenced by:
+
+Ch.10,
+§4.46
+
+Permalink:
+http://dlmf.nist.gov/10.21
+See also:
+Annotations for Ch.10
+
+Contents
+
+§10.21(i) Distribution
+§10.21(ii) Analytic Properties
+§10.21(iii) Infinite Products
+§10.21(iv) Monotonicity Properties
+§10.21(v) Inequalities
+§10.21(vi) McMahon’s Asymptotic Expansions for Large Zeros
+§10.21(vii) Asymptotic Expansions for Large Order
+§10.21(viii) Uniform Asymptotic Approximations for Large Order
+§10.21(ix) Complex Zeros
+§10.21(x) Cross-Products
+§10.21(xi) Riccati–Bessel Functions
+§10.21(xii) Zeros of α⁢Jν⁡(x)+x⁢Jν′⁡(x)
+§10.21(xiii) Rayleigh Function
+§10.21(xiv) ν-Zeros
+
+§10.21(i) Distribution
+
+ⓘ
+
+Defines:
+
+jν,m: zeros of the Bessel function Jν⁡(x),
+yν,m: zeros of the Bessel function Yν⁡(x),
+jν,m′: zeros of the Bessel function derivative Jν′⁡(x) and
+yν,m′: zeros of the Bessel function derivative Yν′⁡(x)
+
+Keywords:
+
+Bessel functions, common, complex, contiguous, distribution, double, interlacing, notation, purely imaginary, zeros of Bessel functions (including derivatives), zeros of cylinder functions (including derivatives)
+
+A&S Ref:
+ §9.5 (Statements re the zeros of Jν′⁡(z) and
+Yν′⁡(z) in the first sentence of §9.5 are corrected here.)
+
+Notes:
+See Watson (1944, pp. 477–487),
+Olver (1997b, pp. 244–249), Döring (1971), and
+Kerimov and Skorokhodov (1985a).
+Referenced by:
+
+§10.18(iii),
+§10.21(ix),
+§10.22(ii),
+§10.23(iii),
+§10.58,
+§13.22,
+§13.9(i),
+§18.16(ii),
+§28.9,
+Erratum (V1.0.5) for References
+
+Permalink:
+http://dlmf.nist.gov/10.21.i
+Addition (effective with 1.0.5):
+
+The reference to Pálmai and Apagyi (2011) has been added near the middle of this subsection.
+
+See also:
+Annotations for §10.21 and
+Ch.10
+
+The zeros of any cylinder function or its derivative are simple, with the
+possible exceptions of z=0 in the case of the functions, and z=0,±ν
+in the case of the derivatives.
+
+If ν is real, then Jν⁡(z), Jν′⁡(z),
+Yν⁡(z), and Yν′⁡(z), each have an infinite number of
+positive real zeros. All of these zeros are simple, provided that ν≥−1
+in the case of Jν′⁡(z), and ν≥−12 in the case of
+Yν′⁡(z). When all of their zeros are simple, the mth
+positive zeros of these functions are
+denoted by jν,m, jν,m′,
+yν,m, and yν,m′ respectively, except
+that z=0 is counted as the first zero of J0′⁡(z). Since
+J0′⁡(z)=−J1⁡(z) we have
+
+10.21.1
+
+j0,1′
+=0,
+
+j0,m′
+=j1,m−1,
+
+m=2,3,….
+
+ⓘ
+
+Symbols:
+
+jν,m: zeros of the Bessel function Jν⁡(x),
+jν,m′: zeros of the Bessel function derivative Jν′⁡(x) and
+m: integer
+
+A&S Ref:
+ 9.5.1
+
+Permalink:
+http://dlmf.nist.gov/10.21.E1
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.21(i),
+§10.21 and
+Ch.10
+
+When ν≥0, the zeros interlace according to the inequalities
+
+10.21.2
+
+jν,1
+<jν+1,1<jν,2<jν+1,2<jν,3<⋯,
+
+yν,1
+<yν+1,1<yν,2<yν+1,2<yν,3<⋯,
+
+ⓘ
+
+Symbols:
+
+jν,m: zeros of the Bessel function Jν⁡(x),
+yν,m: zeros of the Bessel function Yν⁡(x) and
+ν: complex parameter
+
+A&S Ref:
+ 9.5.2
+
+Referenced by:
+§10.21(ii)
+Permalink:
+http://dlmf.nist.gov/10.21.E2
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.21(i),
+§10.21 and
+Ch.10
+
+10.21.3
+
+ν≤jν,1′<yν,1<yν,1′<jν,1<jν,2′<yν,2<⋯.
+
+ⓘ
+
+Symbols:
+
+jν,m: zeros of the Bessel function Jν⁡(x),
+yν,m: zeros of the Bessel function Yν⁡(x),
+jν,m′: zeros of the Bessel function derivative Jν′⁡(x),
+yν,m′: zeros of the Bessel function derivative Yν′⁡(x) and
+ν: complex parameter
+
+A&S Ref:
+ 9.5.2
+
+Referenced by:
+§10.21(ii)
+Permalink:
+http://dlmf.nist.gov/10.21.E3
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(i),
+§10.21 and
+Ch.10
+
+For an extension see Pálmai and Apagyi (2011).
+
+The positive zeros of any two real distinct cylinder functions of the same
+order are interlaced, as are the positive zeros of any real cylinder function
+𝒞ν⁡(z) and the contiguous function 𝒞ν+1⁡(z). See
+also Elbert and Laforgia (1994).
+
+When ν≥−1 the zeros of Jν⁡(z) are all real. If ν<−1
+and ν is not an integer, then the number of complex zeros of
+Jν⁡(z) is 2⁢⌊−ν⌋. If ⌊−ν⌋ is odd, then two of
+these zeros lie on the imaginary axis.
+
+If ν≥0, then the zeros of Jν′⁡(z) are all real.
+
+For information on the real double zeros of Jν′⁡(z) and
+Yν′⁡(z) when ν<−1 and ν<−12, respectively, see
+Döring (1971) and Kerimov and Skorokhodov (1986). The latter reference also
+has information on double zeros of the second and third derivatives of
+Jν⁡(z) and Yν⁡(z).
+
+No two of the functions J0⁡(z), J1⁡(z),
+J2⁡(z),…, have any common zeros other than z=0; see
+Watson (1944, §15.28).
+
+§10.21(ii) Analytic Properties
+
+ⓘ
+
+Keywords:
+
+Bessel functions, analytic properties, forward differences, modulus and phase functions, relation to inverse phase functions, relation to zeros, zeros of Bessel functions (including derivatives), zeros of cylinder functions (including derivatives)
+
+Notes:
+See Watson (1944, pp. 508 and 510) and Olver (1950).
+(In the latter reference t in (10.21.4) is replaced by −t.)
+(10.21.5) and (10.21.6) follow from
+(10.6.2). (10.21.12) and (10.21.13)
+follow from (10.18.3), (10.21.2),
+(10.21.3), and the fact that θν⁡(x) is increasing
+when x>0, whereas ϕν⁡(x) is decreasing when 0<x<ν and
+increasing when x>ν; compare (10.18.8).
+Referenced by:
+
+§10.21(vii),
+Erratum (V1.0.1) for References
+
+Permalink:
+http://dlmf.nist.gov/10.21.ii
+Addition (effective with 1.0.1):
+
+A paragraph with an additional reference was inserted at the end of this subsection.
+
+See also:
+Annotations for §10.21 and
+Ch.10
+
+If ρν is a zero of the cylinder function
+
+10.21.4
+
+𝒞ν⁡(z)=Jν⁡(z)⁢cos⁡(π⁢t)+Yν⁡(z)⁢sin⁡(π⁢t),
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Yν⁡(z): Bessel function of the second kind,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+𝒞ν⁡(z): cylinder function,
+sin⁡z: sine function,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.5.3
+
+Referenced by:
+§10.21(ii)
+Permalink:
+http://dlmf.nist.gov/10.21.E4
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(ii),
+§10.21 and
+Ch.10
+
+where t is a parameter, then
+
+10.21.5
+
+𝒞ν′⁡(ρν)=𝒞ν−1⁡(ρν)=−𝒞ν+1⁡(ρν).
+
+ⓘ
+
+Symbols:
+
+𝒞ν⁡(z): cylinder function,
+ν: complex parameter and
+ρν⁡(t): zero of cylinder function
+
+A&S Ref:
+ 9.5.4
+
+Referenced by:
+§10.21(ii)
+Permalink:
+http://dlmf.nist.gov/10.21.E5
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(ii),
+§10.21 and
+Ch.10
+
+If σν is a zero of 𝒞ν′⁡(z), then
+
+10.21.6
+
+𝒞ν⁡(σν)=σνν⁢𝒞ν−1⁡(σν)=σνν⁢𝒞ν+1⁡(σν).
+
+ⓘ
+
+Symbols:
+
+𝒞ν⁡(z): cylinder function,
+ν: complex parameter and
+σν⁡(t): zero of cylinder function
+
+A&S Ref:
+ 9.5.5
+
+Referenced by:
+§10.21(ii)
+Permalink:
+http://dlmf.nist.gov/10.21.E6
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(ii),
+§10.21 and
+Ch.10
+
+The parameter t may be regarded as a continuous variable and ρν,
+σν as functions ρν⁡(t), σν⁡(t) of t. If ν≥0
+and these functions are fixed by
+
+10.21.7
+
+ρν⁡(0)
+=0,
+
+σν⁡(0)
+=jν,1′,
+
+ⓘ
+
+Symbols:
+
+jν,m′: zeros of the Bessel function derivative Jν′⁡(x),
+ν: complex parameter,
+ρν⁡(t): zero of cylinder function and
+σν⁡(t): zero of cylinder function
+
+A&S Ref:
+ 9.5.6
+
+Permalink:
+http://dlmf.nist.gov/10.21.E7
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.21(ii),
+§10.21 and
+Ch.10
+
+then
+
+10.21.8
+
+jν,m
+=ρν⁡(m),
+
+yν,m
+
+=ρν⁡(m−12),
+
+m=1,2,…,
+
+ⓘ
+
+Symbols:
+
+jν,m: zeros of the Bessel function Jν⁡(x),
+yν,m: zeros of the Bessel function Yν⁡(x),
+m: integer,
+ν: complex parameter and
+ρν⁡(t): zero of cylinder function
+
+A&S Ref:
+ 9.5.7
+
+Permalink:
+http://dlmf.nist.gov/10.21.E8
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.21(ii),
+§10.21 and
+Ch.10
+
+10.21.9
+
+jν,m′
+=σν⁡(m−1),
+
+yν,m′
+
+=σν⁡(m−12),
+
+m=1,2,….
+
+ⓘ
+
+Symbols:
+
+jν,m′: zeros of the Bessel function derivative Jν′⁡(x),
+yν,m′: zeros of the Bessel function derivative Yν′⁡(x),
+m: integer,
+ν: complex parameter and
+σν⁡(t): zero of cylinder function
+
+A&S Ref:
+ 9.5.8
+
+Permalink:
+http://dlmf.nist.gov/10.21.E9
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.21(ii),
+§10.21 and
+Ch.10
+
+10.21.10
+
+𝒞ν′⁡(ρν)
+=(ρν2⁢dρνdt)−12,
+
+𝒞ν⁡(σν)
+=(σν2−ν22⁢σν⁢dσνdt)−12,
+
+ⓘ
+
+Symbols:
+
+𝒞ν⁡(z): cylinder function,
+dfdx: derivative of f with respect to x,
+ν: complex parameter,
+ρν⁡(t): zero of cylinder function and
+σν⁡(t): zero of cylinder function
+
+A&S Ref:
+ 9.5.9
+
+Permalink:
+http://dlmf.nist.gov/10.21.E10
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.21(ii),
+§10.21 and
+Ch.10
+
+10.21.11
+
+2⁢ρν2⁢dρνdt⁢d3ρνdt3−3⁢ρν2⁢(d2ρνdt2)2−4⁢π2⁢ρν2⁢(dρνdt)2+(4⁢ρν2+1−4⁢ν2)⁢(dρνdt)4=0.
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+dfdx: derivative of f with respect to x,
+ν: complex parameter and
+ρν⁡(t): zero of cylinder function
+
+Permalink:
+http://dlmf.nist.gov/10.21.E11
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(ii),
+§10.21 and
+Ch.10
+
+The functions ρν⁡(t) and σν⁡(t) are related to the inverses of
+the phase functions θν⁡(x) and ϕν⁡(x) defined in
+§10.18(i): if ν≥0, then
+
+10.21.12
+
+θν⁡(jν,m)
+=(m−12)⁢π,
+
+θν⁡(yν,m)
+=(m−1)⁢π,
+
+m=1,2,…,
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+θν⁡(x): phase of Bessel functions,
+jν,m: zeros of the Bessel function Jν⁡(x),
+yν,m: zeros of the Bessel function Yν⁡(x),
+m: integer and
+ν: complex parameter
+
+Referenced by:
+§10.21(ii)
+Permalink:
+http://dlmf.nist.gov/10.21.E12
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.21(ii),
+§10.21 and
+Ch.10
+
+10.21.13
+
+ϕν⁡(jν,m′)
+=(m−12)⁢π,
+
+ϕν⁡(yν,m′)
+=m⁢π,
+
+m=1,2,….
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+ϕν⁡(x): phase of derivatives of Bessel functions,
+jν,m′: zeros of the Bessel function derivative Jν′⁡(x),
+yν,m′: zeros of the Bessel function derivative Yν′⁡(x),
+m: integer and
+ν: complex parameter
+
+Referenced by:
+§10.21(ii)
+Permalink:
+http://dlmf.nist.gov/10.21.E13
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.21(ii),
+§10.21 and
+Ch.10
+
+For sign properties of the forward differences that are defined by
+
+10.21.14
+
+Δ⁡ρν⁡(t)
+=ρν⁡(t+1)−ρν⁡(t),
+
+Δ2⁡ρν⁡(t)
+=Δ⁡ρν⁡(t+1)−Δ⁡ρν⁡(t),…,
+
+ⓘ
+
+Symbols:
+
+Δ: forward difference operator,
+ν: complex parameter and
+ρν⁡(t): zero of cylinder function
+
+Permalink:
+http://dlmf.nist.gov/10.21.E14
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.21(ii),
+§10.21 and
+Ch.10
+
+when t=1,2,3,…, and similarly for σν⁡(t), see
+Lorch and Szegő (1963, 1964), Lorch et al. (1970, 1972),
+and Muldoon (1977).
+
+Some information on the distribution of ρν⁡(t) and σν⁡(t) for real values
+of ν and t is given in Muldoon and Spigler (1984).
+
+§10.21(iii) Infinite Products
+
+ⓘ
+
+Keywords:
+
+Bessel functions, infinite products
+
+Notes:
+For (10.21.15) see Watson (1944, pp. 497–498).
+(10.21.16) is proved by a similar method.
+Referenced by:
+§10.58
+Permalink:
+http://dlmf.nist.gov/10.21.iii
+See also:
+Annotations for §10.21 and
+Ch.10
+
+10.21.15
+
+Jν⁡(z)
+=(12⁢z)νΓ⁡(ν+1)⁢∏k=1∞(1−z2jν,k2),
+
+ν≥0,
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Γ⁡(z): gamma function,
+jν,m: zeros of the Bessel function Jν⁡(x),
+k: nonnegative integer,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.5.10
+
+Referenced by:
+§10.21(iii)
+Permalink:
+http://dlmf.nist.gov/10.21.E15
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(iii),
+§10.21 and
+Ch.10
+
+10.21.16
+
+Jν′⁡(z)
+=(12⁢z)ν−12⁢Γ⁡(ν)⁢∏k=1∞(1−z2jν,k′2),
+
+ν>0.
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Γ⁡(z): gamma function,
+jν,m′: zeros of the Bessel function derivative Jν′⁡(x),
+k: nonnegative integer,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.5.11
+
+Referenced by:
+§10.21(iii)
+Permalink:
+http://dlmf.nist.gov/10.21.E16
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(iii),
+§10.21 and
+Ch.10
+
+§10.21(iv) Monotonicity Properties
+
+ⓘ
+
+Keywords:
+
+monotonicity, zeros of Bessel functions (including derivatives), zeros of cylinder functions (including derivatives)
+
+Notes:
+See Watson (1944, pp. 508–510),
+Lorch (1990, 1995), Wong and Lang (1991),
+McCann (1977), Lewis and Muldoon (1977), and Mercer (1992).
+Referenced by:
+Erratum (V1.0.5) for References
+Permalink:
+http://dlmf.nist.gov/10.21.iv
+Addition (effective with 1.0.5):
+
+The reference to Lorch and Muldoon (2008) has been added at the end of this subsection.
+
+See also:
+Annotations for §10.21 and
+Ch.10
+
+Any positive zero c of the cylinder function 𝒞ν⁡(x) and any
+positive zero c′ of 𝒞ν′⁡(x) such that c′>|ν| are definable
+as continuous and increasing functions of ν:
+
+10.21.17
+
+dcdν=2⁢c⁢∫0∞K0⁡(2⁢c⁢sinh⁡t)⁢e−2⁢ν⁢t⁢dt,
+
+ⓘ
+
+Symbols:
+
+dfdx: derivative of f with respect to x,
+dx: differential of x,
+e: base of natural logarithm,
+sinh⁡z: hyperbolic sine function,
+∫: integral,
+Kν⁡(z): modified Bessel function of the second kind,
+ν: complex parameter and
+c: zero of cylinder function
+
+Permalink:
+http://dlmf.nist.gov/10.21.E17
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(iv),
+§10.21 and
+Ch.10
+
+10.21.18
+
+dc′dν=2⁢c′c′2−ν2⁢∫0∞(c′2⁢cosh⁡(2⁢t)−ν2)⁢K0⁡(2⁢c′⁢sinh⁡t)⁢e−2⁢ν⁢t⁢dt,
+
+ⓘ
+
+Symbols:
+
+dfdx: derivative of f with respect to x,
+dx: differential of x,
+e: base of natural logarithm,
+cosh⁡z: hyperbolic cosine function,
+sinh⁡z: hyperbolic sine function,
+∫: integral,
+Kν⁡(z): modified Bessel function of the second kind,
+ν: complex parameter and
+c: zero of cylinder function
+
+Permalink:
+http://dlmf.nist.gov/10.21.E18
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(iv),
+§10.21 and
+Ch.10
+
+where K0 is defined in §10.25(ii).
+
+In particular, jν,m, yν,m,
+jν,m′, and yν,m′ are increasing functions
+of ν when ν≥0. It is also true that the positive zeros jν′′ and
+jν′′′ of Jν′′⁡(x) and Jν′′′⁡(x), respectively,
+are increasing functions of ν when ν>0, provided that in the latter
+case jν′′′>3 when 0<ν<1.
+
+jν,m/ν and jν,m′/ν are decreasing
+functions of ν when ν>0 for m=1,2,3,….
+
+For further monotonicity properties see Elbert (2001),
+Lorch (1990, 1993, 1995), Lorch and Muldoon (2008),
+Lorch and Szegő (1990, 1995), and Muldoon (1981). For
+inequalities for zeros arising from monotonicity properties see
+Laforgia and Muldoon (1983).
+
+§10.21(v) Inequalities
+
+ⓘ
+
+Keywords:
+
+bounds, purely imaginary, zeros of Bessel functions (including derivatives)
+
+Permalink:
+http://dlmf.nist.gov/10.21.v
+See also:
+Annotations for §10.21 and
+Ch.10
+
+For bounds for the smallest real or purely imaginary zeros of Jν⁡(x)
+when ν is real see Ismail and Muldoon (1995).
+
+§10.21(vi) McMahon’s Asymptotic Expansions for Large Zeros
+
+ⓘ
+
+Keywords:
+
+McMahon’s asymptotic expansions, asymptotic expansions for large zeros, error bounds, zeros of Bessel functions, zeros of cylinder functions (including derivatives)
+
+Notes:
+For (10.21.19) see Watson (1944, pp. 503–507) or
+Olver (1997b, pp. 247–248). Similar methods can be used for
+(10.21.20).
+Referenced by:
+
+§10.21(xi),
+§10.58,
+§10.74(vi),
+§13.9(i),
+§13.9(ii)
+
+Permalink:
+http://dlmf.nist.gov/10.21.vi
+See also:
+Annotations for §10.21 and
+Ch.10
+
+If ν (≥0) is fixed, μ=4⁢ν2, and m→∞, then
+
+10.21.19
+
+jν,m,yν,m∼a−μ−18⁢a−4⁢(μ−1)⁢(7⁢μ−31)3⁢(8⁢a)3−32⁢(μ−1)⁢(83⁢μ2−982⁢μ+3779)15⁢(8⁢a)5−64⁢(μ−1)⁢(6949⁢μ3−1 53855⁢μ2+15 85743⁢μ−62 77237)105⁢(8⁢a)7−⋯,
+
+ⓘ
+
+Symbols:
+
+∼: Poincaré asymptotic expansion,
+jν,m: zeros of the Bessel function Jν⁡(x),
+yν,m: zeros of the Bessel function Yν⁡(x),
+m: integer and
+ν: complex parameter
+
+A&S Ref:
+ 9.5.12
+
+Referenced by:
+
+§10.21(vi),
+§10.21(vi)
+
+Permalink:
+http://dlmf.nist.gov/10.21.E19
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(vi),
+§10.21 and
+Ch.10
+
+where a=(m+12⁢ν−14)⁢π for jν,m,
+a=(m+12⁢ν−34)⁢π for yν,m. With
+a=(t+12⁢ν−14)⁢π, the right-hand side is the
+asymptotic expansion of ρν⁡(t) for large t.
+
+10.21.20
+
+jν,m′,yν,m′∼b−μ+38⁢b−4⁢(7⁢μ2+82⁢μ−9)3⁢(8⁢b)3−32⁢(83⁢μ3+2075⁢μ2−3039⁢μ+3537)15⁢(8⁢b)5−64⁢(6949⁢μ4+2 96492⁢μ3−12 48002⁢μ2+74 14380⁢μ−58 53627)105⁢(8⁢b)7−⋯,
+
+ⓘ
+
+Symbols:
+
+∼: Poincaré asymptotic expansion,
+jν,m: zeros of the Bessel function Jν⁡(x),
+yν,m: zeros of the Bessel function Yν⁡(x),
+m: integer and
+ν: complex parameter
+
+A&S Ref:
+ 9.5.13
+
+Referenced by:
+
+§10.21(vi),
+§10.21(vi)
+
+Permalink:
+http://dlmf.nist.gov/10.21.E20
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(vi),
+§10.21 and
+Ch.10
+
+where b=(m+12⁢ν−34)⁢π for jν,m′,
+b=(m+12⁢ν−14)⁢π for yν,m′, and
+b=(t+12⁢ν+14)⁢π for σν⁡(t).
+
+For the next three terms in (10.21.19) and the next two terms in
+(10.21.20) see Bickley et al. (1952, p. xxxvii) or
+Olver (1960, pp. xvii–xviii).
+
+For error bounds see Wong and Lang (1990), Wong (1995), and
+Elbert and Laforgia (2000). See also Laforgia (1979).
+
+For the mth positive zero jν,m′′ of Jν′′⁡(x)
+Wong and Lang (1990) gives the corresponding expansion
+
+10.21.21
+
+jν,m′′∼c−μ+78⁢c−28⁢μ2+424⁢μ+17243⁢(8⁢c)3−⋯,
+
+ⓘ
+
+Symbols:
+
+∼: Poincaré asymptotic expansion,
+m: integer,
+ν: complex parameter and
+c: zero of cylinder function
+
+Permalink:
+http://dlmf.nist.gov/10.21.E21
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(vi),
+§10.21 and
+Ch.10
+
+where c=(m+12⁢ν−14)⁢π if 0<ν<1, and
+c=(m+12⁢ν−54)⁢π if ν>1. An error bound is
+included for the case ν≥32.
+
+§10.21(vii) Asymptotic Expansions for Large Order
+
+ⓘ
+
+Keywords:
+
+asymptotic expansions for large order, uniform, zeros of cylinder functions (including derivatives)
+
+Notes:
+See Olver (1951, 1952).
+Referenced by:
+§10.21(xi)
+Permalink:
+http://dlmf.nist.gov/10.21.vii
+See also:
+Annotations for §10.21 and
+Ch.10
+
+Let 𝒞ν⁡(x), ρν⁡(t), and σν⁡(t) be defined as in
+§10.21(ii) and M⁡(x), θ⁡(x),
+N⁡(x), and ϕ⁡(x) denote the
+modulus and phase functions for the Airy functions and their derivatives as in
+§9.8.
+
+As ν→∞ with t (>0) fixed,
+
+10.21.22
+
+ρν⁡(t)∼ν⁢∑k=0∞αkν2⁢k/3,
+
+ⓘ
+
+Symbols:
+
+∼: Poincaré asymptotic expansion,
+k: nonnegative integer,
+ν: complex parameter,
+ρν⁡(t): zero of cylinder function and
+α: coefficients
+
+Permalink:
+http://dlmf.nist.gov/10.21.E22
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(vii),
+§10.21 and
+Ch.10
+
+10.21.23
+
+𝒞ν′⁡(ρν⁡(t))∼(2/ν)23π⁢M⁡(−213⁢α)⁢∑k=0∞βkν2⁢k/3,
+
+ⓘ
+
+Symbols:
+
+∼: Poincaré asymptotic expansion,
+π: the ratio of the circumference of a circle to its diameter,
+𝒞ν⁡(z): cylinder function,
+M⁡(z): Airy modulus function,
+k: nonnegative integer,
+ν: complex parameter,
+ρν⁡(t): zero of cylinder function,
+α: coefficients and
+β: coefficients
+
+Permalink:
+http://dlmf.nist.gov/10.21.E23
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(vii),
+§10.21 and
+Ch.10
+
+where α is given by
+
+10.21.24
+
+θ⁡(−213⁢α)=π⁢t,
+
+ⓘ
+
+Defines:
+α: coefficients (locally)
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter and
+θ⁡(z): Airy phase function
+
+Permalink:
+http://dlmf.nist.gov/10.21.E24
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(vii),
+§10.21 and
+Ch.10
+
+and
+
+10.21.25
+
+α0
+=1,
+
+α1
+=α,
+
+α2
+=310⁢α2,
+
+α3
+=−1350⁢α3+170,
+
+α4
+=−47963000⁢α4−13150⁢α,
+
+α5
+=2023180 85000⁢α5−5511 61700⁢α2,
+
+ⓘ
+
+Symbols:
+α: coefficients
+Referenced by:
+§10.21(vii)
+Permalink:
+http://dlmf.nist.gov/10.21.E25
+Encodings:
+
+TeX, TeX, TeX, TeX, TeX, TeX, pMML, pMML, pMML, pMML, pMML, pMML, png, png, png, png, png, png
+
+See also:
+Annotations for §10.21(vii),
+§10.21 and
+Ch.10
+
+10.21.26
+
+β0
+=1,
+
+β1
+=−45⁢α,
+
+β2
+=1835⁢α2,
+
+β3
+=−88315⁢α3−111575,
+
+β4
+=795866 06375⁢α4+98246 06375⁢α.
+
+ⓘ
+
+Defines:
+β: coefficients (locally)
+Symbols:
+α: coefficients
+Referenced by:
+§10.21(vii)
+Permalink:
+http://dlmf.nist.gov/10.21.E26
+Encodings:
+
+TeX, TeX, TeX, TeX, TeX, pMML, pMML, pMML, pMML, pMML, png, png, png, png, png
+
+See also:
+Annotations for §10.21(vii),
+§10.21 and
+Ch.10
+
+As ν→∞ with t (>−16) fixed,
+
+10.21.27
+
+σν⁡(t)∼ν⁢∑k=0∞αk′ν2⁢k/3,
+
+ⓘ
+
+Symbols:
+
+∼: Poincaré asymptotic expansion,
+k: nonnegative integer,
+ν: complex parameter,
+σν⁡(t): zero of cylinder function and
+α′: coefficients
+
+Permalink:
+http://dlmf.nist.gov/10.21.E27
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(vii),
+§10.21 and
+Ch.10
+
+10.21.28
+
+𝒞ν⁡(σν⁡(t))∼(2/ν)13π⁢N⁡(−213⁢α′)⁢∑k=0∞βk′ν2⁢k/3,
+
+ⓘ
+
+Symbols:
+
+∼: Poincaré asymptotic expansion,
+π: the ratio of the circumference of a circle to its diameter,
+𝒞ν⁡(z): cylinder function,
+N⁡(z): Airy modulus function,
+k: nonnegative integer,
+ν: complex parameter,
+σν⁡(t): zero of cylinder function,
+β: coefficients and
+α′: coefficients
+
+Permalink:
+http://dlmf.nist.gov/10.21.E28
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(vii),
+§10.21 and
+Ch.10
+
+where α′ is given by
+
+10.21.29
+
+ϕ⁡(−213⁢α′)=π⁢t,
+
+ⓘ
+
+Defines:
+α′: coefficients (locally)
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter and
+ϕ⁡(z): Airy phase function
+
+Permalink:
+http://dlmf.nist.gov/10.21.E29
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(vii),
+§10.21 and
+Ch.10
+
+and
+
+10.21.30
+
+α0′
+=1,
+
+α1′
+=α′,
+
+α2′
+=310⁢α′2−110⁢α′−1,
+
+α3′
+=−1350⁢α′3−125−1200⁢α′−3,
+
+α4′
+=−47963000⁢α′4+50931500⁢α′+11500⁢α′−2−12000⁢α′−5,
+
+ⓘ
+
+Symbols:
+α′: coefficients
+Referenced by:
+§10.21(vii)
+Permalink:
+http://dlmf.nist.gov/10.21.E30
+Encodings:
+
+TeX, TeX, TeX, TeX, TeX, pMML, pMML, pMML, pMML, pMML, png, png, png, png, png
+
+See also:
+Annotations for §10.21(vii),
+§10.21 and
+Ch.10
+
+10.21.31
+
+β0′
+=1,
+
+β1′
+=−15⁢α′,
+
+β2′
+=9350⁢α′2+1100⁢α′−1,
+
+β3′
+=8915750⁢α′3−474500+13000⁢α′−3.
+
+ⓘ
+
+Symbols:
+
+β: coefficients and
+α′: coefficients
+
+Referenced by:
+§10.21(vii)
+Permalink:
+http://dlmf.nist.gov/10.21.E31
+Encodings:
+
+TeX, TeX, TeX, TeX, pMML, pMML, pMML, pMML, png, png, png, png
+
+See also:
+Annotations for §10.21(vii),
+§10.21 and
+Ch.10
+
+In particular, with the notation as below,
+
+10.21.32
+
+jν,m∼ν⁢∑k=0∞αkν2⁢k/3,
+
+ⓘ
+
+Symbols:
+
+∼: Poincaré asymptotic expansion,
+jν,m: zeros of the Bessel function Jν⁡(x),
+m: integer,
+k: nonnegative integer,
+ν: complex parameter and
+α: coefficients
+
+Referenced by:
+
+§10.21(vii),
+§10.21(vii)
+
+Permalink:
+http://dlmf.nist.gov/10.21.E32
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(vii),
+§10.21 and
+Ch.10
+
+10.21.33
+
+yν,m∼ν⁢∑k=0∞αkν2⁢k/3,
+
+ⓘ
+
+Symbols:
+
+∼: Poincaré asymptotic expansion,
+yν,m: zeros of the Bessel function Yν⁡(x),
+m: integer,
+k: nonnegative integer,
+ν: complex parameter and
+α: coefficients
+
+Permalink:
+http://dlmf.nist.gov/10.21.E33
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(vii),
+§10.21 and
+Ch.10
+
+10.21.34
+
+Jν′⁡(jν,m)∼(−1)m⁢(2/ν)23π⁢M⁡(am)⁢∑k=0∞βkν2⁢k/3,
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+∼: Poincaré asymptotic expansion,
+π: the ratio of the circumference of a circle to its diameter,
+M⁡(z): Airy modulus function,
+ak: kth zero of Airy Ai,
+jν,m: zeros of the Bessel function Jν⁡(x),
+m: integer,
+k: nonnegative integer,
+ν: complex parameter and
+β: coefficients
+
+Permalink:
+http://dlmf.nist.gov/10.21.E34
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(vii),
+§10.21 and
+Ch.10
+
+10.21.35
+
+Yν′⁡(yν,m)∼(−1)m−1⁢(2/ν)23π⁢M⁡(bm)⁢∑k=0∞βkν2⁢k/3,
+
+ⓘ
+
+Symbols:
+
+Yν⁡(z): Bessel function of the second kind,
+∼: Poincaré asymptotic expansion,
+π: the ratio of the circumference of a circle to its diameter,
+M⁡(z): Airy modulus function,
+bk: kth zero of Airy Bi,
+yν,m: zeros of the Bessel function Yν⁡(x),
+m: integer,
+k: nonnegative integer,
+ν: complex parameter and
+β: coefficients
+
+Permalink:
+http://dlmf.nist.gov/10.21.E35
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(vii),
+§10.21 and
+Ch.10
+
+and
+
+10.21.36
+
+jν,m′∼ν⁢∑k=0∞αk′ν2⁢k/3,
+
+ⓘ
+
+Symbols:
+
+∼: Poincaré asymptotic expansion,
+jν,m: zeros of the Bessel function Jν⁡(x),
+m: integer,
+k: nonnegative integer,
+ν: complex parameter and
+α′: coefficients
+
+Referenced by:
+§10.21(vii)
+Permalink:
+http://dlmf.nist.gov/10.21.E36
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(vii),
+§10.21 and
+Ch.10
+
+10.21.37
+
+yν,m′∼ν⁢∑k=0∞αk′ν2⁢k/3,
+
+ⓘ
+
+Symbols:
+
+∼: Poincaré asymptotic expansion,
+yν,m: zeros of the Bessel function Yν⁡(x),
+m: integer,
+k: nonnegative integer,
+ν: complex parameter and
+α′: coefficients
+
+Referenced by:
+§10.21(vii)
+Permalink:
+http://dlmf.nist.gov/10.21.E37
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(vii),
+§10.21 and
+Ch.10
+
+10.21.38
+
+Jν⁡(jν,m′)∼(−1)m−1⁢(2/ν)13π⁢N⁡(am′)⁢∑k=0∞βk′ν2⁢k/3,
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+∼: Poincaré asymptotic expansion,
+π: the ratio of the circumference of a circle to its diameter,
+N⁡(z): Airy modulus function,
+jν,m: zeros of the Bessel function Jν⁡(x),
+ak′: kth zero of Airy Ai′,
+m: integer,
+k: nonnegative integer,
+ν: complex parameter and
+β: coefficients
+
+Permalink:
+http://dlmf.nist.gov/10.21.E38
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(vii),
+§10.21 and
+Ch.10
+
+10.21.39
+
+Yν⁡(yν,m′)∼(−1)m−1⁢(2/ν)13π⁢N⁡(bm′)⁢∑k=0∞βk′ν2⁢k/3.
+
+ⓘ
+
+Symbols:
+
+Yν⁡(z): Bessel function of the second kind,
+∼: Poincaré asymptotic expansion,
+π: the ratio of the circumference of a circle to its diameter,
+N⁡(z): Airy modulus function,
+yν,m: zeros of the Bessel function Yν⁡(x),
+bk′: kth zero of Airy Bi′,
+m: integer,
+k: nonnegative integer,
+ν: complex parameter and
+β: coefficients
+
+Referenced by:
+§10.21(vii)
+Permalink:
+http://dlmf.nist.gov/10.21.E39
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(vii),
+§10.21 and
+Ch.10
+
+Here am, bm, am′, bm′ are
+the mth negative zeros of
+Ai⁡(x), Bi⁡(x), Ai′⁡(x), Bi′⁡(x), respectively
+(§9.9), αk, βk, αk′, βk′ are given by
+(10.21.25), (10.21.26), (10.21.30), and
+(10.21.31), with α=−2−13⁢am in the case of
+jν,m and Jν′⁡(jν,m),
+α=−2−13⁢bm in the case of yν,m and
+Yν′⁡(yν,m), α′=−2−13⁢am′ in
+the case of jν,m′ and Jν⁡(jν,m′),
+α′=−2−13⁢bm′ in the case of yν,m′ and
+Yν⁡(yν,m′).
+
+For error bounds for (10.21.32) see Qu and Wong (1999);
+for (10.21.36) and (10.21.37) see
+Elbert and Laforgia (1997). See also Spigler (1980).
+
+For the first zeros rounded numerical values of the coefficients are given by
+
+10.21.40
+
+jν,1
+∼ν+1.85575 71⁢ν13+1.03315 0⁢ν−13−0.00397⁢ν−1−0.0908⁢ν−53+0.043⁢ν−73+⋯,
+
+yν,1
+∼ν+0.93157 68⁢ν13+0.26035 1⁢ν−13+0.01198⁢ν−1−0.0060⁢ν−53−0.001⁢ν−73+⋯,
+
+Jν′⁡(jν,1)
+∼−1.11310 28⁢ν−23÷(1+1.48460 6⁢ν−23+0.43294⁢ν−43−0.1943⁢ν−2+0.019⁢ν−83+⋯),
+
+Yν′⁡(yν,1)
+∼0.95554 86⁢ν−23÷(1+0.74526 1⁢ν−23+0.10910⁢ν−43−0.0185⁢ν−2−0.003⁢ν−83+⋯),
+
+jν,1′
+∼ν+0.80861 65⁢ν13+0.07249 0⁢ν−13−0.05097⁢ν−1+0.0094⁢ν−53+⋯,
+
+yν,1′
+∼ν+1.82109 80⁢ν13+0.94000 7⁢ν−13−0.05808⁢ν−1−0.0540⁢ν−53+⋯.
+
+Jν⁡(jν,1′)
+∼0.67488 51⁢ν−13⁢(1−0.16172 3⁢ν−23+0.02918⁢ν−43−0.0068⁢ν−2+⋯),
+
+Yν⁡(yν,1′)
+∼0.57319 40⁢ν−13⁢(1−0.36422 0⁢ν−23+0.09077⁢ν−43+0.0237⁢ν−2+⋯).
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Yν⁡(z): Bessel function of the second kind,
+∼: Poincaré asymptotic expansion,
+jν,m: zeros of the Bessel function Jν⁡(x),
+yν,m: zeros of the Bessel function Yν⁡(x),
+jν,m′: zeros of the Bessel function derivative Jν′⁡(x),
+yν,m′: zeros of the Bessel function derivative Yν′⁡(x) and
+ν: complex parameter
+
+A&S Ref:
+ 9.5.14--9.5.21
+
+Permalink:
+http://dlmf.nist.gov/10.21.E40
+Encodings:
+
+TeX, TeX, TeX, TeX, TeX, TeX, TeX, TeX, pMML, pMML, pMML, pMML, pMML, pMML, pMML, pMML, png, png, png, png, png, png, png, png
+
+See also:
+Annotations for §10.21(vii),
+§10.21 and
+Ch.10
+
+For numerical coefficients for m=2,3,4,5 see Olver (1951, Tables 3–6).
+
+The expansions (10.21.32)–(10.21.39) become
+progressively weaker as m increases. The approximations that follow in
+§10.21(viii) do not suffer from this drawback.
+
+§10.21(viii) Uniform Asymptotic Approximations for Large Order
+
+ⓘ
+
+Keywords:
+
+asymptotic expansions for large order, uniform, zeros of Bessel functions (including derivatives)
+
+Referenced by:
+
+§10.21(vii),
+§10.58,
+2nd item
+
+Permalink:
+http://dlmf.nist.gov/10.21.viii
+See also:
+Annotations for §10.21 and
+Ch.10
+
+As ν→∞ the following four approximations hold uniformly for
+m=1,2,…:
+
+10.21.41
+
+jν,m=ν⁢z⁡(ζ)+z⁡(ζ)⁢(h⁡(ζ))2⁢B0⁡(ζ)2⁢ν+O⁡(1ν3),
+
+ζ=ν−23⁢am,
+
+ⓘ
+
+Symbols:
+
+O⁡(x): order not exceeding,
+ak: kth zero of Airy Ai,
+jν,m: zeros of the Bessel function Jν⁡(x),
+m: integer,
+ν: complex parameter,
+Bk⁡(ζ): coefficients,
+z⁡(ζ): inverse of ζ⁢(z) and
+h⁡(ζ): function
+
+A&S Ref:
+ 9.5.22
+
+Referenced by:
+§10.21(viii)
+Permalink:
+http://dlmf.nist.gov/10.21.E41
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(viii),
+§10.21 and
+Ch.10
+
+10.21.42
+
+Jν′⁡(jν,m)=−2ν23⁢Ai′⁡(am)z⁡(ζ)⁢h⁡(ζ)⁢(1+O⁡(1ν2)),
+
+ζ=ν−23⁢am,
+
+ⓘ
+
+Symbols:
+
+Ai⁡(z): Airy function,
+Jν⁡(z): Bessel function of the first kind,
+O⁡(x): order not exceeding,
+ak: kth zero of Airy Ai,
+jν,m: zeros of the Bessel function Jν⁡(x),
+m: integer,
+ν: complex parameter,
+z⁡(ζ): inverse of ζ⁢(z) and
+h⁡(ζ): function
+
+A&S Ref:
+ 9.5.23
+
+Permalink:
+http://dlmf.nist.gov/10.21.E42
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(viii),
+§10.21 and
+Ch.10
+
+10.21.43
+
+jν,m′=ν⁢z⁡(ζ)+z⁡(ζ)⁢(h⁡(ζ))2⁢C0⁡(ζ)2⁢ζ⁢ν+O⁡(1ν),
+
+ζ=ν−23⁢am′,
+
+ⓘ
+
+Symbols:
+
+O⁡(x): order not exceeding,
+jν,m: zeros of the Bessel function Jν⁡(x),
+ak′: kth zero of Airy Ai′,
+m: integer,
+ν: complex parameter,
+Ck⁡(ζ): coefficients,
+z⁡(ζ): inverse of ζ⁢(z) and
+h⁡(ζ): function
+
+A&S Ref:
+ 9.5.24
+
+Referenced by:
+§10.21(viii)
+Permalink:
+http://dlmf.nist.gov/10.21.E43
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(viii),
+§10.21 and
+Ch.10
+
+10.21.44
+
+Jν⁡(jν,m′)=h⁡(ζ)⁢Ai⁡(am′)ν13⁢(1+O⁡(1ν43)),
+
+ζ=ν−23⁢am′.
+
+ⓘ
+
+Symbols:
+
+Ai⁡(z): Airy function,
+Jν⁡(z): Bessel function of the first kind,
+O⁡(x): order not exceeding,
+jν,m: zeros of the Bessel function Jν⁡(x),
+ak′: kth zero of Airy Ai′,
+m: integer,
+ν: complex parameter and
+h⁡(ζ): function
+
+A&S Ref:
+ 9.5.25
+
+Referenced by:
+§10.21(viii)
+Permalink:
+http://dlmf.nist.gov/10.21.E44
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(viii),
+§10.21 and
+Ch.10
+
+Here am and am′ denote respectively the zeros of the Airy function
+Ai⁡(z) and its derivative Ai′⁡(z); see §9.9. Next,
+z⁡(ζ) is the inverse of the function ζ=ζ⁢(z) defined by
+(10.20.3). B0⁡(ζ) and C0⁡(ζ) are defined by
+(10.20.11) and (10.20.12) with k=0. Lastly,
+
+10.21.45
+
+h⁡(ζ)=(4⁢ζ/(1−z2))14.
+
+ⓘ
+
+Defines:
+h⁡(ζ): function (locally)
+Symbols:
+z⁡(ζ): inverse of ζ⁢(z)
+A&S Ref:
+ 9.5.36
+
+Permalink:
+http://dlmf.nist.gov/10.21.E45
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(viii),
+§10.21 and
+Ch.10
+
+(Note: If the term z⁡(ζ)⁢(h⁡(ζ))2⁢C0⁡(ζ)/(2⁢ζ⁢ν) in
+(10.21.43) is omitted, then the uniform character of the error
+term O⁡(1/ν) is destroyed.)
+
+Corresponding uniform approximations for yν,m,
+Yν′⁡(yν,m), yν,m′, and
+Yν⁡(yν,m′), are obtained from
+(10.21.41)–(10.21.44) by changing
+the symbols j, J, Ai, Ai′, am, and am′ to y,
+Y, −Bi, −Bi′, bm, and bm′, respectively.
+
+For derivations and further information, including extensions to uniform
+asymptotic expansions, see Olver (1954, 1960). The latter
+reference includes numerical tables of the first few coefficients in the
+uniform asymptotic expansions.
+
+§10.21(ix) Complex Zeros
+
+ⓘ
+
+Keywords:
+
+Hankel functions, complex, distribution, zeros, zeros of Bessel functions (including derivatives)
+
+Notes:
+The zeros depicted in Figures 10.21.1–10.21.6
+were computed at NIST using methods referred to in
+§10.74(vi).
+Referenced by:
+
+§10.74(vi),
+Erratum (V1.0.10) for References
+
+Permalink:
+http://dlmf.nist.gov/10.21.ix
+Addition (effective with 1.0.10):
+
+A sentence and reference to Segura (2013) were added at the end
+of the second paragraph of this subsection.
+
+See also:
+Annotations for §10.21 and
+Ch.10
+
+This subsection describes the distribution in ℂ of the zeros of the
+principal branches of the Bessel functions of the second and third kinds, and
+their derivatives, in the case when the order is a positive integer n. For
+further information, including uniform asymptotic expansions, extensions to
+other branches of the functions and their derivatives, and extensions to
+half-integer values of the order, see Olver (1954). (There is an
+inaccuracy in Figures 11 and 14 in this reference. Each curve that represents
+an infinite string of nonreal zeros should be located on the opposite side of
+its straight line asymptote. This inaccuracy was repeated in
+Abramowitz and Stegun (1964, Figures 9.5 and 9.6). See
+Kerimov and Skorokhodov (1985a, b) and
+Figures 10.21.3–10.21.6.)
+
+See also Cruz and Sesma (1982), Cruz et al. (1991),
+Kerimov and Skorokhodov (1984c, 1987, 1988),
+Kokologiannaki et al. (1992), and references supplied in
+§10.75(iii). For describing the distribution of complex zeros by methods based on the Liouville–Green (WKB) approximation for
+linear homogeneous second-order differential equations, see Segura (2013).
+
+Zeros of Yn⁡(n⁢z) and Yn′⁡(n⁢z)
+
+ⓘ
+
+See also:
+Annotations for §10.21(ix),
+§10.21 and
+Ch.10
+
+In Figures 10.21.1, 10.21.3, and
+10.21.5 the two continuous curves that join the points ±1
+are the boundaries of 𝐊, that is, the eye-shaped domain depicted
+in Figure 10.20.3. These curves therefore intersect the
+imaginary axis at the points z=±i⁢c, where c=0.66274⁢….
+
+The first set of zeros of the principal value of Yn⁡(n⁢z) are the
+points z=yn,m/n, m=1,2,…, on the positive real axis
+(§10.21(i)). Secondly, there is a conjugate pair of infinite strings
+of zeros with asymptotes ℑ⁡z=±i⁢a/n, where
+
+10.21.46
+
+a=12⁢ln⁡3=0.54931⁢….
+
+ⓘ
+
+Symbols:
+ln⁡z: principal branch of logarithm function
+Permalink:
+http://dlmf.nist.gov/10.21.E46
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(ix),
+§10.21(ix),
+§10.21 and
+Ch.10
+
+Lastly, there are two conjugate sets, with n zeros in each set, that are
+asymptotically close to the boundary of 𝐊 as n→∞. Figures
+10.21.1, 10.21.3, and 10.21.5
+plot the actual zeros for n=1,5, and 10, respectively.
+
+The zeros of Yn′⁡(n⁢z) have a similar pattern to those of
+Yn⁡(n⁢z).
+
+Figure 10.21.1: Zeros ∙⁣∙⁣∙ of Yn⁡(n⁢z) in |ph⁡z|≤π.
+Case n=1, −1.6≤ℜ⁡z≤2.6.
+
+Magnify
+
+ⓘ
+
+Symbols:
+
+Yν⁡(z): Bessel function of the second kind,
+π: the ratio of the circumference of a circle to its diameter,
+ph: phase,
+ℜ⁡: real part,
+n: integer and
+z: complex variable
+
+Referenced by:
+
+§10.21(ix),
+§10.21(ix),
+§10.21(ix)
+
+Permalink:
+http://dlmf.nist.gov/10.21.F1
+Encodings:
+
+pdf, png
+
+See also:
+Annotations for §10.21(ix),
+§10.21(ix),
+§10.21 and
+Ch.10
+
+Figure 10.21.2: Zeros ∙⁣∙⁣∙ of Hn(1)⁡(n⁢z) in |ph⁡z|≤π.
+Case n=1, −2.8≤ℜ⁡z≤1.4.
+
+Magnify
+
+ⓘ
+
+Symbols:
+
+Hν(1)⁡(z): Bessel function of the third kind (or Hankel function),
+π: the ratio of the circumference of a circle to its diameter,
+ph: phase,
+ℜ⁡: real part,
+n: integer and
+z: complex variable
+
+Referenced by:
+
+§10.21(ix),
+§10.21(ix),
+§10.42
+
+Permalink:
+http://dlmf.nist.gov/10.21.F2
+Encodings:
+
+pdf, png
+
+See also:
+Annotations for §10.21(ix),
+§10.21(ix),
+§10.21 and
+Ch.10
+
+Figure 10.21.3: Zeros ∙⁣∙⁣∙ of Yn⁡(n⁢z) in |ph⁡z|≤π.
+Case n=5, −2.6≤ℜ⁡z≤1.6.
+
+Magnify
+
+ⓘ
+
+Symbols:
+
+Yν⁡(z): Bessel function of the second kind,
+π: the ratio of the circumference of a circle to its diameter,
+ph: phase,
+ℜ⁡: real part,
+n: integer and
+z: complex variable
+
+Referenced by:
+
+§10.21(ix),
+§10.21(ix),
+§10.21(ix)
+
+Permalink:
+http://dlmf.nist.gov/10.21.F3
+Encodings:
+
+pdf, png
+
+See also:
+Annotations for §10.21(ix),
+§10.21(ix),
+§10.21 and
+Ch.10
+
+Figure 10.21.4: Zeros ∙⁣∙⁣∙ of Hn(1)⁡(n⁢z) in |ph⁡z|≤π.
+Case n=5, −2.6≤ℜ⁡z≤1.6.
+
+Magnify
+
+ⓘ
+
+Symbols:
+
+Hν(1)⁡(z): Bessel function of the third kind (or Hankel function),
+π: the ratio of the circumference of a circle to its diameter,
+ph: phase,
+ℜ⁡: real part,
+n: integer and
+z: complex variable
+
+Referenced by:
+
+§10.21(ix),
+§10.21(ix),
+§10.42
+
+Permalink:
+http://dlmf.nist.gov/10.21.F4
+Encodings:
+
+pdf, png
+
+See also:
+Annotations for §10.21(ix),
+§10.21(ix),
+§10.21 and
+Ch.10
+
+Figure 10.21.5: Zeros ∙⁣∙⁣∙ of Yn⁡(n⁢z) in |ph⁡z|≤π.
+Case n=10, −2.3≤ℜ⁡z≤1.9.
+
+Magnify
+
+ⓘ
+
+Symbols:
+
+Yν⁡(z): Bessel function of the second kind,
+π: the ratio of the circumference of a circle to its diameter,
+ph: phase,
+ℜ⁡: real part,
+n: integer and
+z: complex variable
+
+Referenced by:
+
+§10.21(ix),
+§10.21(ix)
+
+Permalink:
+http://dlmf.nist.gov/10.21.F5
+Encodings:
+
+pdf, png
+
+See also:
+Annotations for §10.21(ix),
+§10.21(ix),
+§10.21 and
+Ch.10
+
+Figure 10.21.6: Zeros ∙⁣∙⁣∙ of Hn(1)⁡(n⁢z) in |ph⁡z|≤π.
+Case n=10, −2.3≤ℜ⁡z≤1.9.
+
+Magnify
+
+ⓘ
+
+Symbols:
+
+Hν(1)⁡(z): Bessel function of the third kind (or Hankel function),
+π: the ratio of the circumference of a circle to its diameter,
+ph: phase,
+ℜ⁡: real part,
+n: integer and
+z: complex variable
+
+Referenced by:
+
+§10.21(ix),
+§10.21(ix),
+§10.21(ix),
+§10.21(ix),
+§10.42
+
+Permalink:
+http://dlmf.nist.gov/10.21.F6
+Encodings:
+
+pdf, png
+
+See also:
+Annotations for §10.21(ix),
+§10.21(ix),
+§10.21 and
+Ch.10
+
+Zeros of Hn(1)⁡(n⁢z), Hn(2)⁡(n⁢z),
+Hn(1)′⁡(n⁢z), Hn(2)′⁡(n⁢z)
+
+ⓘ
+
+See also:
+Annotations for §10.21(ix),
+§10.21 and
+Ch.10
+
+In Figures 10.21.2, 10.21.4, and
+10.21.6 the continuous curve that joins the points ±1 is
+the lower boundary of 𝐊.
+
+The first set of zeros of the principal value of Hn(1)⁡(n⁢z) is an
+infinite string with asymptote ℑ⁡z=−i⁢d/n, where
+
+10.21.47
+
+d=12⁢ln⁡2=0.34657⁢….
+
+ⓘ
+
+Defines:
+d (locally)
+Symbols:
+ln⁡z: principal branch of logarithm function
+Permalink:
+http://dlmf.nist.gov/10.21.E47
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(ix),
+§10.21(ix),
+§10.21 and
+Ch.10
+
+The only other set comprises n zeros that are asymptotically close to the
+lower boundary of 𝐊 as n→∞. Figures
+10.21.2, 10.21.4, and 10.21.6
+plot the actual zeros for n=1,5, and 10, respectively.
+
+The zeros of Hn(1)′⁡(n⁢z) have a similar pattern to those of
+Hn(1)⁡(n⁢z). The zeros of Hn(2)⁡(n⁢z) and
+Hn(2)′⁡(n⁢z) are the complex conjugates of the zeros of
+Hn(1)⁡(n⁢z) and Hn(1)′⁡(n⁢z), respectively.
+
+Zeros of J0⁡(z)−i⁢J1⁡(z) and
+Jn⁡(z)−i⁢Jn+1⁡(z)
+
+ⓘ
+
+Keywords:
+
+Hankel functions, complex, derivatives, zeros, zeros of Bessel functions (including derivatives)
+
+See also:
+Annotations for §10.21(ix),
+§10.21 and
+Ch.10
+
+For information see Synolakis (1988),
+MacDonald (1989, 1997), and Ikebe et al. (1993).
+
+§10.21(x) Cross-Products
+
+ⓘ
+
+Keywords:
+
+Bessel functions, asymptotic expansions, cross-products, of cross-products, zeros, zeros of Bessel functions (including derivatives)
+
+Notes:
+See McMahon (1894), Gray et al. (1922, p. 261), and
+Cochran (1964).
+Referenced by:
+
+§10.21(xi),
+§10.58
+
+Permalink:
+http://dlmf.nist.gov/10.21.x
+See also:
+Annotations for §10.21 and
+Ch.10
+
+Throughout this subsection we assume ν≥0, x>0, λ>1, and we
+denote 4⁢ν2 by μ.
+
+The zeros of the functions
+
+10.21.48
+
+Jν⁡(x)⁢Yν⁡(λ⁢x)−Yν⁡(x)⁢Jν⁡(λ⁢x)
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Yν⁡(z): Bessel function of the second kind,
+x: real variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.5.27
+
+Referenced by:
+§10.21(x)
+Permalink:
+http://dlmf.nist.gov/10.21.E48
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(x),
+§10.21 and
+Ch.10
+
+and
+
+10.21.49
+
+Jν′⁡(x)⁢Yν′⁡(λ⁢x)−Yν′⁡(x)⁢Jν′⁡(λ⁢x)
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Yν⁡(z): Bessel function of the second kind,
+x: real variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.5.30
+
+Referenced by:
+§10.21(x)
+Permalink:
+http://dlmf.nist.gov/10.21.E49
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(x),
+§10.21 and
+Ch.10
+
+are simple and the asymptotic expansion of the mth positive zero as
+m→∞ is given by
+
+10.21.50
+
+α+pα+q−p2α3+r−4⁢p⁢q+2⁢p3α5+⋯,
+
+ⓘ
+
+Symbols:
+
+α,
+p,
+q and
+r
+
+A&S Ref:
+ 9.5.28
+
+Referenced by:
+§10.21(x)
+Permalink:
+http://dlmf.nist.gov/10.21.E50
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(x),
+§10.21 and
+Ch.10
+
+where, in the case of (10.21.48),
+
+10.21.51
+
+α
+=m⁢πλ−1,
+
+p
+=μ−18⁢λ,
+
+q
+=(μ−1)⁢(μ−25)⁢(λ3−1)6⁢(4⁢λ)3⁢(λ−1),
+
+r
+=(μ−1)⁢(μ2−114⁢μ+1073)⁢(λ5−1)5⁢(4⁢λ)5⁢(λ−1),
+
+ⓘ
+
+Defines:
+
+α (locally),
+p (locally),
+q (locally) and
+r (locally)
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter and
+m: integer
+
+A&S Ref:
+ 9.5.29
+
+Permalink:
+http://dlmf.nist.gov/10.21.E51
+Encodings:
+
+TeX, TeX, TeX, TeX, pMML, pMML, pMML, pMML, png, png, png, png
+
+See also:
+Annotations for §10.21(x),
+§10.21 and
+Ch.10
+
+and, in the case of (10.21.49),
+
+10.21.52
+
+α
+=(m−1)⁢πλ−1,
+
+p
+=μ+38⁢λ,
+
+q
+=(μ2+46⁢μ−63)⁢(λ3−1)6⁢(4⁢λ)3⁢(λ−1),
+
+r
+=(μ3+185⁢μ2−2053⁢μ+1899)⁢(λ5−1)5⁢(4⁢λ)5⁢(λ−1).
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+m: integer,
+α,
+p,
+q and
+r
+
+A&S Ref:
+ 9.5.31
+
+Permalink:
+http://dlmf.nist.gov/10.21.E52
+Encodings:
+
+TeX, TeX, TeX, TeX, pMML, pMML, pMML, pMML, png, png, png, png
+
+See also:
+Annotations for §10.21(x),
+§10.21 and
+Ch.10
+
+The asymptotic expansion of the large positive zeros (not necessarily the
+mth) of the function
+
+10.21.53
+
+Jν′⁡(x)⁢Yν⁡(λ⁢x)−Yν′⁡(x)⁢Jν⁡(λ⁢x)
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Yν⁡(z): Bessel function of the second kind,
+x: real variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.5.32
+
+Permalink:
+http://dlmf.nist.gov/10.21.E53
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(x),
+§10.21 and
+Ch.10
+
+is given by (10.21.50), where
+
+10.21.54
+
+α
+=(m−12)⁢πλ−1,
+
+p
+=(μ+3)⁢λ−(μ−1)8⁢λ⁢(λ−1),
+
+q
+=(μ2+46⁢μ−63)⁢λ3−(μ−1)⁢(μ−25)6⁢(4⁢λ)3⁢(λ−1),
+
+r
+=(μ3+185⁢μ2−2053⁢μ+1899)⁢λ5−(μ−1)⁢(μ2−114⁢μ+1073)5⁢(4⁢λ)5⁢(λ−1).
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+m: integer,
+α,
+p,
+q and
+r
+
+A&S Ref:
+ 9.5.33
+
+Permalink:
+http://dlmf.nist.gov/10.21.E54
+Encodings:
+
+TeX, TeX, TeX, TeX, pMML, pMML, pMML, pMML, png, png, png, png
+
+See also:
+Annotations for §10.21(x),
+§10.21 and
+Ch.10
+
+Higher coefficients in the asymptotic expansions in this subsection can be
+obtained by expressing the cross-products in terms of the modulus and phase
+functions (§10.18), and then reverting the asymptotic expansion for
+the difference of the phase functions.
+
+For further information see
+Cochran (1963, 1964, 1966a, 1966b),
+Kalähne (1907), Martinek et al. (1966), Muldoon (1979),
+and Salchev and Popov (1976).
+
+§10.21(xi) Riccati–Bessel Functions
+
+ⓘ
+
+Keywords:
+
+Riccati–Bessel functions, zeros
+
+Permalink:
+http://dlmf.nist.gov/10.21.xi
+See also:
+Annotations for §10.21 and
+Ch.10
+
+The Riccati–Bessel functions are
+(12⁢π⁢x)12⁢Jν⁡(x) and
+(12⁢π⁢x)12⁢Yν⁡(x). Except possibly for
+x=0 their zeros are the same as those of Jν⁡(x) and
+Yν⁡(x), respectively. For information on the zeros of the
+derivatives of Riccati–Bessel functions, and also on zeros of their
+cross-products, see Boyer (1969). This information includes
+asymptotic approximations analogous to those given in §§10.21(vi),
+10.21(vii), and 10.21(x).
+
+§10.21(xii) Zeros of α⁢Jν⁡(x)+x⁢Jν′⁡(x)
+
+ⓘ
+
+Permalink:
+http://dlmf.nist.gov/10.21.xii
+See also:
+Annotations for §10.21 and
+Ch.10
+
+For properties of the positive zeros of the function
+α⁢Jν⁡(x)+x⁢Jν′⁡(x), with α and
+ν real, see Landau (1999).
+
+§10.21(xiii) Rayleigh Function
+
+ⓘ
+
+Keywords:
+
+Rayleigh function, distribution, zeros of Bessel functions (including derivatives)
+
+Referenced by:
+
+§10.73(v),
+Erratum (V1.0.5) for References
+
+Permalink:
+http://dlmf.nist.gov/10.21.xiii
+Addition (effective with 1.0.5):
+
+The reference to Kerimov (2008) has been added at the end of this subsection.
+
+See also:
+Annotations for §10.21 and
+Ch.10
+
+The Rayleigh function σn⁡(ν) is defined by
+
+10.21.55
+
+σn⁡(ν)=∑m=1∞(jν,m)−2⁢n,
+
+n=1,2,3,….
+
+ⓘ
+
+Defines:
+σn⁡(ν): Rayleigh function
+Symbols:
+
+m: integer,
+n: integer and
+ν: complex parameter
+
+Permalink:
+http://dlmf.nist.gov/10.21.E55
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.21(xiii),
+§10.21 and
+Ch.10
+
+For properties, computation, and generalizations see Kapitsa (1951b),
+Kerimov (1999, 2008), and Gupta and Muldoon (2000). See also Watson (1944, §§15.5, 15.51).
+
+§10.21(xiv) ν-Zeros
+
+ⓘ
+
+Keywords:
+
+Hankel functions, with respect to order (ν-zeros), zeros, zeros of Bessel functions (including derivatives)
+
+Referenced by:
+Erratum (V1.0.5) for References
+Permalink:
+http://dlmf.nist.gov/10.21.xiv
+Addition (effective with 1.0.5):
+
+The reference to Sandström and Ackrén (2007) has been added at the end of this subsection.
+
+See also:
+Annotations for §10.21 and
+Ch.10
+
+For information on zeros of Bessel and Hankel functions as functions of the
+order, see Cochran (1965), Cochran and Hoffspiegel (1970),
+Hethcote (1970), Conde and Kalla (1979), and Sandström and Ackrén (2007).
+
+10.20 Uniform Asymptotic Expansions for Large Order10.22 Integrals
+
+© 2010–2026 NIST / Disclaimer / Feedback;
+ Version 1.2.6;
+Release date 2026-03-15.
+
+Site Privacy Accessibility Privacy Program Copyrights Vulnerability Disclosure No Fear Act Policy FOIA Environmental Policy Scientific Integrity Information Quality Standards Commerce.gov Science.gov USA.gov
+

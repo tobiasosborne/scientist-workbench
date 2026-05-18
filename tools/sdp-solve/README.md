@@ -127,16 +127,18 @@ with `<class>` ∈ `{non-finite-input, degenerate-shape, quadratic-objective, no
 
 ## Algorithm
 
-Per-block Mehrotra predictor-corrector primal-dual IPM with three direction choices:
+Per-block Mehrotra predictor-corrector primal-dual IPM with four direction choices:
 
 | `--method` | direction | reference | notes |
 |---|---|---|---|
-| `auto` (default), `nt` | Nesterov-Todd | Todd-Toh-Tütüncü 1998 | primary; symmetric, self-scaled, the SDPT3 v4 default |
+| `auto` (default), `hsde-nt` | HSDE + NT scaling + iterative refinement | ART03 / Andersen 2009 (Mosek); Higham 2002 §12 | the homogeneous self-dual embedding per [ADR-0033](../../docs/adr/0033-hsde-for-solver-ipm.md); τ-κ scalars detect infeasibility via the ART03 ρ-dichotomy + Mosek/And09 sign convention; iterative refinement on the regularised Schur back-sub per Phase 5 Tier 1 (worklog 110, `solveWithIR`); HSDE soft-success branch (`μ ≤ feasTol AND prstatus > 0.5 AND τ ≥ 1e-6`, mirroring legacy NT's `couldDualFeas`) returns wire `optimal` for τ-shrunk iterates at the float64 floor — agent reads `achieved_precision` for the actual purified ρ-max |
+| `nt` | Nesterov-Todd (legacy, non-HSDE) | Todd-Toh-Tütüncü 1998 | kept as the legacy primal-dual NT path for A/B comparison and `scripts/trace-diff.ts` workflows; was the `auto` default pre-Tier-3 (worklog 129) |
 | `aho` | Alizadeh-Haeberly-Overton | Alizadeh-Haeberly-Overton 1997 | algebraically clean (Lyapunov solve); A/B reference |
 | `hkm-debug` | Helmberg-Kojima-Monteiro | Helmberg-Kojima-Monteiro 1996 | asymmetric; gated for diagnostic comparison only |
-| `hsde-nt` | HSDE + NT scaling | ART03 / Andersen 2009 (Mosek) | homogeneous self-dual embedding per [ADR-0033](../../docs/adr/0033-hsde-for-solver-ipm.md); τ-κ scalars detect infeasibility; A/B-grade today, pending Phase 5 iterative refinement (handoff [`docs/HANDOFF_solver_ipm_hsde_part2.md`](../../docs/HANDOFF_solver_ipm_hsde_part2.md)) |
 
 The substrate is `@workbench/solver-ipm` (ADR-0032). Convergence is gated by `feasTol = optTol = precision`; the `precision` flag default is `1e-8`. Termination at `iter >= max_iter` returns `status: "iter-cap"` with the best-effort iterate; `numerical-breakdown` covers Cholesky failure on the Schur complement, eigen-decomposition stall, or step-length collapse.
+
+**Bench grade** (`scientist-workbench-corpus benchmarks/sdp-sdplib`, default tol): 5/6 cases, 64/66 invariants. The 4 well-conditioned cases (`control1`, `control2`, `theta1`, `mcp100`) reach strict `optimal`; `control3` lands as soft-`optimal` via the HSDE soft-success branch; `hinf2` passes 8/10 invariants — the remaining 2 (`primal_feasibility`, `complementary_slackness`) are the float64 representation limit of `r_p / τ` purification (worklog 128's τ-shrinkage diagnosis). The 6/6 case-count is a Phase 6 (bigfloat HSDE) gate, separate ADR per ADR-0033 Decision 9.
 
 The 1×1 PSD case is well-defined and reduces to a scalar primal-dual barrier — used internally to encode `ZeroCone` constraints.
 

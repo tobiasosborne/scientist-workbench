@@ -78,13 +78,16 @@ describe("tools/meijer-g-asymptotic-only", () => {
   });
 
   test("principal-sector success: schema fields are all populated", () => {
+    // κ=1 shape (G^{1,1}_{1,1}): the κ=2 shape used previously
+    // (G^{1,1}_{1,2} via `[cHalf], [], [cZero], [cOne]`) is now refused
+    // with `coverage-gap` per ADR-0039 §D2 (bead fc83). Pivot onto κ=1
+    // so the principal-sector path still exercises the success record.
     const out = callFn(
-      buildInput([cHalf], [], [cZero], [cOne], c100),
+      buildInput([cHalf], [], [cZero], [], c100),
       30n,
     );
     expect(out.kind).toBe("record");
     if (out.kind !== "record") return;
-    // All success fields must be present.
     for (const k of [
       "value",
       "achieved_precision",
@@ -100,21 +103,28 @@ describe("tools/meijer-g-asymptotic-only", () => {
     }
   });
 
-  test("refusal: secondary-sector tag for arg z = π", () => {
-    const cNeg100 = bigcomplexToValue(cfromInts(-100n, 0n, PREC));
-    const out = callFn(buildInput([cHalf], [], [cZero], [cOne], cNeg100));
+  test("refusal: coverage-gap tag for κ=2 (bead fc83)", () => {
+    // The previous "secondary-sector for arg z = π" test used a κ=2
+    // shape, which now refuses upstream in the κ-aware classifier with
+    // `coverage-gap` rather than `secondary-sector`. The new refusal
+    // class is structurally part of ADR-0039's wire-schema extension.
+    const out = callFn(buildInput([cHalf], [], [cZero], [cOne], c100));
     expect(out.kind).toBe("tagged");
     if (out.kind !== "tagged") return;
-    expect(out.tag).toBe("meijer-g-asymptotic-only/secondary-sector");
+    expect(out.tag).toBe("meijer-g-asymptotic-only/coverage-gap");
     expect(out.payload.kind).toBe("record");
     if (out.payload.kind === "record") {
       expect(out.payload.fields.reason!.kind).toBe("string");
+      if (out.payload.fields.reason!.kind === "string") {
+        expect(out.payload.fields.reason!.value).toMatch(/fc83/);
+      }
     }
   });
 
   test("refusal: small-z tag for |z| < 1", () => {
     const cSmall = bigcomplexToValue(cfromStrings("0.5", "0", PREC));
-    const out = callFn(buildInput([cHalf], [], [cZero], [cOne], cSmall));
+    // κ=1 shape — see comment on the test above.
+    const out = callFn(buildInput([cHalf], [], [cZero], [], cSmall));
     expect(out.kind).toBe("tagged");
     if (out.kind !== "tagged") return;
     expect(out.tag).toBe("meijer-g-asymptotic-only/small-z");
@@ -128,8 +138,9 @@ describe("tools/meijer-g-asymptotic-only", () => {
   });
 
   test("--precision flag is honoured", () => {
-    const out30 = callFn(buildInput([cHalf], [], [cZero], [cOne], c100), 30n);
-    const out50 = callFn(buildInput([cHalf], [], [cZero], [cOne], c100), 50n);
+    // κ=1 shape (G^{1,1}_{1,1}) per comment on the schema-fields test.
+    const out30 = callFn(buildInput([cHalf], [], [cZero], [], c100), 30n);
+    const out50 = callFn(buildInput([cHalf], [], [cZero], [], c100), 50n);
     if (out30.kind !== "record" || out50.kind !== "record") {
       throw new Error("expected success records");
     }
@@ -140,7 +151,6 @@ describe("tools/meijer-g-asymptotic-only", () => {
     }
     expect(ap30.value).toBe("30");
     expect(ap50.value).toBe("50");
-    // Working precision should differ (50 dps requires more bits).
     const wp30 = out30.fields.working_precision;
     const wp50 = out50.fields.working_precision;
     if (wp30?.kind !== "integer" || wp50?.kind !== "integer") {
@@ -150,8 +160,8 @@ describe("tools/meijer-g-asymptotic-only", () => {
   });
 
   test("determinism: two evaluations produce byte-identical output", () => {
-    const a = callFn(buildInput([cHalf], [], [cZero], [cOne], c100));
-    const b = callFn(buildInput([cHalf], [], [cZero], [cOne], c100));
+    const a = callFn(buildInput([cHalf], [], [cZero], [], c100));
+    const b = callFn(buildInput([cHalf], [], [cZero], [], c100));
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
   });
 });

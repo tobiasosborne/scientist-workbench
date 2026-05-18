@@ -80,3 +80,50 @@ export {
   UnknownVocabularyError,
   evalNumericExpr,
 } from "./eval-expr.js";
+
+// Float64 special-function dispatch (ADR-0040 Decision 4). Adds the
+// Erf family (Erf / Erfc / Erfcx / Erfi / InverseErf / InverseErfc)
+// to the closed-vocabulary evaluator. Future per-head ADRs extend
+// `SPECIAL_HEADS` additively without re-touching `eval-expr.ts`.
+export {
+  SPECIAL_HEADS,
+  ADMITTED_HEADS as ADMITTED_HEADS_WITH_SPECIAL,
+  evalNumericExpr as evalNumericExprWithSpecial,
+} from "./eval-numeric-expr.js";
+
+// Per-head float64 implementations (ADR-0015 `numerical: true` tier).
+// Re-exported so consumers (e.g. `packages/meijer-core`'s bridge
+// numerical cross-check, the Phase 1 bench grader) can call directly
+// without going through the AST evaluator.
+export {
+  type ComplexF64,
+  erfFloat64,
+  erfcFloat64,
+  erfcxFloat64,
+  erfiFloat64,
+  erfInvFloat64,
+  erfcInvFloat64,
+  wFunctionFloat64,
+  wImFloat64,
+  erfComplexFloat64,
+  erfcComplexFloat64,
+  erfcxComplexFloat64,
+  erfiComplexFloat64,
+  maskLowWord,
+} from "./special-funcs/erf-float64.js";
+
+// Float64 Bessel family substrate (ADR-0041 §Decision 4). Inherits
+// `numerical: true` (ADR-0015). Six real entry points (J, Y, I, K +
+// scaled I, scaled K) + 4 complex (via AMOS-style rotation per R3 §1.6).
+export {
+  besselJFloat64,
+  besselYFloat64,
+  besselIFloat64,
+  besselKFloat64,
+  besselIScaledFloat64,
+  besselKScaledFloat64,
+  besselJComplexFloat64,
+  besselYComplexFloat64,
+  besselIComplexFloat64,
+  besselKComplexFloat64,
+} from "./special-funcs/bessel-float64.js";

@@ -287,6 +287,94 @@ its callers (`packages/meijer-core`'s contour layer, downstream tools)
 compose BigFloat-typed integrands directly rather than walking a
 `Value` tree.
 
+## Special-function extension (ADR-0040)
+
+The closed integrand vocabulary above is the *integrand* surface
+consumed by `tools/integrate-1d` — deliberately narrow. The
+*special-function* surface — wider, accommodating Erf today and Bessel
+/ Whittaker / Legendre as future ADRs ship — lives in the sibling
+`evalNumericExprWithSpecial`. It accepts every elementary head AND
+the six Erf-family heads pinned by ADR-0040 Decision 4:
+
+- **Heads added:** `Erf`, `Erfc`, `Erfcx`, `Erfi`, `InverseErf`,
+  `InverseErfc`. All unary; all float64 → float64.
+
+Per-head implementations live in
+`src/special-funcs/erf-float64.ts`:
+
+- **Real `erf`/`erfc`/`erfcx`** — verbatim port of Sun Microsystems
+  1993 `s_erf.c` (musl / glibc / FreeBSD lineage; ≤ 1 ULP `erf`,
+  ≤ 2 ULP `erfc`). The five-piece dispatch on `|x|` and the
+  `SET_LOW_WORD(s, 0)` mantissa-mask trick (as a JS `maskLowWord`
+  DataView helper) are the load-bearing numerical structure. License:
+  BSD-permissive Sun 1993 notice carried verbatim in the module
+  header.
+- **Real `erfi`** — `erfi(x) = exp(x²) · w_im(x)` where `w_im(x) =
+  (2/√π)·Dawson(x) = Im[w(x)]` is computed via the 100-panel
+  Chebyshev `wImY100` (Faddeeva-Johnson, MIT, 2012) for `|x| ≤ 45`
+  and a 5-term continued-fraction expansion for `|x| > 45`. Inherits
+  Faddeeva-Johnson's ≤ ULP real-axis precision; the previous v0.1
+  asymptotic-series fallback (precision-limited to ≈ 1e-7 at x=4 and
+  ≈ 1e-11 at x=5 by the inherent asymptotic-truncation floor) is
+  retired (worklog 167 / bead `nxvu`).
+- **Complex `w`/`erf`/`erfc`/`erfcx`/`erfi`** — full port of Stephen
+  G. Johnson's Faddeeva library (MIT, 2012). Hybrid dispatch
+  preserved verbatim from `Faddeeva.cc` lines 692-984:
+  Zaghloul-Ali Algorithm 916 (`ACM TOMS 38(2), 2011`) for the bulk;
+  Poppe-Wijers 1990 continued fraction (`ACM TOMS 16(1)`) for the
+  large-`|z|` envelope (`|Im z| > 7` OR `|Re z| > 6 ∧ |Im z| > 0.1`
+  …); the 100-panel Chebyshev `w_im_y100` on the real axis; SunPro
+  `erfcx` on the imaginary axis; and two complex-`erf` Taylor
+  branches (`taylor` for `|x| < 0.08 ∧ |y| < 0.01`; `taylor_erfi`
+  for `|x| < 5e-3 ∧ |Re·Im| < 2.5e-3`) to handle the
+  `1 − exp(−z²)·w(iz)` cancellation strips. License: MIT notice
+  carried verbatim in the source header. **Accuracy contract**:
+  ≤ Faddeeva-Johnson's published `1e-13` relative error across all
+  of ℂ. The v0.1 "CF-universal" regression (worklog 167) that lost
+  1-3 orders of magnitude at `|z| < 1.5` is retired.
+- **`erfinv`/`erfcinv`** — Blair, Edwards & Johnson 1976 rational
+  approximants (Tables 17/37/57 for erfinv, Tables 57/80 for
+  erfcinv) plus one Newton-Raphson refinement step (≤ 8 ULP vs
+  SciPy in the ill-conditioned saturation regime, where multiple
+  float64 inputs round to the same `erf` value).
+
+The extension obeys the same `numerical: true` determinism contract
+as the integrand evaluator: bit-identical given the platform
+fingerprint, pure JS with no FFI or platform-conditional branches.
+
+```ts
+import {
+  evalNumericExprWithSpecial,
+  SPECIAL_HEADS,            // ["Erf", "Erfc", "Erfcx", "Erfi", "InverseErf", "InverseErfc"]
+  erfFloat64,               // direct call without going through AST
+  erfcFloat64,
+  erfcxFloat64,
+  erfiFloat64,
+  erfInvFloat64,
+  erfcInvFloat64,
+  wFunctionFloat64,
+  erfComplexFloat64,
+  erfcComplexFloat64,
+  erfcxComplexFloat64,
+  erfiComplexFloat64,
+  type ComplexF64,
+} from "@workbench/quadrature";
+
+// AST surface:
+//   import { expr, float64FromNumber } from "@workbench/protocol";
+//   evalNumericExprWithSpecial(
+//     expr("Erf", [float64FromNumber(0.5)]),
+//     new Map(),
+//   )                                  // → 0.5204998778130465
+```
+
+`tools/integrate-1d` continues to use the elementary-only
+`evalNumericExpr` from `eval-expr.ts`. An `Erf` in the integrand
+surfaces there as `UnknownVocabularyError` — which is the right
+failure: integration with Erf in the integrand requires the agent to
+opt into `tools/special-eval` (filed under ADR-0040 Decision 7) when
+that ships.
+
 ## Scope
 
 - **In:** finite real intervals `[a, b]` with `a < b`. Float64 tier

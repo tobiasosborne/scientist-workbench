@@ -64,11 +64,41 @@
 //
 // Diff-rule output is in the same closed vocabulary
 // -------------------------------------------------
-// Bessel rules emit Bessel; Erf/Erfc/Fresnel/ExpIntegralEi/ExpIntegralE
-// rules emit elementary heads (`exp`, `cos`, `sin`, `*`, `/`, `^`).
-// Both are admissible — when cas-diff recurs through a Bessel
-// derivative result, the dispatcher fires again on the new BesselJ
-// node. The output is well-formed AST, recursively differentiable.
+// Bessel rules emit Bessel; Erf/Erfc/Erfi/Fresnel/ExpIntegralEi/
+// ExpIntegralE rules emit elementary heads (`exp`, `cos`, `sin`, `*`,
+// `/`, `^`). Both are admissible — when cas-diff recurs through a
+// Bessel derivative result, the dispatcher fires again on the new
+// BesselJ node. The output is well-formed AST, recursively
+// differentiable.
+//
+// Amendments
+// ----------
+// 2026-05-16 (ADR-0040 §"Decision 6"; bead `m114`): vocabulary table
+// grew 27 → 28 by admitting `Erfi` — the per-head substrate this ADR
+// pins for the Erf family needs `Erfi` as a first-class head (the
+// canonical Meijer-G forward table R4 §1 covers `Erf`, `Erfc`, and
+// `Erfi` symmetrically). Diff rule `d/dz Erfi(z) = (2/√π)·exp(z²)`
+// per DLMF §7.10.2.
+//
+// 2026-05-17 (ADR-0041 §"Decision 6"; bead `vsvl`): vocabulary table
+// grew 28 → 32 by admitting the four cleanly-disambiguated Bessel
+// boundary heads — `HankelH1`, `HankelH2`, `SphericalBesselJ`,
+// `SphericalBesselY` — per the per-head substrate prototype #2 (Bessel
+// family). Each passes the Erfi precedent test of R1 §13: a substrate-
+// level pattern table can dispatch on the head non-redundantly (Hankel
+// avoids `J + i·Y` cancellation loss in the upper half-plane; spherical
+// Bessel is the load-bearing physics encoding for Mie scattering,
+// quantum partial-wave decomposition, and gravitational-wave spherical
+// harmonic expansions). All four are fixed-2 arity. Diff rules per
+// DLMF §10.6.1 (Hankel: same shape as cylinder Bessel) and DLMF
+// §10.51.2 (spherical: asymmetric ascent form `j_{n-1} - (n+1)/z · j_n`
+// — see `ruleHankel` and `ruleSphericalBesselFirstKind` below for the
+// canonical-form rationale). `SphericalBesselI` and `SphericalBesselK`
+// are deferred pending a clean resolution of the DLMF §10.47.7-8
+// `i^{(1)}` / `i^{(2)}` convention ambiguity (filed as P3 follow-up;
+// the cas-core AST cannot represent "this is one of two distinct
+// spherical-modified-Bessel functions" without a tag-disambiguator the
+// substrate doesn't yet support).
 
 import {
   expr,
@@ -112,6 +142,13 @@ export const SPECIAL_FUNCTION_HEADS: readonly string[] = [
   "BesselY",
   "BesselI",
   "BesselK",
+  // Bessel family boundary — Hankel (cylinder, complex-valued: H¹ = J + i·Y,
+  // H² = J − i·Y) and spherical Bessel (= √(π/(2z))·J_{n+1/2}, etc.).
+  // Admitted 2026-05-17 per ADR-0041 §"Decision 6" (R1 §13).
+  "HankelH1",
+  "HankelH2",
+  "SphericalBesselJ",
+  "SphericalBesselY",
   // Generalised hypergeometric.
   "HypergeometricPFQ",
   // Confluent (Whittaker) and parabolic-cylinder.
@@ -121,6 +158,7 @@ export const SPECIAL_FUNCTION_HEADS: readonly string[] = [
   // Error / exponential / Fresnel integrals.
   "Erf",
   "Erfc",
+  "Erfi",
   "ExpIntegralEi",
   "ExpIntegralE",
   "FresnelC",
@@ -155,6 +193,7 @@ export const SPECIAL_FUNCTION_DIFFERENTIABLE_HEADS: readonly string[] = [
   "Polygamma",
   "Erf",
   "Erfc",
+  "Erfi",
   "ExpIntegralEi",
   "ExpIntegralE",
   "FresnelC",
@@ -163,6 +202,10 @@ export const SPECIAL_FUNCTION_DIFFERENTIABLE_HEADS: readonly string[] = [
   "BesselY",
   "BesselI",
   "BesselK",
+  "HankelH1",
+  "HankelH2",
+  "SphericalBesselJ",
+  "SphericalBesselY",
   "HermiteH",
   "Polylog",
 ];
@@ -199,6 +242,10 @@ const ARITY_TABLE: Readonly<Record<string, SpecialFunctionArity>> = {
   BesselY: { shape: "fixed", count: 2 },
   BesselI: { shape: "fixed", count: 2 },
   BesselK: { shape: "fixed", count: 2 },
+  HankelH1: { shape: "fixed", count: 2 },
+  HankelH2: { shape: "fixed", count: 2 },
+  SphericalBesselJ: { shape: "fixed", count: 2 },
+  SphericalBesselY: { shape: "fixed", count: 2 },
   HypergeometricPFQ: {
     shape: "list-head",
     argShapes: ["list", "list", "scalar"],
@@ -208,6 +255,7 @@ const ARITY_TABLE: Readonly<Record<string, SpecialFunctionArity>> = {
   ParabolicCylinderD: { shape: "fixed", count: 2 },
   Erf: { shape: "fixed", count: 1 },
   Erfc: { shape: "fixed", count: 1 },
+  Erfi: { shape: "fixed", count: 1 },
   ExpIntegralEi: { shape: "fixed", count: 1 },
   ExpIntegralE: { shape: "fixed", count: 2 },
   FresnelC: { shape: "fixed", count: 1 },
@@ -305,6 +353,8 @@ export function differentiateSpecialFunction(
       return ruleErf(args, wrt, recurDiff, /*sign=*/ 1);
     case "Erfc":
       return ruleErf(args, wrt, recurDiff, /*sign=*/ -1);
+    case "Erfi":
+      return ruleErfi(args, wrt, recurDiff);
     case "ExpIntegralEi":
       return ruleExpIntegralEi(args, wrt, recurDiff);
     case "ExpIntegralE":
@@ -315,11 +365,21 @@ export function differentiateSpecialFunction(
       return ruleFresnel(args, wrt, recurDiff, /*kind=*/ "sin");
     case "BesselJ":
     case "BesselY":
+    case "HankelH1":
+    case "HankelH2":
+      // Cylinder Bessel + Hankel share the symmetric three-term
+      // derivative recurrence (DLMF §10.6.1, second equality). The
+      // dispatcher fans four heads through one rule body.
       return ruleBesselFirstKind(head, args, wrt, recurDiff);
     case "BesselI":
       return ruleBesselI(args, wrt, recurDiff);
     case "BesselK":
       return ruleBesselK(args, wrt, recurDiff);
+    case "SphericalBesselJ":
+    case "SphericalBesselY":
+      // Spherical Bessel j_n, y_n share the asymmetric ascent recurrence
+      // (DLMF §10.51.2 first equality). One rule body, two heads.
+      return ruleSphericalBesselFirstKind(head, args, wrt, recurDiff);
     case "HermiteH":
       return ruleHermiteH(args, wrt, recurDiff);
     case "Polylog":
@@ -431,6 +491,43 @@ function ruleErf(
   return mkTimes(mkTimes(prefactor, expFactor), dz);
 }
 
+// d/dz erfi(z) = (2/√π) · exp(z²)     — DLMF §7.10.2 (imaginary error function)
+//
+// The imaginary error function `erfi(z) := -i · erf(i·z)` is the
+// Dawson / Faddeeva sister of `erf` on the imaginary axis; its
+// derivative differs from `erf`'s only in the sign of the exponent
+// (`+z²` not `-z²`). That sign flip is what makes `erfi` grow super-
+// exponentially on the real axis where `erf` saturates at ±1 — the
+// numerical-evaluation challenges of `erfi` (catastrophic cancellation
+// for moderate |z|, the need for Karbach-Weideman in the complex plane)
+// trace back to this single sign and motivate the substrate pattern
+// pinned by ADR-0040.
+//
+// Encoding choice: we emit `√π` as `expr("^", [sym("pi"), rat(1/2)])`
+// per ADR-0040 §"Decision 6"'s literal-of-record code. The `sqrt`
+// elementary head (used by `ruleErf` above) and `pi^(1/2)` are
+// canonically distinct AST shapes — both within the closed elementary
+// vocabulary, both recursively differentiable — but the per-head
+// substrate at ADR-0040 picked the rational-exponent shape so the
+// downstream Meijer-G bridge (R4 §1; bead `tc2c`) sees a single
+// uniform encoding for the `z/√π` prefactor common to Erf, Erfc, and
+// Erfi G-forms. The two encodings reduce to the same value under any
+// numerical or arb-prec evaluator; their difference is purely
+// canonical-form bookkeeping.
+function ruleErfi(
+  args: readonly Value[],
+  wrt: SymbolValue,
+  recurDiff: RecurDiff,
+): Value | null {
+  arityCheck(args, 1, "Erfi");
+  const z = args[0]!;
+  const dz = recurDiff(z, wrt);
+  if (isZero(dz)) return ZERO;
+  const twoOverSqrtPi = mkDiv(int(2n), mkPower(sym("pi"), rat(1n, 2n)));
+  const expZSquared = expr("exp", [mkPower(z, int(2n))]);
+  return mkTimes(mkTimes(twoOverSqrtPi, expZSquared), dz);
+}
+
 // d/dz Ei(z) = exp(z) / z   — DLMF §6.2.6
 function ruleExpIntegralEi(
   args: readonly Value[],
@@ -481,8 +578,26 @@ function ruleFresnel(
   return mkTimes(expr(kind, [arg]), dz);
 }
 
-// d/dz J_ν(z) = (J_{ν-1}(z) − J_{ν+1}(z)) / 2   — DLMF §10.6.1
-// d/dz Y_ν(z) — same shape (DLMF §10.6.1).
+// d/dz C_ν(z) = (C_{ν-1}(z) − C_{ν+1}(z)) / 2   — DLMF §10.6.1
+//
+// One rule body, four heads: BesselJ, BesselY, HankelH1, HankelH2 all
+// satisfy the same symmetric three-term derivative recurrence — DLMF
+// §10.6.1's "any cylinder function `C_ν(z)`" pattern, where the
+// cylinder family is `{J, Y, H¹, H²}`. Hankel was admitted to the
+// vocabulary 2026-05-17 (ADR-0041 §"Decision 6"; bead vsvl); the rule
+// fans through the same body via the `head` dispatch parameter that
+// was already wired generically for J/Y.
+//
+// Why the symmetric form, not the asymmetric `C_{ν−1} − (ν/z)·C_ν`
+// alternative (DLMF §10.6.2 first): the symmetric form preserves the
+// closed-vocabulary invariant (ADR-0023: rule outputs emit heads that
+// are themselves recursively differentiable in the same vocabulary)
+// AND avoids introducing a spurious removable singularity at `z = 0`
+// after foreign-pass-through. The two forms are mathematically
+// equivalent on the principal branch; the symmetric form is the
+// canonical CAS-output choice already verified against
+// `integrate-1d` / `eval-numeric-expr` consumers (R1 §1.1).
+//
 // Discrete order ν refuses.
 function ruleBesselFirstKind(
   head: string,
@@ -556,6 +671,54 @@ function ruleBesselK(
     ),
     dz,
   );
+}
+
+// d/dz f_n(z) = f_{n-1}(z) − ((n + 1) / z) · f_n(z)   — DLMF §10.51.2
+// (asymmetric ascent form, where f_n ∈ {j_n, y_n}).
+//
+// One rule body, two heads: SphericalBesselJ and SphericalBesselY share
+// the spherical-Bessel ascent recurrence — DLMF §10.51.2's first
+// equality, applicable to *any* solution of the spherical-Bessel ODE.
+// The fan-through is the spherical-Bessel analogue of
+// `ruleBesselFirstKind` for cylinder Bessel + Hankel.
+//
+// Why the asymmetric form here vs the symmetric form used for cylinder
+// Bessel (ADR-0041 §"Decision 6" prompt; R1 §13.3 deems both
+// admissible): the spherical-Bessel ladder is *unidirectional* — `j_n`
+// derivatives shift down to `j_{n-1}` only, not symmetrically across
+// `j_{n±1}`. That eliminates the half of the recurrence tree we would
+// otherwise generate; for typical small-`n` use (Mie scattering and
+// quantum partial-wave decomposition both cap at `n ≤ 10`-ish), the
+// ladder shrinks linearly rather than fanning out. The `(n + 1) / z`
+// factor introduces a `1/z` term that consumers must be aware of —
+// `integrate-1d` and `eval-numeric-expr` handle this exactly the way
+// they handle the `1/z` in `d/dz Li_s(z) = Li_{s-1}(z) / z` (DLMF
+// §25.12.4; see `rulePolylog`), so no new dispatcher hook is needed.
+//
+// The closure invariant (ADR-0023: rule outputs emit heads recursively
+// differentiable in the same vocabulary) is preserved: the output
+// contains `SphericalBesselJ` (or `SphericalBesselY`) at shifted order
+// plus elementary heads `*`, `/`, `+/-` — every recursive diff call
+// fires the same rule again.
+//
+// Discrete order n refuses.
+function ruleSphericalBesselFirstKind(
+  head: string,
+  args: readonly Value[],
+  wrt: SymbolValue,
+  recurDiff: RecurDiff,
+): Value | null {
+  arityCheck(args, 2, head);
+  const n = args[0]!;
+  const z = args[1]!;
+  if (dependsOnWrt(n, wrt, recurDiff)) return null;
+  const dz = recurDiff(z, wrt);
+  if (isZero(dz)) return ZERO;
+  // f_{n-1}(z) − ((n + 1) / z) · f_n(z)
+  const ladderDown = expr(head, [intShift(n, -1n), z]);
+  const ratioFactor = mkDiv(intShift(n, 1n), z);
+  const ratioTerm = mkTimes(ratioFactor, expr(head, [n, z]));
+  return mkTimes(mkMinus(ladderDown, ratioTerm), dz);
 }
 
 // d/dz H_n(z) = 2n · H_{n-1}(z) when var = z   — DLMF §18.9.27

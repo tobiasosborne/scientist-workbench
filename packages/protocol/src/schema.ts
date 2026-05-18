@@ -101,6 +101,16 @@ export interface ListValueOf<E extends Value> {
   readonly items: readonly E[];
 }
 
+// `S.tagged("foo", S.kind("integer"))` should remember its payload type —
+// a `Schema<TaggedValueOf<IntegerValue>>`, not a `Schema<TaggedValue>` that
+// has forgotten what it wraps. Mirrors `ListValueOf`: one type parameter,
+// structurally narrowed, still a subtype of the wide `TaggedValue`.
+export interface TaggedValueOf<P extends Value> {
+  readonly kind: "tagged";
+  readonly tag: string;
+  readonly payload: P;
+}
+
 // Tuples are length-fixed lists with positional element types. We map
 // the array of schemas to an array of value types via a mapped tuple.
 export type TupleValueOf<S extends readonly Schema[]> = {
@@ -234,7 +244,7 @@ export const expressionSchema = (
 export const taggedSchema = <P extends Value>(
   tagName: string | null,
   payload: Schema<P>
-): Schema<TaggedValue> => ({
+): Schema<TaggedValueOf<P>> => ({
   node: { tag: "tagged", tagName, payload },
 });
 

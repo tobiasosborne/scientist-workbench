@@ -163,6 +163,26 @@ function lgammaStirling(z: BigFloat, prec: number): BigFloat {
 /**
  * `log |Γ(z)|` for real z, including z ≤ 0. Uses reflection at non-
  * positive z. Throws at non-positive integers (poles of Γ).
+ *
+ * The reflection branch (`z < 0`) is the real-argument sibling of
+ * `clgammaReflect` and carried the byte-identical near-pole
+ * cancellation that bead `oj5j` (worklog 117) fixed for the complex
+ * path. Bead `zhrm`, this fix: write `z = m + ζ` with `m = round(z)`
+ * and reduce *before* multiplying by π. The two compounding
+ * cancellations the naïve form suffers are
+ *
+ *   1. forming `π·z` at `work = prec + 32` truncates the `π·ζ`
+ *      information, which lives `≈ −log₂|ζ|` bits below `π·m`;
+ *   2. `sin`'s argument reduction then re-subtracts the large integer
+ *      multiple of `π/2`, re-doing the same large cancellation.
+ *
+ * Reducing first localises the one unavoidable cancellation to the
+ * single subtraction `ζ = z − m`; the integer shift drops out by
+ * periodicity, `sin(π z) = (−1)ᵐ · sin(π ζ)`, and since `log |sin|`
+ * is sign-blind the `(−1)ᵐ` evaporates from the formula — we just
+ * use `|sin(π ζ)|`. Working precision is bumped by the measured
+ * cancellation depth `lossBits`, so the loss is *paid for*, not
+ * carried as a lie about the answer.
  */
 function lgammaRealAbs(z: BigFloat, prec: number): BigFloat {
   if (isZero(z)) {
@@ -173,21 +193,42 @@ function lgammaRealAbs(z: BigFloat, prec: number): BigFloat {
   }
   // Reflection: Γ(z) · Γ(1 − z) = π / sin(π z).
   // ⟹ log |Γ(z)| = log π − log |sin(π z)| − log Γ(1 − z).
-  // Detect non-positive integers (where sin(π z) = 0).
-  const work = prec + 32;
-  const zRound = Math.round(toFloat64(z).value);
-  const zRoundedBack = fromInt(BigInt(zRound), work);
-  if (eq(z, zRoundedBack)) {
+  const reFloat = toFloat64(z).value;
+  if (!Number.isFinite(reFloat)) {
+    throw new RangeError(`lgamma: argument not finite`);
+  }
+  // ζ = z − m, formed first at the input's own precision so we don't
+  // round-trip information through `work` before measuring it.
+  const m = Math.round(reFloat);
+  const inPrec = z.precision;
+  const zeta0 = sub(z, fromInt(BigInt(m), inPrec), inPrec);
+  // The pole: z is exactly the non-positive integer m.
+  if (m <= 0 && isZero(zeta0)) {
     throw new RangeError(
       `lgamma: argument is a non-positive integer (Γ has a pole)`,
     );
   }
+  // Cancellation depth: how many leading bits `z − m` annihilates.
+  // For m = 0 (z in (−½, ½)) there is no integer to peel off and
+  // `lossBits = 0`, so the computation is byte-identical to the
+  // pre-`zhrm` code — change is confined to z ≤ −½ where the genuine
+  // cancellation lives.
+  const lossBits =
+    m === 0 ? 0 : Math.max(0, zMagBits(z) - zMagBits(zeta0));
+  const work = prec + 32 + lossBits;
+  // Re-form ζ at the bumped working precision.
+  const zeta =
+    m === 0 ? z : sub(z, fromInt(BigInt(m), work), work);
   const piW = pi(work);
-  const piZ = mul(piW, z, work);
-  const sinPiZ = sin(piZ, work);
+  // sin(π ζ) at small ζ — `sin`'s own reduction does no spurious work
+  // here because `π · ζ` is genuinely small, not a delta around a large
+  // multiple of `π/2`. `|sin(π ζ)|` is what enters `log`; the
+  // `(−1)ᵐ` sign from `sin(π z) = (−1)ᵐ sin(π ζ)` is irrelevant under
+  // the absolute value.
+  const sinPiZeta = sin(mul(piW, zeta, work), work);
   const oneMinusZ = sub(fromInt(1n, work), z, work);
   const result = sub(
-    sub(log(piW, work), log(abs(sinPiZ), work), work),
+    sub(log(piW, work), log(abs(sinPiZeta), work), work),
     lgamma(oneMinusZ, work),
     work,
   );
@@ -195,11 +236,37 @@ function lgammaRealAbs(z: BigFloat, prec: number): BigFloat {
 }
 
 /**
+ * `log₂ |x|` to integer precision; `-Infinity` for x = 0. Mirrors the
+ * `magBits` helper in `complex.ts` (`zhrm` shares the
+ * cancellation-depth measurement with `oj5j`).
+ */
+function zMagBits(x: BigFloat): number {
+  if (x.mantissa === 0n) return -Infinity;
+  const m = x.mantissa < 0n ? -x.mantissa : x.mantissa;
+  return x.exponent + m.toString(2).length;
+}
+
+/**
  * `Γ(z)` for real argument. Throws at non-positive integers.
  *
  * For `z > 0`: gamma(z) = exp(lgamma(z)).
- * For `z < 0` non-integer: gamma(z) = sign · exp(lgamma|abs|(z)), where
- *   sign = (-1)^floor(1 - z) — equivalently the sign of sin(π z).
+ * For `z < 0` non-integer: gamma(z) = sign · exp(lgammaRealAbs(z)),
+ * where the sign follows from
+ *
+ *     sgn(Γ(z)) = sgn(sin(π z))                  (since Γ(1−z) > 0 for z < 0)
+ *               = sgn((−1)ᵐ · sin(π ζ))           (z = m + ζ, m = round(z))
+ *               = (−1)ᵐ · sgn(ζ)                 (sin is monotone near 0,
+ *                                                  |ζ| ≤ ½ ⇒ sgn(sinπζ) = sgn(ζ))
+ *
+ * which is *exact* — no `sin` call, no precision loss, no near-pole
+ * `sgn` collapse. The pre-`zhrm` code formed `sin(π z)` at
+ * `work = prec + 32` *purely to read its sign*; for a z ε-close to a
+ * pole the value would be annihilated to zero and `sgn` would return 0,
+ * triggering a spurious "pole at z" `RangeError` even though z was
+ * merely *near* a pole, not at one. The algebraic-identity sign
+ * detection is the right tool here — the sign is a structural fact
+ * about which interval z lies in, not something we need a numeric
+ * computation to discover. (Bead `zhrm`.)
  */
 export function gamma(z: BigFloat, prec: number): BigFloat {
   if (sgn(z) > 0) {
@@ -208,24 +275,29 @@ export function gamma(z: BigFloat, prec: number): BigFloat {
   if (isZero(z)) {
     throw new RangeError(`gamma: argument is zero (Γ has a pole)`);
   }
-  const zRound = Math.round(toFloat64(z).value);
-  const zRoundedBack = fromInt(BigInt(zRound), z.precision);
-  if (eq(z, zRoundedBack)) {
+  // z = m + ζ. The pole detection is the *only* one needed — the sign
+  // is then read off `m` and `sgn(ζ)` algebraically.
+  const reFloat = toFloat64(z).value;
+  if (!Number.isFinite(reFloat)) {
+    throw new RangeError(`gamma: argument not finite`);
+  }
+  const m = Math.round(reFloat);
+  const zeta = sub(z, fromInt(BigInt(m), z.precision), z.precision);
+  if (m <= 0 && isZero(zeta)) {
     throw new RangeError(`gamma: argument is a non-positive integer (Γ has a pole)`);
   }
-  // sign of Γ(z) for z < 0, z non-integer: alternates per integer interval.
-  // Γ(z) = π / (sin(π z) · Γ(1−z)). Γ(1−z) > 0 for z < 0 (since 1−z > 1).
-  // sin(π z): for z = -0.5, sin(-π/2) = -1 → Γ(-0.5) = π/(-1 · √π) = -2√π < 0.
-  // for z = -1.5, sin(-3π/2) = +1 → Γ(-1.5) > 0.
-  // So sign = sgn(sin(π z)).
-  const work = prec + 32;
-  const piZ = mul(pi(work), z, work);
-  const sinPiZ = sin(piZ, work);
-  const sign = sgn(sinPiZ);
-  if (sign === 0) {
-    // Theoretically this means non-positive-integer z; we already checked.
-    throw new RangeError(`gamma: pole at ${toFloat64(z).value}`);
+  // sign = (−1)ᵐ · sgn(ζ). `m % 2 === 0` covers m = 0 cleanly too,
+  // since 0 is even and (−1)⁰ = 1. `sgn(zeta)` here is exact —
+  // `zeta` is a real subtraction `z − m`, its sign is a structural
+  // property of the input, not a derived numerical quantity.
+  const zetaSgn = sgn(zeta);
+  if (zetaSgn === 0) {
+    // Unreachable: m === round(z), if zeta is zero then z is integer
+    // and we returned above. Kept as a defensive check.
+    throw new RangeError(`gamma: pole at ${reFloat}`);
   }
+  const sign = (m % 2 === 0 ? zetaSgn : -zetaSgn) as 1 | -1;
+  const work = prec + 32;
   const absG = exp(lgammaRealAbs(z, work), work);
   const signedG = sign === 1 ? absG : neg(absG);
   return normalise(signedG.mantissa, signedG.exponent, prec);

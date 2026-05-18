@@ -244,3 +244,172 @@ describe("round-trip", () => {
     expect(v.kind).toBe("record");
   });
 });
+
+// -----------------------------------------------------------------------------
+// Numerical-tier ergonomic helpers (bead `qiv8`)
+// -----------------------------------------------------------------------------
+//
+// `matrixToValue` / `vectorToValue` / `valueToMatrix` / `valueToVector` —
+// the boilerplate-deleters. The tests cover three properties:
+//
+//   1. Round-trip identity: `valueTo*(matrixTo*Value(M))` reproduces `M`
+//      bit-for-bit (modulo IEEE-754 NaN, which is excluded).
+//   2. Type-narrowness: the return type of `matrixToValue` is
+//      `ListValueOf<ListValueOf<Float64Value>>` so the call site doesn't
+//      need an `as never` cast — pinned via a static type-level test.
+//   3. Honest refusal: shape mismatches and non-rectangular inputs raise
+//      `JsonBridgeError` with a path pointing at the offending position.
+
+import {
+  matrixToValue,
+  vectorToValue,
+  valueToMatrix,
+  valueToVector,
+} from "../src/index.js";
+import {
+  float64FromNumber,
+  type Float64Value,
+  type ListValueOf,
+  type Value,
+} from "@workbench/protocol";
+
+describe("vectorToValue / valueToVector — round-trip and refusal", () => {
+  test("round-trip: [1, 2.5, -3.14, 0] survives", () => {
+    const v = [1, 2.5, -3.14, 0];
+    expect(valueToVector(vectorToValue(v))).toEqual(v);
+  });
+
+  test("round-trip: empty vector survives", () => {
+    expect(valueToVector(vectorToValue([]))).toEqual([]);
+  });
+
+  test("round-trip: ±Infinity and subnormal values survive (IEEE-754 bit-exact)", () => {
+    const v = [Infinity, -Infinity, Number.MIN_VALUE, -Number.MIN_VALUE, 0, -0];
+    expect(valueToVector(vectorToValue(v))).toEqual(v);
+  });
+
+  test("vectorToValue: return is canonical {kind:'list', items: Float64Value[]}", () => {
+    const out = vectorToValue([1, 2]);
+    expect(out.kind).toBe("list");
+    expect(out.items.length).toBe(2);
+    expect(out.items[0]!.kind).toBe("float64");
+    expect(out.items[1]!.kind).toBe("float64");
+  });
+
+  test("valueToVector: rejects non-list with JsonBridgeError", () => {
+    expect(() => valueToVector(float64FromNumber(1))).toThrow(JsonBridgeError);
+    expect(() => valueToVector(int(1n))).toThrow(/expected list/);
+  });
+
+  test("valueToVector: rejects list with non-float64 element, names position", () => {
+    const bad: Value = { kind: "list", items: [float64FromNumber(1), int(2n)] };
+    expect(() => valueToVector(bad)).toThrow(/element 1.*float64/);
+    expect(() => valueToVector(bad)).toThrow(/\$\[1\]/);
+  });
+});
+
+describe("matrixToValue / valueToMatrix — round-trip and refusal", () => {
+  test("round-trip: 2x3 matrix survives", () => {
+    const M = [
+      [1, 2, 3],
+      [4, 5, 6],
+    ];
+    expect(valueToMatrix(matrixToValue(M))).toEqual(M);
+  });
+
+  test("round-trip: 5x5 identity survives", () => {
+    const I = Array.from({ length: 5 }, (_, i) =>
+      Array.from({ length: 5 }, (_, j) => (i === j ? 1 : 0)),
+    );
+    expect(valueToMatrix(matrixToValue(I))).toEqual(I);
+  });
+
+  test("round-trip: empty matrix []", () => {
+    expect(valueToMatrix(matrixToValue([]))).toEqual([]);
+  });
+
+  test("matrixToValue: rejects non-rectangular input with named row", () => {
+    const bad = [
+      [1, 2, 3],
+      [4, 5],  // row 1 ragged
+    ];
+    expect(() => matrixToValue(bad)).toThrow(JsonBridgeError);
+    expect(() => matrixToValue(bad)).toThrow(/row 1.*length 2.*expected 3/);
+    expect(() => matrixToValue(bad)).toThrow(/\$\[1\]/);
+  });
+
+  test("valueToMatrix: rejects non-list at top level", () => {
+    expect(() => valueToMatrix(float64FromNumber(1))).toThrow(/expected list/);
+  });
+
+  test("valueToMatrix: rejects when a row is not a list", () => {
+    const bad: Value = {
+      kind: "list",
+      items: [
+        { kind: "list", items: [float64FromNumber(1)] },
+        float64FromNumber(2), // row 1 is a leaf, not a row
+      ],
+    };
+    expect(() => valueToMatrix(bad)).toThrow(/row 1.*float64.*expected list/);
+  });
+
+  test("valueToMatrix: rejects non-rectangular value, names row", () => {
+    const bad: Value = {
+      kind: "list",
+      items: [
+        { kind: "list", items: [float64FromNumber(1), float64FromNumber(2)] },
+        { kind: "list", items: [float64FromNumber(3)] }, // wrong length
+      ],
+    };
+    expect(() => valueToMatrix(bad)).toThrow(/row 1.*length 1.*expected 2/);
+  });
+
+  test("valueToMatrix: rejects non-float64 cell, names [i][j] position", () => {
+    const bad: Value = {
+      kind: "list",
+      items: [
+        { kind: "list", items: [float64FromNumber(1), int(2n)] },
+      ],
+    };
+    expect(() => valueToMatrix(bad)).toThrow(/\[0\]\[1\].*integer.*float64/);
+  });
+});
+
+describe("type-level: helper returns narrow to ListValueOf<...>", () => {
+  // Bead `qiv8`: the whole point of the helpers is to remove `as never`
+  // casts at the typed-barrel boundary. That requires the return type
+  // to be the *narrow* `ListValueOf<Float64Value>` /
+  // `ListValueOf<ListValueOf<Float64Value>>`, not the loose `Value` or
+  // `ListValue`. A regression to a wider return type would re-introduce
+  // the cast and the `extends` assertions below go RED at compile time.
+  test("vectorToValue returns ListValueOf<Float64Value>", () => {
+    type _ok = ReturnType<typeof vectorToValue> extends ListValueOf<Float64Value>
+      ? true
+      : "WIDENED RETURN TYPE";
+    const _check: _ok = true;
+    void _check;
+    expect(true).toBe(true);
+  });
+
+  test("matrixToValue returns ListValueOf<ListValueOf<Float64Value>>", () => {
+    type _ok = ReturnType<typeof matrixToValue> extends ListValueOf<ListValueOf<Float64Value>>
+      ? true
+      : "WIDENED RETURN TYPE";
+    const _check: _ok = true;
+    void _check;
+    expect(true).toBe(true);
+  });
+
+  test("cast-free composition: matrixToValue feeds a list<list<float64>> slot", () => {
+    // Synthetic call site mirroring the typed-barrel boundary:
+    // `expectMatrix` requires `ListValueOf<ListValueOf<Float64Value>>`.
+    // Pre-`qiv8`, callers built the value inline with `list(M.map(row =>
+    // list(row.map(float64FromNumber))))` — a `Value` — and had to cast
+    // `as never` here. Post-`qiv8`, `matrixToValue(M)` typechecks
+    // directly.
+    const expectMatrix = (m: ListValueOf<ListValueOf<Float64Value>>): number =>
+      m.items.length;
+    const n = expectMatrix(matrixToValue([[1, 2], [3, 4]]));
+    expect(n).toBe(2);
+  });
+});

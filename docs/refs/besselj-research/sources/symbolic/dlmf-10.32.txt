@@ -1,0 +1,833 @@
+
+
+DLMF: §10.32 Integral Representations ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions
+
+DLMF
+
+Index
+Notations
+Search
+Help?
+Citing
+Customize
+Annotate
+UnAnnotate
+
+About the Project
+
+10 Bessel FunctionsModified Bessel Functions10.31 Power Series10.33 Continued Fractions
+
+§10.32 Integral Representations
+
+ⓘ
+
+Referenced by:
+§10.54
+Permalink:
+http://dlmf.nist.gov/10.32
+See also:
+Annotations for Ch.10
+
+Contents
+
+§10.32(i) Integrals along the Real Line
+§10.32(ii) Contour Integrals
+§10.32(iii) Products
+§10.32(iv) Compendia
+
+§10.32(i) Integrals along the Real Line
+
+ⓘ
+
+Keywords:
+
+along real line, integral representations, modified Bessel functions
+
+Notes:
+See Watson (1944, pp. 79, 80, 172, and 181–183). For
+(10.32.7) see also Erdélyi et al. (1953b, p. 82).
+Permalink:
+http://dlmf.nist.gov/10.32.i
+See also:
+Annotations for §10.32 and
+Ch.10
+
+10.32.1
+
+I0⁡(z)=1π⁢∫0πe±z⁢cos⁡θ⁢dθ=1π⁢∫0πcosh⁡(z⁢cos⁡θ)⁢dθ.
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+dx: differential of x,
+e: base of natural logarithm,
+cosh⁡z: hyperbolic cosine function,
+∫: integral,
+Iν⁡(z): modified Bessel function of the first kind and
+z: complex variable
+
+A&S Ref:
+ 9.6.16
+
+Permalink:
+http://dlmf.nist.gov/10.32.E1
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.32(i),
+§10.32 and
+Ch.10
+
+10.32.2
+
+Iν⁡(z)=(12⁢z)νπ12⁢Γ⁡(ν+12)⁢∫0πe±z⁢cos⁡θ⁢(sin⁡θ)2⁢ν⁢dθ=(12⁢z)νπ12⁢Γ⁡(ν+12)⁢∫−11(1−t2)ν−12⁢e±z⁢t⁢dt,
+
+ℜ⁡ν>−12.
+
+ⓘ
+
+Symbols:
+
+Γ⁡(z): gamma function,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+dx: differential of x,
+e: base of natural logarithm,
+∫: integral,
+Iν⁡(z): modified Bessel function of the first kind,
+ℜ⁡: real part,
+sin⁡z: sine function,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.18
+
+Permalink:
+http://dlmf.nist.gov/10.32.E2
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.32(i),
+§10.32 and
+Ch.10
+
+10.32.3
+
+In⁡(z)=1π⁢∫0πez⁢cos⁡θ⁢cos⁡(n⁢θ)⁢dθ.
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+dx: differential of x,
+e: base of natural logarithm,
+∫: integral,
+Iν⁡(z): modified Bessel function of the first kind,
+n: integer and
+z: complex variable
+
+A&S Ref:
+ 9.6.19
+
+Permalink:
+http://dlmf.nist.gov/10.32.E3
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.32(i),
+§10.32 and
+Ch.10
+
+10.32.4
+
+Iν⁡(z)=1π⁢∫0πez⁢cos⁡θ⁢cos⁡(ν⁢θ)⁢dθ−sin⁡(ν⁢π)π⁢∫0∞e−z⁢cosh⁡t−ν⁢t⁢dt,
+
+|ph⁡z|<12⁢π.
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+dx: differential of x,
+e: base of natural logarithm,
+cosh⁡z: hyperbolic cosine function,
+∫: integral,
+Iν⁡(z): modified Bessel function of the first kind,
+ph: phase,
+sin⁡z: sine function,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.20
+
+Permalink:
+http://dlmf.nist.gov/10.32.E4
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.32(i),
+§10.32 and
+Ch.10
+
+10.32.5
+
+K0⁡(z)=−1π⁢∫0πe±z⁢cos⁡θ⁢(γ+ln⁡(2⁢z⁢(sin⁡θ)2))⁢dθ.
+
+ⓘ
+
+Symbols:
+
+γ: Euler’s constant,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+dx: differential of x,
+e: base of natural logarithm,
+∫: integral,
+Kν⁡(z): modified Bessel function of the second kind,
+ln⁡z: principal branch of logarithm function,
+sin⁡z: sine function and
+z: complex variable
+
+A&S Ref:
+ 9.6.17
+
+Permalink:
+http://dlmf.nist.gov/10.32.E5
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.32(i),
+§10.32 and
+Ch.10
+
+10.32.6
+
+K0⁡(x)=∫0∞cos⁡(x⁢sinh⁡t)⁢dt=∫0∞cos⁡(x⁢t)t2+1⁢dt,
+
+x>0.
+
+ⓘ
+
+Symbols:
+
+cos⁡z: cosine function,
+dx: differential of x,
+sinh⁡z: hyperbolic sine function,
+∫: integral,
+Kν⁡(z): modified Bessel function of the second kind and
+x: real variable
+
+A&S Ref:
+ 9.6.21
+
+Permalink:
+http://dlmf.nist.gov/10.32.E6
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.32(i),
+§10.32 and
+Ch.10
+
+10.32.7
+
+Kν⁡(x)=sec⁡(12⁢ν⁢π)⁢∫0∞cos⁡(x⁢sinh⁡t)⁢cosh⁡(ν⁢t)⁢dt=csc⁡(12⁢ν⁢π)⁢∫0∞sin⁡(x⁢sinh⁡t)⁢sinh⁡(ν⁢t)⁢dt,
+
+|ℜ⁡ν|<1, x>0.
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+csc⁡z: cosecant function,
+cos⁡z: cosine function,
+dx: differential of x,
+cosh⁡z: hyperbolic cosine function,
+sinh⁡z: hyperbolic sine function,
+∫: integral,
+Kν⁡(z): modified Bessel function of the second kind,
+ℜ⁡: real part,
+sec⁡z: secant function,
+sin⁡z: sine function,
+x: real variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.22
+
+Referenced by:
+§10.32(i)
+Permalink:
+http://dlmf.nist.gov/10.32.E7
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.32(i),
+§10.32 and
+Ch.10
+
+10.32.8
+
+Kν⁡(z)=π12⁢(12⁢z)νΓ⁡(ν+12)⁢∫0∞e−z⁢cosh⁡t⁢(sinh⁡t)2⁢ν⁢dt=π12⁢(12⁢z)νΓ⁡(ν+12)⁢∫1∞e−z⁢t⁢(t2−1)ν−12⁢dt,
+
+ℜ⁡ν>−12,
+|ph⁡z|<12⁢π.
+
+ⓘ
+
+Symbols:
+
+Γ⁡(z): gamma function,
+π: the ratio of the circumference of a circle to its diameter,
+dx: differential of x,
+e: base of natural logarithm,
+cosh⁡z: hyperbolic cosine function,
+sinh⁡z: hyperbolic sine function,
+∫: integral,
+Kν⁡(z): modified Bessel function of the second kind,
+ph: phase,
+ℜ⁡: real part,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.23
+
+Referenced by:
+§10.74(iii)
+Permalink:
+http://dlmf.nist.gov/10.32.E8
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.32(i),
+§10.32 and
+Ch.10
+
+10.32.9
+
+Kν⁡(z)=∫0∞e−z⁢cosh⁡t⁢cosh⁡(ν⁢t)⁢dt,
+
+|ph⁡z|<12⁢π.
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+dx: differential of x,
+e: base of natural logarithm,
+cosh⁡z: hyperbolic cosine function,
+∫: integral,
+Kν⁡(z): modified Bessel function of the second kind,
+ph: phase,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.24
+
+Referenced by:
+§10.43(iii)
+Permalink:
+http://dlmf.nist.gov/10.32.E9
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.32(i),
+§10.32 and
+Ch.10
+
+10.32.10
+
+Kν⁡(z)=12⁢(12⁢z)ν⁢∫0∞exp⁡(−t−z24⁢t)⁢dttν+1,
+
+|ph⁡z|<14⁢π.
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+dx: differential of x,
+exp⁡z: exponential function,
+∫: integral,
+Kν⁡(z): modified Bessel function of the second kind,
+ph: phase,
+z: complex variable and
+ν: complex parameter
+
+Referenced by:
+
+§6.7(iii),
+§7.14(i)
+
+Permalink:
+http://dlmf.nist.gov/10.32.E10
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.32(i),
+§10.32 and
+Ch.10
+
+Basset’s Integral
+
+ⓘ
+
+Keywords:
+
+Basset’s integral, along real line, integral representations, modified Bessel functions
+
+See also:
+Annotations for §10.32(i),
+§10.32 and
+Ch.10
+
+10.32.11
+
+Kν⁡(x⁢z)=Γ⁡(ν+12)⁢(2⁢z)νπ12⁢xν⁢∫0∞cos⁡(x⁢t)⁢dt(t2+z2)ν+12,
+
+ℜ⁡ν>−12,
+x>0,
+|ph⁡z|<12⁢π.
+
+ⓘ
+
+Symbols:
+
+Γ⁡(z): gamma function,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+dx: differential of x,
+∫: integral,
+Kν⁡(z): modified Bessel function of the second kind,
+ph: phase,
+ℜ⁡: real part,
+x: real variable,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.25 (corrected)
+
+Permalink:
+http://dlmf.nist.gov/10.32.E11
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.32(i),
+§10.32(i),
+§10.32 and
+Ch.10
+
+§10.32(ii) Contour Integrals
+
+ⓘ
+
+Keywords:
+
+contour integrals, integral representations, modified Bessel functions
+
+Notes:
+See Watson (1944, pp. 181, 191, and 193) and apply
+(10.27.8). See also Paris and Kaminski (2001, p. 114).
+Permalink:
+http://dlmf.nist.gov/10.32.ii
+See also:
+Annotations for §10.32 and
+Ch.10
+
+10.32.12
+
+Iν⁡(z)=12⁢π⁢i⁢∫∞−i⁢π∞+i⁢πez⁢cosh⁡t−ν⁢t⁢dt,
+
+|ph⁡z|<12⁢π.
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+dx: differential of x,
+e: base of natural logarithm,
+cosh⁡z: hyperbolic cosine function,
+i: imaginary unit,
+∫: integral,
+Iν⁡(z): modified Bessel function of the first kind,
+ph: phase,
+z: complex variable and
+ν: complex parameter
+
+Permalink:
+http://dlmf.nist.gov/10.32.E12
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.32(ii),
+§10.32 and
+Ch.10
+
+Mellin–Barnes Type
+
+ⓘ
+
+Keywords:
+
+Mellin–Barnes type, integral representations, modified Bessel functions
+
+See also:
+Annotations for §10.32(ii),
+§10.32 and
+Ch.10
+
+10.32.13
+
+Kν⁡(z)=(12⁢z)ν4⁢π⁢i⁢∫c−i⁢∞c+i⁢∞Γ⁡(t)⁢Γ⁡(t−ν)⁢(12⁢z)−2⁢t⁢dt,
+
+c>max⁡(ℜ⁡ν,0),|ph⁡z|<12⁢π.
+
+ⓘ
+
+Symbols:
+
+Γ⁡(z): gamma function,
+π: the ratio of the circumference of a circle to its diameter,
+dx: differential of x,
+i: imaginary unit,
+∫: integral,
+Kν⁡(z): modified Bessel function of the second kind,
+ph: phase,
+ℜ⁡: real part,
+z: complex variable and
+ν: complex parameter
+
+Keywords:
+Mellin transform
+Referenced by:
+Erratum (V1.0.11) for Equation (10.32.13)
+Permalink:
+http://dlmf.nist.gov/10.32.E13
+Encodings:
+
+TeX, pMML, png
+
+Errata (effective with 1.0.11):
+
+Originally the constraint |ph⁡z|<12⁢π was written incorrectly as |ph⁡z|<π.
+
+Reported 2015-05-20 by Richard Paris
+
+See also:
+Annotations for §10.32(ii),
+§10.32(ii),
+§10.32 and
+Ch.10
+
+10.32.14
+
+Kν⁡(z)=12⁢π2⁢i⁢(π2⁢z)12⁢e−z⁢cos⁡(ν⁢π)⁢∫−i⁢∞i⁢∞Γ⁡(t)⁢Γ⁡(12−t−ν)⁢Γ⁡(12−t+ν)⁢(2⁢z)t⁢dt,
+
+ν−12∉ℤ,|ph⁡z|<32⁢π.
+
+ⓘ
+
+Symbols:
+
+Γ⁡(z): gamma function,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+dx: differential of x,
+e: base of natural logarithm,
+i: imaginary unit,
+ℤ: set of all integers,
+∫: integral,
+Kν⁡(z): modified Bessel function of the second kind,
+∉: not an element of,
+ph: phase,
+z: complex variable and
+ν: complex parameter
+
+Keywords:
+Mellin transform
+Referenced by:
+
+§10.32(ii),
+§10.74(iii)
+
+Permalink:
+http://dlmf.nist.gov/10.32.E14
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.32(ii),
+§10.32(ii),
+§10.32 and
+Ch.10
+
+In (10.32.14) the integration contour separates the poles of
+Γ⁡(t) from the poles of
+Γ⁡(12−t−ν)⁢Γ⁡(12−t+ν).
+
+§10.32(iii) Products
+
+ⓘ
+
+Keywords:
+
+integral representations, modified Bessel functions, products
+
+Notes:
+See Watson (1944, pp. 439–441) and
+Erdélyi et al. (1953b, pp. 97–98). For (10.32.16) see
+Dixon and Ferrar (1930). (An error in the conditions has been corrected.)
+For (10.32.19) see Titchmarsh (1986a, Eq. (7.10.2)).
+Permalink:
+http://dlmf.nist.gov/10.32.iii
+See also:
+Annotations for §10.32 and
+Ch.10
+
+10.32.15
+
+Iμ⁡(z)⁢Iν⁡(z)=2π⁢∫012⁢πIμ+ν⁡(2⁢z⁢cos⁡θ)⁢cos⁡((μ−ν)⁢θ)⁢dθ,
+
+ℜ⁡(μ+ν)>−1.
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+dx: differential of x,
+∫: integral,
+Iν⁡(z): modified Bessel function of the first kind,
+ℜ⁡: real part,
+z: complex variable and
+ν: complex parameter
+
+Permalink:
+http://dlmf.nist.gov/10.32.E15
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.32(iii),
+§10.32 and
+Ch.10
+
+10.32.16
+
+Iμ⁡(x)⁢Kν⁡(x)=∫0∞Jμ±ν⁡(2⁢x⁢sinh⁡t)⁢e(−μ±ν)⁢t⁢dt,
+
+ℜ⁡(μ∓ν)>−12,
+ℜ⁡(μ±ν)>−1,
+x>0.
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+dx: differential of x,
+e: base of natural logarithm,
+sinh⁡z: hyperbolic sine function,
+∫: integral,
+Iν⁡(z): modified Bessel function of the first kind,
+Kν⁡(z): modified Bessel function of the second kind,
+ℜ⁡: real part,
+x: real variable and
+ν: complex parameter
+
+Keywords:
+Laplace transform
+Referenced by:
+§10.32(iii)
+Permalink:
+http://dlmf.nist.gov/10.32.E16
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.32(iii),
+§10.32 and
+Ch.10
+
+10.32.17
+
+Kμ⁡(z)⁢Kν⁡(z)=2⁢∫0∞Kμ±ν⁡(2⁢z⁢cosh⁡t)⁢cosh⁡((μ∓ν)⁢t)⁢dt,
+
+|ph⁡z|<12⁢π.
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+dx: differential of x,
+cosh⁡z: hyperbolic cosine function,
+∫: integral,
+Kν⁡(z): modified Bessel function of the second kind,
+ph: phase,
+z: complex variable and
+ν: complex parameter
+
+Permalink:
+http://dlmf.nist.gov/10.32.E17
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.32(iii),
+§10.32 and
+Ch.10
+
+10.32.18
+
+Kν⁡(z)⁢Kν⁡(ζ)=12⁢∫0∞exp⁡(−t2−z2+ζ22⁢t)⁢Kν⁡(z⁢ζt)⁢dtt,
+
+|ph⁡z|<π, |ph⁡ζ|<π, |ph⁡(z+ζ)|<14⁢π.
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+dx: differential of x,
+exp⁡z: exponential function,
+∫: integral,
+Kν⁡(z): modified Bessel function of the second kind,
+ph: phase,
+z: complex variable and
+ν: complex parameter
+
+Permalink:
+http://dlmf.nist.gov/10.32.E18
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.32(iii),
+§10.32 and
+Ch.10
+
+Mellin–Barnes Type
+
+ⓘ
+
+See also:
+Annotations for §10.32(iii),
+§10.32 and
+Ch.10
+
+10.32.19
+
+Kμ⁡(z)⁢Kν⁡(z)=18⁢π⁢i⁢∫c−i⁢∞c+i⁢∞Γ⁡(t+12⁢μ+12⁢ν)⁢Γ⁡(t+12⁢μ−12⁢ν)⁢Γ⁡(t−12⁢μ+12⁢ν)⁢Γ⁡(t−12⁢μ−12⁢ν)Γ⁡(2⁢t)⁢(12⁢z)−2⁢t⁢dt,
+
+c>12⁢(|ℜ⁡μ|+|ℜ⁡ν|),|ph⁡z|<12⁢π.
+
+ⓘ
+
+Symbols:
+
+Γ⁡(z): gamma function,
+π: the ratio of the circumference of a circle to its diameter,
+dx: differential of x,
+i: imaginary unit,
+∫: integral,
+Kν⁡(z): modified Bessel function of the second kind,
+ph: phase,
+ℜ⁡: real part,
+z: complex variable and
+ν: complex parameter
+
+Keywords:
+Mellin transform
+Referenced by:
+§10.32(iii)
+Permalink:
+http://dlmf.nist.gov/10.32.E19
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.32(iii),
+§10.32(iii),
+§10.32 and
+Ch.10
+
+For similar integrals for Jν⁡(z)⁢Kν⁡(z) and
+Iν⁡(z)⁢Kν⁡(z) see Paris and Kaminski (2001, p. 116).
+
+§10.32(iv) Compendia
+
+ⓘ
+
+Keywords:
+
+compendia, integral representations, modified Bessel functions
+
+Permalink:
+http://dlmf.nist.gov/10.32.iv
+See also:
+Annotations for §10.32 and
+Ch.10
+
+For collections of integral representations of modified Bessel functions, or
+products of modified Bessel functions, see
+Erdélyi et al. (1953b, §§7.3, 7.12, and 7.14.2),
+Erdélyi et al. (1954a, pp. 48–60, 105–115, 276–285, and 357–359),
+Gröbner and Hofreiter (1950, pp. 193–194), Magnus et al. (1966, §3.7),
+Marichev (1983, pp. 191–216), and
+Watson (1944, Chapters 6, 12, and 13).
+
+10.31 Power Series10.33 Continued Fractions
+
+© 2010–2026 NIST / Disclaimer / Feedback;
+ Version 1.2.6;
+Release date 2026-03-15.
+
+Site Privacy Accessibility Privacy Program Copyrights Vulnerability Disclosure No Fear Act Policy FOIA Environmental Policy Scientific Integrity Information Quality Standards Commerce.gov Science.gov USA.gov
+

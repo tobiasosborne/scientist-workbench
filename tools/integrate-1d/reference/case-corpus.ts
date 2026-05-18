@@ -40,6 +40,18 @@ import {
   sym,
   type Value,
 } from "@workbench/protocol";
+// Erf-family float64 substrate (ADR-0040 §"Decision 4", I5 / bead
+// `xiry`, worklog 133). Used by the Phase 3 corpus entries below
+// (`g01-erf-on-0-1` … `g04-erf-times-exp-neg-x2`) so the JS-side
+// `f` and the wire-form `fExpr` evaluate to bit-identical values
+// at every quadrature node — the load-bearing contract that lets
+// the `--test` hook compare reported integrals to closed-form
+// references without float drift between the two sides.
+import {
+  erfFloat64,
+  erfcFloat64,
+  erfiFloat64,
+} from "@workbench/quadrature";
 
 // -----------------------------------------------------------------------------
 // Helpers — keep the table below dense and readable
@@ -434,6 +446,76 @@ export const caseCorpus: readonly CorpusCase[] = [
         "exp",
         neg(mul(int(1000n), pow(sub(x, f64(0.8)), 2n))),
       ),
+    ),
+    a: 0,
+    b: 1,
+  },
+  // --- Category 8: Erf-family integrands (Phase 3 / bead 3ynw / I5 wiring) ---
+  //
+  // These cases ARE generated as goldens (via goldens.spec.ts) but
+  // they are NOT in `manifest.json` — the Python orchestrator's
+  // SciPy/QUADPACK manifest was generated for Phase 0 / elementary
+  // vocabulary only. The closed-form correctness anchors live in
+  // `tool.test.ts`'s `Erf-family closed-form anchors` block; the
+  // goldens here lock the *bytes* the tool produces today, so a
+  // future change that perturbs the dispatcher (or the underlying
+  // erfFloat64 substrate) will surface as a golden mismatch in the
+  // oracle phase of `bun run check`. The `--test` hook walks the
+  // manifest, not the corpus, so these entries are safely additive.
+  //
+  // The JS-side `f` calls go through @workbench/quadrature's
+  // `erfFloat64` etc. via the float64 dispatcher's per-head Map; we
+  // duplicate the import-chain rather than importing those symbols
+  // here to keep `case-corpus.ts` decoupled from the substrate's
+  // exact export shape. The integrand value at every quadrature
+  // node MUST match between the JS-side `f` and the wire-form
+  // `fExpr` evaluation; using the same substrate function on both
+  // sides is the load-bearing contract that makes the goldens
+  // meaningful.
+  //
+  // Numeric anchors (closed-form / DLMF §7.7.8 / §7.7.9):
+  //   ∫_0^1 Erf(x) dx   = Erf(1) + (e^-1 − 1)/√π ≈ 0.486065
+  //   ∫_0^2 Erfc(x) dx  = 2·Erfc(2) + (1 − e^-4)/√π ≈ 0.5675
+  //   ∫_0^1 Erfi(x) dx  = Erfi(1) − (e − 1)/√π ≈ 0.6810
+  {
+    id: "g01-erf-on-0-1",
+    description: "∫ Erf(x) on [0,1] = Erf(1) + (e^-1 - 1)/√π (DLMF §7.7.9)",
+    category: "erf-family",
+    kind: "value",
+    f: (x) => erfFloat64(x),
+    fExpr: call("Erf", x),
+    a: 0,
+    b: 1,
+  },
+  {
+    id: "g02-erfc-on-0-2",
+    description: "∫ Erfc(x) on [0,2] = 2·Erfc(2) + (1 - e^-4)/√π (DLMF §7.7.8)",
+    category: "erf-family",
+    kind: "value",
+    f: (x) => erfcFloat64(x),
+    fExpr: call("Erfc", x),
+    a: 0,
+    b: 2,
+  },
+  {
+    id: "g03-erfi-on-0-1",
+    description: "∫ Erfi(x) on [0,1] = Erfi(1) - (e - 1)/√π (parity of DLMF §7.7.9)",
+    category: "erf-family",
+    kind: "value",
+    f: (x) => erfiFloat64(x),
+    fExpr: call("Erfi", x),
+    a: 0,
+    b: 1,
+  },
+  {
+    id: "g04-erf-times-exp-neg-x2",
+    description: "∫ Erf(x)·exp(-x²) on [0,1] — Maclaurin-bombed integrand (no elementary closed form)",
+    category: "erf-family",
+    kind: "value",
+    f: (x) => erfFloat64(x) * Math.exp(-x * x),
+    fExpr: mul(
+      call("Erf", x),
+      call("exp", neg(pow(x, 2n))),
     ),
     a: 0,
     b: 1,

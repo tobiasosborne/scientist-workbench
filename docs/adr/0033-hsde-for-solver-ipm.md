@@ -257,16 +257,54 @@ Decision tree:
 
 | Condition | Status |
 |---|---|
-| `max(ρ_p, ρ_d, ρ_g) ≤ 1` AND `PRSTATUS > 0.5` | OPTIMAL — return `(x*, y*, s*)/τ*` |
-| `max(ρ_p, ρ_d, ρ_g) ≤ 1` AND `PRSTATUS < −0.5` | INFEASIBLE — return `(x*, y*, s*)` as certificate |
-| `α_τ → 0, τ → 0` | ILL-POSED |
-| `iter ≥ iterLimit` | ITER-LIMIT — return best snapshot |
-| `μ stalled, ρ > 1` | NUMERICAL-DIFFICULTY — return best snapshot |
+| `τ + κ ≥ TAU_KAPPA_FLOOR` AND `max(ρ_p, ρ_d, ρ_g) ≤ 1` AND `PRSTATUS > 0.5` | OPTIMAL — return `(x*, y*, s*)/τ*` |
+| `τ + κ ≥ TAU_KAPPA_FLOOR` AND `PRSTATUS < −0.5` AND `bᵀy > WITNESS_FLOOR` AND `‖r_d‖ ≤ ε_inf · (1 + bᵀy)` | PRIMAL-INFEASIBLE — Farkas y certificate |
+| `τ + κ ≥ TAU_KAPPA_FLOOR` AND `PRSTATUS < −0.5` AND `cᵀx < −WITNESS_FLOOR` AND `‖r_p‖ ≤ ε_inf · (1 + |cᵀx|)` | DUAL-INFEASIBLE — primal recession ray |
+| `τ + κ < TAU_KAPPA_FLOOR` | RUNNING (homogenization collapsed; let outer loop fall through) |
+| `iter ≥ iterLimit` | ITER-LIMIT — return best snapshot with fallback status |
+| `μ stalled` | NUMERICAL-DIFFICULTY — return best snapshot with fallback status |
+
+Constants (default: `TAU_KAPPA_FLOOR = 1e-8`, `WITNESS_FLOOR = 1e-6`,
+`ε_inf = max(ε_p, 1e-8)`).
+
+**Important departure from an earlier draft of this ADR.** A prior
+version gated *both* the OPTIMAL and the INFEASIBLE classifications on
+`max(ρ_p, ρ_d, ρ_g) ≤ 1`. That gate looked symmetric — but the ρ
+metrics are *purified* (each divides by τ), so on an iterate heading
+to the τ→0 limit (which is exactly the infeasibility-certificate
+regime), the ρ metrics inflate and the gate never trips. The
+implementation followed the ADR faithfully, and the consequence was
+bead `io2v`: the four explicitly-infeasible SDPLIB cases (infp1/infp2/
+infd1/infd2) returned wire `status=optimal` with `achieved_precision`
+in the 1e+1 to 1e+5 range, because the cert tests never fired and
+soft-success best-iterate took over.
+
+The fix is to split the two classifications:
+  - OPTIMAL uses *purified* ρ-metrics (correct shape — we hand back the
+    purified iterate, so feasibility/optimality tolerances are
+    naturally `residual / τ`).
+  - INFEASIBILITY certificates use *unpurified* residual+witness tests
+    (correct shape — the Farkas certificate IS the unpurified iterate
+    at τ→0, and dividing by τ is a category error there). The witness
+    floor on |bᵀy| / |cᵀx| guards against the degenerate "everything
+    collapses to zero" iterate that satisfies the inequalities
+    vacuously; `PRSTATUS < −0.5` guards against an almost-converged
+    optimal problem with `|bᵀy| ≫ ‖c‖_F` spuriously firing the
+    primal-infeas cert.
+
+This mirrors Mosek `hom_terminatelo` (decomp `003f8460`) — gate to
+classification on `pfeasinff < tolP OR dfeasinff ≤ tolD` (NOT a
+conjunction with ρ), then independent witness-ratio tests. SCS
+`solver.c::solve` has the same structural shape. The original ADR
+draft inadvertently copied the "ρ-test as universal gate" shorthand
+from the ART03 *optimal-case* analysis and applied it to
+infeasibility — which the ART03 paper itself does not.
 
 The 6-flag tree machinery in the legacy NT solver is **not
 ported** to HSDE — different termination semantics; the HSDE
 exit codes map directly to our wire taxonomy without going
-through the soft-success bucket.
+through the soft-success bucket. (See Decision 7 for the related
+fix to NT-path best-iterate gating.)
 
 ### Decision 7 — Best-iterate snapshot on UNPURIFIED iterate (hazard §3.3)
 
@@ -277,9 +315,32 @@ moment we return to the caller. Saving a purified iterate and then
 re-purifying double-divides; symptom is the returned objective off
 by `1/τ²`.
 
+**Bead `io2v` follow-up — `bestStatus` stamping.** The HSDE solver
+does *not* stamp the snapshot with `bestStatus = "dual-feasible"`.
+That stamp is reserved for the legacy NT path's 6-flag soft-success
+bucket (worklog 095, control2/control3/hinf2). HSDE has a comprehensive
+classification: optimal + primal-infeasible + dual-infeasible via the
+τ-κ tests in Decision 6. Any iter that the test doesn't positively
+classify falls through to the fallback status (iter-limit / numerical-
+difficulty / numerical-error) — `finalizeBestOr` still returns the
+best snapshot (always at least as good as the current iterate, which
+may have just blown up), but with the honest fallback status, never
+`dual-feasible`. Pre-fix the stamp was unconditional and the wire map
+`dual-feasible → optimal` turned every snapshot — including iter-0
+snapshots on infeasible inputs — into wire `optimal`.
+
+The same fix applies to the legacy `NtSdpSolver.ts`: stamp
+`bestStatus = "dual-feasible"` only when `couldDualFeas` is honestly
+true (the iterate meets at least `abs_gap` OR `rel_dual_feas` OR
+`abs_dual_feas`). The control2/control3/hinf2 motivation for the soft
+bucket is preserved (those cases DO hit `couldDualFeas` along their
+trajectory); infeasible inputs (infp/infd) never hit it, so the snapshot
+is returned with the fallback status (typically `numerical-error` —
+NT can't tell infeasibility from "S leaves the cone after 2 iters").
+
 ### Decision 8 — Verbose trace schema extension
 
-`VerboseIterLine` in `Solver.ts` gains four fields:
+`VerboseIterLine` in `Solver.ts` gains the HSDE scalar fields:
 
 ```typescript
 tau: number;       // homogenization scalar (NaN for non-HSDE kinds)
@@ -288,26 +349,165 @@ gfeas: number;     // |r_g| (NaN for non-HSDE kinds)
 prstatus: number;  // (bᵀy − cᵀx) / max(‖b‖, ‖c‖, 1) (NaN for non-HSDE)
 ```
 
-The `kind` discriminator extends:
+Phase 5 Tier 0 adds ECOS/SDPT3-style iterative-refinement counters:
+
+```typescript
+nitref1: number;   // data-direction Schur back-substitution
+nitref2: number;   // affine-direction Schur back-substitution
+nitref3: number;   // combined-direction Schur back-substitution
+```
+
+The counters are `0` for HSDE traces until Tier 1 wires the IR helper,
+and `NaN` for non-HSDE traces. They exist before the algorithm change
+so the diagnostic pipeline can prove where refinement fires.
+
+**Two trace types, not one** (revised — worklog 107). The
+in-process solver-emitted type stays `VerboseIterLine` with the
+six solver `kind`s:
 
 ```typescript
 kind: "lp" | "sdp-nt" | "sdp-aho" | "sdp-hkm" | "lp-hsde" | "sdp-hsde-nt";
 ```
 
+The *persisted JSONL* schema is a distinct, wider type — `TraceLine`
+in `packages/solver-ipm/src/solver/TraceLog.ts` — which adds the
+external-log-parser kinds `"copt"`, `"mosek"` and `"gurobi"` and
+makes every solver-internal field `number | null`. `VerboseIterLine`
+is a strict subtype of `TraceLine` (stricter field types, narrower
+`kind` union); a compile-time assertion in `TraceLog.ts` proves it,
+so a field added to one but not the other is a build error rather
+than a silently-skewed trace. (Tier 0 originally widened
+`VerboseIterLine.kind` itself with `"mosek"`; that put a value no
+solver emits into the solver-emitted type and was inconsistent with
+`"copt"`, which was never added — bead `ghvl` reconciled both into
+`TraceLine`.)
+
 JSONL stability: NaN-for-inapplicable is preserved (JSON
 serialises as `null`). The diff harness `scripts/trace-diff.ts`
 treats `null` as "missing" and already handles arbitrary fields —
-no harness changes needed. `scripts/copt-log-to-jsonl.ts` (LP
-COPT logs) leaves these fields `null` since COPT is not HSDE; a
-new `scripts/mosek-log-to-jsonl.ts` will populate them from
-Mosek's iter trace (out of scope for Phase 0; lands with Phase 2's
-trace-diff infrastructure).
+no harness changes needed. The parsing logic lives in `TraceLog.ts`
+as `parseCoptLog` / `parseMosekLog` / `parseGurobiLog` (typechecked,
+unit-tested); `scripts/{copt,mosek,gurobi}-log-to-jsonl.ts` are thin
+CLI shells over them. `parseCoptLog` leaves the HSDE fields `null`
+since COPT is not HSDE. `parseMosekLog` maps Mosek's
+`ITE PFEAS DFEAS GFEAS PRSTATUS POBJ DOBJ MU TIME` table onto the
+schema, populating `kind: "mosek"`, `gfeas`, and `prstatus`
+directly while leaving TS-internal fields `null`. `parseGurobiLog`
+maps Gurobi's barrier table — seven columns
+`Iter Primal Dual Primal Dual Compl Time` under a two-line header,
+a *different* column order from COPT — onto the schema as a
+non-HSDE trace. All three parsers' row formats are **verified
+against real solver logs** — Mosek 11.1.6, COPT 8.0.4 and Gurobi
+13.0.1, each an interior-point / barrier solve of NETLIB
+`adlittle`, committed under `packages/solver-ipm/test/fixtures/`
+and asserted by `trace-log.test.ts` (beads `yyme`, `z799`). The
+three independent witnesses let a TS trace be cross-checked against
+two-of-three. The strict token-count checks also fail closed should
+a future solver version drift the format.
 
 ### Decision 9 — Determinism tier unchanged: `numerical: true` (ADR-0015)
 
 HSDE remains float64 throughout. Bit-identical given the platform
 fingerprint, like the existing solver. No bigfloat substrate is
 added; bigfloat HSDE would be a separate ADR.
+
+#### Tier-2 amendment (2026-05-16, bead `fsr7`, worklog 128)
+
+The Tier-2 acceptance work measured the float64 precision floor of
+HSDE+NT+IR against the Mosek 11.1 oracle on the six `sdp-sdplib`
+cases (logs at `docs/oracles/mosek-sdo/`). The empirical verdict:
+
+- **Well-conditioned cases** (`control1`, `control2`, `theta1`,
+  `mcp100`) reach clean `optimal` at the wire-default `feasTol =
+  optTol = 1e-8`. Tier 1's IR was load-bearing for `control2`
+  (pre-Tier-1 it returned `dual-feasible`; post-Tier-1 it returns
+  strict `optimal` with `pInf = 1.34e-8`).
+
+- **Ill-conditioned cases** (`hinf2`, `control3`) reach the float64
+  algorithmic floor — purified `pInf ≈ 5.6e-8` and `5.9e-8`
+  respectively. IR bought 3 decades on the *unpurified* `r_p`
+  (`1.26e-7 → 1.77e-10` on hinf2, the same magnitude on control3),
+  but the homogenization scalar `τ` shrinks in lockstep during HSDE's
+  near-optimal dynamics. Purification `pInf_purified = r_p / τ`
+  consumes the IR gains exactly. The empirical proof: at hinf2's
+  best unpurified iter (iter 126), `r_p = 1.77e-10` and `τ = 3.08e-3`
+  ⇒ `pInf_purified = 5.76e-8`, matching the returned value to 1
+  significant figure (worklog 128 §"hinf2 diagnostic"). No tuning of
+  `LINSYSACC`, `IRERRFACT`, or `maxIter` in `solveWithIR` can recover
+  the gap — the limit is in the purification step, not the
+  back-substitution.
+
+The bead's honest-scope clause is hereby discharged: float64 HSDE+NT+IR
+is at its precision ceiling on these two cases. **Bigfloat (Phase 6,
+a separate ADR per Decision 9's clause above) is the only path past.**
+Mosek reaches `PFEAS = 2.4e-12` on hinf2 in 23 iters via sparse-LDL
+with dynamic regularisation in extended precision — that delta is the
+substrate, not the algorithm. The Phase 6 ADR should target an
+ArbprecHSDE solver carrying `arbprec: true` (ADR-0020), pricing
+`~10–100× slower` per iter for unconditional precision (worklog
+128 §"Pointers" links the candidate path).
+
+The two Tier-2 tests covering these targets are committed as
+`test.skip("…[PHASE 6 GATE — bigfloat required]")` in
+`packages/solver-ipm/test/hsde-precision.test.ts` — un-skip when the
+ArbprecHSDE solver ships, not before. The companion ceiling tests
+(`hinf2 achieves pInf ≤ 1e-7`, `control3 reaches the float64 floor`)
+*are* green and lock in the post-IR precision so a future regression
+is caught.
+
+#### Tier-3 amendment (2026-05-16, bead `lniy`, worklog 129)
+
+Tier 3 ships the `tools/sdp-solve --method=auto → hsde-nt` default
+switch, the soft-success classification that makes HSDE compatible with
+the `sdp-sdplib` corpus's status-consistency expectations, and the
+regenerated success goldens for the new method tag.
+
+**HSDE soft-success classification.** The strict optimal test in
+`checkHsdeTermination` requires `max(ρ_p, ρ_d, ρ_g) ≤ 1` — at the
+float64 floor of `hinf2`/`control3` this never fires, so the trajectory
+returns `numerical-difficulty` (wire `numerical-breakdown`) even though
+the homogeneous-system convergence indicators (μ at the complementarity
+floor, τ-dominant, τ + κ substantial) are at their true limits. Without
+a soft-success branch, the corpus's `status_consistency` check rejects
+both cases — a 1-case regression vs the legacy NT solver (which has
+the COPT-aligned `couldDualFeas` branch in `NtSdpSolver.ts:227-241`).
+
+The HSDE analog, added to the snapshot logic in `HsdeNtSdpSolver.ts`,
+matches legacy NT's shape: classify as `dual-feasible` (a `SolverStatus`
+the existing wire mapping in `Status.ts` already lifts to `optimal`)
+when at the snapshot iter `μ ≤ feasTol AND prstatus > 0.5 AND τ ≥ 1e-6`
+— the same three convergence indicators legacy NT checks. The agent
+sees the same wire contract as for the strict-optimal case: `status =
+"optimal"` plus `achieved_precision` carrying the actual purified ρ-max
+(so the agent who needs `pInf ≤ feasTol` strictly can detect the soft
+case via `achieved_precision > 1`). Deliberately NOT a `ρ_p`-bound
+check: the floor is in `r_p / τ` purification, not in the
+back-substitution residual, so any `ρ_p`-bound K is arbitrary; the
+absolute μ-test is the principled inheritance from legacy NT.
+
+**Corpus bench grade after Tier 3:** 5/6 cases, 64/66 invariants —
+up from the pre-Tier-3 baseline of 5/6, 63/66 (legacy NT default;
+worklog 095). The Tier 3 default-switch lifts `control3` from
+legacy NT's soft-success branch onto HSDE's, and improves `hinf2`
+from failing 3 invariants (`primal_feasibility,
+complementary_slackness, optimality_gap`) to failing 2 (`primal_feas,
+complementary_slackness`). The case-count target of 6/6 remains an
+ArbprecHSDE (Phase 6) gate — `hinf2` purified `pInf ≈ 2e-6` on the
+corpus's svec-scaled wire encoding exceeds the verifier's
+`1e-7 · max(1, ‖b‖_∞)` tolerance regardless of termination
+classification.
+
+**Tool-side surface.** `tools/sdp-solve --method=auto` returns
+`method=solver-ipm-hsde-nt` (verified). `--method=nt` still returns
+`method=solver-ipm-nt` (back-compat). The 6 PSD-success goldens
+regenerate with the new method tag + iter count + ULP-level iterate
+drift (the algorithm differs from legacy NT; the optimum is the same
+within float64). The 8 refusal goldens are byte-identical (refusal
+envelopes are method-independent). `--test` smoke hook passes
+across all three method tags.
+
+Bead `y3qd` (Phase 3 tool wiring, half-shipped in commit `e164046`)
+is superseded by Tier 3's default-switch.
 
 ## Consequences
 

@@ -30,6 +30,7 @@ import {
 
   // special functions (real)
   gamma, lgamma, digamma, polygamma,
+  bigErf,                              // real-axis error function (ADR-0040)
 
   // BigComplex API
   cfromReal, cfromInts, cfromStrings, cre, cim, cconj, cisZero,
@@ -185,6 +186,73 @@ non-load-bearing, but explicit precision documents intent.
 
 Source: `packages/bigfloat/src/arithmetic.ts:81-155`.
 
+## Near-pole reflection precision (bead `oj5j`)
+
+`clgamma` / `cdigamma` route `Re(z) < ½` through the reflection formulae
+`log Γ(z) = log π − log sin(π z) − log Γ(1 − z)` and
+`ψ(z) = ψ(1 − z) − π cot(π z)`. The original reflection branches formed
+`π·z` at a fixed `work = prec + 32` *before* the `sin` / `cos` argument
+reduction. When `z = m + ζ` sits ε-close to a Γ / ψ pole (a non-positive
+integer `m`), the `π·ζ` information lives `≈ −log₂|ζ|` bits *below* `π·m`
+— so it was truncated away inside the branch, and `sin`'s own reduction
+then re-did the same large subtraction. The net loss was
+`≈ (−log₁₀|ζ| − 9)` digits of the *requested* precision, no matter how
+much precision the input `z` carried.
+
+The fix reduces `z → ζ = z − m` **before** multiplying by π, so the one
+unavoidable cancellation is localised to that single subtraction, and
+`π·ζ` is then formed from a quantity that already has the right
+magnitude. The integer shift is handled by periodicity —
+`sin(π z) = (−1)ᵐ sin(π ζ)`, `cot(π z) = cot(π ζ)` — and the working
+precision is bumped by the measured cancellation depth:
+
+```ts
+const lossBits = Math.max(0, magBits(z) - magBits(zeta0));
+const work = prec + 32 + lossBits;
+```
+
+For `m = 0` (the region `Re(z) ∈ (−½, ½)`) there is no integer to peel
+off: `ζ = z`, `lossBits = 0`, and the computation is byte-identical to
+the pre-`oj5j` code. Only `Re(z) ≤ −½` arguments — where the genuine
+cancellation lives — see new behaviour.
+
+Source: `packages/bigfloat/src/complex.ts` (`clgammaReflect`,
+`cdigammaReflect`); regression tests in `test/complex.test.ts`
+(`describe("clgamma / cdigamma — near-pole reflection precision")`).
+The real-argument reflection paths (`lgammaRealAbs`, `digamma` in
+`special.ts`) carry the same latent cancellation — tracked separately.
+
+## Erf family substrate (ADR-0040)
+
+ADR-0040 pins a per-head special-function substrate architecture; Erf is
+the v0.1 reference implementation. The real-axis arb-prec evaluator
+`bigErf(x: BigFloat, prec: number): BigFloat` is the entry point and
+lives in `src/special-funcs/erf.ts` alongside three package-internal
+substrate primitives:
+
+- `bigErfSeries`             — DLMF 7.6.2 Borel form (all-positive terms).
+  The textbook Maclaurin (DLMF 7.6.1) is *not* used: its alternating
+  signs discard `x² · log₂ e` bits to cancellation when `|x|² > p`. The
+  Borel form has zero alternation and the same convergence rate.
+- `bigErfcAsymptotic`        — DLMF 7.12.1 Poincaré asymptotic with the
+  optimal-truncation idiom (mirrors `lgammaStirling` in `special.ts`).
+- `bigErfcContinuedFraction` — DLMF 7.9.1 Laplace CF via modified Lentz.
+
+The dispatch in `bigErf` is precision-aware: `|x| ≤ x_c(prec) := √(prec ·
+ln 2)` routes to the Borel series; `|x| > x_c` routes to
+`1 − bigErfcAsymptotic(|x|)` (the subtraction is cancellation-free
+because by construction `erfcAsymptotic` is below `2^-prec` past the
+crossover). At prec = 200 bits (≈ 60 dps), `x_c ≈ 11.78`.
+
+The two `bigErfc*` primitives are exported from `erf.ts` but **not**
+re-exported from the package's public surface — they are substrate
+intended for I2's `bigErfc` / `bigErfcx` implementation to hoist on top
+of.
+
+Source: `packages/bigfloat/src/special-funcs/erf.ts`. Tests:
+`packages/bigfloat/test/erf.test.ts` (golden masters vs Wolfram + mpmath
+at 50, 100, 200 dp on the full T1/T2 real-Erf corpus subset).
+
 ## See also
 
 - `docs/adr/0020-arbitrary-precision-tier.md` — design rationale, the
@@ -196,3 +264,6 @@ Source: `packages/bigfloat/src/arithmetic.ts:81-155`.
 - `docs/worklog/084-bigfloat-div-precision-floor-fix.md` — `div` precision
   floor: diagnosis, fix, and downgrade of the integrand-contract from
   load-bearing invariant to stylistic recommendation.
+- `docs/worklog/117-cgamma-near-pole-reflection-fix.md` — `clgamma` /
+  `cdigamma` near-pole reflection: catastrophic-cancellation diagnosis,
+  the reduce-z-before-π reformulation, adaptive working precision.

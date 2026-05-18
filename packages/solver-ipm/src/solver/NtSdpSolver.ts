@@ -224,12 +224,22 @@ export function solveSdpNt(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveR
       bestDualInf = dualInf;
       bestIter = iter;
       bestAchieved = achieved;
-      bestStatus = "dual-feasible";
+      // Only stamp the snapshot as "dual-feasible" when the iterate honestly
+      // meets at least one component of the dual-feasibility check
+      // (abs_gap OR rel_dual_feas OR abs_dual_feas — `couldDualFeas`).
+      // Before this gate, ANY improvement was stamped dual-feasible — on
+      // infeasible inputs (infp1/infd1 etc, bead `io2v`) the algorithm
+      // crashes after 2 iters with primalInf ≈ 1e+5 and dualInf ≈ 1e+1,
+      // `couldDualFeas` is false at every iter, but bestStatus was being
+      // promoted regardless, and Status.ts maps `dual-feasible → optimal`
+      // (worklog 095) — the tool wire then claimed `status: optimal` with
+      // `achieved_precision = 1.5e+5`. The X/y/S snapshot is preserved
+      // either way (finalizeBestOr always uses the best iterate), but the
+      // returned status now reflects the actual quality.
+      if (couldDualFeas) {
+        bestStatus = "dual-feasible";
+      }
     }
-    // Suppress unused-warning for the diagnostic flags; they remain
-    // computed because they're load-bearing for future enrichment of
-    // VerboseIterLine and for symmetry with the COPT decision tree.
-    void couldDualFeas;
 
     if (couldOptimal) return finalize("optimal");
     if (Date.now() - startMs > params.timeLimitSec * 1000) {
@@ -437,6 +447,9 @@ export function solveSdpNt(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveR
         kappa: NaN,
         gfeas: NaN,
         prstatus: NaN,
+        nitref1: NaN,
+        nitref2: NaN,
+        nitref3: NaN,
         tSchurMs,
         tFactorMs,
         tDirectionMs,
@@ -467,22 +480,25 @@ export function solveSdpNt(prob: SdpProblem, opts: SolveOptions = {}): SdpSolveR
     };
   }
 
-  // COPT FUN_00732a50 L601-620 + epilogue L1606-1879: when we have a
-  // saved best iterate (`bestStatus !== null`), return that with its
-  // status. Otherwise return the requested fallback status with the
-  // current (probably-bad) iterate.
+  // COPT FUN_00732a50 L601-620 + epilogue L1606-1879: when we have a saved
+  // best iterate, return that — it's at least as good as the current iterate
+  // (which may have just blown up, e.g. NT factor failure). Status:
+  // bestStatus when the snapshot was qualified as dual-feasible at some iter
+  // (control2/control3/hinf2 trajectory); fallback otherwise (the snapshot
+  // is still the best iterate we saw, but we don't lie about its status).
   //
-  // The point: if our trajectory passed through optimality / dual-
-  // feasibility at *some* iter, the iterate at that iter is a valid
-  // answer even if we later stalled at the boundary trying to push it
-  // further. Without this, control2 (and friends) stall for 60 iters
-  // after reaching obj=8.30 at iter ~7, then declare numerical-
-  // difficulty even though they had a valid answer. With this, we
-  // return iter ~7's snapshot with status `dual-feasible`.
+  // Pre-`io2v` (bead): bestStatus was unconditionally set to "dual-feasible"
+  // whenever achieved improved, and finalizeBestOr returned `finalize(fallback)`
+  // (the *current* iterate) when bestStatus was null — but bestStatus was
+  // never null in practice, because the very first iter improves on Infinity.
+  // The combination meant infp1/infd1 returned wire `optimal` with
+  // `achieved_precision ≈ 1e+5`. Post-fix: bestStatus is only set when
+  // `couldDualFeas` honestly holds; finalizeBestOr always prefers the best
+  // snapshot but is honest about status.
   function finalizeBestOr(fallback: SolverStatus): SdpSolveResult {
-    if (bestStatus === null) return finalize(fallback);
+    if (bestAchieved === Infinity) return finalize(fallback);
     return {
-      status: bestStatus,
+      status: bestStatus ?? fallback,
       primalObj: prob.maximize ? -bestPObj : bestPObj,
       dualObj: prob.maximize ? -bestDObj : bestDObj,
       X: bestX,

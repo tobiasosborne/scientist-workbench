@@ -7,5 +7,8 @@
     "@workbench/protocol": "workspace:*",
     "@workbench/contract": "workspace:*",
     "@workbench/quadrature": "workspace:*"
+  },
+  "devDependencies": {
+    "@workbench/bigfloat": "workspace:*"
   }
 }

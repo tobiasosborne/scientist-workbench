@@ -44,6 +44,7 @@ export {
   type ListValueOf,
   type TupleValueOf,
   type RecordValueOf,
+  type TaggedValueOf,
   type RecordSchemaOptions,
   type ConformanceFailure,
   type ConformanceResult,

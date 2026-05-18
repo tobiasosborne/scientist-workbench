@@ -1,0 +1,213 @@
+
+
+DLMF: §10.48 Graphs ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions
+
+DLMF
+
+Index
+Notations
+Search
+Help?
+Citing
+Customize
+Annotate
+UnAnnotate
+
+About the Project
+
+10 Bessel FunctionsSpherical Bessel Functions10.47 Definitions and Basic Properties10.49 Explicit Formulas
+
+§10.48 Graphs
+
+ⓘ
+
+Keywords:
+
+graphs, spherical Bessel functions
+
+Notes:
+These graphs were produced at NIST.
+Permalink:
+http://dlmf.nist.gov/10.48
+See also:
+Annotations for Ch.10
+
+Figure 10.48.1: 𝗃n⁡(x), n=0⁢(1)⁢4, 0≤x≤12.
+
+Magnify
+
+ⓘ
+
+Symbols:
+
+𝗃n⁡(z): spherical Bessel function of the first kind,
+n: integer and
+x: real variable
+
+Permalink:
+http://dlmf.nist.gov/10.48.F1
+Encodings:
+
+pdf, png
+
+See also:
+Annotations for §10.48 and
+Ch.10
+
+Figure 10.48.2: 𝗒n⁡(x), n=0⁢(1)⁢4, 0<x≤12.
+
+Magnify
+
+ⓘ
+
+Symbols:
+
+𝗒n⁡(z): spherical Bessel function of the second kind,
+n: integer and
+x: real variable
+
+Permalink:
+http://dlmf.nist.gov/10.48.F2
+Encodings:
+
+pdf, png
+
+See also:
+Annotations for §10.48 and
+Ch.10
+
+Figure 10.48.3: 𝗃5⁡(x), 𝗒5⁡(x),
+𝗃52⁡(x)+𝗒52⁡(x),
+0≤x≤12.
+
+Magnify
+
+ⓘ
+
+Symbols:
+
+𝗃n⁡(z): spherical Bessel function of the first kind,
+𝗒n⁡(z): spherical Bessel function of the second kind and
+x: real variable
+
+Permalink:
+http://dlmf.nist.gov/10.48.F3
+Encodings:
+
+pdf, png
+
+See also:
+Annotations for §10.48 and
+Ch.10
+
+Figure 10.48.4: 𝗃5′⁡(x), 𝗒5′⁡(x),
+𝗃5′2⁡(x)+𝗒5′2⁡(x),
+0≤x≤12.
+
+Magnify
+
+ⓘ
+
+Symbols:
+
+𝗃n⁡(z): spherical Bessel function of the first kind,
+𝗒n⁡(z): spherical Bessel function of the second kind and
+x: real variable
+
+Permalink:
+http://dlmf.nist.gov/10.48.F4
+Encodings:
+
+pdf, png
+
+See also:
+Annotations for §10.48 and
+Ch.10
+
+Figure 10.48.5: 𝗂0(1)⁡(x), 𝗂0(2)⁡(x), 𝗄0⁡(x),
+0≤x≤4.
+
+Magnify
+
+ⓘ
+
+Symbols:
+
+𝗂n(1)⁡(z): modified spherical Bessel function,
+𝗂n(2)⁡(z): modified spherical Bessel function,
+𝗄n⁡(z): modified spherical Bessel function and
+x: real variable
+
+Referenced by:
+Erratum (V1.0.1) for Figure 10.48.5
+Permalink:
+http://dlmf.nist.gov/10.48.F5
+Encodings:
+
+pdf, png
+
+Errata (effective with 1.0.1):
+
+The ordinate labels 2 and 4 originally were misplaced at ordinates 3 and 5.
+
+Reported 2010-11-08 by Wolfgang Ehrhardt
+
+See also:
+Annotations for §10.48 and
+Ch.10
+
+Figure 10.48.6: 𝗂1(1)⁡(x),𝗂1(2)⁡(x),𝗄1⁡(x), 0≤x≤4.
+
+Magnify
+
+ⓘ
+
+Symbols:
+
+𝗂n(1)⁡(z): modified spherical Bessel function,
+𝗂n(2)⁡(z): modified spherical Bessel function,
+𝗄n⁡(z): modified spherical Bessel function and
+x: real variable
+
+Permalink:
+http://dlmf.nist.gov/10.48.F6
+Encodings:
+
+pdf, png
+
+See also:
+Annotations for §10.48 and
+Ch.10
+
+Figure 10.48.7: 𝗂5(1)⁡(x), 𝗂5(2)⁡(x), 𝗄5⁡(x),
+0≤x≤8.
+
+Magnify
+
+ⓘ
+
+Symbols:
+
+𝗂n(1)⁡(z): modified spherical Bessel function,
+𝗂n(2)⁡(z): modified spherical Bessel function,
+𝗄n⁡(z): modified spherical Bessel function and
+x: real variable
+
+Permalink:
+http://dlmf.nist.gov/10.48.F7
+Encodings:
+
+pdf, png
+
+See also:
+Annotations for §10.48 and
+Ch.10
+
+10.47 Definitions and Basic Properties10.49 Explicit Formulas
+
+© 2010–2026 NIST / Disclaimer / Feedback;
+ Version 1.2.6;
+Release date 2026-03-15.
+
+Site Privacy Accessibility Privacy Program Copyrights Vulnerability Disclosure No Fear Act Policy FOIA Environmental Policy Scientific Integrity Information Quality Standards Commerce.gov Science.gov USA.gov
+

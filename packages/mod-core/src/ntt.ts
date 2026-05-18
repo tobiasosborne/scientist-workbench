@@ -131,13 +131,111 @@ function fpInv(a: bigint): bigint {
   return r.inverse;
 }
 
+// ── NTTContext: instance-scoped caches ──────────────────────────────────────
+//
+// Three plan tables — power-of-two twiddles, Bluestein chirp plans, and
+// the power-of-two `n⁻¹` table — live as `Map<number, …>` keyed by `n`
+// (with the sign of the key encoding the inverse-direction variant).
+// They were originally module-level singletons, which had three
+// problems:
+//
+//   1. Unbounded growth. A fuzz test that allocates arbitrary `n`
+//      values leaks memory for the whole process lifetime; there was
+//      no way to release the plans without restarting Bun.
+//   2. Process-global. Currently the modulus is frozen at
+//      `NTT_SUPPORTED_MODULUS = 998244353`, so cache keys are unique
+//      by `n` alone — but a future generalisation to other NTT-friendly
+//      primes (Solinas primes, etc.) would collide on the same `n` key
+//      across moduli, returning the wrong plan.
+//   3. Hidden ordering coupling. `ntt(...)` was a pure function on its
+//      output, but its *timings* depended on which `n` values had been
+//      seen before — the first invocation at a given `n` paid the
+//      plan-build cost; subsequent ones reused. That's a footgun for
+//      anyone benchmarking the tool: an iteration-1 number is the
+//      build-and-run number; an iteration-2 number is the cache-hit
+//      number. Removing the implicit module state makes timings a
+//      function of the caller-supplied context lifetime.
+//
+// `NTTContext` is the explicit owner. Constructing a fresh context
+// gives clean caches; calling `clear()` releases the memory without
+// constructing a new instance. The two-argument `ntt(x, opts)` shape
+// is preserved by defaulting `ctx` to a module-singleton (`defaultNTTContext()`)
+// for backwards compatibility with the published surface — that
+// singleton has the same behaviour as the old module-level Maps, so
+// existing call sites and goldens are byte-stable.
+//
+// For v0.1 the context carries no modulus state — the kernel constants
+// (`P`, `P_INV`, `R_MOD_P`, etc.) remain module-level because changing
+// them is a deeper change than this bead asks for. A future
+// `NTTContext(modulus, primitiveRoot)` constructor that bundles the
+// Montgomery setup is the natural extension; this class is shaped so
+// it can grow without breaking the v0.1 callers.
+
+/**
+ * Owns the three plan caches that `ntt(...)` consults. Construct one
+ * per long-running fuzz/benchmark loop to bound cache growth, or use
+ * `defaultNTTContext()` to share a process-global instance.
+ *
+ * The caches' values (twiddle tables, Bluestein plans, `n⁻¹` scalars)
+ * depend only on `(n, direction)` and the modulus; for v0.1 the
+ * modulus is fixed at `NTT_SUPPORTED_MODULUS`, so two instances are
+ * effectively equivalent in cold-cache behaviour and differ only in
+ * which plans they retain.
+ */
+export class NTTContext {
+  readonly modulus: bigint = NTT_SUPPORTED_MODULUS;
+  readonly primitiveRoot: bigint = NTT_SUPPORTED_PRIMITIVE_ROOT;
+
+  // Maps are private — exposing them would let callers corrupt cached
+  // plans (the typed plan structures hold Uint32Arrays the kernel
+  // reads as-is). The `clear()` method is the only sanctioned mutator.
+  readonly #twiddles: Map<number, Uint32Array> = new Map();
+  readonly #bluesteinPlans: Map<number, BluesteinPlan> = new Map();
+  readonly #pow2InvNMont: Map<number, number> = new Map();
+
+  /** Drop all cached plans. Next `ntt(...)` call repays the build cost. */
+  clear(): void {
+    this.#twiddles.clear();
+    this.#bluesteinPlans.clear();
+    this.#pow2InvNMont.clear();
+  }
+
+  /**
+   * Approximate cache occupancy, summed across the three plan maps.
+   * Useful in tests asserting that `clear()` actually releases entries,
+   * or in fuzz loops that want to cap context size.
+   */
+  size(): number {
+    return this.#twiddles.size + this.#bluesteinPlans.size + this.#pow2InvNMont.size;
+  }
+
+  // Internal accessors — package-private semantics via the `_*` prefix.
+  // The free functions below call these; user code never touches them.
+  _getTwiddles(key: number): Uint32Array | undefined { return this.#twiddles.get(key); }
+  _setTwiddles(key: number, v: Uint32Array): void { this.#twiddles.set(key, v); }
+  _getBluestein(key: number): BluesteinPlan | undefined { return this.#bluesteinPlans.get(key); }
+  _setBluestein(key: number, v: BluesteinPlan): void { this.#bluesteinPlans.set(key, v); }
+  _getPow2InvN(key: number): number | undefined { return this.#pow2InvNMont.get(key); }
+  _setPow2InvN(key: number, v: number): void { this.#pow2InvNMont.set(key, v); }
+}
+
+/**
+ * The process-global `NTTContext` consulted by `ntt(...)` when no
+ * context is supplied. Constructed lazily on first use; lives for the
+ * process lifetime. The singleton is the historical (pre-`nip`)
+ * behaviour — clearing it from one call site clears it everywhere.
+ */
+let DEFAULT_CONTEXT: NTTContext | null = null;
+export function defaultNTTContext(): NTTContext {
+  if (DEFAULT_CONTEXT === null) DEFAULT_CONTEXT = new NTTContext();
+  return DEFAULT_CONTEXT;
+}
+
 // ── Power-of-two NTT ────────────────────────────────────────────────────────
 
-const POW2_TWIDDLE_CACHE: Map<number, Uint32Array> = new Map();
-
-function powerOfTwoTwiddles(n: number, invert: boolean): Uint32Array {
+function powerOfTwoTwiddles(ctx: NTTContext, n: number, invert: boolean): Uint32Array {
   const key = invert ? -n : n;
-  const cached = POW2_TWIDDLE_CACHE.get(key);
+  const cached = ctx._getTwiddles(key);
   if (cached) return cached;
 
   const table = new Uint32Array(Math.max(1, n - 1));
@@ -152,7 +250,7 @@ function powerOfTwoTwiddles(n: number, invert: boolean): Uint32Array {
       cur = mmul(cur, wMont);
     }
   }
-  POW2_TWIDDLE_CACHE.set(key, table);
+  ctx._setTwiddles(key, table);
   return table;
 }
 
@@ -167,11 +265,11 @@ function bitReverse(a: Uint32Array): void {
   }
 }
 
-function nttPow2InPlace(a: Uint32Array, invert: boolean): void {
+function nttPow2InPlace(ctx: NTTContext, a: Uint32Array, invert: boolean): void {
   const n = a.length;
   if (n <= 1) return;
   bitReverse(a);
-  const tw = powerOfTwoTwiddles(n, invert);
+  const tw = powerOfTwoTwiddles(ctx, n, invert);
   for (let L = 2; L <= n; L <<= 1) {
     const H = L >>> 1;
     const base = H - 1;
@@ -202,11 +300,9 @@ function nextPow2(x: number): number {
   return p;
 }
 
-const BLUESTEIN_CACHE: Map<number, BluesteinPlan> = new Map();
-
-function bluesteinPlan(n: number, invert: boolean): BluesteinPlan {
+function bluesteinPlan(ctx: NTTContext, n: number, invert: boolean): BluesteinPlan {
   const key = invert ? -n : n;
-  const cached = BLUESTEIN_CACHE.get(key);
+  const cached = ctx._getBluestein(key);
   if (cached) return cached;
 
   if ((P_BIG - 1n) % (2n * BigInt(n)) !== 0n) {
@@ -242,7 +338,7 @@ function bluesteinPlan(n: number, invert: boolean): BluesteinPlan {
     bHat[m]     = chirpInv[m]!;
     bHat[L - m] = chirpInv[m]!;
   }
-  nttPow2InPlace(bHat, false);
+  nttPow2InPlace(ctx, bHat, false);
 
   const invScaleBig = invert
     ? fpInv(BigInt(L) * BigInt(n))
@@ -250,19 +346,17 @@ function bluesteinPlan(n: number, invert: boolean): BluesteinPlan {
   const invScaleMont = toMont(Number(invScaleBig));
 
   const plan: BluesteinPlan = { n, L, chirp, bHat, invScaleMont };
-  BLUESTEIN_CACHE.set(key, plan);
+  ctx._setBluestein(key, plan);
   return plan;
 }
 
 // ── Top-level dispatch ──────────────────────────────────────────────────────
 
-const POW2_INV_N_MONT_CACHE: Map<number, number> = new Map();
-
-function pow2InvNMont(n: number): number {
-  const cached = POW2_INV_N_MONT_CACHE.get(n);
+function pow2InvNMont(ctx: NTTContext, n: number): number {
+  const cached = ctx._getPow2InvN(n);
   if (cached !== undefined) return cached;
   const v = toMont(Number(fpInv(BigInt(n))));
-  POW2_INV_N_MONT_CACHE.set(n, v);
+  ctx._setPow2InvN(n, v);
   return v;
 }
 
@@ -278,8 +372,15 @@ export interface NTTOptions {
  *
  * Implementation: power-of-two n via radix-2 Cooley-Tukey; otherwise
  * Bluestein chirp-z reducing to a length-(next pow2 ≥ 2n−1) convolution.
+ *
+ * The optional third parameter `ctx` is an `NTTContext` that owns the
+ * plan caches (twiddles, Bluestein plans, `n⁻¹` Montgomery scalars).
+ * Omitting it uses a process-global default — historical behaviour,
+ * suitable for one-shot calls. Long-running fuzz/benchmark loops
+ * should construct a fresh `NTTContext` per loop and discard it after,
+ * or call `ctx.clear()` periodically to bound memory.
  */
-export function ntt(x: readonly bigint[], opts: NTTOptions): bigint[] {
+export function ntt(x: readonly bigint[], opts: NTTOptions, ctx?: NTTContext): bigint[] {
   const n = x.length;
   if (n === 0) return [];
   for (let i = 0; i < n; i++) {
@@ -293,6 +394,7 @@ export function ntt(x: readonly bigint[], opts: NTTOptions): bigint[] {
   }
   if (n === 1) return [x[0]!];
 
+  const c = ctx ?? defaultNTTContext();
   const invert = opts.direction === "inverse";
   const xReg = new Array<number>(n);
   for (let i = 0; i < n; i++) xReg[i] = Number(x[i]!);
@@ -300,9 +402,9 @@ export function ntt(x: readonly bigint[], opts: NTTOptions): bigint[] {
   if ((n & (n - 1)) === 0) {
     const a = new Uint32Array(n);
     for (let i = 0; i < n; i++) a[i] = toMont(xReg[i]!);
-    nttPow2InPlace(a, invert);
+    nttPow2InPlace(c, a, invert);
     if (invert) {
-      const nInvMont = pow2InvNMont(n);
+      const nInvMont = pow2InvNMont(c, n);
       for (let i = 0; i < n; i++) a[i] = mmul(a[i]!, nInvMont);
     }
     const out = new Array<bigint>(n);
@@ -310,15 +412,15 @@ export function ntt(x: readonly bigint[], opts: NTTOptions): bigint[] {
     return out;
   }
 
-  const plan = bluesteinPlan(n, invert);
+  const plan = bluesteinPlan(c, n, invert);
   const { L, chirp, bHat, invScaleMont } = plan;
 
   const A = new Uint32Array(L);
   for (let j = 0; j < n; j++) A[j] = mmul(toMont(xReg[j]!), chirp[j]!);
 
-  nttPow2InPlace(A, false);
+  nttPow2InPlace(c, A, false);
   for (let i = 0; i < L; i++) A[i] = mmul(A[i]!, bHat[i]!);
-  nttPow2InPlace(A, true);
+  nttPow2InPlace(c, A, true);
 
   const out = new Array<bigint>(n);
   for (let k = 0; k < n; k++) {

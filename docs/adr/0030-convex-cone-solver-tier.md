@@ -420,6 +420,13 @@ or COO) land additively.
    tr(A B) reduces to vec(A)ᵀvec(B) in the vectorised representation).
    Adopt the same. Document explicitly with examples — the off-
    diagonal-√2 trick has bitten every amateur SDP implementer.
+   **Resolved 2026-05-14 (bead 0wc7):** `cone-core`'s `PSDCone` block is
+   the **upper-triangular, row-major** `svec` with the √2 off-diagonal
+   scaling. The convention, the isometry argument that makes it
+   load-bearing, and worked examples are transcribed in
+   `docs/ground-truth/convex/cone-projections.md` §3 and implemented in
+   `packages/cone-core/src/cones.ts` (`smat` + the `psd` case of
+   `projectCone` / `inCone`).
 
 5. **Sparse matrix wire format for v0.2.** CSR (CSC) is the standard;
    COO is the lowest-friction. Decision deferred until v0.2 is filed.
@@ -438,6 +445,61 @@ or COO) land additively.
   `benchmarks/sdp-sdplib/` shipped to `scientist-workbench-corpus`
   with triple-witness adapters.
 - `tools/sdp-solve` remains explicitly deferred to a future ADR.
+
+## Addendum (2026-05-14) — the consumer-form convergence-test hook (bead `oxuk`)
+
+`cone-core`'s `scsSolve` decides the `optimal` status from O'Donoghue
+2016's §3.5 termination test: the primal/dual/gap relative residuals of
+the *embedded translated* problem, in 2-norm, with the gap term
+`cᵀx + bᵀy`. `tools/cone-solve`'s `precision` contract, however, is
+denominated in the **§C-wire-form** KKT residual of the *recovered §C
+point* — `max(r_p, r_d, r_c)` in ∞-norm with an `xᵀs` complementary-
+slackness term, exactly as the corpus `lp-netlib` verifier recomputes
+it. The two measurements differ by a per-problem factor (0.59–3.08
+across the `lp-netlib` profile — *not* a fixed ratio). Bead `rgl8`'s
+stopgap was a post-hoc coherence guard in the tool: re-label
+`optimal → iter-cap` whenever the recovered §C residual exceeded the
+request. That keeps the tool honest but is pessimistic — a case that
+*could* reach the requested precision with a few more iterations is
+reported `iter-cap` purely because `scsSolve` stopped early on a looser
+proxy.
+
+Three fixes were weighed:
+
+1. **An optional caller-supplied convergence test on `cone-core`.**
+2. **`cone-core` adopts the ∞-norm + `xᵀs` form so its `optimal` matches
+   the wire contract.** *Rejected — structurally impossible.* `cone-core`
+   only ever sees the *translated embedded* problem; it never holds the
+   original §C `(A, b, c)`. No change to its residual *form* can make it
+   measure a residual of a problem it does not have. The translation
+   mixes the §C primal residual and the cone-membership residual into a
+   single embedded vector — they are genuinely different measurements.
+3. **`cone-solve` passes `cone-core` a tighter internal `precision`
+   derived from a per-problem amplification estimate.** *Rejected —
+   a bandaid (CLAUDE.md Rule 2).* The amplification ratio is exactly the
+   thing that is unpredictable (0.59–3.08); correctness-by-estimate is
+   the "looks like it works" anti-pattern.
+
+**Decision: option 1.** `SCSOpts` and `recoverPrimalDual` gain an
+optional `convergenceTest?: (candidate: Candidate) => boolean`. When
+absent — the default, `DEFAULT_SCS_OPTS` does not set it — `scsSolve` is
+the paper-faithful standalone substrate, §3.5 unchanged, the 90-test
+suite's semantics fixed. When supplied, the predicate is the **sole
+arbiter of the `optimal` status** (the infeasible / unbounded
+certificate branches are untouched); `scsSolve` is driven to the
+*caller's* criterion. `tools/cone-solve` supplies a closure that
+recovers the §C point from each `Candidate` and returns
+`kktResidualC(...) ≤ precision`, so the iteration converges to the wire
+contract directly and `optimal` from the tool means `optimal` with no
+asterisk — `rgl8`'s coherence-guard re-label is retired.
+
+This is the `Array.prototype.sort(comparator)` move: the substrate owns
+the machinery, the caller owns the decision criterion. `cone-core`'s
+`SCSResult.achievedPrecision` keeps its meaning unchanged — the §3.5
+embedded residual — and `cone-solve` recomputes its own §C-wire-form
+`achieved_precision` for the §D output, as it already did. Worklog
+shard 116; `docs/worklog/114-cone-solve-bench-reconciliation.md` for the
+`rgl8` surfacing.
 
 ## Pointers
 

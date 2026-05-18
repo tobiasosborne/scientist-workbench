@@ -1,0 +1,571 @@
+
+
+DLMF: §10.2 Definitions ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions
+
+DLMF
+
+Index
+Notations
+Search
+Help?
+Citing
+Customize
+Annotate
+UnAnnotate
+
+About the Project
+
+10 Bessel FunctionsBessel and Hankel Functions10.1 Special Notation10.3 Graphics
+
+§10.2 Definitions
+
+ⓘ
+
+Keywords:
+
+Bessel functions, definitions
+
+Referenced by:
+
+§10.74(i),
+§2.8(i),
+§32.10(iii)
+
+Permalink:
+http://dlmf.nist.gov/10.2
+See also:
+Annotations for Ch.10
+
+Contents
+
+§10.2(i) Bessel’s Equation
+§10.2(ii) Standard Solutions
+§10.2(iii) Numerically Satisfactory Pairs of Solutions
+
+§10.2(i) Bessel’s Equation
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Bessel’s equation, Hankel functions, cylinder functions, differential equations, singularities
+
+Permalink:
+http://dlmf.nist.gov/10.2.i
+See also:
+Annotations for §10.2 and
+Ch.10
+
+10.2.1
+
+z2⁢d2wdz2+z⁢dwdz+(z2−ν2)⁢w=0.
+
+ⓘ
+
+Symbols:
+
+dfdx: derivative of f with respect to x,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.1.1
+
+Referenced by:
+
+§10.13,
+§10.15,
+§10.2(ii),
+§10.2(ii),
+§10.2(iii),
+§10.24,
+§10.25(i),
+§10.27,
+§10.4,
+§10.61(ii),
+§10.74(ii)
+
+Permalink:
+http://dlmf.nist.gov/10.2.E1
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.2(i),
+§10.2 and
+Ch.10
+
+This differential equation has a regular singularity at z=0 with indices
+±ν, and an irregular singularity at z=∞ of rank 1; compare
+§§2.7(i) and 2.7(ii).
+
+§10.2(ii) Standard Solutions
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Bessel’s equation, of the first, second, and third kinds, principal branches (or values), standard solutions
+
+Notes:
+See Olver (1997b, pp. 57, 237–238, 242–243) and
+Watson (1944, pp. 38–45, 57–64, 196–198).
+Referenced by:
+
+§1.17(ii),
+§1.18(vi),
+§10.14,
+§10.22(i),
+§10.25(ii),
+§10.25(ii),
+§10.6(i),
+§11.1,
+§12.14(vii),
+§13.10(v),
+§13.16(i),
+§13.21(i),
+§13.21(ii),
+§13.23(iii),
+§13.24(ii),
+§13.4(i),
+§13.8(iii),
+§14.15(iii),
+§18.10(iv),
+§18.11(ii),
+§18.12,
+§18.15(iv),
+§18.15(i),
+§18.17(v),
+§2.5(i),
+§2.8(iv),
+§28.20(iii),
+§28.23,
+§3.11(iii),
+§3.5(iii),
+§3.5(viii),
+§30.11(i),
+§31.10(ii),
+§33.20(i),
+§33.20(ii),
+§33.20(iii),
+§33.5(ii),
+§33.9(ii),
+§36.2(ii),
+§8.6(i),
+§9.11(iii),
+§9.13(i),
+§9.6(i),
+§9.6(ii),
+Notation for the Special Functions
+
+Permalink:
+http://dlmf.nist.gov/10.2.ii
+See also:
+Annotations for §10.2 and
+Ch.10
+
+Bessel Function of the First Kind
+
+ⓘ
+
+Keywords:
+
+Bessel functions, of the first kind
+
+See also:
+Annotations for §10.2(ii),
+§10.2 and
+Ch.10
+
+10.2.2
+
+Jν⁡(z)=(12⁢z)ν⁢∑k=0∞(−1)k⁢(14⁢z2)kk!⁢Γ⁡(ν+k+1).
+
+ⓘ
+
+Defines:
+Jν⁡(z): Bessel function of the first kind
+Symbols:
+
+Γ⁡(z): gamma function,
+!: factorial (as in n!),
+k: nonnegative integer,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.1.10
+
+Referenced by:
+
+§10.11,
+§10.16,
+§10.19(i),
+§10.22(ii),
+§10.22(iii),
+§10.24,
+§10.53,
+§10.65(i),
+§10.7(i),
+§10.74(ii),
+§10.8,
+§18.38(iii),
+§8.6(i)
+
+Permalink:
+http://dlmf.nist.gov/10.2.E2
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.2(ii),
+§10.2(ii),
+§10.2 and
+Ch.10
+
+This solution of (10.2.1) is an analytic function of
+z∈ℂ, except for a branch point at z=0 when ν is not
+an integer. The principal branch of Jν⁡(z) corresponds to
+the principal value of (12⁢z)ν (§4.2(iv)) and is
+analytic in the z-plane cut along the interval (−∞,0].
+
+When ν=n (∈ℤ), Jν⁡(z) is entire in z.
+
+For fixed z (≠0) each branch of Jν⁡(z) is entire in ν.
+
+Bessel Function of the Second Kind (Weber’s Function)
+
+ⓘ
+
+Keywords:
+
+Bessel functions, of the second kind
+
+See also:
+Annotations for §10.2(ii),
+§10.2 and
+Ch.10
+
+10.2.3
+
+Yν⁡(z)=Jν⁡(z)⁢cos⁡(ν⁢π)−J−ν⁡(z)sin⁡(ν⁢π).
+
+ⓘ
+
+Defines:
+Yν⁡(z): Bessel function of the second kind
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+sin⁡z: sine function,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.1.2
+
+Referenced by:
+
+§10.11,
+§10.15,
+§10.19(i),
+§10.2(ii),
+§10.22(ii),
+§10.24,
+§10.4,
+§10.47(ii),
+§10.7(i),
+§10.8,
+§11.10(v),
+§11.4(i)
+
+Permalink:
+http://dlmf.nist.gov/10.2.E3
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.2(ii),
+§10.2(ii),
+§10.2 and
+Ch.10
+
+When ν is an integer the right-hand side is replaced by its limiting value:
+
+10.2.4
+
+Yn⁡(z)=1π⁢∂Jν⁡(z)∂ν|ν=n+(−1)nπ⁢∂Jν⁡(z)∂ν|ν=−n,
+
+n=0,±1,±2,….
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Yν⁡(z): Bessel function of the second kind,
+π: the ratio of the circumference of a circle to its diameter,
+∂f∂x: partial derivative of f with respect to x,
+∂x: partial differential of x,
+n: integer,
+z: complex variable and
+ν: complex parameter
+
+Referenced by:
+
+§10.15,
+§10.2(ii),
+§10.22(iv),
+§10.4
+
+Permalink:
+http://dlmf.nist.gov/10.2.E4
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.2(ii),
+§10.2(ii),
+§10.2 and
+Ch.10
+
+Whether or not ν is an integer Yν⁡(z) has a branch point at
+z=0. The principal branch corresponds to the principal branches of
+J±ν⁡(z) in (10.2.3) and (10.2.4), with a
+cut in the z-plane along the interval (−∞,0].
+
+Except in the case of J±n⁡(z), the principal branches of
+Jν⁡(z) and Yν⁡(z) are two-valued and discontinuous
+on the cut ph⁡z=±π; compare §4.2(i).
+
+Both Jν⁡(z) and Yν⁡(z) are real when ν is real
+and ph⁡z=0.
+
+For fixed z (≠0) each branch of Yν⁡(z) is entire in ν.
+
+Bessel Functions of the Third Kind (Hankel Functions)
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Hankel functions, definitions, limiting forms, of the third kind, principal branches (or values)
+
+See also:
+Annotations for §10.2(ii),
+§10.2 and
+Ch.10
+
+These solutions of (10.2.1) are denoted by Hν(1)⁡(z)
+and Hν(2)⁡(z), and their defining properties are given by
+
+10.2.5
+
+Hν(1)⁡(z)∼2/(π⁢z)⁢ei⁢(z−12⁢ν⁢π−14⁢π)
+
+ⓘ
+
+Defines:
+Hν(1)⁡(z): Bessel function of the third kind (or Hankel function)
+Symbols:
+
+∼: asymptotic equality,
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+i: imaginary unit,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.2.3
+
+Referenced by:
+
+§10.2(ii),
+§10.7(ii)
+
+Permalink:
+http://dlmf.nist.gov/10.2.E5
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.2(ii),
+§10.2(ii),
+§10.2 and
+Ch.10
+
+as z→∞ in −π+δ≤ph⁡z≤2⁢π−δ, and
+
+10.2.6
+
+Hν(2)⁡(z)∼2/(π⁢z)⁢e−i⁢(z−12⁢ν⁢π−14⁢π)
+
+ⓘ
+
+Defines:
+Hν(2)⁡(z): Bessel function of the third kind (or Hankel function)
+Symbols:
+
+∼: asymptotic equality,
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+i: imaginary unit,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.2.4
+
+Referenced by:
+
+§10.2(ii),
+§10.7(ii)
+
+Permalink:
+http://dlmf.nist.gov/10.2.E6
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.2(ii),
+§10.2(ii),
+§10.2 and
+Ch.10
+
+as z→∞ in −2⁢π+δ≤ph⁡z≤π−δ, where δ
+is an arbitrary small positive constant. Each solution has a branch point
+at z=0 for all ν∈ℂ. The principal branches correspond
+to principal values of the square roots in (10.2.5) and
+(10.2.6), again with a cut in the z-plane along the interval
+(−∞,0].
+
+The principal branches of Hν(1)⁡(z) and Hν(2)⁡(z)
+are two-valued and discontinuous on the cut ph⁡z=±π.
+
+For fixed z (≠0) each branch of Hν(1)⁡(z) and
+Hν(2)⁡(z) is entire in ν.
+
+Branch Conventions
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Hankel functions, branch conventions
+
+See also:
+Annotations for §10.2(ii),
+§10.2 and
+Ch.10
+
+Except where indicated otherwise, it is assumed throughout the DLMF
+that the symbols Jν⁡(z), Yν⁡(z),
+Hν(1)⁡(z), and Hν(2)⁡(z) denote the principal values
+of these functions.
+
+Cylinder Functions
+
+ⓘ
+
+Defines:
+𝒞ν⁡(z): cylinder function
+Keywords:
+
+Bessel functions, Bessel’s equation, cylinder functions, definition, definitions, standard solutions
+
+See also:
+Annotations for §10.2(ii),
+§10.2 and
+Ch.10
+
+The notation 𝒞ν⁡(z) denotes Jν⁡(z),
+Yν⁡(z), Hν(1)⁡(z), Hν(2)⁡(z), or any
+nontrivial linear combination of these functions, the coefficients in which
+are independent of z and ν.
+
+§10.2(iii) Numerically Satisfactory Pairs of Solutions
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Bessel’s equation, numerically satisfactory solutions, of the first, second, and third kinds, principal branches (or values)
+
+Notes:
+The conclusions in this subsection follow from §2.7(iv)
+and the limiting forms of the solutions as z→0 and as z→∞; see
+§10.7.
+Permalink:
+http://dlmf.nist.gov/10.2.iii
+See also:
+Annotations for §10.2 and
+Ch.10
+
+Table 10.2.1 lists numerically satisfactory pairs of solutions
+(§2.7(iv)) of (10.2.1) for the stated intervals or regions
+in the case ℜ⁡ν≥0. When ℜ⁡ν<0, ν is replaced
+by −ν throughout.
+
+Table 10.2.1: Numerically satisfactory pairs of solutions of Bessel’s equation.
+
+Pair
+Interval or Region
+
+Jν⁡(x),Yν⁡(x)
+0<x<∞
+
+Jν⁡(z),Yν⁡(z)
+neighborhood of 0 in |ph⁡z|≤π
+
+Jν⁡(z),Hν(1)⁡(z)
+0≤ph⁡z≤π
+
+Jν⁡(z),Hν(2)⁡(z)
+−π≤ph⁡z≤0
+
+Hν(1)⁡(z),Hν(2)⁡(z)
+neighborhood of ∞ in |ph⁡z|≤π
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Yν⁡(z): Bessel function of the second kind,
+Hν(1)⁡(z): Bessel function of the third kind (or Hankel function),
+Hν(2)⁡(z): Bessel function of the third kind (or Hankel function),
+π: the ratio of the circumference of a circle to its diameter,
+ph: phase,
+x: real variable,
+z: complex variable and
+ν: complex parameter
+
+Referenced by:
+
+§10.2(iii),
+§10.47(iii)
+
+Permalink:
+http://dlmf.nist.gov/10.2.T1
+See also:
+Annotations for §10.2(iii),
+§10.2 and
+Ch.10
+
+10.1 Special Notation10.3 Graphics
+
+© 2010–2026 NIST / Disclaimer / Feedback;
+ Version 1.2.6;
+Release date 2026-03-15.
+
+Site Privacy Accessibility Privacy Program Copyrights Vulnerability Disclosure No Fear Act Policy FOIA Environmental Policy Scientific Integrity Information Quality Standards Commerce.gov Science.gov USA.gov
+

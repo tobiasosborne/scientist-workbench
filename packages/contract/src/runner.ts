@@ -112,8 +112,16 @@ export interface InvariantEntry {
 
 // Default flag schema: an empty record. Tools that declare no flags
 // keep their `fn(input, _flags)` signature unchanged because
-// `FlagsOf<{}>` is `{}`.
-type EmptyFlags = Record<string, never>;
+// `FlagsOf<EmptyFlags>` is `{}` — a true keyless object, not an
+// index-signature type. The keyless form matters for `FlagsArgOf`'s
+// intersection with the arbprec `{ precision?: bigint }` lift (bead
+// `0y27`): a `Record<string, never>` keyless-by-value type carries an
+// `[K in string]: never` index signature that poisons any intersection
+// it participates in, forcing every key — `precision` included — to
+// `never`. `Record<never, never>` has no index signature, so
+// `Partial<{}> & { precision?: bigint } = { precision?: bigint }`
+// resolves cleanly.
+type EmptyFlags = Record<never, never>;
 
 /**
  * Extract the input Value type from a `ToolDefinition`'s static type.
@@ -137,51 +145,91 @@ type EmptyFlags = Record<string, never>;
 export type InputOf<D> = D extends { schema: { input: Schema<infer I> } } ? I : never;
 export type OutputOf<D> = D extends { schema: { output: Schema<infer O> } } ? O : never;
 /**
- * Caller-side flag shape: `Partial<FlagsOf<Fl>>` with the tier-
- * additive standard flags the runner contributes folded in (today:
- * `precision?: bigint` for `arbprec: true` tools, ADR-0020). Defaults
- * flow through `resolveFlagsForCall`, so a caller is free to omit any
- * flag that has a declared default. Bool flags absent default to
- * `false`. A tool with no declared flags and no tier annotations
- * resolves to `Partial<{}>` ≅ `{}`, i.e. the parameter is functionally
- * absent.
+ * Caller-side flag shape: `Partial<FlagsOf<Fl>>` with the tier-additive
+ * standard flags the runner contributes folded in. Defaults flow
+ * through `resolveFlagsForCall`, so a caller is free to omit any flag
+ * that has a declared default. Bool flags absent default to `false`. A
+ * tool with no declared flags and no tier annotations resolves to
+ * `Partial<{}>` ≅ `{}`, i.e. the parameter is functionally absent.
  *
- * The `arbprec` lift is what makes
- * `wb.hypergeometricPfq(input, { precision: 50n })` typecheck through
- * the typed barrel — the typed surface mirrors the subprocess CLI's
- * admissible-flag set per the ADR-0012 byte-identical contract.
- */
-/**
- * Caller-side flag shape: `Partial<FlagsOf<Fl>>`. Defaults flow through
- * `resolveFlagsForCall`, so a caller is free to omit any flag that
- * has a declared default. Bool flags absent default to `false`. A
- * tool with no declared flags resolves to `Partial<{}>` ≅ `{}`, i.e.
- * the parameter is functionally absent.
+ * Tier lift, today: `arbprec: true` tools (ADR-0020) get
+ * `precision?: bigint` folded in on top of any declared flags, so
  *
- * Note on the runner-injected `precision` slot for `arbprec: true` tools
- * (ADR-0020): `defineTool` does not preserve the `arbprec: true`
- * literal in the returned type (the field is `arbprec?: boolean` in
- * `ToolDefinition`), so the typed-barrel surface cannot statically
- * lift `precision?: bigint` into `FlagsArgOf<typeof def>` for
- * arbprec tools. Callers passing `{ precision: 50n }` to the typed
- * barrel for an arbprec tool with no declared flags work at runtime
- * (the rn2 fix accepts the flag) but must cast at the type level —
- * typically `flags as { precision: bigint }` or `as never` — until a
- * future ADR carries the arbprec literal through `defineTool`'s
- * generic surface. Meanwhile the loose `wb.run(name, input,
- * { precision: 50n })` surface accepts the flag without ceremony.
+ *     wb.hypergeometricPfq(input, { precision: 50n })
+ *
+ * typechecks through the typed barrel with no cast — the typed surface
+ * mirrors the subprocess CLI's admissible-flag set per the ADR-0012
+ * byte-identical contract. The lift is statically conditional on the
+ * `arbprec: true` *literal* propagating into `ToolDefinition`'s
+ * `Ar extends boolean` slot, which `defineTool`'s `const Ar` capture
+ * preserves from the inline `arbprec: true` at the call site (bead
+ * `0y27`, worklog 118).
  */
 export type FlagsArgOf<D> =
-  D extends { flags?: infer Fl }
-    ? Fl extends FlagSchema
-      ? Partial<FlagsOf<Fl>>
-      : Record<string, never>
+  // Two-tier branching, no intersection. The naïve attempt to assemble
+  // `<flags-branch> & <arbprec-lift>` ran into a tension: the flags-
+  // branch's empty case wants to be strict (`Record<string, never>`,
+  // "no flags allowed") so non-arbprec tools reject random keys, but
+  // intersecting strict-empty with `{ precision?: bigint }` poisons the
+  // `precision` slot to `never`. Loosening it to `{}` fixed the
+  // intersection but then accepted any flag on any no-flag tool — the
+  // `@ts-expect-error` negative test catches this. Wrapping both
+  // contributions inside one conditional, with the arbprec branch
+  // *replacing* the strict empty (rather than intersecting with it),
+  // gets both properties.
+  //
+  // The arbprec check: wrap in `[.]` so a `true | undefined` from the
+  // optional-field inference doesn't distribute into a union result;
+  // `Exclude<Ar, undefined>` peels the optional-marker `undefined` off
+  // so a tool declared with `arbprec: true` (typed as `arbprec?: true`
+  // after `defineTool`'s `const Ar` capture) reads as `true` here.
+  // `keyof Fl extends never` (also `[.]`-wrapped) detects "Fl truly
+  // has no keys" — works because `EmptyFlags = Record<never, never>`
+  // has `keyof = never`, whereas `{ op: EnumFlag<...> }` has
+  // `keyof = "op"` ≠ `never`.
+  D extends { arbprec?: infer Ar }
+    ? [Exclude<Ar, undefined>] extends [true]
+      // Arbprec tool: lift `precision?: bigint`, fold in any declared
+      // flags.
+      ? D extends { flags?: infer Fl }
+        ? Fl extends FlagSchema
+          ? [keyof Fl] extends [never]
+            ? { precision?: bigint }
+            : Partial<FlagsOf<Fl>> & { precision?: bigint }
+          : { precision?: bigint }
+        : { precision?: bigint }
+      // Non-arbprec: strict declared flags or strict-empty.
+      // The `[keyof Fl] extends [never]` discriminator is needed here
+      // *too* — `EmptyFlags = Record<never, never>` runs through
+      // `Partial<FlagsOf<...>>` to `{}`, which would accept random
+      // keys; we want strict-empty for non-arbprec no-flag tools so
+      // `{ precision: 50n }` on `modPow` is a compile-time error
+      // (caught by this block's `@ts-expect-error` negative test).
+      : D extends { flags?: infer Fl }
+        ? Fl extends FlagSchema
+          ? [keyof Fl] extends [never]
+            ? Record<string, never>
+            : Partial<FlagsOf<Fl>>
+          : Record<string, never>
+        : Record<string, never>
     : Record<string, never>;
 
 export interface ToolDefinition<
   I extends Value = Value,
   O extends Value = Value,
   Fl extends FlagSchema = EmptyFlags,
+  // The literal-preserving slot for `arbprec: true` (bead `0y27`).
+  // The default is the wide `boolean`, not the narrow `false`, so a
+  // function parameter typed as `ToolDefinition<...>` (no explicit
+  // `Ar`) accepts both arbprec and non-arbprec defs and lets internal
+  // call sites compare `def.arbprec === true` without TS rejecting the
+  // narrow `false | undefined` shape. The `defineTool` `const Ar`
+  // capture is what makes the typed barrel actually *see* `true`: at
+  // an inline `arbprec: true` call site `Ar` narrows from the default
+  // to the literal `true`, the returned definition is typed as
+  // `ToolDefinition<..., true>`, and `FlagsArgOf` reads this slot to
+  // lift `precision?: bigint` into the typed-barrel flag surface.
+  Ar extends boolean = boolean,
 > {
   name: string;
   version: string;
@@ -243,8 +291,15 @@ export interface ToolDefinition<
    *
    * Default (absent / false): the tool is symbolic and does not take a
    * precision parameter.
+   *
+   * Generic-parameterised on `Ar` (bead `0y27`) so the `true` literal
+   * propagates through `defineTool`'s `const Ar` capture into the
+   * caller-visible type of the returned definition. `FlagsArgOf` reads
+   * `arbprec` off that type to lift `precision?: bigint` into the
+   * typed-barrel flag surface — without the literal preservation, the
+   * field reads as `boolean | undefined` and the lift cannot fire.
    */
-  arbprec?: boolean;
+  arbprec?: Ar;
 }
 
 /**
@@ -268,7 +323,24 @@ export function defineTool<
   I extends Value,
   O extends Value,
   const Fl extends FlagSchema = EmptyFlags,
->(def: ToolDefinition<I, O, Fl>): ToolDefinition<I, O, Fl> {
+  // `Ar` carries the `arbprec` literal through the returned
+  // definition's type so `FlagsArgOf` (bead `0y27`) can lift
+  // `precision?: bigint` into the typed-barrel flag surface for
+  // arbprec tools. A tool author writing `arbprec: true` inline gets
+  // `Ar = true` baked into the def's type.
+  //
+  // The `const` modifier here is *defensive*, not strictly load-
+  // bearing: with `Ar extends boolean`, regular inference already
+  // narrows the value `true` to the literal `true` in inference
+  // context, because TS picks the narrowest type satisfying the
+  // constraint. `const` is kept for consistency with the `const Fl`
+  // sibling above and as belt-and-suspenders for any future unusual
+  // call patterns. The default tracks the interface default
+  // (`boolean`, not the narrow `false`) so an omitted `arbprec`
+  // resolves to a returned type compatible with non-Ar-parameterised
+  // call sites.
+  const Ar extends boolean = boolean,
+>(def: ToolDefinition<I, O, Fl, Ar>): ToolDefinition<I, O, Fl, Ar> {
   return def;
 }
 

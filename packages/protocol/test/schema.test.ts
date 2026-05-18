@@ -34,6 +34,8 @@ import {
   validate,
   type IntegerValue,
   type StringValue,
+  type TaggedValueOf,
+  type ValueOf,
 } from "../src/index.js";
 
 // ── leaf-node conformance ───────────────────────────────────────────────────
@@ -415,5 +417,34 @@ describe("constructor ergonomics", () => {
   test("S.tuple([]) is a valid empty-tuple schema", () => {
     expect(validate(list([]), S.tuple([])).ok).toBe(true);
     expect(validate(list([int(0n)]), S.tuple([])).ok).toBe(false);
+  });
+});
+
+// ── narrowing canary: `tagged` / `S.tagged` preserve their payload type ─────
+//
+// Bead x0lc. `tagged` and `taggedSchema` are generic in the payload, so a
+// helper that builds tagged values keeps its narrow type instead of
+// widening to `TaggedValue` and forcing an `as never` cast at the call
+// site. These tests are *compile-time* canaries: the runtime asserts are
+// incidental — the load-bearing part is the type annotations. If `tagged`
+// ever widens back, `t.payload` becomes `Value`, `.value` stops resolving,
+// and the `IntegerValue` / `TaggedValueOf<IntegerValue>` annotations fail
+// to typecheck. `bun run typecheck` is the alarm.
+
+describe("constructor narrowing (compile-time canary)", () => {
+  test("tagged preserves the payload's structural type", () => {
+    const t = tagged("x0lc/probe", int(7n));
+    const payload: IntegerValue = t.payload; // would be `Value` if widened
+    expect(payload.value).toBe("7");
+  });
+
+  test("S.tagged threads the payload type through ValueOf", () => {
+    const ts = S.tagged("x0lc/probe", S.kind("integer"));
+    // `ValueOf<typeof ts>` is `TaggedValueOf<IntegerValue>` — a value built
+    // by the (also-narrow) `tagged` constructor must slot in directly.
+    const conforming: ValueOf<typeof ts> = tagged("x0lc/probe", int(3n));
+    const echo: TaggedValueOf<IntegerValue> = conforming;
+    expect(echo.payload.value).toBe("3");
+    expect(validate(conforming, ts).ok).toBe(true);
   });
 });

@@ -58,6 +58,20 @@ export { type QRResult, qr } from "./qr.js";
 export { type SVDResult, type SVDOptions, svd, svdJacobi, svdGolubReinsch } from "./svd.js";
 export { type EighResult, eigh } from "./eigh.js";
 export {
+  type ComplexMatrix,
+  complexFromNested,
+  complexZeros,
+  complexFromReal,
+  complexFromQinfo,
+  realPartOnly,
+  complexAdjoint,
+  complexFrobeniusNorm,
+  complexMaxAbs,
+  complexMatmul,
+} from "./complex-matrix.js";
+export { type EighComplexResult, eighComplex } from "./eigh-complex.js";
+export { type SvdComplexResult, svdComplex } from "./svd-complex.js";
+export {
   type Algorithm as NumericalAlgorithm,
   MemoryExhaustionError,
   assessNumericalScale,

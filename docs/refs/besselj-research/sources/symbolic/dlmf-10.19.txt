@@ -1,0 +1,755 @@
+
+
+DLMF: §10.19 Asymptotic Expansions for Large Order ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions
+
+DLMF
+
+Index
+Notations
+Search
+Help?
+Citing
+Customize
+Annotate
+UnAnnotate
+
+About the Project
+
+10 Bessel FunctionsBessel and Hankel Functions10.18 Modulus and Phase Functions10.20 Uniform Asymptotic Expansions for Large Order
+
+§10.19 Asymptotic Expansions for Large Order
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Hankel functions, asymptotic expansions for large order
+
+Permalink:
+http://dlmf.nist.gov/10.19
+See also:
+Annotations for Ch.10
+
+Contents
+
+§10.19(i) Asymptotic Forms
+§10.19(ii) Debye’s Expansions
+§10.19(iii) Transition Region
+
+§10.19(i) Asymptotic Forms
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Hankel functions, asymptotic expansions for large order, asymptotic forms, derivatives
+
+Notes:
+These results follow from
+(10.2.2),
+(10.2.3),
+(10.4.3),
+(10.8.1),
+(5.5.3),
+(5.11.3).
+Referenced by:
+§3.6(vi)
+Permalink:
+http://dlmf.nist.gov/10.19.i
+See also:
+Annotations for §10.19 and
+Ch.10
+
+If ν→∞ through positive real values, with z (≠0) fixed, then
+
+10.19.1
+
+Jν⁡(z)∼12⁢π⁢ν⁢(e⁢z2⁢ν)ν,
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+∼: asymptotic equality,
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.3.1
+
+Referenced by:
+
+§10.41(i),
+§33.9(i)
+
+Permalink:
+http://dlmf.nist.gov/10.19.E1
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.19(i),
+§10.19 and
+Ch.10
+
+10.19.2
+
+Yν⁡(z)∼−i⁢Hν(1)⁡(z)∼i⁢Hν(2)⁡(z)∼−2π⁢ν⁢(e⁢z2⁢ν)−ν.
+
+ⓘ
+
+Symbols:
+
+Yν⁡(z): Bessel function of the second kind,
+Hν(1)⁡(z): Bessel function of the third kind (or Hankel function),
+Hν(2)⁡(z): Bessel function of the third kind (or Hankel function),
+∼: asymptotic equality,
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+i: imaginary unit,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.3.1
+
+Referenced by:
+§10.41(i)
+Permalink:
+http://dlmf.nist.gov/10.19.E2
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.19(i),
+§10.19 and
+Ch.10
+
+§10.19(ii) Debye’s Expansions
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Debye’s expansions, asymptotic expansions for large order, derivatives
+
+Notes:
+For (10.19.3) and (10.19.6) see
+Watson (1944, pp. 241–245) and Bickley et al. (1952, p. xxxv).
+The expansions for the derivatives are established in a similar manner, with
+the coefficients calculated by term-by-term differentiation; compare
+§2.1(iii).
+Referenced by:
+
+§11.11(iii),
+Erratum (V1.0.7) for Other
+
+Permalink:
+http://dlmf.nist.gov/10.19.ii
+Errata (effective with 1.0.7):
+
+The last sentence of this subsection, referring to Olver (1997b, p. 382)
+for (10.19.6), has been corrected. Previously it referred to
+Olver (1997b, p. 382) for (10.19.3).
+
+Reported 2013-08-30 by Gergő Nemes
+
+See also:
+Annotations for §10.19 and
+Ch.10
+
+If ν→∞ through positive real values with α (>0) fixed, then
+
+10.19.3
+
+Jν⁡(ν⁢sech⁡α)
+∼eν⁢(tanh⁡α−α)(2⁢π⁢ν⁢tanh⁡α)12⁢∑k=0∞Uk⁡(coth⁡α)νk,
+
+Yν⁡(ν⁢sech⁡α)
+∼−eν⁢(α−tanh⁡α)(12⁢π⁢ν⁢tanh⁡α)12⁢∑k=0∞(−1)k⁢Uk⁡(coth⁡α)νk,
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Yν⁡(z): Bessel function of the second kind,
+∼: Poincaré asymptotic expansion,
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+coth⁡z: hyperbolic cotangent function,
+sech⁡z: hyperbolic secant function,
+tanh⁡z: hyperbolic tangent function,
+k: nonnegative integer,
+ν: complex parameter and
+Uk⁡(p): polynomial coefficient
+
+A&S Ref:
+ 9.3.7, 9.3.8
+
+Referenced by:
+§10.19(ii)
+Permalink:
+http://dlmf.nist.gov/10.19.E3
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.19(ii),
+§10.19 and
+Ch.10
+
+10.19.4
+
+Jν′⁡(ν⁢sech⁡α)
+∼(sinh⁡(2⁢α)4⁢π⁢ν)12⁢eν⁢(tanh⁡α−α)⁢∑k=0∞Vk⁡(coth⁡α)νk,
+
+Yν′⁡(ν⁢sech⁡α)
+∼(sinh⁡(2⁢α)π⁢ν)12⁢eν⁢(α−tanh⁡α)⁢∑k=0∞(−1)k⁢Vk⁡(coth⁡α)νk.
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Yν⁡(z): Bessel function of the second kind,
+∼: Poincaré asymptotic expansion,
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+coth⁡z: hyperbolic cotangent function,
+sech⁡z: hyperbolic secant function,
+sinh⁡z: hyperbolic sine function,
+tanh⁡z: hyperbolic tangent function,
+k: nonnegative integer,
+ν: complex parameter and
+Vk⁡(p): polynomial coefficient
+
+A&S Ref:
+ 9.3.11, 9.3.12
+
+Permalink:
+http://dlmf.nist.gov/10.19.E4
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.19(ii),
+§10.19 and
+Ch.10
+
+If ν→∞ through positive real values with
+β (∈(0,12⁢π)) fixed, and
+
+10.19.5
+
+ξ=ν⁢(tan⁡β−β)−14⁢π,
+
+ⓘ
+
+Defines:
+ξ (locally)
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+tan⁡z: tangent function,
+ν: complex parameter and
+β
+
+Permalink:
+http://dlmf.nist.gov/10.19.E5
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.19(ii),
+§10.19 and
+Ch.10
+
+then
+
+10.19.6
+
+Jν⁡(ν⁢sec⁡β)
+∼(2π⁢ν⁢tan⁡β)12⁢(cos⁡ξ⁢∑k=0∞U2⁢k⁡(i⁢cot⁡β)ν2⁢k−i⁢sin⁡ξ⁢∑k=0∞U2⁢k+1⁡(i⁢cot⁡β)ν2⁢k+1),
+
+Yν⁡(ν⁢sec⁡β)
+∼(2π⁢ν⁢tan⁡β)12⁢(sin⁡ξ⁢∑k=0∞U2⁢k⁡(i⁢cot⁡β)ν2⁢k+i⁢cos⁡ξ⁢∑k=0∞U2⁢k+1⁡(i⁢cot⁡β)ν2⁢k+1),
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Yν⁡(z): Bessel function of the second kind,
+∼: Poincaré asymptotic expansion,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+cot⁡z: cotangent function,
+i: imaginary unit,
+sec⁡z: secant function,
+sin⁡z: sine function,
+tan⁡z: tangent function,
+k: nonnegative integer,
+ν: complex parameter,
+β,
+ξ and
+Uk⁡(p): polynomial coefficient
+
+A&S Ref:
+ 9.3.15--9.3.18
+
+Referenced by:
+
+§10.19(ii),
+§10.19(ii),
+§11.6(iii)
+
+Permalink:
+http://dlmf.nist.gov/10.19.E6
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.19(ii),
+§10.19 and
+Ch.10
+
+10.19.7
+
+Jν′⁡(ν⁢sec⁡β)
+∼(sin⁡(2⁢β)π⁢ν)12⁢(−sin⁡ξ⁢∑k=0∞V2⁢k⁡(i⁢cot⁡β)ν2⁢k−i⁢cos⁡ξ⁢∑k=0∞V2⁢k+1⁡(i⁢cot⁡β)ν2⁢k+1),
+
+Yν′⁡(ν⁢sec⁡β)
+∼(sin⁡(2⁢β)π⁢ν)12⁢(cos⁡ξ⁢∑k=0∞V2⁢k⁡(i⁢cot⁡β)ν2⁢k−i⁢sin⁡ξ⁢∑k=0∞V2⁢k+1⁡(i⁢cot⁡β)ν2⁢k+1).
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Yν⁡(z): Bessel function of the second kind,
+∼: Poincaré asymptotic expansion,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+cot⁡z: cotangent function,
+i: imaginary unit,
+sec⁡z: secant function,
+sin⁡z: sine function,
+k: nonnegative integer,
+ν: complex parameter,
+β,
+ξ and
+Vk⁡(p): polynomial coefficient
+
+A&S Ref:
+ 9.3.19--9.3.22
+
+Permalink:
+http://dlmf.nist.gov/10.19.E7
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.19(ii),
+§10.19 and
+Ch.10
+
+In these expansions Uk⁡(p) and Vk⁡(p) are the polynomials in p of degree
+3⁢k defined in §10.41(ii).
+
+For error bounds for the first of (10.19.6) see
+Olver (1997b, p. 382).
+
+§10.19(iii) Transition Region
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Hankel functions, asymptotic expansions for large order, derivatives, transition region
+
+Referenced by:
+
+Erratum (V1.0.5) for References,
+Erratum (V1.0.7) for Usability
+
+Permalink:
+http://dlmf.nist.gov/10.19.iii
+Addition (effective with 1.0.7):
+
+The cross-reference to §10.20(i) has been added at the end of this subsection.
+
+Addition (effective with 1.0.5):
+
+The reference to Jentschura and Lötstedt (2012) has been added at the end of this subsection.
+
+See also:
+Annotations for §10.19 and
+Ch.10
+
+As ν→∞, with a(∈ℂ) fixed,
+
+10.19.8
+
+Jν⁡(ν+a⁢ν13)
+∼213ν13⁢Ai⁡(−213⁢a)⁢∑k=0∞Pk⁡(a)ν2⁢k/3+223ν⁢Ai′⁡(−213⁢a)⁢∑k=0∞Qk⁡(a)ν2⁢k/3,
+
+|ph⁡ν|≤12⁢π−δ,
+
+Yν⁡(ν+a⁢ν13)
+∼−213ν13⁢Bi⁡(−213⁢a)⁢∑k=0∞Pk⁡(a)ν2⁢k/3−223ν⁢Bi′⁡(−213⁢a)⁢∑k=0∞Qk⁡(a)ν2⁢k/3,
+
+|ph⁡ν|≤12⁢π−δ.
+
+ⓘ
+
+Symbols:
+
+Ai⁡(z): Airy function,
+Bi⁡(z): Airy function,
+Jν⁡(z): Bessel function of the first kind,
+Yν⁡(z): Bessel function of the second kind,
+∼: Poincaré asymptotic expansion,
+π: the ratio of the circumference of a circle to its diameter,
+ph: phase,
+k: nonnegative integer,
+ν: complex parameter,
+δ: small positive constant,
+Pk⁡(a): polynomial coefficient and
+Qk⁡(a): polynomial coefficient
+
+A&S Ref:
+ 9.3.23, 9.3.24
+
+Referenced by:
+§10.19(iii)
+Permalink:
+http://dlmf.nist.gov/10.19.E8
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+Correction (effective with 1.0.27):
+
+Originally the polynomials Pk⁡(a), Qk⁡(a) were incorrectly described as
+Legendre polynomials and integer-degree, zero-order associated Legendre
+functions of the second kind respectively.
+
+See also:
+Annotations for §10.19(iii),
+§10.19 and
+Ch.10
+
+Also,
+
+10.19.9
+
+Hν(1)⁡(ν+a⁢ν13)Hν(2)⁡(ν+a⁢ν13)}∼243ν13⁢e∓π⁢i/3⁢Ai⁡(e∓π⁢i/3⁢213⁢a)⁢∑k=0∞Pk⁡(a)ν2⁢k/3+253ν⁢e±π⁢i/3⁢Ai′⁡(e∓π⁢i/3⁢213⁢a)⁢∑k=0∞Qk⁡(a)ν2⁢k/3,
+
+ⓘ
+
+Symbols:
+
+Ai⁡(z): Airy function,
+Hν(1)⁡(z): Bessel function of the third kind (or Hankel function),
+Hν(2)⁡(z): Bessel function of the third kind (or Hankel function),
+∼: Poincaré asymptotic expansion,
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+i: imaginary unit,
+k: nonnegative integer,
+ν: complex parameter,
+Pk⁡(a): polynomial coefficient and
+Qk⁡(a): polynomial coefficient
+
+Permalink:
+http://dlmf.nist.gov/10.19.E9
+Encodings:
+
+TeX, pMML, png
+
+Correction (effective with 1.0.27):
+
+Originally the polynomials Pk⁡(a), Qk⁡(a) were incorrectly described as
+Legendre polynomials and integer-degree, zero-order associated Legendre
+functions of the second kind respectively.
+
+See also:
+Annotations for §10.19(iii),
+§10.19 and
+Ch.10
+
+with sectors of validity
+−12⁢π+δ≤±ph⁡ν≤32⁢π−δ.
+Here Ai and Bi are the Airy functions
+(§9.2), and
+
+10.19.10
+
+P0⁡(a)
+=1,
+
+P1⁡(a)
+=−15⁢a,
+
+P2⁡(a)
+=−9100⁢a5+335⁢a2,
+
+P3⁡(a)
+=9577000⁢a6−1733150⁢a3−1225,
+
+P4⁡(a)
+=2720000⁢a10−235731 47000⁢a7+59031 38600⁢a4+9473 46500⁢a,
+
+ⓘ
+
+Defines:
+Pk⁡(a): polynomial coefficient (locally)
+Symbols:
+k: nonnegative integer
+A&S Ref:
+ 9.3.25
+
+Permalink:
+http://dlmf.nist.gov/10.19.E10
+Encodings:
+
+TeX, TeX, TeX, TeX, TeX, pMML, pMML, pMML, pMML, pMML, png, png, png, png, png
+
+Correction (effective with 1.0.27):
+
+Originally the polynomials Pk⁡(a), were incorrectly described as
+Legendre polynomials.
+
+See also:
+Annotations for §10.19(iii),
+§10.19 and
+Ch.10
+
+10.19.11
+
+Q0⁡(a)
+=310⁢a2,
+
+Q1⁡(a)
+=−1770⁢a3+170,
+
+Q2⁡(a)
+=−91000⁢a7+6113150⁢a4−373150⁢a,
+
+Q3⁡(a)
+=54928000⁢a8−1 107676 93000⁢a5+7912375⁢a2.
+
+ⓘ
+
+Defines:
+Qk⁡(a): polynomial coefficient (locally)
+Symbols:
+k: nonnegative integer
+A&S Ref:
+ 9.3.26
+
+Referenced by:
+Erratum (V1.0.10) for Equation (10.19.11)
+Permalink:
+http://dlmf.nist.gov/10.19.E11
+Encodings:
+
+TeX, TeX, TeX, TeX, pMML, pMML, pMML, pMML, png, png, png, png
+
+Correction (effective with 1.0.27):
+
+Originally the polynomials Qk⁡(a), were incorrectly described as
+integer-degree, zero-order associated Legendre functions of the second kind.
+
+Errata (effective with 1.0.10):
+
+Originally the first term on the right-hand side of the equation for
+Q3⁡(a) was written incorrectly as −54928000⁢a8.
+
+Reported 2015-03-16 by Svante Janson
+
+See also:
+Annotations for §10.19(iii),
+§10.19 and
+Ch.10
+
+10.19.12
+
+Jν′⁡(ν+a⁢ν13)
+∼−223ν23⁢Ai′⁡(−213⁢a)⁢∑k=0∞Rk⁡(a)ν2⁢k/3+213ν43⁢Ai⁡(−213⁢a)⁢∑k=0∞Sk⁡(a)ν2⁢k/3,
+
+|ph⁡ν|≤12⁢π−δ,
+
+Yν′⁡(ν+a⁢ν13)
+∼223ν23⁢Bi′⁡(−213⁢a)⁢∑k=0∞Rk⁡(a)ν2⁢k/3−213ν43⁢Bi⁡(−213⁢a)⁢∑k=0∞Sk⁡(a)ν2⁢k/3,
+
+|ph⁡ν|≤12⁢π−δ.
+
+ⓘ
+
+Symbols:
+
+Ai⁡(z): Airy function,
+Bi⁡(z): Airy function,
+Jν⁡(z): Bessel function of the first kind,
+Yν⁡(z): Bessel function of the second kind,
+∼: Poincaré asymptotic expansion,
+π: the ratio of the circumference of a circle to its diameter,
+ph: phase,
+k: nonnegative integer,
+ν: complex parameter,
+δ: small positive constant,
+Rk⁡(a): polynomial coefficient and
+Sk⁡(a): polynomial coefficient
+
+A&S Ref:
+ 9.3.27, 9.3.28
+
+Permalink:
+http://dlmf.nist.gov/10.19.E12
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.19(iii),
+§10.19 and
+Ch.10
+
+10.19.13
+
+Hν(1)′⁡(ν+a⁢ν13)Hν(2)′⁡(ν+a⁢ν13)}∼−253ν23⁢e±π⁢i/3⁢Ai′⁡(e∓π⁢i/3⁢213⁢a)⁢∑k=0∞Rk⁡(a)ν2⁢k/3+243ν43⁢e∓π⁢i/3⁢Ai⁡(e∓π⁢i/3⁢213⁢a)⁢∑k=0∞Sk⁡(a)ν2⁢k/3,
+
+ⓘ
+
+Symbols:
+
+Ai⁡(z): Airy function,
+Hν(1)⁡(z): Bessel function of the third kind (or Hankel function),
+Hν(2)⁡(z): Bessel function of the third kind (or Hankel function),
+∼: Poincaré asymptotic expansion,
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+i: imaginary unit,
+k: nonnegative integer,
+ν: complex parameter,
+Rk⁡(a): polynomial coefficient and
+Sk⁡(a): polynomial coefficient
+
+Permalink:
+http://dlmf.nist.gov/10.19.E13
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.19(iii),
+§10.19 and
+Ch.10
+
+with sectors of validity
+−12⁢π+δ≤ph⁡ν≤32⁢π−δ and
+−32⁢π+δ≤ph⁡ν≤12⁢π−δ,
+respectively. Here
+
+10.19.14
+
+R0⁡(a)
+=1,
+
+R1⁡(a)
+=−45⁢a,
+
+R2⁡(a)
+=−9100⁢a5+5770⁢a2,
+
+R3⁡(a)
+=6993500⁢a6−26173150⁢a3+233150,
+
+R4⁡(a)
+=2720000⁢a10−466311 47000⁢a7+38894620⁢a4−11591 15500⁢a,
+
+ⓘ
+
+Defines:
+Rk⁡(a): polynomial coefficient (locally)
+Symbols:
+k: nonnegative integer
+A&S Ref:
+ 9.3.29
+
+Permalink:
+http://dlmf.nist.gov/10.19.E14
+Encodings:
+
+TeX, TeX, TeX, TeX, TeX, pMML, pMML, pMML, pMML, pMML, png, png, png, png, png
+
+See also:
+Annotations for §10.19(iii),
+§10.19 and
+Ch.10
+
+10.19.15
+
+S0⁡(a)
+=35⁢a3−15,
+
+S1⁡(a)
+=−131140⁢a4+15⁢a,
+
+S2⁡(a)
+=−9500⁢a8+54374500⁢a5−5933150⁢a2,
+
+S3⁡(a)
+=3697000⁢a9−9 994436 93000⁢a6+317271 73250⁢a3+9473 46500.
+
+ⓘ
+
+Defines:
+Sk⁡(a): polynomial coefficient (locally)
+Symbols:
+k: nonnegative integer
+A&S Ref:
+ 9.3.30
+
+Permalink:
+http://dlmf.nist.gov/10.19.E15
+Encodings:
+
+TeX, TeX, TeX, TeX, pMML, pMML, pMML, pMML, png, png, png, png
+
+See also:
+Annotations for §10.19(iii),
+§10.19 and
+Ch.10
+
+For proofs and also for the corresponding expansions for second derivatives see
+Olver (1952).
+
+For higher coefficients in (10.19.8) in the case a=0 (that is,
+in the expansions of Jν⁡(ν) and Yν⁡(ν)), see
+Watson (1944, §8.21), Temme (1997), and Jentschura and Lötstedt (2012).
+The last reference also includes the corresponding expansions for Jν′⁡(ν)
+and Yν′⁡(ν).
+
+See also §10.20(i).
+
+10.18 Modulus and Phase Functions10.20 Uniform Asymptotic Expansions for Large Order
+
+© 2010–2026 NIST / Disclaimer / Feedback;
+ Version 1.2.6;
+Release date 2026-03-15.
+
+Site Privacy Accessibility Privacy Program Copyrights Vulnerability Disclosure No Fear Act Policy FOIA Environmental Policy Scientific Integrity Information Quality Standards Commerce.gov Science.gov USA.gov
+

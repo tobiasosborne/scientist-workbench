@@ -150,6 +150,19 @@ export {
 } from "./special-functions.js";
 
 export {
+  isPositiveInteger,
+  isNonNegativeInteger,
+  isHalfInteger,
+} from "./pattern.js";
+
+export {
+  BESSEL_FAMILY_HEADS,
+  BESSEL_RULES,
+  isBesselFamilyHead,
+  tryBesselSimplify,
+} from "./special-funcs/bessel-identities.js";
+
+export {
   type AlgebraicElement,
   type AlgebraicRingSpec,
   algebraicRing,

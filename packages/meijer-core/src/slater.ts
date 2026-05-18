@@ -276,8 +276,17 @@ function runSlaterPass(
  * intuition that "agree to 50 dps relative" against a result of
  * magnitude `2^{-200}` is silly — if the L'Hôpital limit *is* small,
  * there's no relative precision to speak of, only absolute.
+ *
+ * Exported (not just internal) so the bead-`7usr` honesty contract can
+ * be tested *directly* — feeding it two deliberately-disagreeing passes
+ * and asserting it reports a low figure.  After the `oj5j` substrate fix
+ * lifted the former half-integer-spaced low-precision witnesses to full
+ * precision, this direct unit test is the load-bearing guard against
+ * the estimator silently regressing into over-reporting (it would
+ * otherwise need an end-to-end input that genuinely loses precision,
+ * and none survives in the 2-pole regime post-`oj5j`).
  */
-function estimateAchievedPrecision(
+export function estimateAchievedPrecision(
   sumA: BigComplex,
   sumB: BigComplex,
   workingBits: number,

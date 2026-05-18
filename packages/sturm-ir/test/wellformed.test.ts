@@ -180,7 +180,15 @@ describe("classical-ref scoping", () => {
   });
 });
 
-describe("cases arms cannot change scope (v0.1)", () => {
+// `cases` arms are the IR's structural fingerprint of a *controlled
+// body* — the recursive analogue of the source-level `when(q) { … }`
+// frame. ADR-0038 names this restriction "Layer 4" of the four-layer
+// coherent-control closure: no non-unitary op (`prepare`, `observe`,
+// `discard`, nested `cases`, scope-changing `oracle`) appears inside
+// an arm. Each test below pins one rejection path for one forbidden
+// op; the positive `rotation-only arms is OK` case anchors the
+// happy path.
+describe("cases arms cannot change scope (v0.1) — ADR-0038 Layer 4", () => {
   test("cases with rotation-only arms is OK", () => {
     const c = channel(
       [],
@@ -207,6 +215,29 @@ describe("cases arms cannot change scope (v0.1)", () => {
       ]
     );
     expect(checkWellFormed(c).ok).toBe(false);
+  });
+
+  test("cases arm with observe fails", () => {
+    // Symmetry test against the prepare/discard/nested-cases rejections
+    // below; pins the wellformed.ts rejection at line 152-154 that
+    // existed without a covering test before ADR-0038 closed the gap.
+    const c = channel(
+      [],
+      [W1],
+      [
+        prepareOp(rat(0n, 1n), 0n),
+        prepareOp(rat(0n, 1n), 1n),
+        observeOp(0n, "r1"),
+        casesOp("r1", [observeOp(1n, "r2")], []),
+      ]
+    );
+    const r = checkWellFormed(c);
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.failure.message).toContain("observe");
+      // Failure path points inside the true-arm of the cases op at body[3].
+      expect(r.failure.path).toEqual(["body", "3", "trueArm", "0"]);
+    }
   });
 
   test("cases arm with discard fails", () => {
@@ -236,6 +267,26 @@ describe("cases arms cannot change scope (v0.1)", () => {
       ]
     );
     expect(checkWellFormed(c).ok).toBe(false);
+  });
+
+  test("cases arm in falseArm position also catches non-unitary ops", () => {
+    // The two arms are symmetric — pin both, lest the recursion only
+    // descends into trueArm by accident.
+    const c = channel(
+      [],
+      [W1],
+      [
+        prepareOp(rat(0n, 1n), 0n),
+        prepareOp(rat(0n, 1n), 1n),
+        observeOp(0n, "r"),
+        casesOp("r", [], [discardOp(1n)]),
+      ]
+    );
+    const r = checkWellFormed(c);
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.failure.path).toEqual(["body", "3", "falseArm", "0"]);
+    }
   });
 });
 

@@ -1,0 +1,53 @@
+Problem
+  Name                   :                 
+  Objective sense        : minimize        
+  Type                   : CONIC (conic optimization problem)
+  Constraints            : 66              
+  Affine conic cons.     : 0               
+  Disjunctive cons.      : 0               
+  Cones                  : 0               
+  Scalar variables       : 0               
+  Matrix variables       : 2 (scalarized: 265)
+  Integer variables      : 0               
+
+Optimizer started.
+Presolve started.
+Linear dependency checker started.
+Linear dependency checker terminated.
+Eliminator started.
+Freed constraints in eliminator : 0
+Eliminator terminated.
+Eliminator - tries                  : 1                 time                   : 0.00            
+Lin. dep.  - tries                  : 1                 time                   : 0.00            
+Lin. dep.  - primal attempts        : 1                 successes              : 1               
+Lin. dep.  - dual attempts          : 0                 successes              : 0               
+Lin. dep.  - primal deps.           : 0                 dual deps.             : 0               
+Presolve terminated. Time: 0.00    
+Optimizer  - threads                : 32              
+Optimizer  - solved problem         : the primal      
+Optimizer  - Constraints            : 66              
+Optimizer  - Cones                  : 0               
+Optimizer  - Scalar variables       : 0                 conic                  : 0               
+Optimizer  - Semi-definite variables: 2                 scalarized             : 265             
+Factor     - setup time             : 0.00            
+Factor     - dense det. time        : 0.00              GP order time          : 0.00            
+Factor     - nonzeros before factor : 2211              after factor           : 2211            
+Factor     - dense dim.             : 0                 flops                  : 6.78e+05        
+ITE PFEAS    DFEAS    GFEAS    PRSTATUS   POBJ              DOBJ              MU       TIME  
+0   1.9e+01  1.0e+00  1.1e+01  0.00e+00   1.000000000e+01   0.000000000e+00   1.0e+00  0.00  
+1   2.1e+00  1.1e-01  2.5e-01  1.17e+00   4.143057851e-01   -5.503341672e-01  1.1e-01  0.01  
+2   3.3e-01  1.7e-02  1.3e-02  1.84e+00   4.678457280e-02   -5.316844284e-02  1.7e-02  0.01  
+3   5.5e-02  2.9e-03  8.9e-04  1.09e+00   7.864651559e-03   -8.526417501e-03  2.9e-03  0.01  
+4   9.0e-03  4.7e-04  6.1e-05  9.99e-01   1.368990793e-03   -1.342360047e-03  4.7e-04  0.01  
+5   1.1e-03  5.9e-05  2.9e-06  9.25e-01   1.916703331e-04   -1.627909734e-04  5.9e-05  0.01  
+6   1.2e-04  6.4e-06  8.0e-08  1.06e+00   1.282924251e-05   -2.280885934e-05  6.4e-06  0.01  
+7   1.5e-05  7.7e-07  2.5e-09  1.41e+00   8.760380010e-07   -2.503236774e-06  7.7e-07  0.01  
+8   3.8e-08  2.0e-09  3.5e-13  1.10e+00   2.498985906e-09   -5.806080950e-09  2.0e-09  0.01  
+Optimizer terminated. Time: 0.01    
+
+
+Interior-point solution summary
+  Problem status  : PRIMAL_AND_DUAL_FEASIBLE
+  Solution status : OPTIMAL
+  Primal.  obj: 2.4989859057e-09    nrm: 1e+00    Viol.  con: 4e-05    barvar: 0e+00  
+  Dual.    obj: -5.8060809496e-09   nrm: 1e+00    Viol.  con: 0e+00    barvar: 8e-10  

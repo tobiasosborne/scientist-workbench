@@ -1,0 +1,1403 @@
+
+
+DLMF: §10.9 Integral Representations ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions
+
+DLMF
+
+Index
+Notations
+Search
+Help?
+Citing
+Customize
+Annotate
+UnAnnotate
+
+About the Project
+
+10 Bessel FunctionsBessel and Hankel Functions10.8 Power Series10.10 Continued Fractions
+
+§10.9 Integral Representations
+
+ⓘ
+
+Referenced by:
+§10.54
+Permalink:
+http://dlmf.nist.gov/10.9
+See also:
+Annotations for Ch.10
+
+Contents
+
+§10.9(i) Integrals along the Real Line
+§10.9(ii) Contour Integrals
+§10.9(iii) Products
+§10.9(iv) Compendia
+
+§10.9(i) Integrals along the Real Line
+
+ⓘ
+
+Keywords:
+
+Bessel functions, along the real line, integral representations
+
+Notes:
+See
+Watson (1944, pp. 19–21, 47–48, 68–71, 169–170, 175–180).
+For (10.9.3) see Olver (1997b, p. 244) (with “Exercises
+2.2 and 9.5” corrected to “Exercises 2.3 and 9.5”).
+For (10.9.5), (10.9.10), (10.9.11),
+(10.9.13), (10.9.14) see
+Erdélyi et al. (1953b, pp. 18, 21, 82).
+(The condition ℜ⁡z±ζ>0 in (10.9.14) is
+weaker than the corresponding condition in
+Erdélyi et al. (1953b, p. 82, Eq. (18)).)
+(10.9.15),
+(10.9.16) follow from (10.9.10),
+(10.9.11) by change of variables z=ζ⁢cosh⁡ϕ,
+t→t−ln⁡tanh⁡(12⁢ϕ), ϕ>0.
+Permalink:
+http://dlmf.nist.gov/10.9.i
+See also:
+Annotations for §10.9 and
+Ch.10
+
+Bessel’s Integral
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Bessel’s integral
+
+See also:
+Annotations for §10.9(i),
+§10.9 and
+Ch.10
+
+10.9.1
+
+J0⁡(z)=1π⁢∫0πcos⁡(z⁢sin⁡θ)⁢dθ=1π⁢∫0πcos⁡(z⁢cos⁡θ)⁢dθ,
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+dx: differential of x,
+∫: integral,
+sin⁡z: sine function and
+z: complex variable
+
+A&S Ref:
+ 9.1.18
+
+Permalink:
+http://dlmf.nist.gov/10.9.E1
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.9(i),
+§10.9(i),
+§10.9 and
+Ch.10
+
+10.9.2
+
+Jn⁡(z)=1π⁢∫0πcos⁡(z⁢sin⁡θ−n⁢θ)⁢dθ=i−nπ⁢∫0πei⁢z⁢cos⁡θ⁢cos⁡(n⁢θ)⁢dθ,
+
+n∈ℤ.
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+dx: differential of x,
+∈: element of,
+e: base of natural logarithm,
+i: imaginary unit,
+ℤ: set of all integers,
+∫: integral,
+sin⁡z: sine function,
+n: integer and
+z: complex variable
+
+A&S Ref:
+ 9.1.21
+
+Referenced by:
+§11.10(vii)
+Permalink:
+http://dlmf.nist.gov/10.9.E2
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.9(i),
+§10.9(i),
+§10.9 and
+Ch.10
+
+Neumann’s Integral
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Neumann’s integral
+
+See also:
+Annotations for §10.9(i),
+§10.9 and
+Ch.10
+
+10.9.3
+
+Y0⁡(z)=4π2⁢∫012⁢πcos⁡(z⁢cos⁡θ)⁢(γ+ln⁡(2⁢z⁢sin2⁡θ))⁢dθ,
+
+ⓘ
+
+Symbols:
+
+Yν⁡(z): Bessel function of the second kind,
+γ: Euler’s constant,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+dx: differential of x,
+∫: integral,
+ln⁡z: principal branch of logarithm function,
+sin⁡z: sine function and
+z: complex variable
+
+A&S Ref:
+ 9.19
+
+Referenced by:
+§10.9(i)
+Permalink:
+http://dlmf.nist.gov/10.9.E3
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.9(i),
+§10.9(i),
+§10.9 and
+Ch.10
+
+where γ is Euler’s constant (§5.2(ii)).
+
+Poisson’s and Related Integrals
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Poisson’s integral
+
+See also:
+Annotations for §10.9(i),
+§10.9 and
+Ch.10
+
+10.9.4
+
+Jν⁡(z)=(12⁢z)νπ12⁢Γ⁡(ν+12)⁢∫0πcos⁡(z⁢cos⁡θ)⁢(sin⁡θ)2⁢ν⁢dθ=2⁢(12⁢z)νπ12⁢Γ⁡(ν+12)⁢∫01(1−t2)ν−12⁢cos⁡(z⁢t)⁢dt,
+
+ℜ⁡ν>−12.
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Γ⁡(z): gamma function,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+dx: differential of x,
+∫: integral,
+ℜ⁡: real part,
+sin⁡z: sine function,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.1.20
+
+Referenced by:
+§10.54
+Permalink:
+http://dlmf.nist.gov/10.9.E4
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.9(i),
+§10.9(i),
+§10.9 and
+Ch.10
+
+10.9.5
+
+Yν⁡(z)=2⁢(12⁢z)νπ12⁢Γ⁡(ν+12)⁢(∫01(1−t2)ν−12⁢sin⁡(z⁢t)⁢dt−∫0∞e−z⁢t⁢(1+t2)ν−12⁢dt),
+
+ℜ⁡ν>−12,|ph⁡z|<12⁢π.
+
+ⓘ
+
+Symbols:
+
+Yν⁡(z): Bessel function of the second kind,
+Γ⁡(z): gamma function,
+π: the ratio of the circumference of a circle to its diameter,
+dx: differential of x,
+e: base of natural logarithm,
+∫: integral,
+ph: phase,
+ℜ⁡: real part,
+sin⁡z: sine function,
+z: complex variable and
+ν: complex parameter
+
+Referenced by:
+§10.9(i)
+Permalink:
+http://dlmf.nist.gov/10.9.E5
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.9(i),
+§10.9(i),
+§10.9 and
+Ch.10
+
+Schläfli’s and Related Integrals
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Schläfli’s integrals
+
+See also:
+Annotations for §10.9(i),
+§10.9 and
+Ch.10
+
+10.9.6
+
+Jν⁡(z)=1π⁢∫0πcos⁡(z⁢sin⁡θ−ν⁢θ)⁢dθ−sin⁡(ν⁢π)π⁢∫0∞e−z⁢sinh⁡t−ν⁢t⁢dt,
+
+|ph⁡z|<12⁢π,
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+dx: differential of x,
+e: base of natural logarithm,
+sinh⁡z: hyperbolic sine function,
+∫: integral,
+ph: phase,
+sin⁡z: sine function,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.1.22
+
+Permalink:
+http://dlmf.nist.gov/10.9.E6
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.9(i),
+§10.9(i),
+§10.9 and
+Ch.10
+
+10.9.7
+
+Yν⁡(z)=1π⁢∫0πsin⁡(z⁢sin⁡θ−ν⁢θ)⁢dθ−1π⁢∫0∞(eν⁢t+e−ν⁢t⁢cos⁡(ν⁢π))⁢e−z⁢sinh⁡t⁢dt,
+
+|ph⁡z|<12⁢π.
+
+ⓘ
+
+Symbols:
+
+Yν⁡(z): Bessel function of the second kind,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+dx: differential of x,
+e: base of natural logarithm,
+sinh⁡z: hyperbolic sine function,
+∫: integral,
+ph: phase,
+sin⁡z: sine function,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.1.22
+
+Permalink:
+http://dlmf.nist.gov/10.9.E7
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.9(i),
+§10.9(i),
+§10.9 and
+Ch.10
+
+Mehler–Sonine and Related Integrals
+
+ⓘ
+
+Keywords:
+
+Bessel and Hankel functions, Bessel functions, Hankel functions, Mehler–Sonine integrals, along real line, along the real line, integral representations
+
+See also:
+Annotations for §10.9(i),
+§10.9 and
+Ch.10
+
+10.9.8
+
+Jν⁡(x)
+=2π⁢∫0∞sin⁡(x⁢cosh⁡t−12⁢ν⁢π)⁢cosh⁡(ν⁢t)⁢dt,
+
+Yν⁡(x)
+=−2π⁢∫0∞cos⁡(x⁢cosh⁡t−12⁢ν⁢π)⁢cosh⁡(ν⁢t)⁢dt,
+
+|ℜ⁡ν|<1,x>0.
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Yν⁡(z): Bessel function of the second kind,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+dx: differential of x,
+cosh⁡z: hyperbolic cosine function,
+∫: integral,
+ℜ⁡: real part,
+sin⁡z: sine function,
+x: real variable and
+ν: complex parameter
+
+Permalink:
+http://dlmf.nist.gov/10.9.E8
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.9(i),
+§10.9(i),
+§10.9 and
+Ch.10
+
+In particular,
+
+10.9.9
+
+J0⁡(x)
+=2π⁢∫0∞sin⁡(x⁢cosh⁡t)⁢dt,
+
+x>0,
+
+Y0⁡(x)
+=−2π⁢∫0∞cos⁡(x⁢cosh⁡t)⁢dt,
+
+x>0.
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Yν⁡(z): Bessel function of the second kind,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+dx: differential of x,
+cosh⁡z: hyperbolic cosine function,
+∫: integral,
+sin⁡z: sine function and
+x: real variable
+
+A&S Ref:
+ 9.1.23
+
+Permalink:
+http://dlmf.nist.gov/10.9.E9
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.9(i),
+§10.9(i),
+§10.9 and
+Ch.10
+
+10.9.10
+
+Hν(1)⁡(z)=e−12⁢ν⁢π⁢iπ⁢i⁢∫−∞∞ei⁢z⁢cosh⁡t−ν⁢t⁢dt,
+
+0<ph⁡z<π,
+
+ⓘ
+
+Symbols:
+
+Hν(1)⁡(z): Bessel function of the third kind (or Hankel function),
+π: the ratio of the circumference of a circle to its diameter,
+dx: differential of x,
+e: base of natural logarithm,
+cosh⁡z: hyperbolic cosine function,
+i: imaginary unit,
+∫: integral,
+ph: phase,
+z: complex variable and
+ν: complex parameter
+
+Referenced by:
+§10.9(i)
+Permalink:
+http://dlmf.nist.gov/10.9.E10
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.9(i),
+§10.9(i),
+§10.9 and
+Ch.10
+
+10.9.11
+
+Hν(2)⁡(z)=−e12⁢ν⁢π⁢iπ⁢i⁢∫−∞∞e−i⁢z⁢cosh⁡t−ν⁢t⁢dt,
+
+−π<ph⁡z<0.
+
+ⓘ
+
+Symbols:
+
+Hν(2)⁡(z): Bessel function of the third kind (or Hankel function),
+π: the ratio of the circumference of a circle to its diameter,
+dx: differential of x,
+e: base of natural logarithm,
+cosh⁡z: hyperbolic cosine function,
+i: imaginary unit,
+∫: integral,
+ph: phase,
+z: complex variable and
+ν: complex parameter
+
+Referenced by:
+§10.9(i)
+Permalink:
+http://dlmf.nist.gov/10.9.E11
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.9(i),
+§10.9(i),
+§10.9 and
+Ch.10
+
+10.9.12
+
+Jν⁡(x)
+=2⁢(12⁢x)−νπ12⁢Γ⁡(12−ν)⁢∫1∞sin⁡(x⁢t)⁢dt(t2−1)ν+12,
+
+Yν⁡(x)
+=−2⁢(12⁢x)−νπ12⁢Γ⁡(12−ν)⁢∫1∞cos⁡(x⁢t)⁢dt(t2−1)ν+12,
+
+|ℜ⁡ν|<12, x>0.
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Yν⁡(z): Bessel function of the second kind,
+Γ⁡(z): gamma function,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+dx: differential of x,
+∫: integral,
+ℜ⁡: real part,
+sin⁡z: sine function,
+x: real variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.1.24
+
+Permalink:
+http://dlmf.nist.gov/10.9.E12
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.9(i),
+§10.9(i),
+§10.9 and
+Ch.10
+
+10.9.13
+
+(z+ζz−ζ)12⁢ν⁢Jν⁡((z2−ζ2)12)=1π⁢∫0πeζ⁢cos⁡θ⁢cos⁡(z⁢sin⁡θ−ν⁢θ)⁢dθ−sin⁡(ν⁢π)π⁢∫0∞e−ζ⁢cosh⁡t−z⁢sinh⁡t−ν⁢t⁢dt,
+
+ℜ⁡(z+ζ)>0,
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+dx: differential of x,
+e: base of natural logarithm,
+cosh⁡z: hyperbolic cosine function,
+sinh⁡z: hyperbolic sine function,
+∫: integral,
+ℜ⁡: real part,
+sin⁡z: sine function,
+z: complex variable and
+ν: complex parameter
+
+Referenced by:
+§10.9(i)
+Permalink:
+http://dlmf.nist.gov/10.9.E13
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.9(i),
+§10.9(i),
+§10.9 and
+Ch.10
+
+10.9.14
+
+(z+ζz−ζ)12⁢ν⁢Yν⁡((z2−ζ2)12)=1π⁢∫0πeζ⁢cos⁡θ⁢sin⁡(z⁢sin⁡θ−ν⁢θ)⁢dθ−1π⁢∫0∞(eν⁢t+ζ⁢cosh⁡t+e−ν⁢t−ζ⁢cosh⁡t⁢cos⁡(ν⁢π))⁢e−z⁢sinh⁡t⁢dt,
+
+ℜ⁡(z±ζ)>0.
+
+ⓘ
+
+Symbols:
+
+Yν⁡(z): Bessel function of the second kind,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+dx: differential of x,
+e: base of natural logarithm,
+cosh⁡z: hyperbolic cosine function,
+sinh⁡z: hyperbolic sine function,
+∫: integral,
+ℜ⁡: real part,
+sin⁡z: sine function,
+z: complex variable and
+ν: complex parameter
+
+Referenced by:
+§10.9(i)
+Permalink:
+http://dlmf.nist.gov/10.9.E14
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.9(i),
+§10.9(i),
+§10.9 and
+Ch.10
+
+10.9.15
+
+(z+ζz−ζ)12⁢ν⁢Hν(1)⁡((z2−ζ2)12)=1π⁢i⁢e−12⁢ν⁢π⁢i⁢∫−∞∞ei⁢z⁢cosh⁡t+i⁢ζ⁢sinh⁡t−ν⁢t⁢dt,
+
+ℑ⁡(z±ζ)>0,
+
+ⓘ
+
+Symbols:
+
+Hν(1)⁡(z): Bessel function of the third kind (or Hankel function),
+π: the ratio of the circumference of a circle to its diameter,
+dx: differential of x,
+e: base of natural logarithm,
+cosh⁡z: hyperbolic cosine function,
+sinh⁡z: hyperbolic sine function,
+ℑ⁡: imaginary part,
+i: imaginary unit,
+∫: integral,
+z: complex variable and
+ν: complex parameter
+
+Referenced by:
+§10.9(i)
+Permalink:
+http://dlmf.nist.gov/10.9.E15
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.9(i),
+§10.9(i),
+§10.9 and
+Ch.10
+
+10.9.16
+
+(z+ζz−ζ)12⁢ν⁢Hν(2)⁡((z2−ζ2)12)=−1π⁢i⁢e12⁢ν⁢π⁢i⁢∫−∞∞e−i⁢z⁢cosh⁡t−i⁢ζ⁢sinh⁡t−ν⁢t⁢dt,
+
+ℑ⁡(z±ζ)<0.
+
+ⓘ
+
+Symbols:
+
+Hν(2)⁡(z): Bessel function of the third kind (or Hankel function),
+π: the ratio of the circumference of a circle to its diameter,
+dx: differential of x,
+e: base of natural logarithm,
+cosh⁡z: hyperbolic cosine function,
+sinh⁡z: hyperbolic sine function,
+ℑ⁡: imaginary part,
+i: imaginary unit,
+∫: integral,
+z: complex variable and
+ν: complex parameter
+
+Referenced by:
+§10.9(i)
+Permalink:
+http://dlmf.nist.gov/10.9.E16
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.9(i),
+§10.9(i),
+§10.9 and
+Ch.10
+
+§10.9(ii) Contour Integrals
+
+ⓘ
+
+Keywords:
+
+Bessel functions, contour integrals, integral representations
+
+Notes:
+See Watson (1944, pp. 160–167 and 174–178).
+Permalink:
+http://dlmf.nist.gov/10.9.ii
+Clarification (effective with 1.2.1):
+
+In regard to the contour of integration, just below (10.9.19),
+we inserted “(see Figure 5.9.1)”.
+
+See also:
+Annotations for §10.9 and
+Ch.10
+
+Schläfli–Sommerfeld Integrals
+
+ⓘ
+
+Keywords:
+
+Bessel and Hankel functions, Hankel functions, Schläfli–Sommerfeld integrals, contour integrals, integral representations
+
+See also:
+Annotations for §10.9(ii),
+§10.9 and
+Ch.10
+
+When |ph⁡z|<12⁢π,
+
+10.9.17
+
+Jν⁡(z)=12⁢π⁢i⁢∫∞−π⁢i∞+π⁢iez⁢sinh⁡t−ν⁢t⁢dt,
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+π: the ratio of the circumference of a circle to its diameter,
+dx: differential of x,
+e: base of natural logarithm,
+sinh⁡z: hyperbolic sine function,
+i: imaginary unit,
+∫: integral,
+z: complex variable and
+ν: complex parameter
+
+Permalink:
+http://dlmf.nist.gov/10.9.E17
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.9(ii),
+§10.9(ii),
+§10.9 and
+Ch.10
+
+and
+
+10.9.18
+
+Hν(1)⁡(z)
+=1π⁢i⁢∫−∞∞+π⁢iez⁢sinh⁡t−ν⁢t⁢dt,
+
+Hν(2)⁡(z)
+=−1π⁢i⁢∫−∞∞−π⁢iez⁢sinh⁡t−ν⁢t⁢dt.
+
+ⓘ
+
+Symbols:
+
+Hν(1)⁡(z): Bessel function of the third kind (or Hankel function),
+Hν(2)⁡(z): Bessel function of the third kind (or Hankel function),
+π: the ratio of the circumference of a circle to its diameter,
+dx: differential of x,
+e: base of natural logarithm,
+sinh⁡z: hyperbolic sine function,
+i: imaginary unit,
+∫: integral,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.1.25
+
+Referenced by:
+§10.74(iii)
+Permalink:
+http://dlmf.nist.gov/10.9.E18
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.9(ii),
+§10.9(ii),
+§10.9 and
+Ch.10
+
+Schläfli’s Integral
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Schläfli’s integrals
+
+See also:
+Annotations for §10.9(ii),
+§10.9 and
+Ch.10
+
+10.9.19
+
+Jν⁡(z)=(12⁢z)ν2⁢π⁢i⁢∫−∞(0+)exp⁡(t−z24⁢t)⁢dttν+1,
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+π: the ratio of the circumference of a circle to its diameter,
+dx: differential of x,
+exp⁡z: exponential function,
+i: imaginary unit,
+∫: integral,
+z: complex variable and
+ν: complex parameter
+
+Referenced by:
+
+§10.9(ii),
+Erratum (V1.2.1) for Figure 5.9.1
+
+Permalink:
+http://dlmf.nist.gov/10.9.E19
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.9(ii),
+§10.9(ii),
+§10.9 and
+Ch.10
+
+where the integration path is a simple loop contour (see Figure 5.9.1),
+and tν+1 is continuous on the path and takes its principal value at
+the intersection with the positive real axis.
+
+Hankel’s Integrals
+
+ⓘ
+
+See also:
+Annotations for §10.9(ii),
+§10.9 and
+Ch.10
+
+In (10.9.20) and (10.9.21) the integration paths
+are simple loop contours not enclosing t=−1. Also,
+(t2−1)ν−12 is continuous on the path, and takes its principal
+value at the intersection with the interval (1,∞).
+
+10.9.20
+
+Jν⁡(z)=Γ⁡(12−ν)⁢(12⁢z)νπ32⁢i⁢∫0(1+)cos⁡(z⁢t)⁢(t2−1)ν−12⁢dt,
+
+ν≠12,32,….
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Γ⁡(z): gamma function,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+dx: differential of x,
+i: imaginary unit,
+∫: integral,
+z: complex variable and
+ν: complex parameter
+
+Referenced by:
+§10.9(ii)
+Permalink:
+http://dlmf.nist.gov/10.9.E20
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.9(ii),
+§10.9(ii),
+§10.9 and
+Ch.10
+
+10.9.21
+
+Hν(1)⁡(z)
+=Γ⁡(12−ν)⁢(12⁢z)νπ32⁢i⁢∫1+i⁢∞(1+)ei⁢z⁢t⁢(t2−1)ν−12⁢dt,
+
+Hν(2)⁡(z)
+=Γ⁡(12−ν)⁢(12⁢z)νπ32⁢i⁢∫1−i⁢∞(1+)e−i⁢z⁢t⁢(t2−1)ν−12⁢dt,
+
+ν≠12,32,…,|ph⁡z|<12⁢π.
+
+ⓘ
+
+Symbols:
+
+Γ⁡(z): gamma function,
+Hν(1)⁡(z): Bessel function of the third kind (or Hankel function),
+Hν(2)⁡(z): Bessel function of the third kind (or Hankel function),
+π: the ratio of the circumference of a circle to its diameter,
+dx: differential of x,
+e: base of natural logarithm,
+i: imaginary unit,
+∫: integral,
+ph: phase,
+z: complex variable and
+ν: complex parameter
+
+Referenced by:
+§10.9(ii)
+Permalink:
+http://dlmf.nist.gov/10.9.E21
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.9(ii),
+§10.9(ii),
+§10.9 and
+Ch.10
+
+Mellin–Barnes Type Integrals
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Mellin–Barnes type, contour integrals, integral representations
+
+See also:
+Annotations for §10.9(ii),
+§10.9 and
+Ch.10
+
+10.9.22
+
+Jν⁡(x)=12⁢π⁢i⁢∫−i⁢∞i⁢∞Γ⁡(−t)⁢(12⁢x)ν+2⁢tΓ⁡(ν+t+1)⁢dt,
+
+ℜ⁡ν>0, x>0,
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Γ⁡(z): gamma function,
+π: the ratio of the circumference of a circle to its diameter,
+dx: differential of x,
+i: imaginary unit,
+∫: integral,
+ℜ⁡: real part,
+x: real variable and
+ν: complex parameter
+
+Keywords:
+Mellin transform
+A&S Ref:
+ 9.1.26
+
+Referenced by:
+§10.9(ii)
+Permalink:
+http://dlmf.nist.gov/10.9.E22
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.9(ii),
+§10.9(ii),
+§10.9 and
+Ch.10
+
+where the integration path passes to the left of t=0,1,2,….
+
+10.9.23
+
+Jν⁡(z)=12⁢π⁢i⁢∫−∞−i⁢c−∞+i⁢cΓ⁡(t)Γ⁡(ν−t+1)⁢(12⁢z)ν−2⁢t⁢dt,
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Γ⁡(z): gamma function,
+π: the ratio of the circumference of a circle to its diameter,
+dx: differential of x,
+i: imaginary unit,
+∫: integral,
+z: complex variable,
+ν: complex parameter and
+c: constant
+
+Keywords:
+Mellin transform
+Permalink:
+http://dlmf.nist.gov/10.9.E23
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.9(ii),
+§10.9(ii),
+§10.9 and
+Ch.10
+
+where c is a positive constant and the integration path encloses the points
+t=0,−1,−2,….
+
+In (10.9.24) and (10.9.25) c is any constant
+exceeding max⁡(ℜ⁡ν,0).
+
+10.9.24
+
+Hν(1)⁡(z)
+=−e−12⁢ν⁢π⁢i2⁢π2⁢∫c−i⁢∞c+i⁢∞Γ⁡(t)⁢Γ⁡(t−ν)⁢(−12⁢i⁢z)ν−2⁢t⁢dt,
+
+0<ph⁡z<π,
+
+ⓘ
+
+Symbols:
+
+Γ⁡(z): gamma function,
+Hν(1)⁡(z): Bessel function of the third kind (or Hankel function),
+π: the ratio of the circumference of a circle to its diameter,
+dx: differential of x,
+e: base of natural logarithm,
+i: imaginary unit,
+∫: integral,
+ph: phase,
+z: complex variable,
+ν: complex parameter and
+c: constant
+
+Keywords:
+Mellin transform
+Referenced by:
+§10.9(ii)
+Permalink:
+http://dlmf.nist.gov/10.9.E24
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.9(ii),
+§10.9(ii),
+§10.9 and
+Ch.10
+
+10.9.25
+
+Hν(2)⁡(z)
+=e12⁢ν⁢π⁢i2⁢π2⁢∫c−i⁢∞c+i⁢∞Γ⁡(t)⁢Γ⁡(t−ν)⁢(12⁢i⁢z)ν−2⁢t⁢dt,
+
+−π<ph⁡z<0.
+
+ⓘ
+
+Symbols:
+
+Γ⁡(z): gamma function,
+Hν(2)⁡(z): Bessel function of the third kind (or Hankel function),
+π: the ratio of the circumference of a circle to its diameter,
+dx: differential of x,
+e: base of natural logarithm,
+i: imaginary unit,
+∫: integral,
+ph: phase,
+z: complex variable,
+ν: complex parameter and
+c: constant
+
+Keywords:
+Mellin transform
+Referenced by:
+
+§10.9(ii),
+§10.9(ii)
+
+Permalink:
+http://dlmf.nist.gov/10.9.E25
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.9(ii),
+§10.9(ii),
+§10.9 and
+Ch.10
+
+For (10.9.22)–(10.9.25) and further integrals of
+this type see Paris and Kaminski (2001, pp. 114–116).
+
+§10.9(iii) Products
+
+ⓘ
+
+Keywords:
+
+Bessel functions, integral representations, products
+
+Notes:
+See Watson (1944, pp. 150, 436, 438, 441–444). For
+(10.9.27) see Erdélyi et al. (1953b, p. 47). See
+also Olver (1997b, pp. 340–341).
+Permalink:
+http://dlmf.nist.gov/10.9.iii
+See also:
+Annotations for §10.9 and
+Ch.10
+
+10.9.26
+
+Jμ⁡(z)⁢Jν⁡(z)=2π⁢∫0π/2Jμ+ν⁡(2⁢z⁢cos⁡θ)⁢cos⁡((μ−ν)⁢θ)⁢dθ,
+
+ℜ⁡(μ+ν)>−1.
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+dx: differential of x,
+∫: integral,
+ℜ⁡: real part,
+z: complex variable and
+ν: complex parameter
+
+Source:
+Watson (1944, (5.43.1), p. 150, originally cos⁡(μ−ν)⁢θ. Clarified
+to cos⁡((μ−ν)⁢θ) in 1.0.18.)
+Referenced by:
+Erratum (V1.0.18) for (10.9.26)
+Permalink:
+http://dlmf.nist.gov/10.9.E26
+Encodings:
+
+TeX, pMML, png
+
+Clarification (effective with 1.0.18):
+
+The factor on the right-hand side of the integral, originally cos⁡(μ−ν)⁢θ,
+was replaced with cos⁡((μ−ν)⁢θ) to clarify the meaning. Note that this
+ambiguity originates with Watson (1944, p. 150).
+
+See also:
+Annotations for §10.9(iii),
+§10.9 and
+Ch.10
+
+10.9.27
+
+Jν⁡(z)⁢Jν⁡(ζ)=2π⁢∫0π/2J2⁢ν⁡(2⁢(z⁢ζ)12⁢sin⁡θ)⁢cos⁡((z−ζ)⁢cos⁡θ)⁢dθ,
+
+ℜ⁡ν>−12,
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+dx: differential of x,
+∫: integral,
+ℜ⁡: real part,
+sin⁡z: sine function,
+z: complex variable and
+ν: complex parameter
+
+Referenced by:
+§10.9(iii)
+Permalink:
+http://dlmf.nist.gov/10.9.E27
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.9(iii),
+§10.9 and
+Ch.10
+
+where the square root has its principal value.
+
+10.9.28
+
+Jν⁡(z)⁢Jν⁡(ζ)=12⁢π⁢i⁢∫c−i⁢∞c+i⁢∞⁢exp⁡(12⁢t−z2+ζ22⁢t)⁢Iν⁡(z⁢ζt)⁢dtt,
+
+ℜ⁡ν>−1,
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+π: the ratio of the circumference of a circle to its diameter,
+dx: differential of x,
+exp⁡z: exponential function,
+i: imaginary unit,
+∫: integral,
+Iν⁡(z): modified Bessel function of the first kind,
+ℜ⁡: real part,
+z: complex variable,
+ν: complex parameter and
+c: constant
+
+Permalink:
+http://dlmf.nist.gov/10.9.E28
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.9(iii),
+§10.9 and
+Ch.10
+
+where c is a positive constant. For the function Iν see
+§10.25(ii).
+
+Mellin–Barnes Type
+
+ⓘ
+
+See also:
+Annotations for §10.9(iii),
+§10.9 and
+Ch.10
+
+10.9.29
+
+Jμ⁡(x)⁢Jν⁡(x)=12⁢π⁢i⁢∫−i⁢∞i⁢∞Γ⁡(−t)⁢Γ⁡(2⁢t+μ+ν+1)⁢(12⁢x)μ+ν+2⁢tΓ⁡(t+μ+1)⁢Γ⁡(t+ν+1)⁢Γ⁡(t+μ+ν+1)⁢dt,
+
+x>0,
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Γ⁡(z): gamma function,
+π: the ratio of the circumference of a circle to its diameter,
+dx: differential of x,
+i: imaginary unit,
+∫: integral,
+x: real variable and
+ν: complex parameter
+
+Keywords:
+Mellin transform
+Permalink:
+http://dlmf.nist.gov/10.9.E29
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.9(iii),
+§10.9(iii),
+§10.9 and
+Ch.10
+
+where the path of integration separates the poles of Γ⁡(−t) from those
+of Γ⁡(2⁢t+μ+ν+1). See Paris and Kaminski (2001, p. 116) for related
+results.
+
+Nicholson’s Integral
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Nicholson’s integral, integral representations, products
+
+See also:
+Annotations for §10.9(iii),
+§10.9 and
+Ch.10
+
+10.9.30
+
+Jν2⁡(z)+Yν2⁡(z)=8π2⁢∫0∞cosh⁡(2⁢ν⁢t)⁢K0⁡(2⁢z⁢sinh⁡t)⁢dt,
+
+|ph⁡z|<12⁢π.
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+Yν⁡(z): Bessel function of the second kind,
+π: the ratio of the circumference of a circle to its diameter,
+dx: differential of x,
+cosh⁡z: hyperbolic cosine function,
+sinh⁡z: hyperbolic sine function,
+∫: integral,
+Kν⁡(z): modified Bessel function of the second kind,
+ph: phase,
+z: complex variable and
+ν: complex parameter
+
+Permalink:
+http://dlmf.nist.gov/10.9.E30
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.9(iii),
+§10.9(iii),
+§10.9 and
+Ch.10
+
+For the function K0 see §10.25(ii).
+
+§10.9(iv) Compendia
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Bessel functions and Hankel functions, Hankel functions, Hankel’s integrals, compendia, integral representations
+
+Permalink:
+http://dlmf.nist.gov/10.9.iv
+See also:
+Annotations for §10.9 and
+Ch.10
+
+For collections of integral representations of Bessel and Hankel functions see
+Erdélyi et al. (1953b, §§7.3 and 7.12),
+Erdélyi et al. (1954a, pp. 43–48, 51–60, 99–105, 108–115, 123–124, 272–276, and
+356–357),
+Gröbner and Hofreiter (1950, pp. 189–192),
+Marichev (1983, pp. 191–192 and 196–210),
+Magnus et al. (1966, §3.6), and Watson (1944, Chapter 6).
+
+10.8 Power Series10.10 Continued Fractions
+
+© 2010–2026 NIST / Disclaimer / Feedback;
+ Version 1.2.6;
+Release date 2026-03-15.
+
+Site Privacy Accessibility Privacy Program Copyrights Vulnerability Disclosure No Fear Act Policy FOIA Environmental Policy Scientific Integrity Information Quality Standards Commerce.gov Science.gov USA.gov
+

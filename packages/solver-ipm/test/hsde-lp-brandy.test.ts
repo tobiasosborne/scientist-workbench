@@ -7,28 +7,32 @@
 // tagged refusal". This is the "resolved" branch.
 
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
 import { solveHsdeLp, lpFromCanonical, type CanonicalLp } from "../src/index.js";
+import { loadSuite } from "./corpus.js";
 
-const corpus = JSON.parse(
-  readFileSync(
-    "/home/tobias/Projects/scientist-workbench-corpus/benchmarks/lp-netlib/golden/inputs.json",
-    "utf-8",
-  ),
-);
-const cases: { id: string; input: CanonicalLp }[] = corpus.cases;
-const brandy = cases.find((c) => c.id === "brandy")!;
+const suite = loadSuite<CanonicalLp>("lp-netlib");
 
-describe("brandy NETLIB LP via HSDE", () => {
-  test("solves to optimality near 1518.5099 (legacy path numerical-errors here)", () => {
-    const res = solveHsdeLp(lpFromCanonical(brandy.input), {
-      params: { iterLimit: 300 },
-    });
-    expect(res.status).toBe("optimal");
-    expect(Math.abs(res.primalObj - 1518.5098964881047)).toBeLessThan(1e-3);
-    expect(res.achievedPrecision).toBeLessThanOrEqual(1);
-    expect(res.tau).toBeGreaterThan(1e-6);
-    // κ → 0 confirms optimal branch (not certificate)
-    expect(res.kappa / res.tau).toBeLessThan(1e-6);
+// Corpus-missing handling follows the `corpus.ts` convention (skip with a
+// clear reason), matching `netlib.test.ts` / `lp-small.test.ts`.
+if (suite === null) {
+  describe.skip("brandy NETLIB LP via HSDE (corpus not found)", () => {
+    test("set WORKBENCH_CORPUS or place scientist-workbench-corpus alongside the workbench", () => {});
   });
-});
+} else {
+  const brandy = suite.cases.find((c) => c.id === "brandy");
+
+  describe("brandy NETLIB LP via HSDE", () => {
+    test("solves to optimality near 1518.5099 (legacy path numerical-errors here)", () => {
+      expect(brandy).toBeDefined();
+      const res = solveHsdeLp(lpFromCanonical(brandy!.input), {
+        params: { iterLimit: 300 },
+      });
+      expect(res.status).toBe("optimal");
+      expect(Math.abs(res.primalObj - 1518.5098964881047)).toBeLessThan(1e-3);
+      expect(res.achievedPrecision).toBeLessThanOrEqual(1);
+      expect(res.tau).toBeGreaterThan(1e-6);
+      // κ → 0 confirms optimal branch (not certificate)
+      expect(res.kappa / res.tau).toBeLessThan(1e-6);
+    });
+  });
+}

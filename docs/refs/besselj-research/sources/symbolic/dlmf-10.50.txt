@@ -1,0 +1,193 @@
+
+
+DLMF: §10.50 Wronskians and Cross-Products ‣ Spherical Bessel Functions ‣ Chapter 10 Bessel Functions
+
+DLMF
+
+Index
+Notations
+Search
+Help?
+Citing
+Customize
+Annotate
+UnAnnotate
+
+About the Project
+
+10 Bessel FunctionsSpherical Bessel Functions10.49 Explicit Formulas10.51 Recurrence Relations and Derivatives
+
+§10.50 Wronskians and Cross-Products
+
+ⓘ
+
+Keywords:
+
+Wronskians, cross-products, spherical Bessel functions
+
+Notes:
+That the Wronskians are constant multiples of z−2 follows from
+(1.13.5). The constants can be found from the limiting forms
+(and their derivatives) given in §§10.52(i) or 10.52(ii).
+For (10.50.3) combine (10.50.1) with (10.51.1)
+and (10.51.2). For (10.50.4) use
+(10.49.2)–(10.49.5).
+Permalink:
+http://dlmf.nist.gov/10.50
+See also:
+Annotations for Ch.10
+
+10.50.1
+
+𝒲⁡{𝗃n⁡(z),𝗒n⁡(z)}
+=z−2,
+
+𝒲⁡{𝗁n(1)⁡(z),𝗁n(2)⁡(z)}
+=−2⁢i⁢z−2.
+
+ⓘ
+
+Symbols:
+
+𝒲: Wronskian,
+i: imaginary unit,
+𝗃n⁡(z): spherical Bessel function of the first kind,
+𝗒n⁡(z): spherical Bessel function of the second kind,
+𝗁n(1)⁡(z): spherical Bessel function of the third kind,
+𝗁n(2)⁡(z): spherical Bessel function of the third kind,
+n: integer and
+z: complex variable
+
+A&S Ref:
+ 10.1.6, 10.1.7
+
+Referenced by:
+§10.50
+Permalink:
+http://dlmf.nist.gov/10.50.E1
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.50 and
+Ch.10
+
+10.50.2
+
+𝒲⁡{𝗂n(1)⁡(z),𝗂n(2)⁡(z)}
+=(−1)n+1⁢z−2,
+
+𝒲⁡{𝗂n(1)⁡(z),𝗄n⁡(z)}
+=𝒲⁡{𝗂n(2)⁡(z),𝗄n⁡(z)}=−12⁢π⁢z−2.
+
+ⓘ
+
+Symbols:
+
+𝒲: Wronskian,
+π: the ratio of the circumference of a circle to its diameter,
+𝗂n(1)⁡(z): modified spherical Bessel function,
+𝗂n(2)⁡(z): modified spherical Bessel function,
+𝗄n⁡(z): modified spherical Bessel function,
+n: integer and
+z: complex variable
+
+A&S Ref:
+ 10.2.7, 10.2.8
+
+Permalink:
+http://dlmf.nist.gov/10.50.E2
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.50 and
+Ch.10
+
+10.50.3
+
+𝗃n+1⁡(z)⁢𝗒n⁡(z)−𝗃n⁡(z)⁢𝗒n+1⁡(z)
+=z−2,
+
+𝗃n+2⁡(z)⁢𝗒n⁡(z)−𝗃n⁡(z)⁢𝗒n+2⁡(z)
+=(2⁢n+3)⁢z−3.
+
+ⓘ
+
+Symbols:
+
+𝗃n⁡(z): spherical Bessel function of the first kind,
+𝗒n⁡(z): spherical Bessel function of the second kind,
+n: integer and
+z: complex variable
+
+A&S Ref:
+ 10.2.31, 10.1.32
+
+Referenced by:
+
+§10.50,
+§10.50
+
+Permalink:
+http://dlmf.nist.gov/10.50.E3
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.50 and
+Ch.10
+
+10.50.4
+
+𝗃0⁡(z)⁢𝗃n⁡(z)+𝗒0⁡(z)⁢𝗒n⁡(z)=cos⁡(12⁢n⁢π)⁢∑k=0⌊n/2⌋(−1)k⁢a2⁢k⁡(n+12)z2⁢k+2+sin⁡(12⁢n⁢π)⁢∑k=0⌊(n−1)/2⌋(−1)k⁢a2⁢k+1⁡(n+12)z2⁢k+3,
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+⌊x⌋: floor of x,
+sin⁡z: sine function,
+𝗃n⁡(z): spherical Bessel function of the first kind,
+𝗒n⁡(z): spherical Bessel function of the second kind,
+n: integer,
+k: nonnegative integer,
+z: complex variable and
+ak⁡(ν): polynomial coefficient
+
+A&S Ref:
+ 10.1.33 (modified)
+
+Referenced by:
+
+§10.50,
+§10.50
+
+Permalink:
+http://dlmf.nist.gov/10.50.E4
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.50 and
+Ch.10
+
+where ak⁡(n+12) is given by (10.49.1).
+
+Results corresponding to (10.50.3) and (10.50.4) for
+𝗂n(1)⁡(z) and 𝗂n(2)⁡(z) are obtainable via (10.47.12).
+
+10.49 Explicit Formulas10.51 Recurrence Relations and Derivatives
+
+© 2010–2026 NIST / Disclaimer / Feedback;
+ Version 1.2.6;
+Release date 2026-03-15.
+
+Site Privacy Accessibility Privacy Program Copyrights Vulnerability Disclosure No Fear Act Policy FOIA Environmental Policy Scientific Integrity Information Quality Standards Commerce.gov Science.gov USA.gov
+

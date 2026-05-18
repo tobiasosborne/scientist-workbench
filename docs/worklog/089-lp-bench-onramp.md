@@ -1,5 +1,15 @@
 # 089 — LP bench onramp for Phase 1 (2026-05-11)
 
+> **Superseded in part — see ADR-0037 and worklog 114 (2026-05-14).**
+> The "`tools/cone-solve` v0.1 gate: 21/21 on `lp-netlib` + 29/29 on
+> `lp-small`" target in the *Bench gate (v0.1)* section below is
+> **withdrawn** as a category error: it handed the *universal* tool the
+> *LP specialist's* 1e-8 gate. `lp-netlib` / `lp-small` are `lp-solve`'s
+> gates; `cone-solve` v0.1 is gated by its seven-artefact contract, and
+> its relationship to `lp-netlib` is a tracked 1e-6 *profile*, not a
+> pass/fail bar (ADR-0037). The rest of this shard — what to read, the
+> feedback loop, the dependency chain — stands.
+
 ## Context
 
 Phase 0 of the convex-cone solver epic (eg9j, ADR-0030) closed

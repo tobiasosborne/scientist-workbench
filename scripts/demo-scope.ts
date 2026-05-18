@@ -26,10 +26,11 @@
 // if you want a clean provenance store; absent, the demos use the
 // global default (`~/.scientist-workbench/cas-store`).
 
-import { float64FromNumber, float64ToNumber, hash, int, list, parse, rat, record, str, sym, expr, type Value } from "@workbench/protocol";
+import { float64FromNumber, float64ToNumber, hash, int, list, parse, rat, record, str, sym, expr, tagged, type Value, type Float64Value, type ListValueOf } from "@workbench/protocol";
 import { canonicalize } from "@workbench/protocol";
 import { spawnBun } from "@workbench/contract";
 import { loadWorkbench, typed } from "@workbench/compose";
+import { matrixToValue, valueToVector } from "@workbench/json-bridge";
 
 // -----------------------------------------------------------------------------
 // Pretty-printer — same shape as `SHORT` in the bash version
@@ -336,21 +337,20 @@ const peiRows = [
   [1, 1, 1, 2, 1],
   [1, 1, 1, 1, 2],
 ];
-const peiInput = list(
-  peiRows.map((row) => list(row.map((x) => float64FromNumber(x)))),
-);
+// Boilerplate-deleted via `@workbench/json-bridge` (bead qiv8). `matrixToValue`
+// returns the narrow `ListValueOf<ListValueOf<Float64Value>>` so the
+// typed-barrel slot takes it cast-free; `valueToVector` is the inverse of
+// the old `.filter(isFloat64).map(float64ToNumber as never)` chain.
 const eighResult = await wb.linalgEigh({
   kind: "record",
-  fields: { A: peiInput },
+  fields: { A: matrixToValue(peiRows) },
 });
 if (eighResult.kind === "record") {
   const lams = eighResult.fields["eigenvalues"];
   const reconErr = eighResult.fields["reconstruction_error"];
   const orthErr = eighResult.fields["orthogonality_error"];
   if (lams?.kind === "list" && reconErr?.kind === "float64" && orthErr?.kind === "float64") {
-    const eigs = lams.items
-      .filter((it): it is { kind: "float64" } & typeof it => it.kind === "float64")
-      .map((it) => float64ToNumber(it as never).toFixed(4));
+    const eigs = valueToVector(lams).map((x) => x.toFixed(4));
     console.log("  eigenvalues:        [" + eigs.join(", ") + "]   (expected [1, 1, 1, 1, 6])");
     console.log("  reconstruction err:", float64ToNumber(reconErr).toExponential(2));
     console.log("  orthogonality err: ", float64ToNumber(orthErr).toExponential(2),
@@ -1148,6 +1148,390 @@ function reportSdp(label: string, out: Value): void {
 reportSdp("default (nt)", await wb.sdpSolve(sdpInput as never));
 reportSdp("--method=aho", await wb.sdpSolve(sdpInput as never, { method: "aho" }));
 reportSdp("--method=hsde-nt", await wb.sdpSolve(sdpInput as never, { method: "hsde-nt" }));
+
+// -----------------------------------------------------------------------------
+// 21. choi-iso ∘ linalg-eigh — the Peres–Horodecki CP test, end-to-end
+// -----------------------------------------------------------------------------
+//
+// The transpose map T(ρ) = ρᵀ is positive (it sends Hermitian to Hermitian,
+// PSD to PSD on a single system) but not completely positive (extending it
+// by an identity factor on a second system breaks positivity). The
+// Choi–Jamiołkowski isomorphism makes this abstract property concrete:
+// J(Φ) ⪰ 0 ⟺ Φ is CP. So computing the Choi matrix of T and feeding it to
+// linalg-eigh should expose a negative eigenvalue. This is exactly the
+// Peres–Horodecki PPT entanglement-detection criterion, viewed as a CP
+// witness rather than as a witness on a particular bipartite state.
+//
+// Two tools, one wire. The whole composition runs in this process.
+
+console.log("\n" + "=".repeat(60));
+console.log("  21. choi-iso ∘ linalg-eigh — the transpose map is not CP");
+console.log("=".repeat(60));
+console.log(
+  "T(ρ) = ρᵀ has superoperator matrix SWAP_4 in column-stacking vec.\n" +
+  "choi(T) is *also* SWAP_4 (a fixed point of the iso for this map);\n" +
+  "eigh of SWAP_4 reveals eigenvalues {-1, 1, 1, 1} — the negative one\n" +
+  "is the Peres–Horodecki witness that T is positive but not CP.",
+);
+
+// Transpose-map superoperator (= SWAP_4) on the wire.
+const T_super = list([
+  list([1, 0, 0, 0].map(float64FromNumber)),
+  list([0, 0, 1, 0].map(float64FromNumber)),
+  list([0, 1, 0, 0].map(float64FromNumber)),
+  list([0, 0, 0, 1].map(float64FromNumber)),
+]);
+const choiResult = await wb.choiIso(
+  tagged(
+    "channel-to-choi",
+    record({ channel: T_super, dim_in: int(2n), dim_out: int(2n) }),
+  ),
+);
+if (choiResult.kind === "record") {
+  const J = choiResult.fields["J"];
+  if (J?.kind === "list") {
+    const eighOut = await wb.linalgEigh({
+      kind: "record",
+      // `J` is narrowed to `ListValue`; choi-iso's contract guarantees it is
+      // a `list<list<float64>>` Choi matrix — assert the element type the
+      // typed barrel requires.
+      fields: { A: J as ListValueOf<ListValueOf<Float64Value>> },
+    });
+    if (eighOut.kind === "record") {
+      const lams = eighOut.fields["eigenvalues"];
+      if (lams?.kind === "list") {
+        const eigs = lams.items
+          .filter((it): it is { kind: "float64" } & typeof it => it.kind === "float64")
+          .map((it) => float64ToNumber(it as never).toFixed(4));
+        console.log("  J(T) eigenvalues:   [" + eigs.join(", ") + "]");
+        console.log("  the negative eigenvalue is the not-CP witness; T fails J ⪰ 0.");
+      }
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 22. partial-transpose ∘ linalg-eigh — the Peres–Horodecki PPT entanglement
+//     witness, end-to-end
+// -----------------------------------------------------------------------------
+//
+// The state-side companion to #21. There the input was a channel (the
+// transpose map T), and we asked "is T completely positive?" — answer no,
+// because J(T) had a negative eigenvalue. Here the input is a *bipartite
+// state* (the Bell pair |Φ+⟩⟨Φ+|), and we ask "is this state entangled?"
+// — answer yes, because PT_B(|Φ+⟩⟨Φ+|) has a negative eigenvalue. The
+// matrix-level connection: PT on one qubit of the maximally entangled
+// state equals (1/2) SWAP, so the min eigenvalue is −1/2. The criterion
+// is necessary AND sufficient on 2×2 systems (Horodecki³ 1996).
+
+console.log("\n" + "=".repeat(60));
+console.log("  22. partial-transpose ∘ linalg-eigh — Bell state is entangled");
+console.log("=".repeat(60));
+console.log(
+  "PT_B(|Φ+⟩⟨Φ+|) = (1/2) SWAP_4; eigh reveals a −1/2 eigenvalue,\n" +
+  "the Peres–Horodecki witness — Bell state is entangled.",
+);
+const ptBell = await wb.partialTranspose({
+  kind: "record",
+  fields: {
+    M: list([
+      list([0.5, 0, 0, 0.5].map(float64FromNumber)),
+      list([0, 0, 0, 0].map(float64FromNumber)),
+      list([0, 0, 0, 0].map(float64FromNumber)),
+      list([0.5, 0, 0, 0.5].map(float64FromNumber)),
+    ]),
+    dims: list([int(2n), int(2n)]),
+    transposeOn: list([int(1n)]),
+  },
+});
+if (ptBell.kind === "record") {
+  const Mpt = ptBell.fields["M_pt"];
+  if (Mpt?.kind === "list") {
+    const eighOut = await wb.linalgEigh({
+      kind: "record",
+      // `Mpt` is narrowed to `ListValue`; partial-transpose's contract
+      // guarantees a `list<list<float64>>` matrix — assert the element type.
+      fields: { A: Mpt as ListValueOf<ListValueOf<Float64Value>> },
+    });
+    if (eighOut.kind === "record") {
+      const lams = eighOut.fields["eigenvalues"];
+      if (lams?.kind === "list") {
+        const eigs = lams.items
+          .filter((it): it is { kind: "float64" } & typeof it => it.kind === "float64")
+          .map((it) => float64ToNumber(it as never).toFixed(4));
+        console.log("  eigenvalues of PT_B(|Φ+⟩⟨Φ+|): [" + eigs.join(", ") + "]");
+        console.log("  the −0.5 eigenvalue certifies entanglement (Peres 1996).");
+      }
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 23. trace-norm — Helstrom trace distance between two density operators
+// -----------------------------------------------------------------------------
+//
+// Trace distance T(ρ, σ) = ½ · ‖ρ − σ‖₁ is the operationally-meaningful
+// distance between density operators: the optimal probability of
+// distinguishing them by a measurement is (1 + T)/2 (Helstrom 1969).
+// Two orthogonal pure states ρ = |0⟩⟨0| and σ = |1⟩⟨1| have T = 1 — they
+// are *perfectly* distinguishable; the trace norm of their difference is
+// diag(1, −1) whose Schatten-1 norm = |1| + |−1| = 2.
+//
+// One subtraction + one trace-norm call. ADR-0035 phase 1 (the complex
+// eigh substrate) makes this two lines instead of fifty lines of
+// hand-rolled diagonalisation per session.
+
+console.log("\n" + "=".repeat(60));
+console.log("  23. trace-norm — Helstrom trace distance between density operators");
+console.log("=".repeat(60));
+console.log(
+  "T(|0⟩⟨0|, |1⟩⟨1|) = ½ ‖diag(1, −1)‖₁ = 1 (perfectly distinguishable);\n" +
+  "T(|0⟩⟨0|, I/2)    = ½ ‖diag(½, −½)‖₁ = ½ (Bloch-vector half-distance).",
+);
+const tnDiff1 = await wb.traceNorm({
+  kind: "record",
+  fields: {
+    M: {
+      kind: "record",
+      fields: {
+        re: list([
+          list([1, 0].map(float64FromNumber)),
+          list([0, -1].map(float64FromNumber)),
+        ]),
+        im: list([
+          list([0, 0].map(float64FromNumber)),
+          list([0, 0].map(float64FromNumber)),
+        ]),
+      },
+    },
+  },
+});
+if (tnDiff1.kind === "record") {
+  const v = tnDiff1.fields["value"];
+  if (v?.kind === "float64") {
+    const half = float64ToNumber(v as never) / 2;
+    console.log(`  ‖|0⟩⟨0| − |1⟩⟨1|‖₁ = ${float64ToNumber(v as never).toFixed(4)};  T = ${half.toFixed(4)}`);
+  }
+}
+const tnDiff2 = await wb.traceNorm({
+  kind: "record",
+  fields: {
+    M: {
+      kind: "record",
+      fields: {
+        re: list([
+          list([0.5, 0].map(float64FromNumber)),
+          list([0, -0.5].map(float64FromNumber)),
+        ]),
+        im: list([
+          list([0, 0].map(float64FromNumber)),
+          list([0, 0].map(float64FromNumber)),
+        ]),
+      },
+    },
+  },
+});
+if (tnDiff2.kind === "record") {
+  const v = tnDiff2.fields["value"];
+  if (v?.kind === "float64") {
+    const half = float64ToNumber(v as never) / 2;
+    console.log(`  ‖|0⟩⟨0| − I/2‖₁    = ${float64ToNumber(v as never).toFixed(4)};  T = ${half.toFixed(4)}`);
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 24. purity ∘ partial-trace — entanglement as purity loss under partial trace
+// -----------------------------------------------------------------------------
+//
+// Purity γ(ρ) = tr(ρ²) is unity exactly on the rank-1 pure states and 1/d on
+// the maximally mixed state I/d. For a bipartite pure state |Ψ⟩_AB the marginal
+// ρ_A = tr_B(|Ψ⟩⟨Ψ|) is pure iff |Ψ⟩ is a *product* state — equivalently
+// (Schmidt 1907; entanglement-monotone literature), the reduction's purity
+// drops *below* 1 by exactly the amount of entanglement between A and B.
+//
+// The Bell state |Φ+⟩⟨Φ+| is maximally entangled on two qubits: γ(|Φ+⟩⟨Φ+|)
+// = 1 (rank-1 pure), but γ(tr_B |Φ+⟩⟨Φ+|) = γ(I/2) = 1/2 (maximally mixed
+// marginal). The drop 1 → 1/2 *is* the entanglement signature, parallel to
+// the Peres witness in #22 but on the state side rather than the operator
+// side.
+
+console.log("\n" + "=".repeat(60));
+console.log("  24. purity ∘ partial-trace — entanglement as purity loss");
+console.log("=".repeat(60));
+console.log(
+  "γ(|Φ+⟩⟨Φ+|) = 1 (Bell state pure);\n" +
+  "γ(tr_B |Φ+⟩⟨Φ+|) = γ(I/2) = 1/2 (maximally mixed marginal).\n" +
+  "The drop is the entanglement signature.",
+);
+const zeroIm4 = list([
+  list([0, 0, 0, 0].map(float64FromNumber)),
+  list([0, 0, 0, 0].map(float64FromNumber)),
+  list([0, 0, 0, 0].map(float64FromNumber)),
+  list([0, 0, 0, 0].map(float64FromNumber)),
+]);
+const bellRho = list([
+  list([0.5, 0, 0, 0.5].map(float64FromNumber)),
+  list([0, 0, 0, 0].map(float64FromNumber)),
+  list([0, 0, 0, 0].map(float64FromNumber)),
+  list([0.5, 0, 0, 0.5].map(float64FromNumber)),
+]);
+const purityBell = await wb.purity({
+  kind: "record",
+  fields: { rho: record({ re: bellRho, im: zeroIm4 }) },
+});
+if (purityBell.kind === "record") {
+  const v = purityBell.fields["value"];
+  if (v?.kind === "float64") {
+    console.log(`  γ(|Φ+⟩⟨Φ+|)        = ${float64ToNumber(v as never).toFixed(4)}  (pure rank-1 — γ = 1)`);
+  }
+}
+const ptBellRho = await wb.partialTrace({
+  kind: "record",
+  fields: {
+    M: bellRho,
+    dims: list([int(2n), int(2n)]),
+    trace_out: list([int(1n)]),
+  },
+});
+if (ptBellRho.kind === "record") {
+  const reduced = ptBellRho.fields["reduced"];
+  if (reduced?.kind === "list") {
+    const zeroIm2 = list([
+      list([0, 0].map(float64FromNumber)),
+      list([0, 0].map(float64FromNumber)),
+    ]);
+    const purityRed = await wb.purity({
+      kind: "record",
+      fields: { rho: record({ re: reduced, im: zeroIm2 }) },
+    });
+    if (purityRed.kind === "record") {
+      const v = purityRed.fields["value"];
+      if (v?.kind === "float64") {
+        console.log(`  γ(tr_B |Φ+⟩⟨Φ+|)   = ${float64ToNumber(v as never).toFixed(4)}  (maximally mixed — γ = 1/d = 0.5)`);
+      }
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// 25. trace-distance — Helstrom + triangle inequality (with saturation)
+// -----------------------------------------------------------------------------
+//
+// `trace-distance` packages the demo-#23 manual composition (subtract,
+// trace-norm, halve) into one tool call: D(ρ, σ) = ½‖ρ − σ‖₁. Two
+// illustrative claims this demo verifies:
+//
+// 1. **Helstrom orthogonal-pure-state saturation.** D(|0⟩⟨0|, |1⟩⟨1|) = 1
+//    ⇒ P_distinguish = (1 + 1)/2 = 1. Perfect distinguishability.
+//
+// 2. **Triangle inequality with saturation.** Pick three diagonal density
+//    operators with Bloch vectors collinear in 1D:
+//        ρ_a = diag(0.8, 0.2)  r = +0.6
+//        ρ_b = diag(0.5, 0.5)  r =  0.0
+//        ρ_c = diag(0.2, 0.8)  r = -0.6
+//    All three on a straight Bloch-vector line. The trace distances are
+//    Euclidean half-distances:
+//        D(a, b) = 0.3,  D(b, c) = 0.3,  D(a, c) = 0.6
+//    so D(a, c) = D(a, b) + D(b, c) — the triangle inequality is
+//    *saturated*, exactly as it should be for three collinear states on
+//    the Bloch line.
+
+console.log("\n" + "=".repeat(60));
+console.log("  25. trace-distance — Helstrom + triangle inequality (saturated)");
+console.log("=".repeat(60));
+
+const zeroIm2x2 = list([
+  list([0, 0].map(float64FromNumber)),
+  list([0, 0].map(float64FromNumber)),
+]);
+const td = async (rho: number[][], sigma: number[][]) => {
+  const out = await wb.traceDistance({
+    kind: "record",
+    fields: {
+      rho:   record({ re: list(rho.map((r) => list(r.map(float64FromNumber)))),   im: zeroIm2x2 }),
+      sigma: record({ re: list(sigma.map((r) => list(r.map(float64FromNumber)))), im: zeroIm2x2 }),
+    },
+  });
+  if (out.kind === "record") {
+    const v = out.fields["value"];
+    if (v?.kind === "float64") return float64ToNumber(v as never);
+  }
+  throw new Error("unexpected output kind");
+};
+
+const dPure = await td([[1, 0], [0, 0]], [[0, 0], [0, 1]]);
+console.log(`Helstrom: D(|0⟩⟨0|, |1⟩⟨1|) = ${dPure.toFixed(4)} ⇒ P_distinguish = ${((1 + dPure) / 2).toFixed(4)}`);
+
+const rhoA: number[][] = [[0.8, 0], [0, 0.2]];
+const rhoB: number[][] = [[0.5, 0], [0, 0.5]];
+const rhoC: number[][] = [[0.2, 0], [0, 0.8]];
+const dAB = await td(rhoA, rhoB);
+const dBC = await td(rhoB, rhoC);
+const dAC = await td(rhoA, rhoC);
+console.log(`Triangle:  D(a, b) = ${dAB.toFixed(4)}, D(b, c) = ${dBC.toFixed(4)}, D(a, c) = ${dAC.toFixed(4)}`);
+console.log(`           D(a, b) + D(b, c) = ${(dAB + dBC).toFixed(4)}  ≥  D(a, c) = ${dAC.toFixed(4)}  (collinear ⇒ saturated)`);
+
+// -----------------------------------------------------------------------------
+// 26. fidelity ↔ trace-distance — the Fuchs–van de Graaf inequality, numerical
+// -----------------------------------------------------------------------------
+//
+// Both deliverables of the qinfo v0.2 state-distance pair ship in the same
+// session, so the natural demo is the inequality that ties them:
+//
+//     1 − √F(ρ, σ)   ≤   D(ρ, σ)   ≤   √(1 − F(ρ, σ))           (Fuchs–vdG)
+//
+// The upper bound is saturated when both states are pure (then
+// F = |⟨ψ|φ⟩|² and D = √(1−F) exactly). The lower bound is generally
+// loose. We probe two regimes — pure-vs-max-mixed (illustrating
+// non-saturated bounds far apart) and a generic mixed pair (where the
+// upper bound is nearly tight) — printing all four quantities side-by-side.
+
+console.log("\n" + "=".repeat(60));
+console.log("  26. fidelity ↔ trace-distance — the Fuchs–van de Graaf inequality");
+console.log("=".repeat(60));
+
+const zeroIm2x2_FvG = list([
+  list([0, 0].map(float64FromNumber)),
+  list([0, 0].map(float64FromNumber)),
+]);
+const dfPair = async (rho: number[][], sigma: number[][]) => {
+  const wireRho   = record({ re: list(rho.map((r)   => list(r.map(float64FromNumber)))), im: zeroIm2x2_FvG });
+  const wireSigma = record({ re: list(sigma.map((r) => list(r.map(float64FromNumber)))), im: zeroIm2x2_FvG });
+  const dOut = await wb.traceDistance({
+    kind: "record",
+    fields: { rho: wireRho, sigma: wireSigma },
+  });
+  const fOut = await wb.fidelity({
+    kind: "record",
+    fields: { rho: wireRho, sigma: wireSigma },
+  });
+  if (dOut.kind === "record" && fOut.kind === "record") {
+    const dV = dOut.fields["value"];
+    const fV = fOut.fields["value"];
+    if (dV?.kind === "float64" && fV?.kind === "float64") {
+      return { D: float64ToNumber(dV as never), F: float64ToNumber(fV as never) };
+    }
+  }
+  throw new Error("unexpected output kind");
+};
+
+console.log("Probe 1: ρ = |0⟩⟨0|, σ = I/2 (pure vs max-mixed — wide gap between bounds)");
+{
+  const { D, F } = await dfPair([[1, 0], [0, 0]], [[0.5, 0], [0, 0.5]]);
+  const lo = 1 - Math.sqrt(F);
+  const hi = Math.sqrt(1 - F);
+  console.log(`  D = ${D.toFixed(4)}, F = ${F.toFixed(4)}, √F = ${Math.sqrt(F).toFixed(4)}`);
+  console.log(`  Fuchs–vdG: 1 − √F = ${lo.toFixed(4)}  ≤  D = ${D.toFixed(4)}  ≤  √(1 − F) = ${hi.toFixed(4)}`);
+}
+
+console.log("\nProbe 2: ρ = diag(0.7, 0.3), σ = [[0.4, 0.1],[0.1, 0.6]] (generic mixed pair)");
+{
+  const { D, F } = await dfPair([[0.7, 0], [0, 0.3]], [[0.4, 0.1], [0.1, 0.6]]);
+  const lo = 1 - Math.sqrt(F);
+  const hi = Math.sqrt(1 - F);
+  console.log(`  D = ${D.toFixed(4)}, F = ${F.toFixed(4)}, √F = ${Math.sqrt(F).toFixed(4)}`);
+  console.log(`  Fuchs–vdG: 1 − √F = ${lo.toFixed(4)}  ≤  D = ${D.toFixed(4)}  ≤  √(1 − F) = ${hi.toFixed(4)}`);
+}
 
 // -----------------------------------------------------------------------------
 // Bonus — content-addressing

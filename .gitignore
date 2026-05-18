@@ -7,6 +7,10 @@ dist/
 .claude/
 temp/
 
+# SDPLIB stress-test verbose JSONL traces (bead jb1x). The CSV summary
+# is committed; per-(case, method) traces are large and regeneratable.
+scripts/sdplib-stress-traces/
+
 # bun.lock (text format) IS committed — keeps installs reproducible.
 
 
@@ -23,3 +27,8 @@ docs/ground-truth/**/*.pdf
 docs/ground-truth/**/sympy/
 docs/ground-truth/**/sage/
 docs/ground-truth/**/sagemath/
+
+# sturm-trace's scratch dir for user TS source during subprocess tracing.
+# Each invocation makes a `run-<random>/user.ts` and cleans it up; a
+# crashed run can leave one behind — never something to commit.
+tools/sturm-trace/.scratch/

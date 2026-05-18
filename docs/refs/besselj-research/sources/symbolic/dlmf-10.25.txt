@@ -1,0 +1,339 @@
+
+
+DLMF: §10.25 Definitions ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions
+
+DLMF
+
+Index
+Notations
+Search
+Help?
+Citing
+Customize
+Annotate
+UnAnnotate
+
+About the Project
+
+10 Bessel FunctionsModified Bessel Functions10.24 Functions of Imaginary Order10.26 Graphics
+
+§10.25 Definitions
+
+ⓘ
+
+Referenced by:
+§2.8(i)
+Permalink:
+http://dlmf.nist.gov/10.25
+See also:
+Annotations for Ch.10
+
+Contents
+
+§10.25(i) Modified Bessel’s Equation
+§10.25(ii) Standard Solutions
+§10.25(iii) Numerically Satisfactory Pairs of Solutions
+
+§10.25(i) Modified Bessel’s Equation
+
+ⓘ
+
+Keywords:
+
+definitions, differential equations, modified Bessel functions, modified Bessel’s equation, singularities
+
+Permalink:
+http://dlmf.nist.gov/10.25.i
+See also:
+Annotations for §10.25 and
+Ch.10
+
+10.25.1
+
+z2⁢d2wdz2+z⁢dwdz−(z2+ν2)⁢w=0.
+
+ⓘ
+
+Symbols:
+
+dfdx: derivative of f with respect to x,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.1
+
+Referenced by:
+
+§10.25(ii),
+§10.25(iii),
+§10.27,
+§10.45,
+§10.74(ii)
+
+Permalink:
+http://dlmf.nist.gov/10.25.E1
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.25(i),
+§10.25 and
+Ch.10
+
+This equation is obtained from Bessel’s equation (10.2.1) on
+replacing z by ±i⁢z, and it has the same kinds of singularities. Its
+solutions are called modified Bessel functions or Bessel functions
+of imaginary argument.
+
+§10.25(ii) Standard Solutions
+
+ⓘ
+
+Keywords:
+
+modified Bessel functions, modified Bessel’s equation, principal branches (or values), standard solutions
+
+Notes:
+See Olver (1997b, pp. 60, 236–237, 250).
+Referenced by:
+
+§10.21(iv),
+§10.22(ii),
+§10.22(iv),
+§10.22(iv),
+§10.29(i),
+§10.43(i),
+§10.9(iii),
+§10.9(iii),
+§11.1,
+§12.7(iii),
+§13.10(ii),
+§13.16(i),
+§13.18(iii),
+§13.21(i),
+§13.23(i),
+§13.24(ii),
+§13.4(i),
+§13.6(iii),
+§13.8(iii),
+§14.15(i),
+§14.20(vii),
+§15.12(iii),
+§18.12,
+§18.18(vii),
+§2.8(iv),
+§26.10(vi),
+§28.24,
+§33.20(i),
+§33.20(ii),
+§33.20(iii),
+§33.9(ii),
+§6.7(iii),
+§8.6(i),
+§9.12(vii),
+§9.13(i),
+§9.6(i),
+§9.6(ii)
+
+Permalink:
+http://dlmf.nist.gov/10.25.ii
+See also:
+Annotations for §10.25 and
+Ch.10
+
+10.25.2
+
+Iν⁡(z)=(12⁢z)ν⁢∑k=0∞(14⁢z2)kk!⁢Γ⁡(ν+k+1).
+
+ⓘ
+
+Defines:
+Iν⁡(z): modified Bessel function of the first kind
+Symbols:
+
+Γ⁡(z): gamma function,
+!: factorial (as in n!),
+k: nonnegative integer,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.10
+
+Referenced by:
+
+§10.30(i),
+§10.31,
+§10.38,
+§10.45,
+§10.46,
+§10.53,
+§8.6(i)
+
+Permalink:
+http://dlmf.nist.gov/10.25.E2
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.25(ii),
+§10.25 and
+Ch.10
+
+This solution has properties analogous to those of Jν⁡(z), defined
+in §10.2(ii). In particular, the principal branch of
+Iν⁡(z) is defined in a similar way: it corresponds to the principal
+value of (12⁢z)ν, is analytic in ℂ∖(−∞,0],
+and two-valued and discontinuous on the cut ph⁡z=±π.
+
+The defining property of the second standard solution Kν⁡(z) of
+(10.25.1) is
+
+10.25.3
+
+Kν⁡(z)∼π/(2⁢z)⁢e−z,
+
+ⓘ
+
+Defines:
+Kν⁡(z): modified Bessel function of the second kind
+Symbols:
+
+∼: asymptotic equality,
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+z: complex variable and
+ν: complex parameter
+
+Referenced by:
+
+§10.25(ii),
+§10.25(iii),
+§10.30(ii)
+
+Permalink:
+http://dlmf.nist.gov/10.25.E3
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.25(ii),
+§10.25 and
+Ch.10
+
+as z→∞ in |ph⁡z|≤32⁢π−δ (<32⁢π).
+It has a branch point at z=0 for all ν∈ℂ. The
+principal branch corresponds to the principal value of the square root
+in (10.25.3), is analytic in ℂ∖(−∞,0],
+and two-valued and discontinuous on the cut ph⁡z=±π.
+
+Both Iν⁡(z) and Kν⁡(z) are real when ν is real
+and ph⁡z=0.
+
+For fixed z (≠0) each branch of Iν⁡(z) and Kν⁡(z)
+is entire in ν.
+
+Branch Conventions
+
+ⓘ
+
+Keywords:
+
+branch conventions, modified Bessel functions
+
+See also:
+Annotations for §10.25(ii),
+§10.25 and
+Ch.10
+
+Except where indicated otherwise it is assumed throughout the DLMF
+that the symbols Iν⁡(z) and Kν⁡(z) denote the
+principal values of these functions.
+
+Symbol 𝒵ν⁡(z)
+
+ⓘ
+
+Defines:
+𝒵ν⁡(z): modified cylinder function
+See also:
+Annotations for §10.25(ii),
+§10.25 and
+Ch.10
+
+Corresponding to the symbol 𝒞ν introduced in
+§10.2(ii), we sometimes use 𝒵ν⁡(z) to denote
+Iν⁡(z), eν⁢π⁢i⁢Kν⁡(z), or any nontrivial linear
+combination of these functions, the coefficients in which are independent of
+z and ν.
+
+§10.25(iii) Numerically Satisfactory Pairs of Solutions
+
+ⓘ
+
+Keywords:
+
+modified Bessel’s equation, numerically satisfactory solutions
+
+Notes:
+The conclusions in this subsection follow from §2.7(iv)
+and the limiting forms of the solutions as z→0 and z→∞; see
+(10.25.3) and §10.30. See also (10.27.3).
+Referenced by:
+§14.20(i)
+Permalink:
+http://dlmf.nist.gov/10.25.iii
+See also:
+Annotations for §10.25 and
+Ch.10
+
+Table 10.25.1 lists numerically satisfactory pairs of solutions
+(§2.7(iv)) of (10.25.1). It is assumed that
+ℜ⁡ν≥0. When ℜ⁡ν<0, Iν⁡(z) is
+replaced by I−ν⁡(z).
+
+Table 10.25.1: Numerically satisfactory pairs of solutions of the modified Bessel’s equation.
+
+Pair
+Region
+
+Iν⁡(z),Kν⁡(z)
+|ph⁡z|≤12⁢π
+
+Iν⁡(z),Kν⁡(z⁢e∓π⁢i)
+12⁢π≤±ph⁡z≤32⁢π
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+i: imaginary unit,
+Iν⁡(z): modified Bessel function of the first kind,
+Kν⁡(z): modified Bessel function of the second kind,
+ph: phase,
+z: complex variable and
+ν: complex parameter
+
+Referenced by:
+§10.25(iii)
+Permalink:
+http://dlmf.nist.gov/10.25.T1
+See also:
+Annotations for §10.25(iii),
+§10.25 and
+Ch.10
+
+10.24 Functions of Imaginary Order10.26 Graphics
+
+© 2010–2026 NIST / Disclaimer / Feedback;
+ Version 1.2.6;
+Release date 2026-03-15.
+
+Site Privacy Accessibility Privacy Program Copyrights Vulnerability Disclosure No Fear Act Policy FOIA Environmental Policy Scientific Integrity Information Quality Standards Commerce.gov Science.gov USA.gov
+

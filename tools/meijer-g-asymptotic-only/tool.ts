@@ -30,12 +30,30 @@
 //              warnings: list<string> }
 //
 //   refusals (tagged):
-//     meijer-g-asymptotic-only/stokes-line             record { reason }
-//     meijer-g-asymptotic-only/secondary-sector        record { reason }
-//     meijer-g-asymptotic-only/small-z                 record { reason }
-//     meijer-g-asymptotic-only/non-asymptotic-regime   record { reason }
-//     meijer-g-asymptotic-only/no-pole-residues        record { reason }
-//     meijer-g-asymptotic-only/input-error             record { reason }
+//     meijer-g-asymptotic-only/stokes-line                  record { reason }
+//     meijer-g-asymptotic-only/secondary-sector             record { reason }
+//     meijer-g-asymptotic-only/small-z                      record { reason }
+//     meijer-g-asymptotic-only/non-asymptotic-regime        record { reason }
+//     meijer-g-asymptotic-only/no-pole-residues             record { reason }
+//     meijer-g-asymptotic-only/coverage-gap                 record { reason }
+//     meijer-g-asymptotic-only/input-error                  record { reason }
+//     meijer-g-asymptotic-only/degenerate-principal-sector  record { reason }
+//
+// The egf-era `stokes-band-refused` tag was retracted with worklog 125
+// — the band machinery and the connection-formula assembly it gated
+// were both removed when empirical verification confirmed
+// `H_workbench(z) = G(z)` on the principal Riemann sheet for δ ≥ 1.
+//
+// The `degenerate-principal-sector` tag (ADR-0039 §D6, bead `atip`,
+// 2026-05-16) fires when the shape's Paris–Kaminski defect
+// `δ = m + n − (p+q)/2 ≤ 0`, i.e. the algebraic envelope `|arg z| < δπ`
+// is empty (δ=0) or negative (δ<0). For such shapes the right-closing
+// Slater residue series does not converge to G; routing through this
+// path was the bug that motivated bead `atip` (deleted golden 17,
+// G^{1,1}_{1,3}: kernel +4.4×10⁻³ vs mpmath truth −0.5549…). The
+// dominant-E Braaksma formula that would handle this regime is
+// deferred; callers should route to `meijergContour` for a numerical
+// answer in the interim.
 //
 // `--precision=N` (decimal digits, default 50) is the standard
 // ADR-0020 flag inherited from the runner. Determinism contract:
@@ -111,12 +129,26 @@ const refusalOutputSchema = (tag: string) =>
 
 const outputSchema = S.union([
   successOutputSchema,
+  // Refusal classes (ADR-0026 envelope + ADR-0039 §D3 `coverage-gap` +
+  // ADR-0039 §D6 `degenerate-principal-sector`).
+  // `stokes-line` is retained as defence-in-depth for κ ≤ 0 fallback
+  // edges; the κ-aware classifier never emits it for κ ≥ 1 inputs.
+  // `stokes-band-refused` and the Stokes-multiplier-driven `egf` v0.1
+  // assembly were retracted with worklog 125; the band geometry was
+  // gating a connection formula that empirical verification proved
+  // unnecessary (H_workbench = G on the principal Riemann sheet for
+  // δ ≥ 1). The retracted tag is no longer reachable from the kernel.
+  // `degenerate-principal-sector` was added by bead `atip` (2026-05-16)
+  // — fires for shapes with δ ≤ 0 where the algebraic envelope is empty
+  // and the right-closing series silently diverges from G.
   refusalOutputSchema(`${NAME}/stokes-line`),
   refusalOutputSchema(`${NAME}/secondary-sector`),
   refusalOutputSchema(`${NAME}/small-z`),
   refusalOutputSchema(`${NAME}/non-asymptotic-regime`),
   refusalOutputSchema(`${NAME}/no-pole-residues`),
   refusalOutputSchema(`${NAME}/input-error`),
+  refusalOutputSchema(`${NAME}/coverage-gap`),
+  refusalOutputSchema(`${NAME}/degenerate-principal-sector`),
 ]);
 
 // -----------------------------------------------------------------------------
@@ -247,6 +279,10 @@ export const def = defineTool({
     }
 
     const tag = `${NAME}/${result.status}`;
+    // All refusal records are plain `{ reason }` shapes. The egf-era
+    // `stokes-band-refused` tag (which carried an extra
+    // `band_half_width` BigFloat) was retracted with worklog 125; the
+    // band machinery it surfaced is gone with it.
     return tagged(tag, record({ reason: str(result.reason) }));
   },
 });

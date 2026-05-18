@@ -107,6 +107,19 @@ export {
   clgamma,
   cgamma,
   cdigamma,
+  bigW,
+  bigCErf,
+  bigCErfc,
+  bigCErfcx,
+  bigCErfi,
+  bigCBesselI,
+  bigCBesselIScaled,
+  bigCBesselK,
+  bigCBesselKScaled,
+  bigCBesselJ,
+  bigCBesselY,
+  bigCHankelH1,
+  bigCHankelH2,
 } from "./complex.js";
 
 export {
@@ -116,6 +129,39 @@ export {
   trigamma,
   polygamma,
 } from "./special.js";
+
+export {
+  bigErf,
+  bigErfc,
+  bigErfcx,
+} from "./special-funcs/erf.js";
+
+export {
+  bigBesselJ,
+  bigBesselJSeriesMaclaurin,
+  bigBesselJHankelAsymptotic,
+  bigBesselJSeriesCancellationRetry,
+} from "./special-funcs/besselj.js";
+
+export {
+  bigBesselY,
+  bigBesselYConnection,
+  bigBesselYIntegerNu,
+} from "./special-funcs/bessely.js";
+
+export {
+  bigBesselI,
+  bigBesselIScaled,
+  bigBesselISeriesMaclaurin,
+  bigBesselIHankelAsymptotic,
+} from "./special-funcs/besseli.js";
+
+export {
+  bigBesselK,
+  bigBesselKScaled,
+  bigBesselKFromConnection,
+  bigBesselKIntegerNu,
+} from "./special-funcs/besselk.js";
 
 export {
   ln2,

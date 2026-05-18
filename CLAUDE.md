@@ -93,10 +93,22 @@ Numbered, non-negotiable. Re-read after compaction.
    happy path, record-with-flag for routine non-success, tagged for
    boundary failure. `ToolError` is reserved for *malformed* input.
 
-9. **Beads is the only tracker.** `bd create / update / claim / close`.
-   No TodoWrite, no TaskCreate, no markdown TODO lists. Run `bd ready`
-   at session start; `bd close <id1> <id2> ...` at the end. Never use
-   `bd edit` (it opens $EDITOR and blocks).
+9. **Beads is the only *persistent* tracker.** `bd create / update /
+   claim / close` for anything that should outlive the conversation:
+   features, bugs, epics, decisions, cross-session work. No TodoWrite,
+   no markdown TODO lists. Run `bd ready` at session start; `bd close
+   <id1> <id2> ...` at the end. Never use `bd edit` (it opens $EDITOR
+   and blocks).
+
+   **Exception — `TaskCreate` is permitted for in-session progress
+   tracking** (user-granted 2026-05-12). Use it for the harness-visible
+   checklist of "what I'm doing right now in this conversation": the
+   ordered steps of a single task, sub-items the user wants to see
+   ticked off live. It is ephemeral by design; it does not replace
+   `bd` for anything an agent in a future session needs to find. Rule
+   of thumb: if the work would be filed as an issue, it belongs in
+   beads; if it's a step *inside* claiming/closing such an issue, it
+   can live in `TaskCreate`.
 
    **Multi-device sync.** The Dolt DB is local; the cross-device
    sync vehicle is `.beads/issues.jsonl` (tracked in git). Tracked
@@ -228,6 +240,24 @@ re-check the relevant ADR.
   via the same flag-merge layer as `--schema` / `--examples` (ADR-0011);
   the `precision` flag value is part of the input identity, so
   different precisions cache to different output hashes.
+- **Complex matrices on the wire are `record{re, im}` — both required,
+  parallel arrays, not per-cell.** ADR-0035. The wire shape for any
+  `linalg-*-complex` tool is `record{re: list<list<float64>>, im:
+  list<list<float64>>}` with `im` required and shape-matched to `re`.
+  Per-cell complex (`list<list<record{re, im}>>`) inflates the wire by
+  3-4× and violates the "bulk numerics travel as single-kind
+  `list<…>`" convention. Optional-`im` (the qinfo substrate's
+  `Matrix` shape, ADR-0034) is the *in-package* shape for index-only
+  ops that handle real and complex transparently; the wire shape and
+  the `linalg-core` `ComplexMatrix` type both require `im` because
+  "this value is definitely complex" must read from the type, not
+  from a runtime branch. A Hermitian matrix with known-zero imaginary
+  part still emits `im: [[0, …], …]` — explicit, not implicit. The
+  parallel-tool pattern (`linalg-eigh-complex` next to `linalg-eigh`,
+  etc., mirroring `meijer-g-symbolic-only` / `meijer-g-asymptotic-
+  only`) keeps the existing real tools' schemas and goldens byte-
+  identical; do not extend the real tools with optional complex
+  input.
 
 ## Worklog
 

@@ -71,7 +71,11 @@ import type {
 } from "./dispatch-types.js";
 
 import { RULES as BATEMAN_5_6 } from "./dispatch-rules/bateman-5-6.js";
+import { RULES as BESSEL_BACKWARD } from "./dispatch-rules/bessel-backward.js";
 import { RULES as DLMF_16_18 } from "./dispatch-rules/dlmf-16-18.js";
+import { RULES as ERF_FORWARD_FORM_A } from "./dispatch-rules/erf-forward-form-a.js";
+import { RULES as ERFC_FORWARD } from "./dispatch-rules/erfc-forward.js";
+import { RULES as ERFI_FORWARD } from "./dispatch-rules/erfi-forward.js";
 
 // -----------------------------------------------------------------------------
 // Rule registry
@@ -83,6 +87,26 @@ import { RULES as DLMF_16_18 } from "./dispatch-rules/dlmf-16-18.js";
 // would also match a more-general `free`-slot rule must come first).
 
 export const ALL_RULES: readonly ReductionRule[] = [
+  // Erf-family bridge rules (bead `tc2c` / worklog 137, ADR-0040 §"Decision
+  // 5"). Sit FIRST in the registry per R4 §5.a / §5.b ordering
+  // discipline: the bridge rules are the most-specific match for their
+  // shapes; any future generic rule for the same shape would have to
+  // be evaluated AFTER the bridge to preserve round-trip closure.
+  // Form A.Erf and Erfi share `(1, 1, 1, 2)` with `[1/2], [], [0],
+  // [-1/2]` — they partition cleanly via `zMatch`. Form B
+  // (`dlmf-16-18-erf`) has different slot values, no collision.
+  ...ERF_FORWARD_FORM_A,
+  ...ERFI_FORWARD,
+  ...ERFC_FORWARD,
+  // Bessel-Y / Bessel-I canonical-form backward rules (beads `1xqq` /
+  // `lfet`, R4 §E.3 gap close). Sit before DLMF/Bateman so the
+  // canonical-Bessel shapes don't fall through to `no-known-reduction`;
+  // their (m,n,p,q) tuples (2,0,1,3) and (1,0,1,3) are NOT covered by
+  // any DLMF/Bateman rule today, so ordering is for future-proofing
+  // rather than current-disambiguation. See
+  // `dispatch-rules/bessel-backward.ts` for the slot-match algebra and
+  // soundness contract.
+  ...BESSEL_BACKWARD,
   ...DLMF_16_18, // DLMF first — primary contemporary index
   ...BATEMAN_5_6, // Bateman §5.6 for the pre-DLMF starter rules
 ];
@@ -107,7 +131,7 @@ export function meijergSymbolic(
 ): DispatchResult {
   const canonical = canonicaliseParams(params);
   for (const rule of ALL_RULES) {
-    const bindings = tryMatch(rule.match, canonical);
+    const bindings = tryMatch(rule.match, canonical, z);
     if (bindings === null) continue;
     let candidate: Value;
     try {
@@ -184,6 +208,7 @@ function mnpqOf(p: MeijerGSymbolicParams): { m: number; n: number; p: number; q:
 function tryMatch(
   pattern: PatternSpec,
   params: MeijerGSymbolicParams,
+  z: Value,
 ): Bindings | null {
   const got = mnpqOf(params);
   if (
@@ -214,6 +239,21 @@ function tryMatch(
     for (const rel of pattern.relations) {
       if (!checkRelation(rel, bindings)) return null;
     }
+  }
+
+  // z-argument predicate (ADR-0040 §"Decision 5" / R4 §2.5.1). Absent
+  // predicate = "match every z" (current behaviour, every legacy rule
+  // continues to fire). The Erf-vs-Erfi disambiguation registers
+  // distinct rules with mutually-exclusive `zMatch` predicates on the
+  // same `(an, ap, bm, bq)` tuple; first-match-wins, but `zMatch:
+  // "no"` declines so the second rule gets its chance.
+  if (pattern.zMatch !== undefined) {
+    const verdict = pattern.zMatch(z);
+    if (verdict === "no") return null;
+    // "yes" and "unknown" both fall through to the rewrite path; the
+    // difference is documented in dispatch-types.ts and is observable
+    // only via rule ordering when multiple zMatch-bearing rules
+    // overlap.
   }
 
   return bindings;

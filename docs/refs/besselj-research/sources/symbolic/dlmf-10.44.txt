@@ -1,0 +1,349 @@
+
+
+DLMF: §10.44 Sums ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions
+
+DLMF
+
+Index
+Notations
+Search
+Help?
+Citing
+Customize
+Annotate
+UnAnnotate
+
+About the Project
+
+10 Bessel FunctionsModified Bessel Functions10.43 Integrals10.45 Functions of Imaginary Order
+
+§10.44 Sums
+
+ⓘ
+
+Permalink:
+http://dlmf.nist.gov/10.44
+See also:
+Annotations for Ch.10
+
+Contents
+
+§10.44(i) Multiplication Theorem
+§10.44(ii) Addition Theorems
+§10.44(iii) Neumann-Type Expansions
+§10.44(iv) Compendia
+
+§10.44(i) Multiplication Theorem
+
+ⓘ
+
+Keywords:
+
+modified Bessel functions, multiplication theorem, sums
+
+Notes:
+For (10.44.1) combine (10.23.1) with
+(10.27.6) or with (10.27.8). Equations
+(10.44.2) are special cases of (10.23.1) and
+(10.44.1) with λ=i.
+Permalink:
+http://dlmf.nist.gov/10.44.i
+See also:
+Annotations for §10.44 and
+Ch.10
+
+10.44.1
+
+𝒵ν⁡(λ⁢z)=λ±ν⁢∑k=0∞(λ2−1)k⁢(12⁢z)kk!⁢𝒵ν±k⁡(z),
+
+|λ2−1|<1.
+
+ⓘ
+
+Symbols:
+
+!: factorial (as in n!),
+𝒵ν⁡(z): modified cylinder function,
+k: nonnegative integer,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.51
+
+Referenced by:
+
+§10.44(i),
+§10.66
+
+Permalink:
+http://dlmf.nist.gov/10.44.E1
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.44(i),
+§10.44 and
+Ch.10
+
+If 𝒵=I and the upper signs are taken, then the restriction on
+λ is unnecessary.
+
+Examples
+
+ⓘ
+
+See also:
+Annotations for §10.44(i),
+§10.44 and
+Ch.10
+
+10.44.2
+
+Iν⁡(z)
+=∑k=0∞zkk!⁢Jν+k⁡(z),
+
+Jν⁡(z)
+=∑k=0∞(−1)k⁢zkk!⁢Iν+k⁡(z).
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+!: factorial (as in n!),
+Iν⁡(z): modified Bessel function of the first kind,
+k: nonnegative integer,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.52
+
+Referenced by:
+§10.44(i)
+Permalink:
+http://dlmf.nist.gov/10.44.E2
+Encodings:
+
+TeX, TeX, pMML, pMML, png, png
+
+See also:
+Annotations for §10.44(i),
+§10.44(i),
+§10.44 and
+Ch.10
+
+§10.44(ii) Addition Theorems
+
+ⓘ
+
+Keywords:
+
+addition theorems, modified Bessel functions, sums
+
+Notes:
+Combine (10.23.2) and (10.27.1) with
+(10.27.6) or with (10.27.8).
+Referenced by:
+§28.27
+Permalink:
+http://dlmf.nist.gov/10.44.ii
+See also:
+Annotations for §10.44 and
+Ch.10
+
+Neumann’s Addition Theorem
+
+ⓘ
+
+Keywords:
+
+Neumann’s addition theorem, modified Bessel functions
+
+See also:
+Annotations for §10.44(ii),
+§10.44 and
+Ch.10
+
+10.44.3
+
+𝒵ν⁡(u±v)=∑k=−∞∞(±1)k⁢𝒵ν+k⁡(u)⁢Ik⁡(v),
+
+|v|<|u|.
+
+ⓘ
+
+Symbols:
+
+Iν⁡(z): modified Bessel function of the first kind,
+𝒵ν⁡(z): modified cylinder function,
+k: nonnegative integer and
+ν: complex parameter
+
+Permalink:
+http://dlmf.nist.gov/10.44.E3
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.44(ii),
+§10.44(ii),
+§10.44 and
+Ch.10
+
+The restriction |v|<|u| is unnecessary when 𝒵=I and ν is an
+integer.
+
+Graf’s and Gegenbauer’s Addition Theorems
+
+ⓘ
+
+Keywords:
+
+Gegenbauer’s addition theorem, Graf’s addition theorem, modified Bessel functions
+
+See also:
+Annotations for §10.44(ii),
+§10.44 and
+Ch.10
+
+For results analogous to (10.23.7) and (10.23.8) see
+Watson (1944, §§11.3 and 11.41).
+
+§10.44(iii) Neumann-Type Expansions
+
+ⓘ
+
+Keywords:
+
+Neumann-type expansions, expansions in series of, modified Bessel functions, sums
+
+Notes:
+Combine (10.23.15)–(10.23.17) with
+(10.27.6), (10.27.8), and (10.4.3).
+Permalink:
+http://dlmf.nist.gov/10.44.iii
+See also:
+Annotations for §10.44 and
+Ch.10
+
+10.44.4
+
+(12⁢z)ν=∑k=0∞(−1)k⁢(ν+2⁢k)⁢Γ⁡(ν+k)k!⁢Iν+2⁢k⁡(z),
+
+ν≠0,−1,−2,….
+
+ⓘ
+
+Symbols:
+
+Γ⁡(z): gamma function,
+!: factorial (as in n!),
+Iν⁡(z): modified Bessel function of the first kind,
+k: nonnegative integer,
+z: complex variable and
+ν: complex parameter
+
+Permalink:
+http://dlmf.nist.gov/10.44.E4
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.44(iii),
+§10.44 and
+Ch.10
+
+10.44.5
+
+K0⁡(z)=−(ln⁡(12⁢z)+γ)⁢I0⁡(z)+2⁢∑k=1∞I2⁢k⁡(z)k,
+
+ⓘ
+
+Symbols:
+
+γ: Euler’s constant,
+Iν⁡(z): modified Bessel function of the first kind,
+Kν⁡(z): modified Bessel function of the second kind,
+ln⁡z: principal branch of logarithm function,
+k: nonnegative integer and
+z: complex variable
+
+A&S Ref:
+ 9.6.54
+
+Permalink:
+http://dlmf.nist.gov/10.44.E5
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.44(iii),
+§10.44 and
+Ch.10
+
+10.44.6
+
+Kn⁡(z)=n!⁢(12⁢z)−n2⁢∑k=0n−1(−1)k⁢(12⁢z)k⁢Ik⁡(z)k!⁢(n−k)+(−1)n−1⁢(ln⁡(12⁢z)−ψ⁡(n+1))⁢In⁡(z)+(−1)n⁢∑k=1∞(n+2⁢k)⁢In+2⁢k⁡(z)k⁢(n+k),
+
+ⓘ
+
+Symbols:
+
+ψ⁡(z): psi (or digamma) function,
+!: factorial (as in n!),
+Iν⁡(z): modified Bessel function of the first kind,
+Kν⁡(z): modified Bessel function of the second kind,
+ln⁡z: principal branch of logarithm function,
+n: integer,
+k: nonnegative integer and
+z: complex variable
+
+A&S Ref:
+ 9.6.53
+
+Permalink:
+http://dlmf.nist.gov/10.44.E6
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.44(iii),
+§10.44 and
+Ch.10
+
+where γ is Euler’s constant and ψ=Γ′/Γ
+(§5.2).
+
+§10.44(iv) Compendia
+
+ⓘ
+
+Keywords:
+
+compendia, integrals of modified Bessel functions, modified Bessel functions, sums
+
+Permalink:
+http://dlmf.nist.gov/10.44.iv
+See also:
+Annotations for §10.44 and
+Ch.10
+
+For collections of sums and series involving modified Bessel functions see
+Erdélyi et al. (1953b, §7.15), Hansen (1975), and
+Prudnikov et al. (1986b, pp. 691–700).
+
+10.43 Integrals10.45 Functions of Imaginary Order
+
+© 2010–2026 NIST / Disclaimer / Feedback;
+ Version 1.2.6;
+Release date 2026-03-15.
+
+Site Privacy Accessibility Privacy Program Copyrights Vulnerability Disclosure No Fear Act Policy FOIA Environmental Policy Scientific Integrity Information Quality Standards Commerce.gov Science.gov USA.gov
+

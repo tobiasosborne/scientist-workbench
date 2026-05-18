@@ -89,7 +89,12 @@ function relErr(got: BigComplex, want: BigComplex): number {
 
 describe("mutation 1: sign flip", () => {
   test("inverting the asymptotic result fails the method-agreement test", () => {
-    const params = P(["0.5"], [], ["0"], ["1"]);
+    // κ=1 shape (p=q): G^{1,1}_{1,1}([1/2];_;[0];_). The previous
+    // `(["0.5"], [], ["0"], ["1"])` shape was κ=2 (out of egf v0.1
+    // scope; refused with coverage-gap by the κ-aware classifier). The
+    // mutation invariant is shape-independent — pick any shape where
+    // both Slater and asymptotic apply.
+    const params = P(["0.5"], [], ["0"], []);
     const z = cfromInts(100n, 0n, WORK_BITS);
     const slater = meijergSlater(params, z, TARGET_DPS);
     if (slater.status !== "success") throw new Error(slater.reason);
@@ -187,37 +192,95 @@ describe("mutation 3: truncation too early", () => {
 // the refusal is the load-bearing invariant.
 
 describe("mutation 4: sector classifier wrongly admits secondary sector", () => {
-  test("negative-z input must refuse, not compute", () => {
+  test("κ=2 input refuses with coverage-gap (egf v0.1 scope-gate)", () => {
+    // After the κ-aware classifier (ADR-0039 §D3), the load-bearing
+    // sector-refusal invariant moves from "negative-z is secondary-
+    // sector" to "κ=2 input is coverage-gap". The κ=2 (p=q-1) regime
+    // has a structurally distinct three-term H+E^-+E^+ connection
+    // formula (DLMF 16.11.8) that egf v0.1 does not implement; the
+    // classifier refuses upstream with the bead ID
+    // `scientist-workbench-fc83` so the caller can route or surface.
+    // This refusal is the new "sector classifier wrongly admits"
+    // mutation target: if the κ classifier wrongly admitted the κ=2
+    // case as principal, the kernel would silently produce a wrong-
+    // valued answer (because the second E term is missing).
     const params = P(["0.5"], [], ["0"], ["1"]);
-    const z = cfromInts(-100n, 0n, WORK_BITS);
+    const z = cfromInts(100n, 0n, WORK_BITS);
     const r = meijergAsymptotic(params, z, TARGET_DPS);
-    expect(r.status).toBe("secondary-sector");
-    // If we forced the classifier to admit this as principal — by
-    // overriding the sector angle to π — the kernel would compute a
-    // (wrong-valued) answer. Demonstrate by widening the angle:
-    const wrongAngle = Math.PI - 1e-10;
-    const rWrong = meijergAsymptotic(params, z, TARGET_DPS, {
-      principalSectorAngle: wrongAngle,
-    });
-    // The kernel computes *something*, which we know to be wrong (the
-    // exponential E_{p,q} term is missing). Compare to the contour /
-    // Slater answer and confirm divergence — this proves the
-    // refusal-envelope test is load-bearing.
-    if (rWrong.status === "success") {
-      // For G^{1,1}_{1,2}(1/2; ; 0,1 | -100) we'd need a contour /
-      // Slater path. Slater Series 1 converges (q ≥ p ⇒ p < q):
-      const slater = meijergSlater(params, z, TARGET_DPS);
-      if (slater.status === "success") {
-        // The values must NOT match — confirms the refusal is correct
-        // scope.
-        const err = relErr(rWrong.value, slater.value);
-        // We expect the wrongly-computed asymptotic (sans Stokes
-        // correction) to disagree with Slater by some macroscopic
-        // amount on the negative axis.
-        expect(err).toBeGreaterThan(Math.pow(10, -3));
-      }
+    expect(r.status).toBe("coverage-gap");
+    if (r.status === "coverage-gap") {
+      expect(r.reason).toMatch(/fc83/);
     }
-    // Either way, the principal-sector default refuses cleanly.
+  });
+});
+
+// -----------------------------------------------------------------------------
+// 4b. δπ algebraic-sector envelope — mutation-prove (bead atip)
+// -----------------------------------------------------------------------------
+//
+// Worklog 125 surfaced that the κ-aware classifier's `κπ/2` boundary
+// was the wrong geometry: it admitted κ≥3, δ=0 shapes into the
+// algebraic-only path even though the Paris–Kaminski algebraic envelope
+// `|arg z| < δπ` is empty when δ ≤ 0. Bead `atip` added the refusal.
+//
+// The mutation here is the lifted refusal — what the kernel did before
+// `atip`: route the κ=3, δ=0 input through `assembleAlgebraic` and
+// return its output as if it were a valid asymptotic. The wrong-valued
+// behaviour at the exact deleted-golden-17 input is captured as a
+// pinned constant from the math-research investigation: kernel emitted
+// `+4.4×10⁻³` for an mpmath truth of `−0.5549…` (off by ~125× and the
+// wrong sign). The post-`atip` invariant is that the kernel refuses
+// rather than emits any value; this test asserts the refusal and
+// records — for a future reader — the magnitude of the silent wrong
+// answer the refusal replaces. If the refusal is ever lifted without a
+// matching dominant-E Braaksma implementation, the next failure mode
+// would be re-emission of the wrong value.
+
+describe("mutation 4b: degenerate principal sector (κ≥3, δ≤0) ⇒ refuse, not silently emit", () => {
+  test("κ=3, δ=0 (G^{1,1}_{1,3}, deleted golden 17) refuses with degenerate-principal-sector", () => {
+    // Exact deleted-golden-17 input. Pre-`atip` kernel value at this
+    // input: +4.4×10⁻³ at 50 dps. Mpmath truth at 50 dps: −0.5549…
+    // (sign wrong, magnitude wrong by ~125×).
+    const params: MeijerGParameters = {
+      an: [
+        cfromStrings(
+          "0.333333333333333333333333333333333333333333333333333",
+          "0",
+          WORK_BITS,
+        ),
+      ],
+      ap: [],
+      bm: [cfromStrings("0.5", "0", WORK_BITS)],
+      bq: [
+        cfromStrings(
+          "0.666666666666666666666666666666666666666666666666667",
+          "0",
+          WORK_BITS,
+        ),
+        cfromStrings("0.75", "0", WORK_BITS),
+      ],
+    };
+    const z = cfromStrings("2", "0.1", WORK_BITS);
+    const r = meijergAsymptotic(params, z, 50);
+    expect(r.status).toBe("degenerate-principal-sector");
+    if (r.status === "degenerate-principal-sector") {
+      expect(r.reason).toMatch(/atip/);
+    }
+  });
+
+  test("κ=1, δ=0 (G^{1,1}_{2,2}, bead 43i family) is NOT refused", () => {
+    // The atip refusal is gated on κ≥3 — for κ=1 the inner pFq is
+    // convergent for |z|>1 (Slater 1966 §5.5 q≥p condition) and the
+    // algebraic series equals G as a convergent formula regardless of
+    // δ. The bead 43i `G^{1,1}_{2,2}` tests are mpmath-verified at 30
+    // dps for δ=0 shapes; refusing them would deprecate working,
+    // shipped behaviour. This test pins the κ=1 admission invariant —
+    // if a future change broadens the refusal to all δ≤0 regardless
+    // of κ, this test goes red.
+    const params = P(["0.5"], ["0.75"], ["0"], ["-0.25"]);
+    const z = cfromInts(50n, 0n, WORK_BITS);
+    const r = meijergAsymptotic(params, z, TARGET_DPS);
+    expect(r.status).toBe("success");
   });
 });
 

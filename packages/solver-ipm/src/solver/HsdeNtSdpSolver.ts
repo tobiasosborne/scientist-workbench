@@ -93,7 +93,8 @@
 import type { SdpProblem, SdpBlock } from "../problem/SdpProblem.js";
 import { DEFAULT_PARAMS, type IpmParams } from "./Defaults.js";
 import { eighJacobi, frobInner, matMul, symmetrize } from "../cone/PsdCone.js";
-import { choleskyInPlace, choleskySolveInPlace } from "../linalg/Cholesky.js";
+import { choleskyInPlace } from "../linalg/Cholesky.js";
+import { solveWithIR } from "../linalg/IterativeRefinement.js";
 import type { SolverStatus } from "./Iterate.js";
 import type { IterLogLine, SolveOptions, VerboseIterLine } from "./Solver.js";
 import {
@@ -316,6 +317,15 @@ export function solveHsdeSdpNt(
   const M = new Float64Array(m * m);
   const Lchol = new Float64Array(m * m);
   const rhs = new Float64Array(m);
+  // Iterative-refinement scratch + per-iter accepted-step counts (Phase 5
+  // Tier 1). workE / workCorr are allocated once per solve and reused by
+  // every `solveWithIR` call; nitref{1,2,3} are overwritten each iter and
+  // read at the verbose-trace emission site.
+  const workE = new Float64Array(m);
+  const workCorr = new Float64Array(m);
+  let nitref1 = 0;
+  let nitref2 = 0;
+  let nitref3 = 0;
 
   // Per-block scratch for W·A_k·W cache. Built once per iter (after
   // NT factor build) and reused by both affine and combined back-subs.
@@ -412,7 +422,9 @@ export function solveHsdeSdpNt(
     opts.log?.(line, null as never);
 
     // ─── Convergence + best-iterate ───
-    const term = checkHsdeTermination(rp, rd, rg, pObj, dObj, tau, kappa, prob, params);
+    const term = checkHsdeTermination(
+      rp, rd, rg, pObj, dObj, tau, kappa, primalInf, dualInf, prob, params,
+    );
     const gapAbs = Math.abs(pObjPure - dObjPure);
     const objScale = Math.max(1, Math.abs(pObjPure));
     const achieved = Math.max(
@@ -431,7 +443,44 @@ export function solveHsdeSdpNt(
       bestKappa = kappa;
       bestIter = iter;
       bestAchieved = achieved;
-      bestStatus = "dual-feasible";
+
+      // HSDE soft-success classification (ADR-0033 §"Decision 9 — Tier-3
+      // amendment", worklog 129). Mirrors the legacy NT 6-flag tree's
+      // `couldDualFeas` branch in `NtSdpSolver.ts:227-241` — when the
+      // iterate is converged *in the homogeneous sense* (μ at the
+      // complementarity floor, τ dominates κ, τ + κ substantial),
+      // classify the snapshot as `dual-feasible`. `Status.ts` lifts
+      // `dual-feasible → optimal` on the wire, so the agent sees
+      // `status="optimal"` plus `achieved_precision` carrying the actual
+      // purified primal residual — identical contract to legacy NT.
+      //
+      // The classification is **deliberately NOT** based on `ρ_p`. The
+      // strict optimal branch in `checkHsdeTermination` already gates on
+      // `max(ρ_p, ρ_d, ρ_g) ≤ 1`. The soft branch handles the regime where
+      // the homogeneous-system convergence indicators are at their true
+      // limits but `ρ_p = r_p / (τ · ε_p · (1+‖b‖))` floors at 2–100 in
+      // float64 because `τ` shrinks in lockstep with `r_p` during HSDE's
+      // near-optimal dynamics (worklog 128 §"hinf2 diagnostic"). On the
+      // SDPLIB corpus this is the difference between `hinf2` returning
+      // `numerical-breakdown` (regression vs legacy NT) and `optimal`
+      // (Tier 3's 6/6 grade — worklog 129 §"corpus bench delta").
+      //
+      // Criteria (all must hold at the snapshot iter):
+      //  - `μ ≤ feasTol`: the complementarity measure has reached the
+      //    absolute floor the strict optimal test would care about,
+      //    independently of the ρ-scaling. Mirrors `absDualFeas` in NT.
+      //  - `prstatus > 0.5`: τ-dominant, heading to optimal not to an
+      //    infeasibility certificate. Same gate as strict optimal.
+      //  - `τ ≥ TAU_HEALTHY (1e-6)`: τ has not collapsed below the
+      //    purification noise floor. At `τ ≈ 1e-7` the `1/τ` amplification
+      //    on the returned iterate would be `1e7`, which is dishonest
+      //    even with the `achieved_precision` field reporting the truth.
+      const TAU_HEALTHY = 1e-6;
+      const bestIsSoftOptimal =
+        mu <= params.feasTol &&
+        term.prstatus > 0.5 &&
+        tau >= TAU_HEALTHY;
+      bestStatus = bestIsSoftOptimal ? "dual-feasible" : null;
     }
 
     if (term.status !== "running") {
@@ -530,8 +579,10 @@ export function solveHsdeSdpNt(
       for (let b = 0; b < nb; b++) s += frobInner(blocks[b]!.A[i]!, WCW[b]!);
       rhs[i] = s;
     }
-    dy1.set(rhs);
-    choleskySolveInPlace(Lchol, m, dy1);
+    // Back-substitution with iterative refinement against the unregularised
+    // Schur M (Phase 5 Tier 1). nitref1 = accepted refinement steps on the
+    // data direction; 0 when the regularised solve was already accurate.
+    nitref1 = solveWithIR(M, m, Lchol, rhs, dy1, workE, workCorr);
     for (let b = 0; b < nb; b++) {
       const n = blocks[b]!.size;
       const ds1 = dS1[b]!;
@@ -570,8 +621,9 @@ export function solveHsdeSdpNt(
       }
       rhs[i] = s;
     }
-    dy2.set(rhs);
-    choleskySolveInPlace(Lchol, m, dy2);
+    // Iterative-refinement back-sub (Phase 5 Tier 1); nitref2 = affine-
+    // direction accepted refinement steps.
+    nitref2 = solveWithIR(M, m, Lchol, rhs, dy2, workE, workCorr);
 
     // Recover dS2_aff, dX2_aff per block
     for (let b = 0; b < nb; b++) {
@@ -715,8 +767,9 @@ export function solveHsdeSdpNt(
       }
       rhs[i] = s;
     }
-    dy2.set(rhs);
-    choleskySolveInPlace(Lchol, m, dy2);
+    // Iterative-refinement back-sub (Phase 5 Tier 1); nitref3 = combined-
+    // direction accepted refinement steps.
+    nitref3 = solveWithIR(M, m, Lchol, rhs, dy2, workE, workCorr);
 
     // Recover dS2_comb, dX2_comb per block
     for (let b = 0; b < nb; b++) {
@@ -839,6 +892,9 @@ export function solveHsdeSdpNt(
         kappa,
         gfeas: gapInf,
         prstatus: term.prstatus,
+        nitref1,
+        nitref2,
+        nitref3,
         tSchurMs,
         tFactorMs,
         tDirectionMs,
@@ -855,8 +911,20 @@ export function solveHsdeSdpNt(
       bestAchieved);
   }
   function finalizeBestOr(fallback: SolverStatus): HsdeSdpSolveResult {
-    if (bestStatus === null) return finalize(fallback);
-    return purifyAndReturn(bestStatus, bestX, bestY, bestS, bestTau, bestKappa, bestIter, bestAchieved);
+    // Always prefer the best snapshot when we have one (the current iterate
+    // may have just blown up — e.g. NT factor failure on a degenerate τ→0
+    // limit). Status is the honest fallback: bestStatus is reserved for
+    // classifications the termination test made positively (today: never
+    // assigned — bestStatus is always null at this site, and the certificate
+    // tests in `checkHsdeTermination` short-circuit via `finalize(...)` when
+    // they fire). Falling through here means "didn't converge"; the wire
+    // taxonomy maps the fallback to `numerical-breakdown` / `iter-cap`,
+    // never `optimal`.
+    if (bestAchieved === Infinity) return finalize(fallback);
+    return purifyAndReturn(
+      bestStatus ?? fallback,
+      bestX, bestY, bestS, bestTau, bestKappa, bestIter, bestAchieved,
+    );
   }
   function purifyAndReturn(
     status: SolverStatus,
@@ -945,6 +1013,33 @@ interface TerminationCheck {
   prstatus: number;
 }
 
+// HSDE termination — three classifications via two structurally distinct tests.
+//
+// Optimal classification uses the **purified** ρ-metrics (ρ_p, ρ_d, ρ_g all ≤ 1
+// AND τ ≫ κ AND τ + κ substantial). Purification by τ makes ρ the right shape
+// for the optimal regime: τ > 0 and (X/τ, y/τ, S/τ) is the actual primal-dual
+// pair we hand back, so feasibility/optimality tolerances are naturally
+// expressed in terms of `residual / τ`.
+//
+// Infeasibility certificates use **unpurified** residuals + objectives — the
+// τ→0 limit point (X*, y*, S*, τ*=0, κ*>0) IS the Farkas certificate, and
+// dividing by τ is a category error there (it would blow up exactly because
+// τ→0 is what we're trying to detect). This mirrors Mosek's `hom_terminatelo`
+// (decomp 003f8460) — the gate to classification is `pfeasinff < tolP OR
+// dfeasinff ≤ tolD` (NOT a conjunction with ρ), and the certificate tests are
+// ratio tests on unpurified `b^T y` vs `‖r_d‖` and `⟨C, X⟩` vs `‖r_p‖`.
+// The earlier ADR-0033 design (Decision 6) gated *both* on `max(ρ_p, ρ_d, ρ_g)
+// ≤ 1` — that gate never trips on actually-infeasible problems because the
+// purified ρ-metrics inflate as τ→0, so the τ-κ ρ-dichotomy never fired
+// (bead `io2v`).
+//
+// The witness floor (1e-6) on |b^T y| / |⟨C, X⟩| guards against the
+// degenerate "everything collapses to zero" iterate that satisfies the
+// certificate inequalities vacuously. The τ + κ collapse floor (1e-8) does
+// the analogous job for the optimal branch — without it, an iterate with
+// τ = 1e-15 and κ = 1e-24 would have prstatus → +1 and ρ-metrics → 0
+// because rp, rd, gap also collapse, and we'd declare optimal on a
+// degenerate point with no usable purified iterate.
 function checkHsdeTermination(
   rp: Float64Array,
   rd: Float64Array[],
@@ -953,6 +1048,8 @@ function checkHsdeTermination(
   dObj: number,
   tau: number,
   kappa: number,
+  primalInf: number,
+  dualInf: number,
   prob: SdpProblem,
   params: IpmParams,
 ): TerminationCheck {
@@ -963,13 +1060,11 @@ function checkHsdeTermination(
   const eps_p = params.feasTol;
   const eps_d = params.feasTol;
   const eps_g = params.optTol;
-
-  const primalInf = vecInfNorm(rp);
-  let dualInf = 0;
-  for (const r of rd) {
-    const di = matInfNorm(r);
-    if (di > dualInf) dualInf = di;
-  }
+  // Infeasibility-certificate tolerance: looser than feasTol since the
+  // unpurified residual is being compared to a witness magnitude that can
+  // itself be modest (e.g. b^T y ~ 1 on small SDPLIB cases). Matches the
+  // Mosek `tolinfeas` default of 1e-8 scaled by witness.
+  const eps_inf = Math.max(params.feasTol, 1e-8);
 
   const rhoP = tau > 0 ? primalInf / (tau * eps_p * (1 + bInfNorm)) : Infinity;
   const rhoD = tau > 0 ? dualInf / (tau * eps_d * (1 + cFrob)) : Infinity;
@@ -982,19 +1077,58 @@ function checkHsdeTermination(
 
   const prstatus = (tau - kappa) / Math.max(tau + kappa, 1e-300);
 
-  let status: SolverStatus = "running";
-  const rhoMax = Math.max(rhoP, rhoD, rhoG);
-  if (rhoMax <= 1) {
-    if (prstatus > 0.5) {
-      status = "optimal";
-    } else if (prstatus < -0.5) {
-      if (dObj > 0) status = "primal-infeasible";
-      else if (pObj < 0) status = "dual-infeasible";
-      else status = "primal-infeasible";
-    }
+  // Anti-collapse floor. A healthy HSDE iterate has τ + κ comparable to its
+  // initialization (we init both to 1). Below this floor the iterate is
+  // degenerate — neither classification can be trusted; let the outer loop
+  // continue or hit numerical-difficulty / iter-limit on fall-through.
+  const TAU_KAPPA_FLOOR = 1e-8;
+  if (tau + kappa < TAU_KAPPA_FLOOR) {
+    return { status: "running", rhoP, rhoD, rhoG, prstatus };
   }
-  void rg;  // r_g residual is reported via gfeas in the trace; not used in the ρ-test directly
-  return { status, rhoP, rhoD, rhoG, prstatus };
+
+  // Optimal: purified ρ-metrics small, τ dominates κ, scale is substantial.
+  if (rhoP <= 1 && rhoD <= 1 && rhoG <= 1 && prstatus > 0.5) {
+    void rg;  // r_g already enters via rhoG; preserved for trace plumbing
+    return { status: "optimal", rhoP, rhoD, rhoG, prstatus };
+  }
+
+  // Infeasibility certificates fire only in the κ-dominant regime
+  // (`prstatus < -0.5`, i.e. τ ≪ κ — the HSDE iterate is heading to the
+  // τ→0 limit). Without this guard an almost-converged optimal problem
+  // where |b^T y| ≫ ‖C‖_F could spuriously fire the primal-infeasibility
+  // cert before the ρ-metrics drop below 1 (the cert's `eps_inf · |b^T y|`
+  // bound is generous enough to admit dualInf the optimal test would reject).
+  // The guard makes the regime-switch explicit: optimal is τ-dominant,
+  // infeasibility is κ-dominant — they never overlap.
+  const WITNESS_FLOOR = 1e-6;
+
+  // Primal-infeasibility certificate (Farkas y witness). The unpurified
+  // iterate (y, S) satisfies Σ y_i A_i + S = -r_d with S ⪰ 0, so as r_d → 0
+  // we have Σ y_i A_i ⪯ 0. Combined with b^T y > 0, this is a Farkas y for
+  // primal infeasibility. Test: `dualInf / b^T y` is small AND `b^T y` is
+  // substantial in absolute terms (avoid collapse-noise).
+  if (
+    prstatus < -0.5 &&
+    dObj > WITNESS_FLOOR &&
+    dualInf <= eps_inf * (1 + Math.abs(dObj))
+  ) {
+    return { status: "primal-infeasible", rhoP, rhoD, rhoG, prstatus };
+  }
+
+  // Dual-infeasibility certificate (primal recession ray). The unpurified
+  // iterate X satisfies Σ ⟨A_i, X⟩ - b_i τ = r_p → 0 as r_p, τ → 0, so
+  // ⟨A_i, X⟩ → 0. Combined with ⟨C, X⟩ < 0 strictly, X is a primal
+  // recession ray (primal unbounded ⟺ dual infeasible).
+  if (
+    prstatus < -0.5 &&
+    pObj < -WITNESS_FLOOR &&
+    primalInf <= eps_inf * (1 + Math.abs(pObj))
+  ) {
+    return { status: "dual-infeasible", rhoP, rhoD, rhoG, prstatus };
+  }
+
+  void rg;
+  return { status: "running", rhoP, rhoD, rhoG, prstatus };
 }
 
 function initialScale(p: SdpProblem): { xiP: number; xiD: number } {

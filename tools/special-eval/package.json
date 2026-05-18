@@ -1,0 +1,16 @@
+{
+  "name": "@workbench/tool-special-eval",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@workbench/protocol": "workspace:*",
+    "@workbench/contract": "workspace:*",
+    "@workbench/bigfloat": "workspace:*",
+    "@workbench/quadrature": "workspace:*"
+  },
+  "devDependencies": {
+    "@workbench/cas-core": "workspace:*",
+    "@workbench/meijer-core": "workspace:*"
+  }
+}

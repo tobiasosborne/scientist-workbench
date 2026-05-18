@@ -106,11 +106,34 @@ export {
   type MeijerGAsymptoticResult,
   type MeijerGAsymptoticSuccess,
   type MeijerGAsymptoticRefusal,
+  type SectorVerdict,
   asymptoticTerms,
   classifySector,
   findOptimalTruncation,
   meijergAsymptotic,
 } from "./asymptotic.js";
+
+// -----------------------------------------------------------------------------
+// Layer 6 — Stokes-line connection coefficients: RETRACTED (worklog 125)
+// -----------------------------------------------------------------------------
+//
+// ADR-0039 §D3 (bead `egf`) originally shipped a connection-formula
+// assembly (`G(z) ~ H(z) + Σ_k S_k · E_{p,q}(z e^{2πik/κ})`) with two
+// supporting modules: `exponential.ts` for the `E_{p,q}` series and
+// `stokes.ts` for the `S_k` multiplier table. The math-research
+// subagent verified empirically (2026-05-15) that the workbench's
+// `H^{m,n}_{p,q}(z)` (right-closing Slater residues) equals `G(z)`
+// directly on the principal Riemann sheet for `δ = m + n − (p+q)/2
+// ≥ 1`, without any compound-asymptotic correction. The two modules
+// and their exports have been retracted; the asymptotic layer is now
+// the algebraic series alone, tagged `"braaksma-algebraic"` in the
+// principal sector and `"braaksma-stokes"` past the κ-aware boundary
+// (the wire-schema tag is retained for diagnostic continuity).
+//
+// The `δ = 0` regime is genuinely broken (the kernel emits a wrong
+// answer for κ≥3 δ=0 shapes such as G^{1,1}_{1,3}) and is filed as
+// bead `scientist-workbench-atip`. See `docs/worklog/125-*.md` for the
+// empirical verification.
 
 // -----------------------------------------------------------------------------
 // Layer 4 — symbolic dispatch (Adamchik–Marichev + Roach)
@@ -131,6 +154,47 @@ export {
 } from "./dispatch-types.js";
 
 export { ALL_RULES, meijergSymbolic } from "./dispatch.js";
+
+// -----------------------------------------------------------------------------
+// Bidirectional head ↔ Meijer-G bridge (ADR-0040 §"Decision 5")
+// -----------------------------------------------------------------------------
+//
+// Per-head modules under `src/bridges/<head>.ts`. Each bridge exports
+// `headToMeijerG(head, args)` (forward) and `meijerGToHead(form,
+// prefactor?)` (standalone backward). The forward bridge returns a
+// `ForwardBridge` (G-form + prefactor `wrap` + `argsInverse` closure for
+// byte-identical round-trip; ADR-0040 §"Decision 5" pinned the 1-arg
+// closure under the name `zInverse`, ADR-0041 §"Decision 5" renamed it
+// to `argsInverse` arity-agnostically for 2-arg+ heads like Bessel); the
+// standalone backward bridge pattern-matches a G-form against the
+// canonical shapes and emits `{head, args}` or `null` (honest refusal
+// per ADR-0003 boundary failure).
+//
+// Inverse error functions (`InverseErf`, `InverseErfc`) are honestly
+// refused on both directions — no Meijer-G representation exists per
+// DLMF §7.17. The bridge returns `null` rather than emitting a
+// wrong-shaped form.
+
+export {
+  type ForwardBridge,
+  type MeijerGForm,
+} from "./bridges/types.js";
+
+export {
+  headToMeijerG,
+  meijerGToHead,
+} from "./bridges/erf.js";
+
+// Bessel-family bridge (ADR-0041 §"Decision 5" + Bessel R4 §A.4):
+// per-head sister module to `bridges/erf.ts`, the first 2-arg bridge
+// (`(ν, z)`). Re-exported under disambiguated names so callers can
+// route head → bridge explicitly; the top-level `headToMeijerG`
+// dispatcher (when it lands) will iterate over both modules' bridges
+// and return the first non-null hit.
+export {
+  headToMeijerG as headToMeijerGBessel,
+  meijerGToHead as meijerGToHeadBessel,
+} from "./bridges/bessel.js";
 
 // -----------------------------------------------------------------------------
 // Layer 7 — top-level dispatcher (ADR-0027)

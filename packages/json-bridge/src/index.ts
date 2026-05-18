@@ -51,9 +51,11 @@ import {
   rat,
   record,
   str,
+  type Float64Value,
   type IntegerValue,
   type Kind,
   type ListValue,
+  type ListValueOf,
   type RecordValue,
   type Value,
 } from "@workbench/protocol";
@@ -334,4 +336,167 @@ function integerToJson(v: IntegerValue, encoding: "smart" | "string" | "number")
   // smart
   if (big > SAFE_INT_MAX || big < SAFE_INT_MIN) return v.value;
   return Number(big);
+}
+
+// -----------------------------------------------------------------------------
+// Numerical-tier ergonomic helpers (bead `qiv8`, worklog 120)
+// -----------------------------------------------------------------------------
+//
+// Lift JS `number[]` / `number[][]` into canonical `list<float64>` /
+// `list<list<float64>>` values and unpack them back, with return types
+// narrow enough that the typed-barrel call site doesn't need an `as
+// never` cast at the boundary. Every numerical-tier dogfood site
+// (`scripts/demo-scope.ts`, the temp `qwasserstein.ts` from the D_W1
+// dogfood) was re-deriving the same boilerplate:
+//
+//     // build: nested list( map(row => list(map(x => float64FromNumber(x)))) )
+//     const M_value = list(M.map(row => list(row.map(x => float64FromNumber(x)))));
+//
+//     // extract: filter+narrow+map+as-never just to read float64 leaves
+//     const eigs = lams.items
+//       .filter((it): it is { kind: "float64" } & typeof it => it.kind === "float64")
+//       .map((it) => float64ToNumber(it as never));
+//
+// Both replaced by one-liners — `matrixToValue(M)` / `valueToVector(lams)`.
+// The function names follow `valueTo*` / `*ToValue` consistently (the
+// bead's mixed `vectorFromValue` was itself a small piece of the same
+// boilerplate-tax, normalised here).
+//
+// The return type of `*ToValue` is the *narrowest* `ListValueOf<...>` —
+// no widening to `Value` or `ListValue`, so the typed-barrel call site
+// reads the specific element kind from the type. The acceptance test
+// for `valueTo*` is "does it work as a one-line replacement for the
+// six-line filter/narrow/cast chain?"; the function throws
+// `JsonBridgeError` on shape mismatch (a wrong-kind leaf, a
+// non-rectangular matrix), so a caller who *knows* the shape gets a
+// clean number / number[] / number[][] back.
+
+/**
+ * Lift a JS `number[]` into a canonical `list<float64>` value.
+ *
+ * Each element is encoded via `float64FromNumber` (16 hex chars of
+ * IEEE-754 bits). The return type narrows to `ListValueOf<Float64Value>`
+ * so the result drops straight into a tool slot typed
+ * `list<float64>` with no `as never` cast.
+ */
+export function vectorToValue(
+  v: readonly number[],
+): ListValueOf<Float64Value> {
+  return {
+    kind: "list",
+    items: v.map((x) => float64FromNumber(x)),
+  };
+}
+
+/**
+ * Lift a JS `number[][]` into a canonical `list<list<float64>>` value.
+ *
+ * Rectangularity is checked — every row must have the same length as
+ * row 0; an empty matrix (`[]`) is valid (returns the empty list).
+ * Throws `JsonBridgeError` on non-rectangular input rather than
+ * silently encoding a ragged shape — the workbench's linalg tools all
+ * assume rectangular matrices and a ragged input would crash deeper
+ * with a much less useful error.
+ */
+export function matrixToValue(
+  M: readonly (readonly number[])[],
+): ListValueOf<ListValueOf<Float64Value>> {
+  if (M.length === 0) {
+    return { kind: "list", items: [] };
+  }
+  const nCols = M[0]!.length;
+  for (let i = 1; i < M.length; i++) {
+    if (M[i]!.length !== nCols) {
+      throw new JsonBridgeError(
+        `matrixToValue: row ${i} has length ${M[i]!.length}, expected ${nCols} (matrix must be rectangular)`,
+        `$[${i}]`,
+      );
+    }
+  }
+  return {
+    kind: "list",
+    items: M.map((row) => vectorToValue(row)),
+  };
+}
+
+/**
+ * Extract a JS `number[]` from a canonical `list<float64>` value.
+ *
+ * Accepts a loose `Value` so the caller doesn't have to prove the
+ * shape before calling — exactly the boilerplate this helper exists
+ * to delete. Throws `JsonBridgeError` if the value is not a list, or
+ * if any element is not `float64`. The error message names the
+ * offending position (`$[i]`) for ergonomic debugging at deep call
+ * sites.
+ */
+export function valueToVector(v: Value): number[] {
+  if (v.kind !== "list") {
+    throw new JsonBridgeError(
+      `valueToVector: expected list, got ${v.kind}`,
+      "$",
+    );
+  }
+  const out = new Array<number>(v.items.length);
+  for (let i = 0; i < v.items.length; i++) {
+    const it = v.items[i]!;
+    if (it.kind !== "float64") {
+      throw new JsonBridgeError(
+        `valueToVector: element ${i} is ${it.kind}, expected float64`,
+        `$[${i}]`,
+      );
+    }
+    out[i] = float64ToNumber(it);
+  }
+  return out;
+}
+
+/**
+ * Extract a JS `number[][]` from a canonical `list<list<float64>>`
+ * value.
+ *
+ * Rectangularity is enforced (every row must have the same length as
+ * row 0); a value that came from a workbench linalg tool will always
+ * be rectangular, but defensive checking turns a corrupted input into
+ * a clean `JsonBridgeError` instead of a confusing downstream crash.
+ */
+export function valueToMatrix(v: Value): number[][] {
+  if (v.kind !== "list") {
+    throw new JsonBridgeError(
+      `valueToMatrix: expected list, got ${v.kind}`,
+      "$",
+    );
+  }
+  if (v.items.length === 0) return [];
+  const out: number[][] = [];
+  let nCols = -1;
+  for (let i = 0; i < v.items.length; i++) {
+    const row = v.items[i]!;
+    if (row.kind !== "list") {
+      throw new JsonBridgeError(
+        `valueToMatrix: row ${i} is ${row.kind}, expected list`,
+        `$[${i}]`,
+      );
+    }
+    if (nCols === -1) {
+      nCols = row.items.length;
+    } else if (row.items.length !== nCols) {
+      throw new JsonBridgeError(
+        `valueToMatrix: row ${i} has length ${row.items.length}, expected ${nCols} (matrix must be rectangular)`,
+        `$[${i}]`,
+      );
+    }
+    const rowOut = new Array<number>(row.items.length);
+    for (let j = 0; j < row.items.length; j++) {
+      const cell = row.items[j]!;
+      if (cell.kind !== "float64") {
+        throw new JsonBridgeError(
+          `valueToMatrix: element [${i}][${j}] is ${cell.kind}, expected float64`,
+          `$[${i}][${j}]`,
+        );
+      }
+      rowOut[j] = float64ToNumber(cell);
+    }
+    out.push(rowOut);
+  }
+  return out;
 }

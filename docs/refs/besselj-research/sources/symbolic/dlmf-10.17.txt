@@ -1,0 +1,862 @@
+
+
+DLMF: §10.17 Asymptotic Expansions for Large Argument ‣ Bessel and Hankel Functions ‣ Chapter 10 Bessel Functions
+
+DLMF
+
+Index
+Notations
+Search
+Help?
+Citing
+Customize
+Annotate
+UnAnnotate
+
+About the Project
+
+10 Bessel FunctionsBessel and Hankel Functions10.16 Relations to Other Functions10.18 Modulus and Phase Functions
+
+§10.17 Asymptotic Expansions for Large Argument
+
+ⓘ
+
+Keywords:
+
+Bessel functions, asymptotic expansions for large argument
+
+Permalink:
+http://dlmf.nist.gov/10.17
+See also:
+Annotations for Ch.10
+
+Contents
+
+§10.17(i) Hankel’s Expansions
+§10.17(ii) Asymptotic Expansions of Derivatives
+§10.17(iii) Error Bounds for Real Argument and
+Order
+§10.17(iv) Error Bounds for Complex Argument and
+Order
+§10.17(v) Exponentially-Improved Expansions
+
+§10.17(i) Hankel’s Expansions
+
+ⓘ
+
+Keywords:
+
+Hankel functions, Hankel’s expansions, asymptotic expansions for large argument, for Bessel and Hankel functions
+
+Notes:
+See Olver (1997b, pp. 237–242).
+Referenced by:
+
+§10.17(ii),
+§10.17(ii),
+§10.40(i),
+§10.67(i),
+§10.74(i),
+§10.74(i),
+§10.74(ii)
+
+Permalink:
+http://dlmf.nist.gov/10.17.i
+See also:
+Annotations for §10.17 and
+Ch.10
+
+Define a0⁡(ν)=1,
+
+10.17.1
+
+ak⁡(ν)=(4⁢ν2−12)⁢(4⁢ν2−32)⁢⋯⁢(4⁢ν2−(2⁢k−1)2)k!⁢8k=(12−ν)k⁢(12+ν)k(−2)k⁢k!,
+
+k≥1,
+
+ⓘ
+
+Defines:
+ak⁡(ν): polynomial coefficient (locally)
+Symbols:
+
+(a)n: Pochhammer’s symbol (or shifted factorial),
+!: factorial (as in n!),
+k: nonnegative integer and
+ν: complex parameter
+
+Referenced by:
+
+§10.49(i),
+Erratum (V1.1.3) for Additions
+
+Permalink:
+http://dlmf.nist.gov/10.17.E1
+Encodings:
+
+TeX, pMML, png
+
+Addition (effective with 1.1.3):
+
+An alternative Pochhammer symbol representation was added.
+
+See also:
+Annotations for §10.17(i),
+§10.17 and
+Ch.10
+
+10.17.2
+
+ω=z−12⁢ν⁢π−14⁢π,
+
+ⓘ
+
+Defines:
+ω (locally)
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+z: complex variable and
+ν: complex parameter
+
+Permalink:
+http://dlmf.nist.gov/10.17.E2
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.17(i),
+§10.17 and
+Ch.10
+
+and let δ denote an arbitrary small positive constant. Then as
+z→∞, with ν fixed,
+
+10.17.3
+
+Jν⁡(z)∼(2π⁢z)12⁢(cos⁡ω⁢∑k=0∞(−1)k⁢a2⁢k⁡(ν)z2⁢k−sin⁡ω⁢∑k=0∞(−1)k⁢a2⁢k+1⁡(ν)z2⁢k+1),
+
+|ph⁡z|≤π−δ,
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+∼: Poincaré asymptotic expansion,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+ph: phase,
+sin⁡z: sine function,
+k: nonnegative integer,
+z: complex variable,
+ν: complex parameter,
+δ: small positive constant,
+ak⁡(ν): polynomial coefficient and
+ω
+
+A&S Ref:
+ 9.2.5
+
+Referenced by:
+
+§10.17(i),
+§10.17(iii),
+§10.17(iv),
+§10.18(iii),
+§10.24,
+§10.49(i),
+§10.61(v),
+§10.7(ii)
+
+Permalink:
+http://dlmf.nist.gov/10.17.E3
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.17(i),
+§10.17 and
+Ch.10
+
+10.17.4
+
+Yν⁡(z)∼(2π⁢z)12⁢(sin⁡ω⁢∑k=0∞(−1)k⁢a2⁢k⁡(ν)z2⁢k+cos⁡ω⁢∑k=0∞(−1)k⁢a2⁢k+1⁡(ν)z2⁢k+1),
+
+|ph⁡z|≤π−δ,
+
+ⓘ
+
+Symbols:
+
+Yν⁡(z): Bessel function of the second kind,
+∼: Poincaré asymptotic expansion,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+ph: phase,
+sin⁡z: sine function,
+k: nonnegative integer,
+z: complex variable,
+ν: complex parameter,
+δ: small positive constant,
+ak⁡(ν): polynomial coefficient and
+ω
+
+A&S Ref:
+ 9.2.6
+
+Referenced by:
+
+§10.17(iii),
+§10.17(iv),
+§10.18(iii),
+§10.24,
+§10.7(ii),
+§11.6(i)
+
+Permalink:
+http://dlmf.nist.gov/10.17.E4
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.17(i),
+§10.17 and
+Ch.10
+
+10.17.5
+
+Hν(1)⁡(z)∼(2π⁢z)12⁢ei⁢ω⁢∑k=0∞ik⁢ak⁡(ν)zk,
+
+−π+δ≤ph⁡z≤2⁢π−δ,
+
+ⓘ
+
+Symbols:
+
+Hν(1)⁡(z): Bessel function of the third kind (or Hankel function),
+∼: Poincaré asymptotic expansion,
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+i: imaginary unit,
+ph: phase,
+k: nonnegative integer,
+z: complex variable,
+ν: complex parameter,
+δ: small positive constant,
+ak⁡(ν): polynomial coefficient and
+ω
+
+A&S Ref:
+ 9.2.7
+
+Referenced by:
+
+§10.17(i),
+§10.17(iii),
+§10.17(iv),
+§10.41(v)
+
+Permalink:
+http://dlmf.nist.gov/10.17.E5
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.17(i),
+§10.17 and
+Ch.10
+
+10.17.6
+
+Hν(2)⁡(z)∼(2π⁢z)12⁢e−i⁢ω⁢∑k=0∞(−i)k⁢ak⁡(ν)zk,
+
+−2⁢π+δ≤ph⁡z≤π−δ,
+
+ⓘ
+
+Symbols:
+
+Hν(2)⁡(z): Bessel function of the third kind (or Hankel function),
+∼: Poincaré asymptotic expansion,
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+i: imaginary unit,
+ph: phase,
+k: nonnegative integer,
+z: complex variable,
+ν: complex parameter,
+δ: small positive constant,
+ak⁡(ν): polynomial coefficient and
+ω
+
+A&S Ref:
+ 9.2.8
+
+Referenced by:
+
+§10.17(i),
+§10.17(iii),
+§10.17(iv),
+§10.41(v),
+§10.49(i),
+§10.61(v)
+
+Permalink:
+http://dlmf.nist.gov/10.17.E6
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.17(i),
+§10.17 and
+Ch.10
+
+where the branch of z12 is determined by
+
+10.17.7
+
+z12=exp⁡(12⁢ln⁡|z|+12⁢i⁢ph⁡z).
+
+ⓘ
+
+Symbols:
+
+exp⁡z: exponential function,
+i: imaginary unit,
+ln⁡z: principal branch of logarithm function,
+ph: phase and
+z: complex variable
+
+Permalink:
+http://dlmf.nist.gov/10.17.E7
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.17(i),
+§10.17 and
+Ch.10
+
+Corresponding expansions for other ranges of ph⁡z can be obtained by
+combining (10.17.3), (10.17.5),
+(10.17.6) with the continuation formulas (10.11.1),
+(10.11.3), (10.11.4) (or (10.11.7),
+(10.11.8)), and also the connection formula given by the second of
+(10.4.4).
+
+§10.17(ii) Asymptotic Expansions of Derivatives
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Hankel functions, asymptotic expansions for large argument, derivatives
+
+Notes:
+These results follow by differentiation of the corresponding expansions
+in §10.17(i); compare §2.1(iii).
+Referenced by:
+
+§10.40(i),
+§10.67(i)
+
+Permalink:
+http://dlmf.nist.gov/10.17.ii
+See also:
+Annotations for §10.17 and
+Ch.10
+
+We continue to use the notation of §10.17(i). Also, b0⁡(ν)=1,
+b1⁡(ν)=(4⁢ν2+3)/8, and for k≥2,
+
+10.17.8
+
+bk⁡(ν)=((4⁢ν2−12)⁢(4⁢ν2−32)⁢⋯⁢(4⁢ν2−(2⁢k−3)2))⁢(4⁢ν2+4⁢k2−1)k!⁢8k.
+
+ⓘ
+
+Defines:
+bk⁡(ν): polynomial coefficient (locally)
+Symbols:
+
+!: factorial (as in n!),
+k: nonnegative integer and
+ν: complex parameter
+
+Permalink:
+http://dlmf.nist.gov/10.17.E8
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.17(ii),
+§10.17 and
+Ch.10
+
+Then as z→∞ with ν fixed,
+
+10.17.9
+
+Jν′⁡(z)
+∼−(2π⁢z)12⁢(sin⁡ω⁢∑k=0∞(−1)k⁢b2⁢k⁡(ν)z2⁢k+cos⁡ω⁢∑k=0∞(−1)k⁢b2⁢k+1⁡(ν)z2⁢k+1),
+
+|ph⁡z|≤π−δ,
+
+ⓘ
+
+Symbols:
+
+Jν⁡(z): Bessel function of the first kind,
+∼: Poincaré asymptotic expansion,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+ph: phase,
+sin⁡z: sine function,
+k: nonnegative integer,
+z: complex variable,
+ν: complex parameter,
+δ: small positive constant,
+ω and
+bk⁡(ν): polynomial coefficient
+
+A&S Ref:
+ 9.2.11
+
+Permalink:
+http://dlmf.nist.gov/10.17.E9
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.17(ii),
+§10.17 and
+Ch.10
+
+10.17.10
+
+Yν′⁡(z)
+∼(2π⁢z)12⁢(cos⁡ω⁢∑k=0∞(−1)k⁢b2⁢k⁡(ν)z2⁢k−sin⁡ω⁢∑k=0∞(−1)k⁢b2⁢k+1⁡(ν)z2⁢k+1),
+
+|ph⁡z|≤π−δ,
+
+ⓘ
+
+Symbols:
+
+Yν⁡(z): Bessel function of the second kind,
+∼: Poincaré asymptotic expansion,
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+ph: phase,
+sin⁡z: sine function,
+k: nonnegative integer,
+z: complex variable,
+ν: complex parameter,
+δ: small positive constant,
+ω and
+bk⁡(ν): polynomial coefficient
+
+A&S Ref:
+ 9.2.12
+
+Permalink:
+http://dlmf.nist.gov/10.17.E10
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.17(ii),
+§10.17 and
+Ch.10
+
+10.17.11
+
+Hν(1)′⁡(z)
+∼i⁢(2π⁢z)12⁢ei⁢ω⁢∑k=0∞ik⁢bk⁡(ν)zk,
+
+−π+δ≤ph⁡z≤2⁢π−δ,
+
+ⓘ
+
+Symbols:
+
+Hν(1)⁡(z): Bessel function of the third kind (or Hankel function),
+∼: Poincaré asymptotic expansion,
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+i: imaginary unit,
+ph: phase,
+k: nonnegative integer,
+z: complex variable,
+ν: complex parameter,
+δ: small positive constant,
+ω and
+bk⁡(ν): polynomial coefficient
+
+A&S Ref:
+ 9.2.13
+
+Referenced by:
+§10.18(iii)
+Permalink:
+http://dlmf.nist.gov/10.17.E11
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.17(ii),
+§10.17 and
+Ch.10
+
+10.17.12
+
+Hν(2)′⁡(z)
+∼−i⁢(2π⁢z)12⁢e−i⁢ω⁢∑k=0∞(−i)k⁢bk⁡(ν)zk,
+
+−2⁢π+δ≤ph⁡z≤π−δ.
+
+ⓘ
+
+Symbols:
+
+Hν(2)⁡(z): Bessel function of the third kind (or Hankel function),
+∼: Poincaré asymptotic expansion,
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+i: imaginary unit,
+ph: phase,
+k: nonnegative integer,
+z: complex variable,
+ν: complex parameter,
+δ: small positive constant,
+ω and
+bk⁡(ν): polynomial coefficient
+
+A&S Ref:
+ 9.2.14
+
+Referenced by:
+§10.18(iii)
+Permalink:
+http://dlmf.nist.gov/10.17.E12
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.17(ii),
+§10.17 and
+Ch.10
+
+§10.17(iii) Error Bounds for Real Argument and
+Order
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Hankel functions, asymptotic expansions for large argument, error bounds
+
+Notes:
+See Watson (1944, pp. 205–206) and
+Olver (1997b, pp. 268–269).
+Permalink:
+http://dlmf.nist.gov/10.17.iii
+See also:
+Annotations for §10.17 and
+Ch.10
+
+In the expansions (10.17.3) and (10.17.4) assume that
+ν≥0 and z>0. Then the remainder associated with the sum
+∑k=0ℓ−1(−1)k⁢a2⁢k⁡(ν)⁢z−2⁢k does not exceed
+the first neglected term in absolute value and has the same sign provided that
+ℓ≥max⁡(12⁢ν−14,1). Similarly for
+∑k=0ℓ−1(−1)k⁢a2⁢k+1⁡(ν)⁢z−2⁢k−1, provided that
+ℓ≥max⁡(12⁢ν−34,1).
+
+In the expansions (10.17.5) and (10.17.6) assume that
+ν>−12 and z>0. If these expansions are terminated when
+k=ℓ−1, then the remainder term is bounded in absolute value by the
+first neglected term, provided that ℓ≥max⁡(ν−12,1).
+
+§10.17(iv) Error Bounds for Complex Argument and
+Order
+
+ⓘ
+
+Notes:
+See Olver (1997b, pp. 266–267).
+Referenced by:
+
+§10.49(i),
+§10.74(i)
+
+Permalink:
+http://dlmf.nist.gov/10.17.iv
+See also:
+Annotations for §10.17 and
+Ch.10
+
+For (10.17.5) and (10.17.6) write
+
+10.17.13
+
+Hν(1)⁡(z)Hν(2)⁡(z)}=(2π⁢z)12⁢e±i⁢ω⁢(∑k=0ℓ−1(±i)k⁢ak⁡(ν)zk+Rℓ±⁡(ν,z)),
+
+ℓ=1,2,….
+
+ⓘ
+
+Symbols:
+
+Hν(1)⁡(z): Bessel function of the third kind (or Hankel function),
+Hν(2)⁡(z): Bessel function of the third kind (or Hankel function),
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+i: imaginary unit,
+k: nonnegative integer,
+z: complex variable,
+ν: complex parameter,
+ak⁡(ν): polynomial coefficient,
+ω and
+Rℓ±⁡(ν,z): remainder
+
+Referenced by:
+
+§10.17(iv),
+§10.17(v)
+
+Permalink:
+http://dlmf.nist.gov/10.17.E13
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.17(iv),
+§10.17 and
+Ch.10
+
+Then
+
+10.17.14
+
+|Rℓ±⁡(ν,z)|≤2⁢|aℓ⁡(ν)|⁢𝒱z,±i⁢∞⁡(t−ℓ)⁢exp⁡(|ν2−14|⁢𝒱z,±i⁢∞⁡(t−1)),
+
+ⓘ
+
+Defines:
+Rℓ±⁡(ν,z): remainder (locally)
+Symbols:
+
+exp⁡z: exponential function,
+i: imaginary unit,
+𝒱a,b⁡(f): total variation,
+z: complex variable,
+ν: complex parameter and
+ak⁡(ν): polynomial coefficient
+
+Referenced by:
+
+§10.17(iv),
+Erratum (V1.0.10) for Equation (10.17.14)
+
+Permalink:
+http://dlmf.nist.gov/10.17.E14
+Encodings:
+
+TeX, pMML, png
+
+Errata (effective with 1.0.10):
+
+Originally the factor 𝒱z,±i⁢∞⁡(t−1)
+in the argument to the exponential was written incorrectly as
+𝒱z,±i⁢∞⁡(t−ℓ).
+
+Reported 2014-09-27 by Gergő Nemes
+
+See also:
+Annotations for §10.17(iv),
+§10.17 and
+Ch.10
+
+where 𝒱 denotes the variational operator (2.3.6), and the
+paths of variation are subject to the condition that |ℑ⁡t| changes
+monotonically. Bounds for 𝒱z,i⁢∞⁡(t−ℓ) are given by
+
+10.17.15
+
+𝒱z,i⁢∞⁡(t−ℓ)≤{|z|−ℓ,0≤ph⁡z≤π,χ⁡(ℓ)⁢|z|−ℓ,−12⁢π≤ph⁡z≤0 or π≤ph⁡z≤32⁢π,2⁢χ⁡(ℓ)⁢|ℑ⁡z|−ℓ,−π<ph⁡z≤−12⁢π or 32⁢π≤ph⁡z<2⁢π,
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+ℑ⁡: imaginary part,
+i: imaginary unit,
+ph: phase,
+𝒱a,b⁡(f): total variation,
+z: complex variable and
+χ⁡(ℓ)
+
+Referenced by:
+§10.17(iv)
+Permalink:
+http://dlmf.nist.gov/10.17.E15
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.17(iv),
+§10.17 and
+Ch.10
+
+where χ⁡(ℓ)=π12⁢Γ⁡(12⁢ℓ+1)/Γ⁡(12⁢ℓ+12); see §9.7(i). The bounds
+(10.17.15) also apply to 𝒱z,−i⁢∞⁡(t−ℓ)
+in the conjugate sectors.
+Corresponding error bounds for (10.17.3) and
+(10.17.4) are obtainable by combining (10.17.13) and
+(10.17.14) with (10.4.4).
+
+§10.17(v) Exponentially-Improved Expansions
+
+ⓘ
+
+Keywords:
+
+Bessel functions, Hankel functions, asymptotic expansions for large argument, error bounds, exponentially-improved
+
+Notes:
+See Olver (1991b, Theorem 1) or
+Olver (1993a, Theorem 1.1), and (10.16.6).
+Referenced by:
+§10.74(i)
+Permalink:
+http://dlmf.nist.gov/10.17.v
+See also:
+Annotations for §10.17 and
+Ch.10
+
+As in §9.7(v) denote
+
+10.17.16
+
+Gp⁡(z)=ez2⁢π⁢Γ⁡(p)⁢Γ⁡(1−p,z),
+
+ⓘ
+
+Symbols:
+
+Γ⁡(z): gamma function,
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+Γ⁡(a,z): incomplete gamma function,
+Gp⁡(z): rescaled terminant function and
+z: complex variable
+
+Referenced by:
+§10.40(iv)
+Permalink:
+http://dlmf.nist.gov/10.17.E16
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.17(v),
+§10.17 and
+Ch.10
+
+where Γ⁡(1−p,z) is the incomplete gamma function (§8.2(i)). Then
+in (10.17.13) as z→∞ with |ℓ−2⁢|z|| bounded and
+m (≥0) fixed,
+
+10.17.17
+
+Rℓ±⁡(ν,z)=(−1)ℓ⁢2⁢cos⁡(ν⁢π)⁢(∑k=0m−1(±i)k⁢ak⁡(ν)zk⁢Gℓ−k⁡(∓2⁢i⁢z)+Rm,ℓ±⁡(ν,z)),
+
+ⓘ
+
+Symbols:
+
+π: the ratio of the circumference of a circle to its diameter,
+cos⁡z: cosine function,
+i: imaginary unit,
+Gp⁡(z): rescaled terminant function,
+m: integer,
+k: nonnegative integer,
+z: complex variable,
+ν: complex parameter,
+ak⁡(ν): polynomial coefficient and
+Rℓ±⁡(ν,z): remainder
+
+Permalink:
+http://dlmf.nist.gov/10.17.E17
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.17(v),
+§10.17 and
+Ch.10
+
+where
+
+10.17.18
+
+Rm,ℓ±⁡(ν,z)=O⁡(e−2⁢|z|⁢z−m),
+
+|ph⁡(z⁢e∓12⁢π⁢i)|≤π.
+
+ⓘ
+
+Defines:
+Rℓ±⁡(ν,z): remainder (locally)
+Symbols:
+
+O⁡(x): order not exceeding,
+π: the ratio of the circumference of a circle to its diameter,
+e: base of natural logarithm,
+i: imaginary unit,
+ph: phase,
+m: integer,
+z: complex variable and
+ν: complex parameter
+
+Permalink:
+http://dlmf.nist.gov/10.17.E18
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.17(v),
+§10.17 and
+Ch.10
+
+For higher re-expansions of the remainder terms see
+Olde Daalhuis and Olver (1995a) and
+Olde Daalhuis (1995, 1996).
+
+10.16 Relations to Other Functions10.18 Modulus and Phase Functions
+
+© 2010–2026 NIST / Disclaimer / Feedback;
+ Version 1.2.6;
+Release date 2026-03-15.
+
+Site Privacy Accessibility Privacy Program Copyrights Vulnerability Disclosure No Fear Act Policy FOIA Environmental Policy Scientific Integrity Information Quality Standards Commerce.gov Science.gov USA.gov
+

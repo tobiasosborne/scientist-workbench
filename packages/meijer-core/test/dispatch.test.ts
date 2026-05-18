@@ -265,6 +265,69 @@ describe("dispatch — per-rule anchors", () => {
     expect(r.ruleId).toBe("dlmf-16-18-arctan");
     expect(JSON.stringify(r.expr)).toContain("atan");
   });
+
+  test("bessel-y-canonical: G^{2,0}_{1,3}([],[-5/4];[3/4,-3/4],[-5/4]|z) emits BesselY(3/2, 2√z)", () => {
+    // Canonical-Bessel-Y slot values at ν = 3/2 (concrete half-integer):
+    //   ap = [-(ν+1)/2 = -5/4], bm = [ν/2 = 3/4, -ν/2 = -3/4], bq = [-5/4].
+    // The shared `free "c"` slot in the rule enforces ap[0] == bq[0]
+    // (both -5/4); the bm free-slot captures (a, b) bind to the
+    // canonical-sort permutation of [3/4, -3/4]. The rewrite recovers ν
+    // from `b`, which post-sort is whichever rational sorts later in
+    // canonical bytes. For literal rationals -3/4 = {"den":"4","kind":
+    // "rational","num":"-3"} sorts before 3/4 = {"den":"4","kind":
+    // "rational","num":"3"} (`-` < `3`), so b = 3/4 (the positive one)
+    // and recoverNuFromHalfSlot's fallback emits 2·(3/4) = 3/2 = ν. ✓
+    const r = meijergSymbolic(P([], [R(-5, 4)], [R(3, 4), R(-3, 4)], [R(-5, 4)]), Z);
+    expectMatched(r);
+    expect(r.ruleId).toBe("bessel-y-canonical");
+    expect(JSON.stringify(r.expr)).toContain("BesselY");
+  });
+
+  test("bessel-i-canonical: G^{1,0}_{1,3}([],[5/4];[3/4],[-3/4,5/4]|z) emits (1/π)·BesselI(3/2, 2√z)", () => {
+    // Canonical-Bessel-I slot values at ν = 3/2: ap = [(ν+1)/2 = 5/4],
+    // bm = [ν/2 = 3/4], bq = [-ν/2 = -3/4, (ν+1)/2 = 5/4]. The shared
+    // `free "c"` enforces ap[0] == bq[0]; canonical-sort of bq puts
+    // 5/4 = `{"den":"4","kind":"rational","num":"5"}` after
+    // -3/4 = `{"den":"4","kind":"rational","num":"-3"}` (because `-` <
+    // `5`), so bq = [-3/4, 5/4] after sort, meaning bq[0] = -3/4 — but
+    // ap[0] = 5/4 — so the shared name binding FAILS for this literal
+    // input order. The user-input slot order `bq = [-3/4, 5/4]` becomes
+    // (after canonical sort) `bq = [-3/4, 5/4]` (already sorted), so
+    // bq[0] = -3/4 ≠ ap[0] = 5/4 — the rule does NOT fire on this
+    // literal input. To probe the rule literally, we'd need bq order
+    // [5/4, -3/4] so that bq[0] = 5/4 matches ap[0]. Canonical sort
+    // would re-permute to [-3/4, 5/4] anyway, so the rule cannot fire
+    // on rational-only literal inputs — only on bridge-produced
+    // symbolic inputs (where (ν+1)/2 = mkDiv(mkPlus([nu, 1]), 2) is an
+    // expression that sorts differently from -ν/2 = mkNeg(mkDiv(nu, 2))).
+    //
+    // This is a known limitation of the dispatcher's by-position
+    // canonical-sort matcher: structural shape recognition for the
+    // canonical Bessel-I form requires symbolic ν, not literal numeric
+    // ν. For canonical literal-ν inputs (which a user might construct
+    // manually), the rule misses and the dispatcher falls through to
+    // `no-known-reduction`. This is documented in
+    // `bessel-backward.ts` "Looseness contract" and is acceptable for
+    // v0.2 — the symbolic-ν path is the load-bearing use case from the
+    // bridge's forward direction.
+    //
+    // Smoke-test the symbolic path instead: build the canonical
+    // Bessel-I G-form for ν = sym("nu") manually and confirm the rule
+    // fires.
+    const nu = sym("nu");
+    const halfNu = expr("/", [nu, I(2)]);
+    const negHalfNu = expr("neg", [halfNu]);
+    const nuPlusOneHalf = expr("/", [expr("+", [nu, I(1)]), I(2)]);
+    const r = meijergSymbolic(
+      P([], [nuPlusOneHalf], [halfNu], [negHalfNu, nuPlusOneHalf]),
+      Z,
+    );
+    expectMatched(r);
+    expect(r.ruleId).toBe("bessel-i-canonical-symbolic-nu");
+    expect(JSON.stringify(r.expr)).toContain("BesselI");
+    // Prefactor (1/π) — the emission is `BesselI(nu, ...) / pi`.
+    expect(JSON.stringify(r.expr)).toContain("\"pi\"");
+  });
 });
 
 // -----------------------------------------------------------------------------
@@ -416,11 +479,18 @@ describe("dispatch — every rule has a citation", () => {
     for (const rule of ALL_RULES) {
       expect(rule.id.length).toBeGreaterThan(0);
       expect(rule.source.length).toBeGreaterThan(0);
-      // Source must contain either "Bateman" or "DLMF" — the two
-      // primary-literature anchors present in v0.1.
+      // Source must contain one of the recognised primary-literature
+      // anchors. v0.1 started with Bateman + DLMF; the Erf-family
+      // bridge (bead `tc2c` / worklog 137) adds PBM (Prudnikov-
+      // Brychkov-Marichev Vol 3 §8.4 — the canonical Meijer-G integral
+      // table for the Erf-family G-forms that DLMF §16.18 Examples
+      // doesn't cover) and R4 (the local literature-cited research
+      // artefact `docs/refs/erf-research/R4-meijer-g-bridge.md`).
       const isBateman = rule.source.includes("Bateman");
       const isDlmf = rule.source.includes("DLMF");
-      expect(isBateman || isDlmf).toBe(true);
+      const isPbm = rule.source.includes("PBM");
+      const isR4 = rule.source.includes("R4");
+      expect(isBateman || isDlmf || isPbm || isR4).toBe(true);
     }
   });
 

@@ -59,6 +59,27 @@ export type RelationSpec =
  *
  * The `relations` field is optional; an absent / empty array means
  * "no cross-slot guards."
+ *
+ * The `zMatch` field is optional; an absent predicate preserves the
+ * pre-extension behaviour (the matcher does not inspect the z-argument
+ * at all). Introduced 2026-05-17 (bead `tc2c` / worklog 137) to
+ * disambiguate the Erf-vs-Erfi parameter-tuple collision per R4 §2.5.1
+ * and ADR-0040 §"Decision 5": both heads share `(an, ap, bm, bq) =
+ * ([1/2], [], [0], [-1/2])`; the difference is whether the z-argument
+ * is `z²` (Erf) or `−z²` (Erfi). A purely structural slot-by-slot
+ * matcher cannot tell them apart without inspecting `z`.
+ *
+ *   * `"yes"` — match accepted; the matcher proceeds to rewrite.
+ *   * `"no"`  — match rejected; the matcher tries the next rule.
+ *   * `"unknown"` — the predicate cannot decide; the matcher accepts
+ *     conservatively (current behaviour without `zMatch`). Use this for
+ *     z-arguments that don't fit either branch cleanly (symbolic `z`
+ *     with no leading sign, etc.); the first-match-wins discipline then
+ *     gives whichever rule comes first in the registry.
+ *
+ * The default-absent → "match every z" semantics is load-bearing: every
+ * existing dispatch rule continues to fire exactly as before, with no
+ * test-suite regression. The extension is purely additive.
  */
 export interface PatternSpec {
   readonly mnpq: { readonly m: number; readonly n: number; readonly p: number; readonly q: number };
@@ -67,6 +88,7 @@ export interface PatternSpec {
   readonly bm: readonly SlotSpec[];
   readonly bq: readonly SlotSpec[];
   readonly relations?: readonly RelationSpec[];
+  readonly zMatch?: (z: Value) => "yes" | "no" | "unknown";
 }
 
 /**

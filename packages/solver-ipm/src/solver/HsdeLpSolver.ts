@@ -112,7 +112,7 @@ import {
   type RegState,
 } from "./Regularization.js";
 import { schurAssembleNormalEq } from "../linalg/SchurAssembler.js";
-import { choleskySolveInPlace } from "../linalg/Cholesky.js";
+import { solveWithIR } from "../linalg/IterativeRefinement.js";
 import type {
   IterLogLine,
   SolveOptions,
@@ -202,6 +202,15 @@ interface State {
   M: Float64Array;       // m × m Schur, row-major
   Lchol: Float64Array;   // Cholesky factor of M (with regularization)
   rhs: Float64Array;     // m-vector workspace for back-sub
+  // Iterative-refinement workspaces + per-iter step counts (Phase 5 Tier 1).
+  // workE / workCorr are the residual / correction scratch for `solveWithIR`,
+  // allocated once per solve; nitref{1,2,3} are the accepted-step counts of
+  // the data / affine / combined back-substitutions, surfaced in the trace.
+  workE: Float64Array;
+  workCorr: Float64Array;
+  nitref1: number;
+  nitref2: number;
+  nitref3: number;
   // Reg state (3-way Tikhonov)
   reg: RegState;
   // Iter / status / timing
@@ -249,6 +258,11 @@ function makeState(m: number, n: number, params: IpmParams): State {
     M: new Float64Array(m * m),
     Lchol: new Float64Array(m * m),
     rhs: new Float64Array(m),
+    workE: new Float64Array(m),
+    workCorr: new Float64Array(m),
+    nitref1: 0,
+    nitref2: 0,
+    nitref3: 0,
     reg: {
       jitterPrimal: params.initialJitter,
       jitterDual: 0,
@@ -497,6 +511,9 @@ export function solveHsdeLp(lp: LpProblem, opts: SolveOptions = {}): HsdeLpSolve
         kappa: st.kappa,
         gfeas: st.gapInf,
         prstatus: term.prstatus,
+        nitref1: st.nitref1,
+        nitref2: st.nitref2,
+        nitref3: st.nitref3,
         tSchurMs,
         tFactorMs,
         tDirectionMs,
@@ -731,8 +748,10 @@ function computeDataDirection(st: State, lp: LpProblem): void {
     for (let j = 0; j < n; j++) s += A[i * n + j]! * st.D[j]! * c[j]!;
     st.rhs[i] = s;
   }
-  st.dy1.set(st.rhs);
-  choleskySolveInPlace(st.Lchol, m, st.dy1);
+  // Back-substitution with iterative refinement against the unregularised M
+  // (Phase 5 Tier 1). nitref1 = accepted refinement steps on the data
+  // direction; 0 when the regularised solve was already accurate enough.
+  st.nitref1 = solveWithIR(st.M, m, st.Lchol, st.rhs, st.dy1, st.workE, st.workCorr);
 
   // dx1 = D·A^T·dy1 − D·c
   // ds1 = c − A^T·dy1
@@ -783,8 +802,9 @@ function computeAffineDirection(st: State, lp: LpProblem): void {
     }
     st.rhs[i] = s;
   }
-  st.dy2.set(st.rhs);
-  choleskySolveInPlace(st.Lchol, m, st.dy2);
+  // Iterative-refinement back-sub (Phase 5 Tier 1); nitref2 = affine-direction
+  // accepted refinement steps.
+  st.nitref2 = solveWithIR(st.M, m, st.Lchol, st.rhs, st.dy2, st.workE, st.workCorr);
 
   // dx2 = D·A^T·dy2 − x + D·r_d
   // ds2 = −r_d − A^T·dy2
@@ -846,8 +866,9 @@ function computeCombinedDirection(st: State, lp: LpProblem, sigma: number, mu: n
     }
     st.rhs[i] = s;
   }
-  st.dy2.set(st.rhs);
-  choleskySolveInPlace(st.Lchol, m, st.dy2);
+  // Iterative-refinement back-sub (Phase 5 Tier 1); nitref3 = combined-
+  // direction accepted refinement steps.
+  st.nitref3 = solveWithIR(st.M, m, st.Lchol, st.rhs, st.dy2, st.workE, st.workCorr);
 
   // dx2 = D·A^T·dy2 + E_x_comb/S + (1−σ)·D·r_d
   // ds2 = −(1−σ)·r_d − A^T·dy2

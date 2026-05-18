@@ -51,7 +51,7 @@ import {
   toString,
   toFloat64,
 } from "@workbench/bigfloat";
-import { meijergSlater } from "../src/slater.js";
+import { estimateAchievedPrecision, meijergSlater } from "../src/slater.js";
 import type { MeijerGParameters } from "../src/types.js";
 
 // -----------------------------------------------------------------------------
@@ -474,33 +474,60 @@ describe("input errors", () => {
 // to ~14 dps.  The bench's tier-E corpus surfaced this as a value-
 // accuracy violation and the bead-spec acceptance criterion is the
 // honesty contract: `achievedPrecision` must reflect actual achievable
-// precision after Johansson perturbation.
+// precision after Johansson perturbation — the estimator must never
+// *over*-report.
 //
 // The empirical estimator (`slater.ts` § "Empirical precision
-// estimator") runs a second Slater pass at a *minimally* smaller
-// perturbation magnitude and computes `−log10(|Δ|/|S|)`.  The
-// resulting figure is reported as `achievedPrecision`, capped at the
-// user-requested precision.
+// estimator", `estimateAchievedPrecision`) runs a second Slater pass at
+// a *minimally* smaller perturbation magnitude and computes
+// `−log10(|Δ|/|S|)`.  The resulting figure is reported as
+// `achievedPrecision`, capped at the user-requested precision.
 //
-// Test: known-low-precision case (`bm = [1/2, 3/2]`, `z = 3/2`)
-// reports < 50 dps and the reported value matches mpmath to within
-// the reported precision.
+// History — the `oj5j` substrate fix.  Bead `scientist-workbench-oj5j`
+// reformulated `clgammaReflect`/`cdigammaReflect` in `packages/bigfloat`
+// to kill the catastrophic cancellation near Γ/ψ poles.  Before that
+// fix, the 2-pole half-integer-spaced witness `bm = [1/2, 3/2]`,
+// `z = 3/2` was only good to ~14 dps and the estimator honestly
+// reported a low figure; this block's first test *encoded* that ~14-dps
+// ceiling.  After `oj5j` the same input is accurate to >54 dps (verified
+// against mpmath at 120 dps — see the value cross-check below), so the
+// estimator now honestly reports the full 50-dps cap.  That is `oj5j`
+// succeeding (its acceptance criterion was "~14 → ~30 dps"; it
+// over-achieved).  The witness is therefore no longer a low-precision
+// case — the first test below now asserts the *honest post-fix*
+// behaviour, and the contract's anti-over-reporting teeth moved to a
+// direct unit test of `estimateAchievedPrecision` (last test in this
+// block), which feeds it two deliberately-disagreeing passes and
+// asserts it reports low — independent of whether any end-to-end input
+// still loses precision.
 
 describe("honesty contract: empirical precision estimator (bead 7usr)", () => {
-  test("perturbation-driven case (bm = [1/2, 3/2], z = 3/2) reports honest <50 dps", () => {
+  test("post-oj5j: (bm = [1/2, 3/2], z = 3/2) is honestly full-precision", () => {
+    // Pre-`oj5j` this was a known-low-precision witness (~14 dps).  The
+    // `oj5j` bigfloat substrate fix lifted it to full precision, so the
+    // estimator now honestly reports the 50-dps cap.  We assert BOTH
+    // halves of honesty: (1) the reported number is the cap, and (2)
+    // the *value* genuinely has that precision — cross-checked against
+    // mpmath's independent `meijerg` at 120 dps.
     const params = P([], [], ["0.5", "1.5"], []);
     const z = cfromStrings("1.5", "0", 600);
     const r = meijergSlater(params, z, 50);
     if (r.status !== "success") throw new Error(`expected success; got ${r.status}`);
     expect(r.perturbationApplied).toBe(true);
-    // Mpmath at 110 dps reports the answer good to ~14 dps vs our value.
-    // The estimator must report < 50 dps (the over-reporting bug
-    // produced exactly 50 dps).
-    expect(r.achievedPrecision).toBeLessThan(50);
-    // The estimator should not be vacuously low — at this concrete
-    // input the empirical figure is around 13-14 dps.  Allow slack
-    // for cross-platform drift in the underlying cgamma implementation.
-    expect(r.achievedPrecision).toBeGreaterThanOrEqual(8);
+    // The empirical estimator's two perturbation passes now agree
+    // byte-wise, so it reports the full user-requested precision.
+    expect(r.achievedPrecision).toBe(50);
+    // Independent-oracle value cross-check.  mpmath 1.3.0 at mp.dps=120:
+    //   meijerg([[],[]], [[mpf(1)/2, mpf(3)/2], []], mpf(3)/2)
+    //   = 0.236079248996735163282852628719941257506499106008607343667...
+    // The Slater value must match this to comfortably more than the
+    // reported 50 dps for `achievedPrecision = 50` to be honest.
+    const oracle = cfromStrings(
+      "0.236079248996735163282852628719941257506499106008607343667495155420231702567",
+      "0",
+      WORK_BITS,
+    );
+    expectClose(r.value, oracle, 50, "Slater [1/2,3/2]@3/2 vs mpmath oracle");
   });
 
   test("non-perturbed case still reports the user-requested precision", () => {
@@ -524,6 +551,67 @@ describe("honesty contract: empirical precision estimator (bead 7usr)", () => {
     if (r.status !== "success") throw new Error(`expected success; got ${r.status}`);
     expect(r.perturbationApplied).toBe(true);
     expect(r.achievedPrecision).toBe(50);
+  });
+
+  // ---------------------------------------------------------------------------
+  // The anti-over-reporting teeth — direct unit test of the estimator.
+  // ---------------------------------------------------------------------------
+  //
+  // Post-`oj5j` no 2-pole end-to-end input is known to genuinely lose
+  // precision (≥3-pole clusters are *refused*, not low-precision — see
+  // the cost-bounded-refusal block below).  So the contract's teeth —
+  // "this block must RED if someone makes the estimator lie" — live in a
+  // direct unit test of `estimateAchievedPrecision`: feed it two
+  // perturbation passes that *deliberately disagree* at a known
+  // magnitude and assert the reported figure is honestly low (well
+  // under the user-requested `userPrecision`), never the cap.
+  //
+  // Mutation-proof (CLAUDE.md Rule 6/7): the over-reporting regression
+  // this guards is exactly the pre-`7usr` bug — `estimateAchievedPrecision`
+  // returning `userPrecision` unconditionally.  Replacing its body with
+  // `return userPrecision;` makes the first assertion below
+  // (`toBeLessThan(50)`) go RED; restoring it returns to GREEN.  The
+  // estimator therefore cannot silently regress into over-reporting
+  // without this test catching it.
+
+  describe("anti-over-reporting: estimateAchievedPrecision reports honestly low on disagreeing passes", () => {
+    test("two passes disagreeing at ~1e-20 ⇒ ~18 dps, NOT the 50-dps cap", () => {
+      // sumA = 1, sumB = 1 + 1e-20 ⇒ |Δ| ≈ 1e-20, |S| ≈ 1.
+      // Relative agreement ≈ 20 dps; the estimator's 1-digit safety
+      // margin makes it report ~18-19 dps.  The load-bearing assertion
+      // is `< 50`: an estimator that lies (returns `userPrecision`
+      // regardless) fails here.
+      const sumA = cfromStrings("1", "0", WORK_BITS);
+      const sumB = cfromStrings("1.00000000000000000001", "0", WORK_BITS);
+      const got = estimateAchievedPrecision(
+        sumA,
+        sumB,
+        WORK_BITS,
+        decimalToBinaryPrecision(50),
+        /*userPrecision=*/ 50,
+      );
+      // Honest figure is around 18 dps for a 1e-20 disagreement.
+      expect(got).toBeLessThan(50);
+      expect(got).toBeGreaterThanOrEqual(15);
+      expect(got).toBeLessThanOrEqual(22);
+    });
+
+    test("byte-wise-identical passes ⇒ the cap (the legitimate full-precision branch)", () => {
+      // When the two passes genuinely agree to the last bit, reporting
+      // `userPrecision` is honest, not a lie — this is the branch that
+      // (correctly) fires for the post-`oj5j` [1/2,3/2]@3/2 witness.
+      // Pinning it guards against an over-correction that would make
+      // the estimator under-report on genuinely-converged inputs.
+      const sum = cfromStrings("0.2360792489967351632828526287", "0", WORK_BITS);
+      const got = estimateAchievedPrecision(
+        sum,
+        sum,
+        WORK_BITS,
+        decimalToBinaryPrecision(50),
+        /*userPrecision=*/ 50,
+      );
+      expect(got).toBe(50);
+    });
   });
 });
 

@@ -1,0 +1,31 @@
+In file included from boost-complex-test-prog.cpp:6:
+/usr/include/boost/math/special_functions/bessel.hpp: In instantiation of ‘T boost::math::detail::cyl_bessel_j_imp(T, T, const bessel_no_int_tag&, const Policy&) [with T = std::complex<double>; Policy = boost::math::policies::policy<boost::math::policies::promote_float<false>, boost::math::policies::promote_double<false>, boost::math::policies::default_policy, boost::math::policies::default_policy, boost::math::policies::default_policy, boost::math::policies::default_policy, boost::math::policies::default_policy, boost::math::policies::default_policy, boost::math::policies::default_policy, boost::math::policies::default_policy, boost::math::policies::default_policy>; bessel_no_int_tag = std::integral_constant<int, 0>]’:
+/usr/include/boost/math/special_functions/bessel.hpp:521:101:   required from ‘typename boost::math::detail::bessel_traits<T1, T2, Policy>::result_type boost::math::cyl_bessel_j(T1, T2, const Policy&) [with T1 = double; T2 = std::complex<double>; Policy = policies::policy<policies::default_policy, policies::default_policy, policies::default_policy, policies::default_policy, policies::default_policy, policies::default_policy, policies::default_policy, policies::default_policy, policies::default_policy, policies::default_policy, policies::default_policy>; typename detail::bessel_traits<T1, T2, Policy>::result_type = std::complex<double>]’
+/usr/include/boost/math/special_functions/bessel.hpp:527:23:   required from ‘typename boost::math::detail::bessel_traits<T1, T2, boost::math::policies::policy<boost::math::policies::default_policy, boost::math::policies::default_policy, boost::math::policies::default_policy, boost::math::policies::default_policy, boost::math::policies::default_policy, boost::math::policies::default_policy, boost::math::policies::default_policy, boost::math::policies::default_policy, boost::math::policies::default_policy, boost::math::policies::default_policy, boost::math::policies::default_policy> >::result_type boost::math::cyl_bessel_j(T1, T2) [with T1 = double; T2 = std::complex<double>; typename detail::bessel_traits<T1, T2, policies::policy<policies::default_policy, policies::default_policy, policies::default_policy, policies::default_policy, policies::default_policy, policies::default_policy, policies::default_policy, policies::default_policy, policies::default_policy, policies::default_policy, policies::default_policy> >::result_type = std::complex<double>]’
+boost-complex-test-prog.cpp:9:39:   required from here
+/usr/include/boost/math/special_functions/bessel.hpp:99:9: error: no match for ‘operator<’ (operand types are ‘std::complex<double>’ and ‘int’)
+   99 |    if(x < 0)
+      |       ~~^~~
+In file included from /usr/include/boost/lexical_cast.hpp:48,
+                 from /usr/include/boost/math/tools/convert_from_string.hpp:17,
+                 from /usr/include/boost/math/constants/constants.hpp:14,
+                 from /usr/include/boost/math/special_functions/gamma.hpp:24,
+                 from /usr/include/boost/math/special_functions/detail/bessel_jy.hpp:14,
+                 from /usr/include/boost/math/special_functions/bessel.hpp:20:
+/usr/include/boost/range/iterator_range_core.hpp:605:9: note: candidate: ‘template<class IteratorT, class ForwardRange> typename boost::enable_if<boost::mpl::not_<boost::is_base_and_derived<boost::iterator_range_detail::iterator_range_tag, ForwardRange> >, bool>::type boost::operator<(const ForwardRange&, const iterator_range<IteratorT>&)’
+  605 |         operator<( const ForwardRange& l, const iterator_range<IteratorT>& r )
+      |         ^~~~~~~~
+/usr/include/boost/range/iterator_range_core.hpp:605:9: note:   template argument deduction/substitution failed:
+/usr/include/boost/math/special_functions/bessel.hpp:99:9: note:   mismatched types ‘const boost::iterator_range<IteratorT>’ and ‘int’
+   99 |    if(x < 0)
+      |       ~~^~~
+/usr/include/boost/range/iterator_range_core.hpp:678:9: note: candidate: ‘template<class Iterator1T, class Iterator2T> bool boost::operator<(const iterator_range<IteratorT>&, const iterator_range<Iterator2T>&)’
+  678 |         operator<( const iterator_range<Iterator1T>& l, const iterator_range<Iterator2T>& r )
+      |         ^~~~~~~~
+/usr/include/boost/range/iterator_range_core.hpp:678:9: note:   template argument deduction/substitution failed:
+/usr/include/boost/math/special_functions/bessel.hpp:99:9: note:   ‘std::complex<double>’ is not derived from ‘const boost::iterator_range<IteratorT>’
+   99 |    if(x < 0)
+      |       ~~^~~
+/usr/include/boost/range/iterator_range_core.hpp:688:9: note: candidate: ‘template<class IteratorT, class ForwardRange> typename boost::enable_if<boost::mpl::not_<boost::is_base_and_derived<boost::iterator_range_detail::iterator_range_tag, ForwardRange> >, bool>::type boost::operator<(const iterator_range<IteratorT>&, const ForwardRange&)’
+  688 |         operator<( const iterator_range<IteratorT>& l, const ForwardRange& r )
+EXIT=0

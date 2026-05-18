@@ -1,0 +1,98 @@
+
+
+DLMF: §10.28 Wronskians and Cross-Products ‣ Modified Bessel Functions ‣ Chapter 10 Bessel Functions
+
+DLMF
+
+Index
+Notations
+Search
+Help?
+Citing
+Customize
+Annotate
+UnAnnotate
+
+About the Project
+
+10 Bessel FunctionsModified Bessel Functions10.27 Connection Formulas10.29 Recurrence Relations and Derivatives
+
+§10.28 Wronskians and Cross-Products
+
+ⓘ
+
+Keywords:
+
+Wronskians, cross-products, modified Bessel functions
+
+Notes:
+For the Wronskians use (1.13.5) and the limiting forms in
+§10.30. For the cross-products apply (10.29.2).
+Permalink:
+http://dlmf.nist.gov/10.28
+See also:
+Annotations for Ch.10
+
+10.28.1
+
+𝒲⁡{Iν⁡(z),I−ν⁡(z)}=Iν⁡(z)⁢I−ν−1⁡(z)−Iν+1⁡(z)⁢I−ν⁡(z)=−2⁢sin⁡(ν⁢π)/(π⁢z),
+
+ⓘ
+
+Symbols:
+
+𝒲: Wronskian,
+π: the ratio of the circumference of a circle to its diameter,
+Iν⁡(z): modified Bessel function of the first kind,
+sin⁡z: sine function,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.14
+
+Permalink:
+http://dlmf.nist.gov/10.28.E1
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.28 and
+Ch.10
+
+10.28.2
+
+𝒲⁡{Kν⁡(z),Iν⁡(z)}=Iν⁡(z)⁢Kν+1⁡(z)+Iν+1⁡(z)⁢Kν⁡(z)=1/z.
+
+ⓘ
+
+Symbols:
+
+𝒲: Wronskian,
+Iν⁡(z): modified Bessel function of the first kind,
+Kν⁡(z): modified Bessel function of the second kind,
+z: complex variable and
+ν: complex parameter
+
+A&S Ref:
+ 9.6.15
+
+Permalink:
+http://dlmf.nist.gov/10.28.E2
+Encodings:
+
+TeX, pMML, png
+
+See also:
+Annotations for §10.28 and
+Ch.10
+
+10.27 Connection Formulas10.29 Recurrence Relations and Derivatives
+
+© 2010–2026 NIST / Disclaimer / Feedback;
+ Version 1.2.6;
+Release date 2026-03-15.
+
+Site Privacy Accessibility Privacy Program Copyrights Vulnerability Disclosure No Fear Act Policy FOIA Environmental Policy Scientific Integrity Information Quality Standards Commerce.gov Science.gov USA.gov
+

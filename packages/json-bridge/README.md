@@ -91,6 +91,55 @@ JSON, hint-translate, run the canonical-encoded value through the
 `tools/ntt/tool.ts` subprocess, parse the canonical-encoded output, and
 compare residue lists.
 
+## Numerical-tier ergonomic helpers (bead `qiv8`)
+
+Beside the hint-driven JSON bridge, the package ships four small
+helpers for the *typed-barrel* call site at numerical-tier tools. The
+boilerplate they delete looked like this at every dogfood point:
+
+```ts
+// before — six lines plus an `as never` cast to extract eigenvalues
+const peiInput = list(
+  M.map((row) => list(row.map((x) => float64FromNumber(x)))),
+);
+const lams = (await wb.linalgEigh({ kind: "record", fields: { A: peiInput } }))
+  .fields["eigenvalues"];
+const eigs = (lams as ListValue).items
+  .filter((it): it is { kind: "float64" } & typeof it => it.kind === "float64")
+  .map((it) => float64ToNumber(it as never));
+```
+
+Replaced by:
+
+```ts
+// after — `matrixToValue` / `valueToVector` are the one-liners
+const result = await wb.linalgEigh({ kind: "record", fields: { A: matrixToValue(M) } });
+const eigs = valueToVector(result.fields["eigenvalues"]!);
+```
+
+The four helpers:
+
+| call | signature |
+|---|---|
+| `vectorToValue(v: readonly number[])` | `ListValueOf<Float64Value>` |
+| `matrixToValue(M: readonly (readonly number[])[])` | `ListValueOf<ListValueOf<Float64Value>>` |
+| `valueToVector(v: Value)` | `number[]` |
+| `valueToMatrix(v: Value)` | `number[][]` |
+
+Return types from the `*ToValue` direction are narrow enough that the
+typed-barrel slot accepts them cast-free (paired with bead `0y27`'s
+`FlagsArgOf` lift, the result is *zero* `as never` at the typed-barrel
+numerical-tier boundary). The `valueTo*` direction takes a loose `Value`
+so the caller doesn't have to prove the shape before unpacking — that
+shape-proof is exactly the filter+narrow boilerplate this helper exists
+to delete.
+
+**Refusal envelope.** Shape mismatches (`vector` got a non-list, `matrix`
+got a ragged row, an element isn't `float64`) raise `JsonBridgeError`
+with the `$[i]` / `$[i][j]` path naming the offending position. NaN,
+±Infinity, and subnormals round-trip bit-exactly through
+`float64FromNumber` / `float64ToNumber`.
+
 ## Errors
 
 `JsonBridgeError` carries a dotted path (`$`, `$.foo`, `$.x.3`) pointing
@@ -102,4 +151,8 @@ debuggable.
 
 - ADR-0002 (`docs/adr/0002-schema-kind-annotations.md`) for the `kindOf`
   convention this package leans on.
+- ADR-0015 (`docs/adr/0015-first-numerical-tier.md`) for the
+  numerical-tier vocabulary the `matrix`/`vector` helpers serve.
+- bead `0y27` / worklog 118 — typed-barrel `FlagsArgOf` lift; the
+  `qiv8` helpers complete the cast-free numerical-tier call site.
 - main README §"The value protocol" for the canonical encoding.
