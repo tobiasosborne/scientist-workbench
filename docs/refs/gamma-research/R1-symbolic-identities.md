@@ -309,7 +309,27 @@ operate on Gamma, not Pochhammer.
 | `ψ(1/2) = -γ_E - 2·log(2)` | DLMF §5.4.13; mpmath verified | A |
 | `ψ(3/2) = 2 - γ_E - 2·log(2)` | recurrence + ψ(1/2); mpmath verified | A |
 | `ψ(n+1/2) = -γ_E - 2·log(2) + 2·Σ_{k=1}^n 1/(2k-1)` | DLMF §5.4.15; | B |
+| `ψ(1/3) = -γ_E - (3/2)·log(3) - π/(2√3)` | DLMF §5.4.13 (Gauss); mpmath verified | B |
+| `ψ(2/3) = -γ_E - (3/2)·log(3) + π/(2√3)` | DLMF §5.4.13 (Gauss); mpmath verified | B |
+| `ψ(1/4) = -γ_E - 3·log(2) - π/2` | DLMF §5.4.13 (Gauss); mpmath verified | B |
+| `ψ(3/4) = -γ_E - 3·log(2) + π/2` | DLMF §5.4.13 (Gauss); mpmath verified | B |
+| `ψ(1/6) = -γ_E - 2·log(2) - (3/2)·log(3) - (π√3)/2` | DLMF §5.4.13 (Gauss); mpmath verified | B |
+| `ψ(5/6) = -γ_E - 2·log(2) - (3/2)·log(3) + (π√3)/2` | DLMF §5.4.13 (Gauss); mpmath verified | B |
 | `ψ(+∞) = +∞` | DLMF §5.11.2 asymptotic | A |
+
+**Gauss's formula for digamma at rationals** (DLMF §5.4.13–16). For `0 < p < q`
+positive integers (reduced fraction `p/q`):
+```
+ψ(p/q) = -γ_E - log(2q) - (π/2)·cot(πp/q)
+         + 2 · Σ_{k=1}^{⌊(q-1)/2⌋}  cos(2πpk/q) · log(sin(πk/q))
+```
+Eight common rational arguments collapse to clean closed forms involving
+`π·cot`, `√3`, and logs of small integers — these are the rules above for
+denominators `q ∈ {2, 3, 4, 6}` plus their `n + p/q` shifts via recurrence
+`ψ(z+1) = ψ(z) + 1/z`. SymPy's `digamma(Rational(p, q))` evaluates Gauss's
+formula and is the cross-validation oracle. For arbitrary rationals (e.g.
+`ψ(7/11)`), the formula is expressible symbolically but no longer "clean" —
+defer to Priority-E or v0.2.
 
 **Refusal class:** `ψ` has simple poles of residue `-1` at `z = 0, -1, -2, …`.
 A pattern match on `Digamma` at a non-positive integer must return
@@ -762,6 +782,77 @@ conditions:  isPositiveInteger(n) AND n is concrete
 source:      DLMF §5.4.14; mpmath verified
 v0.1_shippable: partial (needs isPositiveInteger; eval of harmonic sum for concrete n)
 
+// Rule DIG-B2: ψ(1/3) = -γ_E - (3/2)·log(3) - π/(2√3)  [Gauss DLMF §5.4.13]
+lhs_pattern: Digamma(rat(1,3))
+rhs:         mkMinus(
+               mkMinus(mkNeg(sym("EulerGamma")),
+                       mkTimes(rat(3n,2n), expr("log", [int(3n)]))),
+               mkDiv(sym("pi"), mkTimes(int(2n), mkPower(int(3n), rat(1n,2n)))))
+conditions:  arg literal 1/3
+source:      DLMF §5.4.13 (Gauss formula); mpmath verified
+v0.1_shippable: yes
+
+// Rule DIG-B3: ψ(2/3) = -γ_E - (3/2)·log(3) + π/(2√3)  [Gauss DLMF §5.4.13]
+lhs_pattern: Digamma(rat(2,3))
+rhs:         mkPlus([
+               mkMinus(mkNeg(sym("EulerGamma")),
+                       mkTimes(rat(3n,2n), expr("log", [int(3n)]))),
+               mkDiv(sym("pi"), mkTimes(int(2n), mkPower(int(3n), rat(1n,2n))))])
+conditions:  arg literal 2/3
+source:      DLMF §5.4.13 (Gauss formula); mpmath verified
+v0.1_shippable: yes
+
+// Rule DIG-B4: ψ(1/4) = -γ_E - 3·log(2) - π/2  [Gauss DLMF §5.4.13]
+lhs_pattern: Digamma(rat(1,4))
+rhs:         mkMinus(
+               mkMinus(mkNeg(sym("EulerGamma")),
+                       mkTimes(int(3n), expr("log", [int(2n)]))),
+               mkDiv(sym("pi"), int(2n)))
+conditions:  arg literal 1/4
+source:      DLMF §5.4.13 (Gauss formula); mpmath verified
+v0.1_shippable: yes
+
+// Rule DIG-B5: ψ(3/4) = -γ_E - 3·log(2) + π/2  [Gauss DLMF §5.4.13]
+lhs_pattern: Digamma(rat(3,4))
+rhs:         mkPlus([
+               mkMinus(mkNeg(sym("EulerGamma")),
+                       mkTimes(int(3n), expr("log", [int(2n)]))),
+               mkDiv(sym("pi"), int(2n))])
+conditions:  arg literal 3/4
+source:      DLMF §5.4.13 (Gauss formula); mpmath verified
+v0.1_shippable: yes
+
+// Rule DIG-B6: ψ(1/6) = -γ_E - 2·log(2) - (3/2)·log(3) - (π√3)/2  [Gauss DLMF §5.4.13]
+lhs_pattern: Digamma(rat(1,6))
+rhs:         mkMinus(
+               mkMinus(
+                 mkMinus(mkNeg(sym("EulerGamma")),
+                         mkTimes(int(2n), expr("log", [int(2n)]))),
+                 mkTimes(rat(3n,2n), expr("log", [int(3n)]))),
+               mkTimes(rat(1n,2n), mkTimes(sym("pi"), mkPower(int(3n), rat(1n,2n)))))
+conditions:  arg literal 1/6
+source:      DLMF §5.4.13 (Gauss formula); mpmath verified
+v0.1_shippable: yes
+
+// Rule DIG-B7: ψ(5/6) = -γ_E - 2·log(2) - (3/2)·log(3) + (π√3)/2  [Gauss DLMF §5.4.13]
+lhs_pattern: Digamma(rat(5,6))
+rhs:         mkPlus([
+               mkMinus(
+                 mkMinus(mkNeg(sym("EulerGamma")),
+                         mkTimes(int(2n), expr("log", [int(2n)]))),
+                 mkTimes(rat(3n,2n), expr("log", [int(3n)]))),
+               mkTimes(rat(1n,2n), mkTimes(sym("pi"), mkPower(int(3n), rat(1n,2n))))])
+conditions:  arg literal 5/6
+source:      DLMF §5.4.13 (Gauss formula); mpmath verified
+v0.1_shippable: yes
+
+// Rule DIG-B8 (META): general Gauss formula for ψ(p/q) — DEFERRED to v0.2.
+// The closed form for arbitrary p/q with q ∉ {2, 3, 4, 6} involves a sum of
+// cos·log(sin) terms (DLMF §5.4.13). Symbolically expressible but verbose;
+// no clean canonical form. The v0.1 rules above cover the cases where the
+// sum collapses to clean π·cot and √3 expressions. File followup bead for
+// the general-q case.
+
 // Rule IGAM-B1: Γ(n+1, z) = n! · e^{-z} · Σ_{k=0}^n z^k/k! for non-negative integer n
 // n=2: Γ(3, z) = 2·e^{-z}·(1 + z + z²/2)
 lhs_pattern: IncompleteGammaUpper(int(3), z)
@@ -824,19 +915,24 @@ conditions:  arg shape z+1
 source:      DLMF §5.5.2; mpmath verified
 v0.1_shippable: yes
 
-// Rule DIG-C2: ψ(z) - ψ(1-z) = -π·cot(πz)  [REFLECTION]
+// Rule DIG-C2: ψ(1-z) - ψ(z) = +π·cot(πz)  [REFLECTION; DLMF §5.5.4]
+// Rearranged for the lhs pattern: ψ(1-z) = ψ(z) + π·cot(πz)
 // This is a product-level rule — same challenge as Γ reflection
 // For the per-head table, the simplest form is the rewrite of ψ(1-z):
 lhs_pattern: Digamma(mkMinus(int(1), z))
-rhs:         mkMinus(expr("Digamma", [z]), mkTimes(sym("pi"), expr("cot", [mkTimes(sym("pi"), z)])))
-// Wait — cot is not in elementary vocabulary. Need tan:
-// -π·cot(πz) = -π·cos(πz)/sin(πz)
-rhs_corrected: mkMinus(expr("Digamma", [z]),
+rhs:         mkPlus([expr("Digamma", [z]), mkTimes(sym("pi"), expr("cot", [mkTimes(sym("pi"), z)]))])
+// cot is not in elementary vocabulary; expand to cos/sin:
+// +π·cot(πz) = +π·cos(πz)/sin(πz)
+rhs_corrected: mkPlus([expr("Digamma", [z]),
                 mkTimes(sym("pi"), mkDiv(expr("cos", [mkTimes(sym("pi"), z)]),
-                                         expr("sin", [mkTimes(sym("pi"), z)]))))
+                                         expr("sin", [mkTimes(sym("pi"), z)])))])
 conditions:  arg shape 1-z
-source:      DLMF §5.5.4; mpmath verified
+source:      DLMF §5.5.4; mpmath verified at z=-0.3 → ψ(1.3) ≈ -0.169, π·cot(-0.3π) ≈ -2.282,
+             so ψ(-0.3) = ψ(1.3) + π·cot(-0.3π)·(-1) = -0.169 + 2.282 = 2.113.
+             Equivalently: ψ(1-(-0.3)) = ψ(1.3) = ψ(-0.3) + π·cot(-0.3π) = 2.113 - 2.282 = -0.169 ✓
 v0.1_shippable: yes (uses cos/sin elementary heads, no cot head needed)
+// IMPORTANT: an earlier version of this rule had `mkMinus(Digamma(z), ...)` which is WRONG.
+// DLMF 5.5.4 reads ψ(1-z) - ψ(z) = +π·cot(πz); rearranging for ψ(1-z) keeps the + sign.
 
 // Rule POL-C1: ψ^{(n)}(z+1) = ψ^{(n)}(z) + (-1)^n · n! / z^{n+1}  [RECURRENCE]
 lhs_pattern: Polygamma(m, expr("+", [z, int(1)]))
@@ -983,15 +1079,17 @@ v0.1_shippable: no (requires (d/dz)^n cot — needs polynomial-in-trig evaluator
 
 **Total class-A rules: 28 (spanning all 6 new heads)**
 
-### Class B: integer-argument / half-integer closures
+### Class B: integer-argument / half-integer / rational closures
 - GA-B1: Γ(3/2) = (1/2)√π, Γ(5/2) = (3/4)√π
 - GA-B2: Γ(-3/2) = (4/3)√π
 - POC-B1: (1/2)_n closed form
 - DIG-B1: ψ(n+1) = H_n - γ_E
+- DIG-B2..B7: Gauss closed forms ψ(1/3), ψ(2/3), ψ(1/4), ψ(3/4), ψ(1/6), ψ(5/6) (DLMF §5.4.13)
+- DIG-B8 (META): general ψ(p/q) for q ∉ {2,3,4,6} — DEFERRED, requires followup bead
 - IGAM-B1: Γ(3, z) explicit polynomial form
 - BETA-B1: B(n, m) integer closed form
 
-**Total class-B rules: ~10**
+**Total class-B rules: ~17**
 
 ### Class C: recurrences + reflection (load-bearing for canonicalisation)
 - GA-C1 (recurrence), GA-C2 (reflection)
@@ -1021,8 +1119,11 @@ v0.1_shippable: no (requires (d/dz)^n cot — needs polynomial-in-trig evaluator
 
 **Total class-E: 3**
 
-**Grand total v0.1-shippable: 38 rules across 28 (A) + 10 (B) + 17 (C) + 5 (D) rules**
-(Class A+B+C = 55 rules; D = 5; E = 3 deferred)
+**Grand total v0.1-shippable: 45 rules across 28 (A) + 17 (B) + 17 (C) + 5 (D) rules**
+(Up from 38 after adding Gauss-formula digamma rules at q ∈ {3,4,6}. The
+general-q Gauss formula is deferred to a followup bead since the closed form
+involves a sum that doesn't always collapse to a clean expression. Class
+A+B+C = 62 rules; D = 5; E = 3 deferred.)
 
 ---
 
@@ -1349,7 +1450,8 @@ export function digammaRecurrence(args: readonly Value[]): Value | null {
   return null;
 }
 
-// DIG-C2: ψ(1-z) = ψ(z) - π·cos(πz)/sin(πz)  [reflection]
+// DIG-C2: ψ(1-z) = ψ(z) + π·cos(πz)/sin(πz)  [DLMF §5.5.4]
+// (DLMF 5.5.4: ψ(1-z) - ψ(z) = +π·cot(πz); rearranged for ψ(1-z) keeps + sign.)
 export function digammaReflection(args: readonly Value[]): Value | null {
   const w = args[0]!;
   // Match 1-z shape
@@ -1358,10 +1460,10 @@ export function digammaReflection(args: readonly Value[]): Value | null {
     if (one.kind === "integer" && one.value === "1") {
       const piZ = mkTimes(sym("pi"), z);
       const cotPiZ = mkDiv(expr("cos", [piZ]), expr("sin", [piZ]));
-      return mkMinus(
+      return mkPlus([
         expr("Digamma", [z]),
         mkTimes(sym("pi"), cotPiZ),
-      );
+      ]);
     }
   }
   return null;

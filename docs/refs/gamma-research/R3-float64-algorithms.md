@@ -572,8 +572,11 @@ const DIGAMMA_Q53 = [
 ];
 
 // Asymptotic digamma coefficients (Stirling; Boost lines 232-251, 8-term, 53-bit)
-// ψ(x) ≈ log(x) - 1/(2x) - 1/(12x²) + 1/(120x⁴) - 1/(252x⁶) + ...
-// Coefficients are B_{2k}/(2k) for k=1,2,...
+// DLMF §5.11.2: ψ(x) ≈ log(x) - 1/(2x) - Σ_{k=1}^∞ B_{2k}/(2k · x^{2k})
+//              = log(x) - 1/(2x) - 1/(12x²) + 1/(120x⁴) - 1/(252x⁶) + ...
+// Coefficients below are -B_{2k}/(2k) for k=1,2,... (sign absorbed for direct
+// addition: ψ ≈ log(x) - 1/(2x) + DIGAMMA_ASYM[0]/x² + DIGAMMA_ASYM[1]/x⁴ + …)
+// (B_2=1/6 → -B_2/2 = -1/12 ≈ -8.33e-2; B_4=-1/30 → -B_4/4 = +1/120 ≈ +8.33e-3; …)
 const DIGAMMA_ASYM = [
   -8.333333333333333e-2,   // -1/12
    8.333333333333333e-3,   // +1/120 (= B_4/(4) sign corrected)
@@ -594,9 +597,11 @@ function digammaFloat64(x: number): number {
   // Pole at non-positive integers
   if (x <= 0 && x === Math.trunc(x)) return -Infinity; // ψ(−n) = −∞
 
-  // Negative non-integer: reflection ψ(1−x) = π/tan(πx) + ψ(x)
+  // Negative non-integer: reflection per DLMF §5.5.4
+  //   identity:    ψ(1-x) - ψ(x) = +π·cot(πx)
+  //   solving for ψ(x):   ψ(x) = ψ(1-x) - π·cot(πx) = ψ(1-x) - π/tan(πx)
   if (x < 0) {
-    return Math.PI / Math.tan(Math.PI * x) + digammaFloat64(1 - x);
+    return digammaFloat64(1 - x) - Math.PI / Math.tan(Math.PI * x);
   }
 
   // Small positive: shift to ≥ 1 via ψ(x+1) = ψ(x) + 1/x
@@ -629,8 +634,11 @@ multiplied by the appropriate factorial.
 **Coefficient tables (8-term Stirling series for ψ^(1), emit-ready):**
 
 ```ts
-// ψ^(1)(x) asymptotic: 1/x + 1/(2x²) + sum_{k=1}^{N} B_{2k}/x^{2k+1}
-// The B_{2k} / (factorial factor) terms — see DLMF 5.15.1
+// ψ^(1)(x) asymptotic (DLMF §5.15.9):
+//   ψ^(1)(x) ≈ 1/x + 1/(2x²) + Σ_{k=1}^N B_{2k} / x^{2k+1}
+// Coefficients below are the raw Bernoulli numbers B_{2k} for k=1,2,3,…
+// (B_2 = 1/6, B_4 = -1/30, B_6 = 1/42, B_8 = -1/30, B_10 = 5/66, …)
+// No sign manipulation: terms get added directly with their natural signs.
 const TRIGAMMA_ASYM = [
   1.0/6.0,
  -1.0/30.0,
@@ -691,18 +699,53 @@ until `x ≥ 10`, then use asymptotic.
 polynomial coefficients for the nth derivative of cot(πx), n=1..20
 (Boost detail/polygamma.hpp lines 248-417).
 
-**NOTE ON ZETA:** `polygamma(m, x)` for m ≥ 2 requires `zeta(m+1, x)`, the
-Hurwitz zeta. This means the Gamma family substrate must include at minimum
-a float64 `hurwitzZetaFloat64(s, a)` helper (or equivalently, `zetaStirling`
-for integer `s`). The Boost implementation inlines this via Bernoulli-number
-series. The substrate implementer MUST implement this helper; it is not
-available in V8's `Math`.
+**NOTE ON ZETA — VERBATIM-PORT TARGET PINNED:**
 
-**Coefficient tables for Hurwitz zeta Bernoulli coefficients:** Same
-`DIGAMMA_ASYM` / `TRIGAMMA_ASYM` family; the general formula just scales by
-the appropriate Pochhammer factorial. The I5 implementer should factor out a
-single `bernoulliB2nOverFactorial` table covering `B_{2k}/(2k)!` up to k=12
-for 53-bit accuracy.
+`polygamma(m, x)` for m ≥ 2 requires the Hurwitz zeta `ζ(m+1, x)` for integer
+`m+1 ≥ 3` and positive real `x`. **The verbatim-port target is Boost.Math's
+`include/boost/math/special_functions/detail/polygamma.hpp`**, function
+`polygamma_atinfinityplus` (lines ~150–205 in Boost 1.83). This function
+inlines the Bernoulli-number-series approach without calling out to a
+separate Hurwitz zeta routine.
+
+**Algorithm** (Boost lines 150–205, Bernoulli-expansion / Stirling-style):
+```
+ψ^(m)(x) = (-1)^(m+1) · m! · ζ(m+1, x)
+
+ζ(s, x) ≈ x^{1-s}/(s-1) + (1/2)·x^{-s}
+         + Σ_{k=1}^{K} B_{2k}/(2k)! · (s)_{2k-1} · x^{-(s+2k-1)}
+```
+where `(s)_{2k-1} = s(s+1)(s+2)···(s+2k-2)` is the Pochhammer symbol. For
+`polygamma` at integer `s = m+1`, the Pochhammer reduces to a product of
+integers `(m+1)(m+2)···(m+2k-1)`. Boost tabulates the first 30 Bernoulli
+numbers; for 53-bit accuracy at `x ≥ 10` typically `K ≤ 10` Bernoulli terms
+suffice (smallest-term truncation handles the rest).
+
+**Implementation options for the I5 subagent:**
+
+(a) **PREFERRED — verbatim port:** Translate Boost
+    `polygamma_atinfinityplus` line-by-line. No separate `hurwitzZeta`
+    function needed; the formula is inlined per polygamma order `m`. This
+    matches R3 §0.0 verbatim-port discipline exactly.
+
+(b) **Factor out for reuse:** Extract `hurwitzZetaFloat64(s, x): number`
+    as a standalone helper that polygamma calls. Adds ~30 LOC of
+    indirection; benefit is the same routine can serve future Riemann zeta
+    `zeta(s) = hurwitzZeta(s, 1)` or Lerch transcendent uses. The Hurwitz
+    zeta substrate has wider applications (Riemann zeta, L-functions,
+    regularization theory) — see the post-v0.1 bead in the gamma epic for
+    extracting this as a first-class substrate to
+    `bigfloat/src/special-funcs/zeta.ts`.
+
+For v0.1, option (a) is mandated by the verbatim-port discipline. Option (b)
+factorisation is a v0.2 cleanup once the consumer set is broader.
+
+**Coefficient tables for Bernoulli `B_{2k}/(2k)!`:** Same Bernoulli-series
+machinery as `DIGAMMA_ASYM` / `TRIGAMMA_ASYM` but with the `(s)_{2k-1}`
+Pochhammer factor folded in per polygamma order. The I5 implementer factors
+out a single `B_{2k}` table (raw Bernoulli numbers; division by `(2k)!` and
+multiplication by Pochhammer happens at evaluation time). 30 entries cover
+53-bit accuracy at `x ≥ 10` for `m ≤ 20`.
 
 ### §2.7 `pochhammer(a, n)` — (a)_n = Γ(a+n)/Γ(a)
 
@@ -1100,8 +1143,11 @@ algorithm. See §4.4 (honest refusal path).
 ### §2.13 Hyperfactorial — `hyperfactorial(n)`
 
 **Algorithm for integer n:** Direct product `1^1 · 2^2 · 3^3 · … · n^n`.
-Exact for n ≤ ~22 (result fits in float64 mantissa as an integer power of 2
-pattern check). For n > ~22, use `exp(Σ_{k=1}^n k·log(k))`.
+Representable in float64 for `n ≤ 23` (K(23) ≈ 2.4·10²⁸⁸; K(24) ≈ 2.04·10³²¹
+overflows). The result is exact only for very small `n` where the product
+stays within mantissa precision; for `n > ~10` rounding accumulates. For
+`n > 23` use the log-domain `exp(Σ_{k=1}^n k·log(k))` to avoid overflow
+(accepting ~4 ULP error from the exp at the top of the dynamic range).
 
 **Algorithm for real x (K(x) = exp(Σ_{k=1}^x k·log(k)) via continuous form):**
 This is `exp(lhyperfactorial(x))` where `lhyperfactorial(x)` uses the
@@ -1478,8 +1524,24 @@ const GAMMA_DISPATCH = new Map<string, (args: number[]) => number>([
   ["Pochhammer",         (a) => { requireArity("Pochhammer", a, 2); return pochhammerFloat64(a[0]!, a[1]!); }],
   ["IncompleteGammaP",   (a) => { requireArity("IncompleteGammaP", a, 2); return igamFloat64(a[0]!, a[1]!); }],
   ["IncompleteGammaQ",   (a) => { requireArity("IncompleteGammaQ", a, 2); return igamcFloat64(a[0]!, a[1]!); }],
-  ["IncompleteGammaLower",(a) => { requireArity("IncompleteGammaLower", a, 2); return igamFloat64(a[0]!, a[1]!) * tgammaFloat64(a[0]!); }],
-  ["IncompleteGammaUpper",(a) => { requireArity("IncompleteGammaUpper", a, 2); return igamcFloat64(a[0]!, a[1]!) * tgammaFloat64(a[0]!); }],
+  // L17/domain guard: γ(a,x) = ∫_0^x t^(a-1) e^(-t) dt is undefined for a ≤ 0
+  //   (integrand t^(a-1) non-integrable at t=0). Cephes igamFloat64 silently
+  //   returns 0 here, masking the domain error — we guard at dispatch level.
+  ["IncompleteGammaLower",(a) => {
+    requireArity("IncompleteGammaLower", a, 2);
+    if (a[0]! <= 0) return NaN; // γ undefined for a ≤ 0
+    return igamFloat64(a[0]!, a[1]!) * tgammaFloat64(a[0]!);
+  }],
+  // Γ(a,x) for a ≤ 0 IS defined when x > 0 (the singularity at t=0 is
+  //   outside the integration range), but Cephes igamc was not designed
+  //   for non-positive a and gives incorrect values. v0.1 returns NaN with
+  //   a domain error; v0.2 needs the analytic-continuation path (see
+  //   followup bead for negative-a incomplete gamma).
+  ["IncompleteGammaUpper",(a) => {
+    requireArity("IncompleteGammaUpper", a, 2);
+    if (a[0]! <= 0) return NaN; // v0.1 limitation; v0.2 analytic continuation
+    return igamcFloat64(a[0]!, a[1]!) * tgammaFloat64(a[0]!);
+  }],
   ["InverseIncompleteGammaP",(a) => { requireArity("InverseIncompleteGammaP", a, 2); return igamiFloat64(a[0]!, a[1]!); }],
   ["InverseIncompleteGammaQ",(a) => { requireArity("InverseIncompleteGammaQ", a, 2); return igamiFloat64(a[0]!, 1 - a[1]!); }],
   ["Beta",               (a) => { requireArity("Beta", a, 2); return betaFloat64(a[0]!, a[1]!); }],
@@ -1809,6 +1871,78 @@ Already given in §2.8:
 
 Same constants in `incbet.c` (lines 64-65).
 
+### §A.7 Canonical antecedent references
+
+The primary verbatim-port targets (Cephes, FreeBSD libm SunPro 1993, Boost.Math)
+themselves derive from a longer lineage. Citing the antecedents is informative
+for understanding *why* coefficient choices were made and where alternative
+minimax refits exist:
+
+- **Hart, J.F. et al. (1968) "Computer Approximations."** John Wiley.
+  The root reference for minimax rational approximations of elementary and
+  special functions. Cephes's P/Q rational tables descend from Hart's
+  methodology and in some cases inherit specific coefficients. Out of print
+  but available second-hand; the lookup tables are still the gold standard
+  for fixed-precision float64 work.
+
+- **Cody, W.J. (1976) "An overview of software development for elementary
+  functions."** SIGNUM Newsletter / NETLIB SPECFUN documentation.
+  Methodology for porting Fortran SPECFUN routines to portable form. The
+  Cody/Stoltz NETLIB SPECFUN library predates Cephes and is the reference
+  for many of the same algorithms.
+
+- **Cody, W.J. (1992) "Algorithm 715: SPECFUN — a portable FORTRAN package of
+  special function routines and test drivers."** ACM TOMS 19(1), 22–32.
+  TOMS publication of Cody's lgamma minimax (the "Cody lgamma"), which is
+  the antecedent of both the FreeBSD `e_lgamma_r.c` polynomial coefficients
+  and SciPy's `lgamma` implementation. Reading TOMS 715 explains the choice
+  of `tc ≈ 1.4616` as the minimax pivot.
+
+- **Lentz, W.J. (1976) "Generating Bessel functions in Mie scattering by use
+  of continued fractions."** Applied Optics 15(3), 668–671.
+  The original "Lentz algorithm" for forward continued-fraction evaluation
+  (avoiding the Wallis recurrence's stability issues). Cephes `igam.c`'s CF
+  uses a Wallis-style recurrence with rescaling rather than Lentz; Boost
+  uses Lentz directly. Mentioning Lentz is important context for the CF
+  rescaling-constants explanation.
+
+- **Thompson, I.J. and Barnett, A.R. (1986) "Coulomb and Bessel functions of
+  complex arguments and order."** J. Comput. Phys. 64, 490–509.
+  **Modified Lentz algorithm** — the version with explicit "tiny denominator"
+  guards (`if denom == 0, set denom = TINY`) that Numerical Recipes §5.2
+  documents and most modern CF implementations follow. For the incomplete
+  gamma CF in `igamc.c`, modified Lentz is a viable v0.2 alternative to the
+  Wallis recurrence; we keep Wallis for verbatim-port discipline.
+
+- **Holoborodko, P. (2014–2017) blog series at holoborodko.com.**
+  Pavel Holoborodko documents minimax refits of digamma, polygamma, and
+  related approximations at 53-bit precision, achieving ≤ 0.5 ULP where
+  Boost achieves ≤ 2 ULP. The coefficient tables require re-running Remez
+  at 53-bit precision and are MIT-licensed. **v0.2 follow-up — see §9.4.**
+  We do NOT use Holoborodko's tables for v0.1 because (a) the Boost ≤ 2 ULP
+  bar is sufficient for the workbench's `numerical: true` contract, and
+  (b) Holoborodko's coefficients have not been independently cross-validated
+  against multiple oracle suites at the same level as the Boost tables.
+
+- **NETLIB SPECFUN library** (Cody/Stoltz; ~1992):
+  http://www.netlib.org/specfun/. Public-domain Fortran source for tgamma,
+  lgamma, beta, incomplete gamma, etc. Useful as a cross-validation source
+  when Cephes and FreeBSD agree but Boost disagrees by 1 ULP — SPECFUN is
+  the independent third voice. Algorithmically near-identical to Cephes; the
+  reading interest is the test-driver suite which surfaces edge cases.
+
+- **Boost.Math test suite** (`boost/libs/math/test/`): the test inputs used
+  to validate Boost's gamma family ship in the test source. Pinning these
+  as a parallel input set for our golden corpus is a v0.2 robustness lift —
+  Boost's test inputs are minimax-style edge cases that complement DLMF's
+  worked examples.
+
+These references are antecedents, not active port targets. The verbatim-port
+discipline (§0.0) is from the *modern* sources (Cephes / FreeBSD / Boost);
+the antecedents inform understanding of why those modern sources are shaped
+the way they are. Future v0.2 work (Holoborodko refits, Cody-Stoltz cross-
+validation, modified-Lentz CF) is filed in §9 follow-ups.
+
 ---
 
 ## §B — Module layout proposal for `gamma-float64.ts`
@@ -1907,9 +2041,13 @@ For each of the following (at minimum), the I5 implementer must document
 ### C.4 digamma
 1. **Perturb `DIGAMMA_ROOT1`** by 1e-8: the rational approximation has wrong
    zero crossing; T1-tier (near-root) goldens fail.
-2. **Replace reflection formula** `π/tan(πx) + ψ(x)` with `π*cot(πx) + ψ(x)`
-   (same, but compute `cot` as `cos/sin` explicitly with a sign error):
-   negative-x goldens fail.
+2. **Sign-flip the reflection cot term** — replace
+   `return digammaFloat64(1-x) - Math.PI/Math.tan(Math.PI*x)` with
+   `return digammaFloat64(1-x) + Math.PI/Math.tan(Math.PI*x)`:
+   `digamma(-0.3)` returns ~-2.45 instead of ~+2.11 (cot is non-zero at
+   non-half-integer negatives). At half-integers (-0.5, -1.5, …) cot is 0
+   so this mutation does NOT fire — the test must use non-half-integer z.
+   Negative-x non-half-integer goldens fail.
 3. **Remove the asymptotic threshold shift**: try to use the rational on
    x=15 (outside [1,2]); the approximation degrades; T3-tier goldens fail.
 

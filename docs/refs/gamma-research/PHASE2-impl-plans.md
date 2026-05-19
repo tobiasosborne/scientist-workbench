@@ -319,15 +319,19 @@ The top-of-file narrative for `gamma-identities.ts` must explain:
   integers.
 - **Priority C** (13 rules): recurrences (Γ(z+1)=z·Γ(z), LogGamma recurrence,
   Pochhammer recurrence, Digamma recurrence ψ(z+1)=ψ(z)+1/z, reflection
-  ψ(1-z)=ψ(z)-π·cos(πz)/sin(πz), incomplete-gamma recurrences, Beta recurrence).
+  ψ(1-z)=ψ(z)+π·cos(πz)/sin(πz) [DLMF §5.5.4], incomplete-gamma recurrences,
+  Beta recurrence).
 - **Priority D** (5 rules): Legendre duplication, Gauss multiplication (shape
   not fully automated in v0.1 — defer to P2 if pattern-walker needed), Barnes-G
   functional equation.
 
-Key implementation note: the Digamma reflection identity (DLMF §5.5.4) rewrites
-`Digamma(mkMinus(ONE, z))` as `Digamma(z) - π·cos(πz)/sin(πz)` using elementary
-heads (`cos`, `sin` via existing vocabulary — NOT the `cot` head which is not in
-the vocabulary).
+Key implementation note: the Digamma reflection identity (DLMF §5.5.4 says
+ψ(1-z) - ψ(z) = +π·cot(πz)) rewrites `Digamma(mkMinus(ONE, z))` as
+`Digamma(z) + π·cos(πz)/sin(πz)` using elementary heads (`cos`, `sin` via
+existing vocabulary — NOT the `cot` head which is not in the vocabulary).
+IMPORTANT: the sign is **plus**, not minus. An earlier version of R1's rule
+table had the wrong sign; cross-check against the I1a (arb-prec) narrative
+which has it correct.
 
 ## Test plan (38 rules × 1 minimum test)
 
@@ -423,9 +427,23 @@ the bead `oj5j` / worklog 117 pattern) exactly, but using real arithmetic:
 // 2. Compute lossBits = max(0, magBits(z) - magBits(ζ))
 // 3. Set work = prec + 32 + lossBits
 // 4. Compute cot(πζ) = cos(πζ) / sin(πζ) — real version, both from transcendental.ts
-// 5. ψ(z) = ψ(1-z) + π·cot(πz)  [DLMF 5.5.4 rearranged: ψ(1-z) - ψ(z) = π·cot(πz)]
-//    → so ψ(z) = ψ(1-z) - (-π·cot(πz)) = ψ(1-z) + π·cot(πz)  [note 1-z > 0 for z < 0]
+// 5. ψ(z) = ψ(1-z) - π·cot(πz)   [DLMF §5.5.4: ψ(1-z) - ψ(z) = +π·cot(πz);
+//                                  rearranged for ψ(z) subtracts the cot term]
+//
+// Numerical verification (z = -0.3, mpmath):
+//   ψ(1.3) ≈ -0.169
+//   π·cot(-0.3π) ≈ -2.282
+//   ψ(1.3) - π·cot(-0.3π) = -0.169 - (-2.282) = 2.113 = ψ(-0.3) ✓
+//   ψ(1.3) + π·cot(-0.3π) = -0.169 + (-2.282) = -2.451 ✗ (wrong sign)
 ```
+
+**SIGN CHECK — load-bearing.** An earlier draft of this narrative had `ψ(z) =
+ψ(1-z) + π·cot(πz)` (PLUS). That is WRONG. The correct rearrangement of DLMF
+§5.5.4 (`ψ(1-z) - ψ(z) = +π·cot(πz)`) for ψ(z) is `ψ(z) = ψ(1-z) - π·cot(πz)`
+(MINUS the cot term). The sign error originally propagated through R1, R3,
+and PHASE2 §I4; all are now corrected. At half-integer z (z = -0.5, -1.5, …)
+cot is zero and the sign error does not fire — tests MUST include
+non-half-integer negative z to catch this mutation.
 
 For `trigamma` the reflection is DLMF §5.15.6 at n=1:
 `ψ'(1-z) + ψ'(z) = (π/sin(πz))²`. So `trigamma(z) = (π/sin(πz))² - trigamma(1-z)`.
@@ -436,12 +454,13 @@ must be imported. This is the exact unblock identified in A1 §1.1.
 ## Test plan
 
 ```ts
-test("digamma(-0.5) ≈ 0.03649... - 2·log(2) + π  (mpmath verified)", () => {
-  // R5 §3.2: mpmath.digamma(mpf(-1)/2)
-  // = 0.03648997397857652... - 2·log(2) + π + γ_E correction
-  // Use mpmath: mpmath.digamma(-0.5) = 0.4636... (mpmath verified value)
+test("digamma(-0.5) ≈ 0.03648997397857652... (mpmath verified)", () => {
+  // mpmath.digamma(mpf(-1)/2) = 0.036489973978576520559023667001244432806840...
+  // By DLMF §5.5.4 reflection: ψ(-0.5) = ψ(1.5) since cot(-π/2) = 0
+  // ψ(1.5) = ψ(0.5) + 1/0.5 = (-γ_E - 2·log(2)) + 2 = 2 - γ_E - 2·log(2) ≈ 0.0365
   const result = digamma(fromDecimal("-0.5"), 160);
-  expect(toDecimalString(result, 50)).toMatch(/^0\.4636.../);
+  expect(toDecimalString(result, 50))
+    .toMatch(/^0\.0364899739785765205590236670012444328068/);
 });
 test("digamma(-1.5): near-pole cancellation does not blow up", () => {
   const result = digamma(fromDecimal("-1.5"), 50);
