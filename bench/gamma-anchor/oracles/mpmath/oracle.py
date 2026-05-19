@@ -387,16 +387,17 @@ def call_head(head: str, inp: dict):
         return mpmath.power(z, a - 1) * mpmath.exp(-z) / mpmath.gamma(a)
 
     if head == "IncompleteBeta":
-        # B(z; a, b) UNregularised — mpmath.betainc with the regularized=
-        # False default + 3-arg `(a, b, 0, z)` form. NOT the regularised
-        # I_z(a, b) — that's a separate symbolic identity in R1, and v0.1
-        # corpus distinguishes the two (only the unregularised form
-        # appears as `IncompleteBeta` head; `BetaReg` is not in the
-        # corpus).
+        # I_z(a, b) REGULARISED per corpus-spec.md ("IncompleteBeta: I_z(a, b)";
+        # DLMF §8.17.2 notation uses I for regularised, B for unregularised).
+        # mpmath.betainc(a, b, x1, x2, regularized=True) returns the difference
+        # I_{x2}(a, b) - I_{x1}(a, b); with x1=0 this collapses to I_z(a, b).
+        # Fixed 2026-05-19 — G8 cross-agreement caught the previous
+        # `regularized=False` as 36/40 of the unexplained findings; the original
+        # subagent comment misread the head's convention.
         a = parse_kind_scalar(inp["a"])
         b = parse_kind_scalar(inp["b"])
         z = parse_z(inp["z"])
-        return mpmath.betainc(a, b, 0, z, regularized=False)
+        return mpmath.betainc(a, b, 0, z, regularized=True)
 
     raise ValueError(f"unknown head: {head!r}")
 

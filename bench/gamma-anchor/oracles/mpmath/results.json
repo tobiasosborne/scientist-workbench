@@ -2,7 +2,7 @@
   "oracle_id": "mpmath",
   "oracle_version": "mpmath 1.3.0 / Python 3.12.3",
   "python_version": "3.12.3 (main, Mar 23 2026, 19:04:32) [GCC 13.3.0]",
-  "generated_at": "2026-05-19T08:13:27.572Z",
+  "generated_at": "2026-05-19T08:46:37.190Z",
   "corpus_seed": 20260519,
   "corpus_bead": "scientist-workbench-0kq3",
   "corpus_adr": "0042",
@@ -12,14 +12,14 @@
   "precision_decimals_emit": 60,
   "per_input_timeout_s": 30,
   "total_corpus_inputs": 377,
-  "total_elapsed_ms": 294.245982,
+  "total_elapsed_ms": 314.298693,
   "results": [
     {
       "input_id": "T1-gamma-001",
       "status": "success",
       "value": "1.00000000000000000000000000000000000000000000000000000000000",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.045519,
+      "elapsed_ms": 0.066192,
       "notes": null
     },
     {
@@ -27,7 +27,7 @@
       "status": "success",
       "value": "1.00000000000000000000000000000000000000000000000000000000000",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.022598,
+      "elapsed_ms": 0.031226,
       "notes": null
     },
     {
@@ -35,7 +35,7 @@
       "status": "success",
       "value": "24.0000000000000000000000000000000000000000000000000000000000",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.012458,
+      "elapsed_ms": 0.027471,
       "notes": null
     },
     {
@@ -43,7 +43,7 @@
       "status": "success",
       "value": "39916800.0000000000000000000000000000000000000000000000000000",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.010839,
+      "elapsed_ms": 0.019374,
       "notes": null
     },
     {
@@ -51,7 +51,7 @@
       "status": "success",
       "value": "10319.7531091276416495823363646825700041047879633876378750656",
       "mpmath_returned_token": null,
-      "elapsed_ms": 2.694485,
+      "elapsed_ms": 4.132864,
       "notes": null
     },
     {
@@ -59,7 +59,7 @@
       "status": "success",
       "value": "0.0",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.019864,
+      "elapsed_ms": 0.041297,
       "notes": null
     },
     {
@@ -67,7 +67,7 @@
       "status": "success",
       "value": "0.0",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.013827,
+      "elapsed_ms": 0.016671,
       "notes": null
     },
     {
@@ -75,7 +75,7 @@
       "status": "success",
       "value": "3.17805383034794561964694160129705540887399096090351521409673",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.05127,
+      "elapsed_ms": 0.067373,
       "notes": null
     },
     {
@@ -83,7 +83,7 @@
       "status": "success",
       "value": "17.5023078458738858392876529072161996717039575982293536474075",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.054948,
+      "elapsed_ms": 0.06261,
       "notes": null
     },
     {
@@ -91,7 +91,7 @@
       "status": "success",
       "value": "15.2801521702521703809799779706640839421920949074373393454172",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.096347,
+      "elapsed_ms": 0.114306,
       "notes": null
     },
     {
@@ -99,7 +99,7 @@
       "status": "success",
       "value": "-0.577215664901532860606512090082402431042159335939923598805767",
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.27449,
+      "elapsed_ms": 1.501378,
       "notes": null
     },
     {
@@ -107,7 +107,7 @@
       "status": "success",
       "value": "0.422784335098467139393487909917597568957840664060076401194233",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.12197,
+      "elapsed_ms": 0.151581,
       "notes": null
     },
     {
@@ -115,7 +115,7 @@
       "status": "success",
       "value": "1.50611766843180047272682124325093090229117399739340973452757",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.105419,
+      "elapsed_ms": 0.128443,
       "notes": null
     },
     {
@@ -123,7 +123,7 @@
       "status": "success",
       "value": "2.44266167997581201673836525479494244630271800893742127853911",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.096458,
+      "elapsed_ms": 0.116158,
       "notes": null
     },
     {
@@ -131,7 +131,7 @@
       "status": "success",
       "value": "2.84656528799628898116137190396727447982932986591017539246577",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.146383,
+      "elapsed_ms": 0.176143,
       "notes": null
     },
     {
@@ -139,7 +139,7 @@
       "status": "success",
       "value": "1.64493406684822643647241516664602518921894990120679843773556",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.660426,
+      "elapsed_ms": 0.795672,
       "notes": null
     },
     {
@@ -147,7 +147,7 @@
       "status": "success",
       "value": "0.644934066848226436472415166646025189218949901206798437735558",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.601526,
+      "elapsed_ms": 0.728359,
       "notes": null
     },
     {
@@ -155,7 +155,7 @@
       "status": "success",
       "value": "0.221322955737115325361304055534914078107838790095687326624447",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.580826,
+      "elapsed_ms": 0.702664,
       "notes": null
     },
     {
@@ -163,7 +163,7 @@
       "status": "success",
       "value": "0.0869018728717683907503001804617749357046271228147559764290277",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.554589,
+      "elapsed_ms": 0.667077,
       "notes": null
     },
     {
@@ -171,7 +171,7 @@
       "status": "success",
       "value": "0.250336573102507825848673560950690143591601404586665054695161",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.63587,
+      "elapsed_ms": 0.803351,
       "notes": null
     },
     {
@@ -179,7 +179,7 @@
       "status": "success",
       "value": "1.00000000000000000000000000000000000000000000000000000000000",
       "mpmath_returned_token": null,
-      "elapsed_ms": 4.56476,
+      "elapsed_ms": 5.507796,
       "notes": null
     },
     {
@@ -187,7 +187,7 @@
       "status": "success",
       "value": "1.00000000000000000000000000000000000000000000000000000000000",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.666933,
+      "elapsed_ms": 0.813602,
       "notes": null
     },
     {
@@ -195,7 +195,7 @@
       "status": "success",
       "value": "12.0000000000000000000000000000000000000000000000000000000000",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.626296,
+      "elapsed_ms": 0.738123,
       "notes": null
     },
     {
@@ -203,7 +203,7 @@
       "status": "success",
       "value": "6658606584104736522240000000.00000000000000000000000000000000",
       "mpmath_returned_token": null,
-      "elapsed_ms": 3.103689,
+      "elapsed_ms": 3.870688,
       "notes": null
     },
     {
@@ -211,7 +211,7 @@
       "status": "success",
       "value": "8.21236619356956355478314010088976294610877584085254040948386e+87",
       "mpmath_returned_token": null,
-      "elapsed_ms": 4.253219,
+      "elapsed_ms": 5.205753,
       "notes": null
     },
     {
@@ -219,7 +219,7 @@
       "status": "success",
       "value": "-2.40411380631918857079947632302289998152997258468099776358454",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.659487,
+      "elapsed_ms": 0.764218,
       "notes": null
     },
     {
@@ -227,7 +227,7 @@
       "status": "success",
       "value": "-0.0487897322451144967254022489488259074558985106069236895104690",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.616532,
+      "elapsed_ms": 0.704795,
       "notes": null
     },
     {
@@ -235,7 +235,7 @@
       "status": "success",
       "value": "6.49393940226682914909602217924700741664850571151236144609786",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.622761,
+      "elapsed_ms": 0.721197,
       "notes": null
     },
     {
@@ -243,7 +243,7 @@
       "status": "success",
       "value": "0.0214278281927550750219481051729333425744316374382873720237832",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.602296,
+      "elapsed_ms": 0.695032,
       "notes": null
     },
     {
@@ -251,7 +251,7 @@
       "status": "success",
       "value": "0.500000000000000000000000000000000000000000000000000000000000",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.069802,
+      "elapsed_ms": 0.10782,
       "notes": null
     },
     {
@@ -259,7 +259,7 @@
       "status": "success",
       "value": "639383.862304687500000000000000000000000000000000000000000000",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.05524,
+      "elapsed_ms": 0.065801,
       "notes": null
     },
     {
@@ -267,7 +267,7 @@
       "status": "success",
       "value": "1741523785768368007345660.75773909687995910644531250000000000",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.044736,
+      "elapsed_ms": 0.053918,
       "notes": null
     },
     {
@@ -275,7 +275,7 @@
       "status": "success",
       "value": "2.00000000000000000000000000000000000000000000000000000000000",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.02068,
+      "elapsed_ms": 0.025479,
       "notes": null
     },
     {
@@ -283,7 +283,7 @@
       "status": "success",
       "value": "39916800.0000000000000000000000000000000000000000000000000000",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.021506,
+      "elapsed_ms": 0.026081,
       "notes": null
     },
     {
@@ -291,7 +291,7 @@
       "status": "success",
       "value": "403291461126605635584000000.000000000000000000000000000000000",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.017105,
+      "elapsed_ms": 0.023261,
       "notes": null
     },
     {
@@ -299,7 +299,7 @@
       "status": "success",
       "value": "1.69999999999999995559107901499373838305473327636718750000000",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.114803,
+      "elapsed_ms": 0.133504,
       "notes": null
     },
     {
@@ -307,7 +307,7 @@
       "status": "success",
       "value": "21194706.9261411078220398075377299368343267349996880546174881",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.090741,
+      "elapsed_ms": 0.105145,
       "notes": null
     },
     {
@@ -315,7 +315,7 @@
       "status": "success",
       "value": "166336087513862530699994608.292814735662744389760017274057802",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.087056,
+      "elapsed_ms": 0.100229,
       "notes": null
     },
     {
@@ -323,7 +323,7 @@
       "status": "success",
       "value": "0.0806471179603176907886260730213051757013592921681669005967214",
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.521999,
+      "elapsed_ms": 2.006265,
       "notes": null
     },
     {
@@ -331,7 +331,7 @@
       "status": "success",
       "value": "0.507282233811773309845140075700180453490086172280355069587086",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.491168,
+      "elapsed_ms": 0.650623,
       "notes": null
     },
     {
@@ -339,7 +339,7 @@
       "status": "success",
       "value": "0.199148273471455771917369662600247106526798368753692862270511",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.053966,
+      "elapsed_ms": 0.074872,
       "notes": null
     },
     {
@@ -347,7 +347,7 @@
       "status": "success",
       "value": "10.5718388415650978746219599759198776464449989079201290401494",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.053331,
+      "elapsed_ms": 0.060229,
       "notes": null
     },
     {
@@ -355,7 +355,7 @@
       "status": "success",
       "value": "0.0365244062353930610618127995459249401393189002337678320332292",
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.556855,
+      "elapsed_ms": 2.046041,
       "notes": null
     },
     {
@@ -363,7 +363,7 @@
       "status": "success",
       "value": "1.69180673294519833650954141031984000709619016395422022761709",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.165013,
+      "elapsed_ms": 0.214853,
       "notes": null
     },
     {
@@ -371,7 +371,7 @@
       "status": "success",
       "value": "0.378944691640984703803943665970392137908688555780838494519818",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.135675,
+      "elapsed_ms": 0.17204,
       "notes": null
     },
     {
@@ -379,7 +379,7 @@
       "status": "success",
       "value": "0.800851726528544228082630337399752893473201631246307137729489",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.499172,
+      "elapsed_ms": 0.725625,
       "notes": null
     },
     {
@@ -387,7 +387,7 @@
       "status": "success",
       "value": "13.4281611584349021253780400240801223535550010920798709598506",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.148385,
+      "elapsed_ms": 0.187951,
       "notes": null
     },
     {
@@ -395,7 +395,7 @@
       "status": "success",
       "value": "0.872114326617897380499752898356026754394611733441992427936945",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.224686,
+      "elapsed_ms": 0.324939,
       "notes": null
     },
     {
@@ -403,7 +403,7 @@
       "status": "success",
       "value": "0.954499736103641585599434725666933125056447552596643132032668",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.16128,
+      "elapsed_ms": 0.199666,
       "notes": null
     },
     {
@@ -411,7 +411,7 @@
       "status": "success",
       "value": "0.427593295529120166000952385641271893927159968027033389929189",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.13747,
+      "elapsed_ms": 0.178929,
       "notes": null
     },
     {
@@ -419,7 +419,7 @@
       "status": "success",
       "value": "0.800851726528544228082630337399752893473201631246307137729489",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.122828,
+      "elapsed_ms": 0.161616,
       "notes": null
     },
     {
@@ -427,7 +427,7 @@
       "status": "success",
       "value": "0.559506714934787588557418334336671764731458378836661289993776",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.126074,
+      "elapsed_ms": 0.171421,
       "notes": null
     },
     {
@@ -435,7 +435,7 @@
       "status": "success",
       "value": "0.959803159479345767901335826580739696088040601884439074539738",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.251482,
+      "elapsed_ms": 0.439211,
       "notes": null
     },
     {
@@ -443,7 +443,7 @@
       "status": "success",
       "value": "0.0455002638963584144005652743330668749435524474033568679673320",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.518132,
+      "elapsed_ms": 0.634749,
       "notes": null
     },
     {
@@ -451,7 +451,7 @@
       "status": "success",
       "value": "0.572406704470879833999047614358728106072840031972966610070811",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.503456,
+      "elapsed_ms": 0.58661,
       "notes": null
     },
     {
@@ -459,7 +459,7 @@
       "status": "success",
       "value": "0.199148273471455771917369662600247106526798368753692862270511",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.057515,
+      "elapsed_ms": 0.068851,
       "notes": null
     },
     {
@@ -467,7 +467,7 @@
       "status": "success",
       "value": "0.440493285065212411442581665663328235268541621163338710006224",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.051286,
+      "elapsed_ms": 0.062967,
       "notes": null
     },
     {
@@ -475,7 +475,7 @@
       "status": "success",
       "value": "0.0401968405206542320986641734192603039119593981155609254602622",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.731566,
+      "elapsed_ms": 0.909581,
       "notes": null
     },
     {
@@ -483,7 +483,7 @@
       "status": "unsupported",
       "value": null,
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.004934,
+      "elapsed_ms": 0.007983,
       "notes": "mpmath has no direct InverseIncompleteGamma{P,Q}; R5 §3.2 documents findroot workaround as non-gold-tier"
     },
     {
@@ -491,7 +491,7 @@
       "status": "unsupported",
       "value": null,
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.003022,
+      "elapsed_ms": 0.003637,
       "notes": "mpmath has no direct InverseIncompleteGamma{P,Q}; R5 §3.2 documents findroot workaround as non-gold-tier"
     },
     {
@@ -499,7 +499,7 @@
       "status": "unsupported",
       "value": null,
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.00185,
+      "elapsed_ms": 0.002351,
       "notes": "mpmath has no direct InverseIncompleteGamma{P,Q}; R5 §3.2 documents findroot workaround as non-gold-tier"
     },
     {
@@ -507,7 +507,7 @@
       "status": "unsupported",
       "value": null,
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.001401,
+      "elapsed_ms": 0.001644,
       "notes": "mpmath has no direct InverseIncompleteGamma{P,Q}; R5 §3.2 documents findroot workaround as non-gold-tier"
     },
     {
@@ -515,7 +515,7 @@
       "status": "unsupported",
       "value": null,
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.001377,
+      "elapsed_ms": 0.002054,
       "notes": "mpmath has no direct InverseIncompleteGamma{P,Q}; R5 §3.2 documents findroot workaround as non-gold-tier"
     },
     {
@@ -523,7 +523,7 @@
       "status": "unsupported",
       "value": null,
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.001313,
+      "elapsed_ms": 0.001374,
       "notes": "mpmath has no direct InverseIncompleteGamma{P,Q}; R5 §3.2 documents findroot workaround as non-gold-tier"
     },
     {
@@ -531,7 +531,7 @@
       "status": "unsupported",
       "value": null,
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.001464,
+      "elapsed_ms": 0.001838,
       "notes": "mpmath has no direct InverseIncompleteGamma{P,Q}; R5 §3.2 documents findroot workaround as non-gold-tier"
     },
     {
@@ -539,7 +539,7 @@
       "status": "unsupported",
       "value": null,
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.001256,
+      "elapsed_ms": 0.001551,
       "notes": "mpmath has no direct InverseIncompleteGamma{P,Q}; R5 §3.2 documents findroot workaround as non-gold-tier"
     },
     {
@@ -547,7 +547,7 @@
       "status": "unsupported",
       "value": null,
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.001229,
+      "elapsed_ms": 0.001423,
       "notes": "mpmath has no direct InverseIncompleteGamma{P,Q}; R5 §3.2 documents findroot workaround as non-gold-tier"
     },
     {
@@ -555,7 +555,7 @@
       "status": "unsupported",
       "value": null,
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.00117,
+      "elapsed_ms": 0.001506,
       "notes": "mpmath has no direct InverseIncompleteGamma{P,Q}; R5 §3.2 documents findroot workaround as non-gold-tier"
     },
     {
@@ -563,7 +563,7 @@
       "status": "unsupported",
       "value": null,
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.001123,
+      "elapsed_ms": 0.00137,
       "notes": "mpmath has no direct InverseIncompleteGamma{P,Q}; R5 §3.2 documents findroot workaround as non-gold-tier"
     },
     {
@@ -571,7 +571,7 @@
       "status": "unsupported",
       "value": null,
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.001318,
+      "elapsed_ms": 0.001498,
       "notes": "mpmath has no direct InverseIncompleteGamma{P,Q}; R5 §3.2 documents findroot workaround as non-gold-tier"
     },
     {
@@ -579,7 +579,7 @@
       "status": "success",
       "value": "3.14159265358979323846264338327950288419716939937510582097494",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.053085,
+      "elapsed_ms": 0.065808,
       "notes": null
     },
     {
@@ -587,7 +587,7 @@
       "status": "success",
       "value": "0.0833333333333333333333333333333333333333333333333333333333333",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.030045,
+      "elapsed_ms": 0.036184,
       "notes": null
     },
     {
@@ -595,7 +595,7 @@
       "status": "success",
       "value": "0.176686604524017487349837097343288429748099024512375579788853",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.130504,
+      "elapsed_ms": 0.17109,
       "notes": null
     },
     {
@@ -603,7 +603,7 @@
       "status": "success",
       "value": "0.00909090909090909090909090909090909090909090909090909090909091",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.034616,
+      "elapsed_ms": 0.037227,
       "notes": null
     },
     {
@@ -611,7 +611,7 @@
       "status": "success",
       "value": "1.14472988584940017414342735135305871164729481291531157151362",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.08063,
+      "elapsed_ms": 0.102622,
       "notes": null
     },
     {
@@ -619,7 +619,7 @@
       "status": "success",
       "value": "-2.48490664978800031022970947983887884079849082654325995997605",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.022531,
+      "elapsed_ms": 0.028055,
       "notes": null
     },
     {
@@ -627,7 +627,7 @@
       "status": "success",
       "value": "-1.73337771167549012118519495141780107577620698419910775603700",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.219666,
+      "elapsed_ms": 0.262692,
       "notes": null
     },
     {
@@ -635,7 +635,7 @@
       "status": "success",
       "value": "-4.70048036579241622807993503264949350742280834256619015125190",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.056489,
+      "elapsed_ms": 0.069955,
       "notes": null
     },
     {
@@ -643,7 +643,7 @@
       "status": "success",
       "value": "504.000000000000000000000000000000000000000000000000000000000",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.016294,
+      "elapsed_ms": 0.020247,
       "notes": null
     },
     {
@@ -651,7 +651,7 @@
       "status": "success",
       "value": "27.0278840892358260955108242798830615472855473416562593178789",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.084556,
+      "elapsed_ms": 0.099696,
       "notes": null
     },
     {
@@ -659,7 +659,7 @@
       "status": "success",
       "value": "0.458515979010240030027645522538278672939926860661027642387574",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.025461,
+      "elapsed_ms": 0.037068,
       "notes": null
     },
     {
@@ -667,7 +667,7 @@
       "status": "success",
       "value": "0.0315333242476168016926655450361515214544521547307571982775205",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.077721,
+      "elapsed_ms": 0.091356,
       "notes": null
     },
     {
@@ -675,7 +675,7 @@
       "status": "success",
       "value": "0.483941449038286699595660385871121309657343941474870050975110",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.065655,
+      "elapsed_ms": 0.082158,
       "notes": null
     },
     {
@@ -683,7 +683,7 @@
       "status": "success",
       "value": "0.00170007332050406836256716299293324769107137709260574429706938",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.052176,
+      "elapsed_ms": 0.061681,
       "notes": null
     },
     {
@@ -691,7 +691,7 @@
       "status": "success",
       "value": "0.00157950692633498287396822795570619909750499514449788269709086",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.036507,
+      "elapsed_ms": 0.043767,
       "notes": null
     },
     {
@@ -699,55 +699,55 @@
       "status": "success",
       "value": "0.175467369767850705641563761019490214813791276754038683080873",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.029648,
+      "elapsed_ms": 0.035203,
       "notes": null
     },
     {
       "input_id": "T1-incompletebeta-001",
       "status": "success",
-      "value": "0.0290249999999999983679721538010198898913445233339029532374188",
+      "value": "0.348299999999999980415665845612238678696134280006835438849026",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.579132,
+      "elapsed_ms": 0.876492,
       "notes": null
     },
     {
       "input_id": "T1-incompletebeta-002",
       "status": "success",
-      "value": "1.03789730985928828362315978762533718916670968050727058344537",
+      "value": "0.660745949143545146335009275053384633573872568021785428091653",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.65457,
+      "elapsed_ms": 0.88413,
       "notes": null
     },
     {
       "input_id": "T1-incompletebeta-003",
       "status": "success",
-      "value": "0.0572916666666666666666666666666666666666666666666666666666667",
+      "value": "0.687500000000000000000000000000000000000000000000000000000000",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.087206,
+      "elapsed_ms": 0.144392,
       "notes": null
     },
     {
       "input_id": "T1-incompletebeta-004",
       "status": "success",
-      "value": "1.28539816339744830961566084581987572104929234984377645524374",
+      "value": "0.818309886183790671537767526745028724068919291480912897495335",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.221255,
+      "elapsed_ms": 0.310501,
       "notes": null
     },
     {
       "input_id": "T1-incompletebeta-005",
       "status": "success",
-      "value": "0.0830250000000000001998401444325281353680181103900980482022456",
+      "value": "0.996300000000000002398081733190337624416217324681176578426947",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.100635,
+      "elapsed_ms": 0.128468,
       "notes": null
     },
     {
       "input_id": "T1-incompletebeta-006",
       "status": "success",
-      "value": "1.54904577239825443323140390811546660271864629961278162981437",
+      "value": "0.986153167011140955985395529923930080608705737185459591901951",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.941188,
+      "elapsed_ms": 1.230594,
       "notes": null
     },
     {
@@ -755,7 +755,7 @@
       "status": "success",
       "value": "-4.32685110882519272045577265644616327603260949941314463140087",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.077144,
+      "elapsed_ms": 0.111463,
       "notes": null
     },
     {
@@ -763,7 +763,7 @@
       "status": "success",
       "value": "-4.27366998241084336111858920516679617884193060359290777902382",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.057637,
+      "elapsed_ms": 0.065003,
       "notes": null
     },
     {
@@ -771,7 +771,7 @@
       "status": "success",
       "value": "3.32834700678860928081138189097809466705725905952965044826945",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.049399,
+      "elapsed_ms": 0.056228,
       "notes": null
     },
     {
@@ -779,7 +779,7 @@
       "status": "success",
       "value": "-0.931082784838963965458595939286894070582530483317423500234255",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.046888,
+      "elapsed_ms": 0.052441,
       "notes": null
     },
     {
@@ -787,7 +787,7 @@
       "status": "success",
       "value": "0.270088205852269108921625521271031646902483726647220895727818",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.025746,
+      "elapsed_ms": 0.029998,
       "notes": null
     },
     {
@@ -795,7 +795,7 @@
       "status": "success",
       "value": "0.00939320626735433609304724566489250524884893807177911391436781",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.042995,
+      "elapsed_ms": 0.052427,
       "notes": null
     },
     {
@@ -803,7 +803,7 @@
       "status": "success",
       "value": "-0.0000504081774715116112962815336161643791936473873755139158507329",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.06019,
+      "elapsed_ms": 0.052654,
       "notes": null
     },
     {
@@ -811,7 +811,7 @@
       "status": "success",
       "value": "0.0000000181011973737688876464263372569280604233795515328745027134027",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.047324,
+      "elapsed_ms": 0.05141,
       "notes": null
     },
     {
@@ -822,7 +822,7 @@
         "im": "-3.14159265358979323846264338327950288419716939937510582097494"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.106911,
+      "elapsed_ms": 0.124779,
       "notes": null
     },
     {
@@ -833,7 +833,7 @@
         "im": "-3.14159265358979323846264338327950288419716939937510582097494"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.091928,
+      "elapsed_ms": 0.1091,
       "notes": null
     },
     {
@@ -844,7 +844,7 @@
         "im": "-6.28318530717958647692528676655900576839433879875021164194989"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.088539,
+      "elapsed_ms": 0.113735,
       "notes": null
     },
     {
@@ -855,7 +855,7 @@
         "im": "-9.42477796076937971538793014983850865259150819812531746292483"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.084904,
+      "elapsed_ms": 0.104839,
       "notes": null
     },
     {
@@ -866,7 +866,7 @@
         "im": "-12.5663706143591729538505735331180115367886775975004232838998"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.066983,
+      "elapsed_ms": 0.082449,
       "notes": null
     },
     {
@@ -877,7 +877,7 @@
         "im": "-18.8495559215387594307758602996770173051830163962506349258497"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.081851,
+      "elapsed_ms": 0.100181,
       "notes": null
     },
     {
@@ -888,7 +888,7 @@
         "im": "-28.2743338823081391461637904495155259577745245943759523887745"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.080991,
+      "elapsed_ms": 0.098376,
       "notes": null
     },
     {
@@ -899,7 +899,7 @@
         "im": "-25.1327412287183459077011470662360230735773551950008465677996"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.077889,
+      "elapsed_ms": 0.095195,
       "notes": null
     },
     {
@@ -907,7 +907,7 @@
       "status": "success",
       "value": "2.11330977963539887340710620283014336984936093950791944883693",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.263676,
+      "elapsed_ms": 0.317244,
       "notes": null
     },
     {
@@ -915,7 +915,7 @@
       "status": "success",
       "value": "-2.07395279362870378310204552829665700436924753342809866399568",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.33851,
+      "elapsed_ms": 0.414755,
       "notes": null
     },
     {
@@ -923,7 +923,7 @@
       "status": "success",
       "value": "2.88254054886616730378696836330441341208647613937395311547749",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.140447,
+      "elapsed_ms": 0.173446,
       "notes": null
     },
     {
@@ -931,7 +931,7 @@
       "status": "success",
       "value": "-1.11534712914068961191020291402860794892534658054415814154608",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.136318,
+      "elapsed_ms": 0.168556,
       "notes": null
     },
     {
@@ -939,7 +939,7 @@
       "status": "success",
       "value": "1.38887092635952890151140461938219681375922134772051827390525",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.180315,
+      "elapsed_ms": 0.207038,
       "notes": null
     },
     {
@@ -947,7 +947,7 @@
       "status": "success",
       "value": "-0.456872304932382787310623764434260112725942441528760057734699",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.135779,
+      "elapsed_ms": 0.162937,
       "notes": null
     },
     {
@@ -955,7 +955,7 @@
       "status": "success",
       "value": "4.45778923322088022586525488731984252369584543801682021605357",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.253419,
+      "elapsed_ms": 0.306259,
       "notes": null
     },
     {
@@ -963,7 +963,7 @@
       "status": "success",
       "value": "0.942598003864290175459543071889560283587040098112807256276215",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.238515,
+      "elapsed_ms": 0.283987,
       "notes": null
     },
     {
@@ -971,7 +971,7 @@
       "status": "success",
       "value": "13.9451602678057224889014082181274263806397325542340331129264",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.751775,
+      "elapsed_ms": 0.839236,
       "notes": null
     },
     {
@@ -979,7 +979,7 @@
       "status": "success",
       "value": "14.2861808726383396265435786922036039968572504277220211426879",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.738635,
+      "elapsed_ms": 0.833901,
       "notes": null
     },
     {
@@ -987,7 +987,7 @@
       "status": "success",
       "value": "14.5368762441370796404968308129327611274190162634582049992996",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.778601,
+      "elapsed_ms": 0.798489,
       "notes": null
     },
     {
@@ -995,7 +995,7 @@
       "status": "success",
       "value": "14.7693758451323150181651576094715164592561287943140876327426",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.740152,
+      "elapsed_ms": 0.79971,
       "notes": null
     },
     {
@@ -1003,7 +1003,7 @@
       "status": "success",
       "value": "9.62087929805034824365760831172945878761149822969749281887561",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.712658,
+      "elapsed_ms": 0.79102,
       "notes": null
     },
     {
@@ -1011,7 +1011,7 @@
       "status": "success",
       "value": "14.9184699179113490157810195687813546708985237464258100995466",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.799002,
+      "elapsed_ms": 0.844892,
       "notes": null
     },
     {
@@ -1019,7 +1019,7 @@
       "status": "success",
       "value": "14.9658990763387809130403788827153376242528760524640407037830",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.825648,
+      "elapsed_ms": 0.863248,
       "notes": null
     },
     {
@@ -1027,7 +1027,7 @@
       "status": "success",
       "value": "19.7775985684446678031358389043123693470772949184410705354729",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.843435,
+      "elapsed_ms": 1.045374,
       "notes": null
     },
     {
@@ -1035,7 +1035,7 @@
       "status": "success",
       "value": "67.6390811998831600402125591672852718509741503744142948288021",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.880335,
+      "elapsed_ms": 0.873623,
       "notes": null
     },
     {
@@ -1043,7 +1043,7 @@
       "status": "success",
       "value": "68.5494134711621342321141179449619028438171009317543373556399",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.876509,
+      "elapsed_ms": 0.857257,
       "notes": null
     },
     {
@@ -1051,7 +1051,7 @@
       "status": "success",
       "value": "-68.9329390232637987607560837382681154474555337996731923759824",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.939375,
+      "elapsed_ms": 0.861284,
       "notes": null
     },
     {
@@ -1059,7 +1059,7 @@
       "status": "success",
       "value": "-0.273000000000000032418512319054569205433007960975303367456708",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.211848,
+      "elapsed_ms": 0.172799,
       "notes": null
     },
     {
@@ -1067,7 +1067,7 @@
       "status": "success",
       "value": "0.390000000000000071054273576010020559264689810342013529321413",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.366705,
+      "elapsed_ms": 0.118499,
       "notes": null
     },
     {
@@ -1075,7 +1075,7 @@
       "status": "success",
       "value": "0.0",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.02671,
+      "elapsed_ms": 0.020575,
       "notes": null
     },
     {
@@ -1083,7 +1083,7 @@
       "status": "success",
       "value": "-60.0000000000000000000000000000000000000000000000000000000000",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.08025,
+      "elapsed_ms": 0.058441,
       "notes": null
     },
     {
@@ -1091,7 +1091,7 @@
       "status": "success",
       "value": "0.562500000000000000000000000000000000000000000000000000000000",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.079222,
+      "elapsed_ms": 0.067117,
       "notes": null
     },
     {
@@ -1099,7 +1099,7 @@
       "status": "success",
       "value": "-4.76190476190476150195990036275507546408972299434909831836585",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.132577,
+      "elapsed_ms": 0.124815,
       "notes": null
     },
     {
@@ -1107,7 +1107,7 @@
       "status": "success",
       "value": "-3.14159265358979323846264338327950288419716939937510582097494",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.06368,
+      "elapsed_ms": 0.059192,
       "notes": null
     },
     {
@@ -1115,7 +1115,7 @@
       "status": "success",
       "value": "5.79450036172328855291027574633385769774552690429580622056075",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.17675,
+      "elapsed_ms": 0.161891,
       "notes": null
     },
     {
@@ -1123,7 +1123,7 @@
       "status": "refused",
       "value": null,
       "mpmath_returned_token": "ValueError: gamma function pole",
-      "elapsed_ms": 0.028427,
+      "elapsed_ms": 0.023845,
       "notes": "L_pole: head=Gamma returned ValueError: gamma function pole"
     },
     {
@@ -1131,7 +1131,7 @@
       "status": "refused",
       "value": null,
       "mpmath_returned_token": "ValueError: polygamma pole",
-      "elapsed_ms": 0.034692,
+      "elapsed_ms": 0.01917,
       "notes": "L_pole: head=Digamma returned ValueError: polygamma pole"
     },
     {
@@ -1139,7 +1139,7 @@
       "status": "success",
       "value": "99.4325851191506016320669886977252870710446382396037307283502",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.07116,
+      "elapsed_ms": 0.07065,
       "notes": null
     },
     {
@@ -1147,7 +1147,7 @@
       "status": "success",
       "value": "-100.560885457868672415475307271708142978338178279089145718982",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.211059,
+      "elapsed_ms": 0.193689,
       "notes": null
     },
     {
@@ -1155,7 +1155,7 @@
       "status": "success",
       "value": "9999.42288323162371158838192282991110581241762441031010642724",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.074252,
+      "elapsed_ms": 0.069133,
       "notes": null
     },
     {
@@ -1163,7 +1163,7 @@
       "status": "success",
       "value": "-10000.5770511835138556326395794057254409046072807392873986971",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.189966,
+      "elapsed_ms": 0.18313,
       "notes": null
     },
     {
@@ -1171,7 +1171,7 @@
       "status": "success",
       "value": "-100.587197964410777111954213668338689846780885317018853730844",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.071572,
+      "elapsed_ms": 0.068762,
       "notes": null
     },
     {
@@ -1179,7 +1179,7 @@
       "status": "success",
       "value": "99.4062136959444027735513394607315658028073452841662938805741",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.229265,
+      "elapsed_ms": 0.198912,
       "notes": null
     },
     {
@@ -1187,7 +1187,7 @@
       "status": "success",
       "value": "-10000.5773145795763590276116903025586422000221083973225623696",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.078102,
+      "elapsed_ms": 0.064416,
       "notes": null
     },
     {
@@ -1195,7 +1195,7 @@
       "status": "success",
       "value": "9999.42261982966965164084911416800712903402900722992710579256",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.177078,
+      "elapsed_ms": 0.15371,
       "notes": null
     },
     {
@@ -1203,7 +1203,7 @@
       "status": "refused",
       "value": null,
       "mpmath_returned_token": "ValueError: gamma function pole",
-      "elapsed_ms": 0.019599,
+      "elapsed_ms": 0.017215,
       "notes": "L_pole: head=Gamma returned ValueError: gamma function pole"
     },
     {
@@ -1211,7 +1211,7 @@
       "status": "refused",
       "value": null,
       "mpmath_returned_token": "ValueError: polygamma pole",
-      "elapsed_ms": 0.013359,
+      "elapsed_ms": 0.011985,
       "notes": "L_pole: head=Digamma returned ValueError: polygamma pole"
     },
     {
@@ -1219,7 +1219,7 @@
       "status": "success",
       "value": "-100.436954665808601814521553781937725009697754997372653164302",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.072173,
+      "elapsed_ms": 0.064553,
       "notes": null
     },
     {
@@ -1227,7 +1227,7 @@
       "status": "success",
       "value": "-99.5507844477675755551675011928322529306017884753485727015885",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.530106,
+      "elapsed_ms": 0.46137,
       "notes": null
     },
     {
@@ -1235,7 +1235,7 @@
       "status": "success",
       "value": "-10000.4229255252779496914620663091723517680083990926427986821",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.085774,
+      "elapsed_ms": 0.065973,
       "notes": null
     },
     {
@@ -1243,7 +1243,7 @@
       "status": "success",
       "value": "-9999.57695117461467601955528052072595625323013361672648215873",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.295247,
+      "elapsed_ms": 0.359829,
       "notes": null
     },
     {
@@ -1251,7 +1251,7 @@
       "status": "success",
       "value": "99.5912851132779103960107102893812196851276653959033634271753",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.080972,
+      "elapsed_ms": 0.11167,
       "notes": null
     },
     {
@@ -1259,7 +1259,7 @@
       "status": "success",
       "value": "100.396312705845306113201758587181275324242501305386659170303",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.190672,
+      "elapsed_ms": 0.197479,
       "notes": null
     },
     {
@@ -1267,7 +1267,7 @@
       "status": "success",
       "value": "9999.57735684499379022494738881148810122196306082424261106508",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.100249,
+      "elapsed_ms": 0.072706,
       "notes": null
     },
     {
@@ -1275,7 +1275,7 @@
       "status": "success",
       "value": "10000.4225198407704722277657097215985530832756772925251734473",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.18632,
+      "elapsed_ms": 0.154896,
       "notes": null
     },
     {
@@ -1283,7 +1283,7 @@
       "status": "refused",
       "value": null,
       "mpmath_returned_token": "ValueError: gamma function pole",
-      "elapsed_ms": 0.023293,
+      "elapsed_ms": 0.01898,
       "notes": "L_pole: head=Gamma returned ValueError: gamma function pole"
     },
     {
@@ -1291,7 +1291,7 @@
       "status": "refused",
       "value": null,
       "mpmath_returned_token": "ValueError: polygamma pole",
-      "elapsed_ms": 0.015069,
+      "elapsed_ms": 0.011693,
       "notes": "L_pole: head=Digamma returned ValueError: polygamma pole"
     },
     {
@@ -1299,7 +1299,7 @@
       "status": "success",
       "value": "50.4708314903560815390917524233645898136616393999013825726488",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.078914,
+      "elapsed_ms": 0.061532,
       "notes": null
     },
     {
@@ -1307,7 +1307,7 @@
       "status": "success",
       "value": "-99.0482718849535052011658890625827005548965525309607107803998",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.232839,
+      "elapsed_ms": 0.181994,
       "notes": null
     },
     {
@@ -1315,7 +1315,7 @@
       "status": "success",
       "value": "5000.46148583693079384935122309143161549024266873424554898701",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.078682,
+      "elapsed_ms": 0.066048,
       "notes": null
     },
     {
@@ -1323,7 +1323,7 @@
       "status": "success",
       "value": "-9999.07692617336461351918375271994508587323225158379870280029",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.224575,
+      "elapsed_ms": 0.177654,
       "notes": null
     },
     {
@@ -1331,7 +1331,7 @@
       "status": "success",
       "value": "-49.5479030414329060161594315284698455140688828064310636363273",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.090278,
+      "elapsed_ms": 0.064776,
       "notes": null
     },
     {
@@ -1339,7 +1339,7 @@
       "status": "success",
       "value": "100.893825143658472473974036817261592815810036622321797784021",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.217132,
+      "elapsed_ms": 0.169,
       "notes": null
     },
     {
@@ -1347,7 +1347,7 @@
       "status": "success",
       "value": "-4999.53870147632032147759791251935180455969056623127816455179",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.085056,
+      "elapsed_ms": 0.062124,
       "notes": null
     },
     {
@@ -1355,7 +1355,7 @@
       "status": "success",
       "value": "10000.9224948198159485983769858676604544661098478994369008961",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.206535,
+      "elapsed_ms": 0.149278,
       "notes": null
     },
     {
@@ -1363,7 +1363,7 @@
       "status": "refused",
       "value": null,
       "mpmath_returned_token": "ValueError: gamma function pole",
-      "elapsed_ms": 0.020314,
+      "elapsed_ms": 0.01428,
       "notes": "L_pole: head=Gamma returned ValueError: gamma function pole"
     },
     {
@@ -1371,7 +1371,7 @@
       "status": "refused",
       "value": null,
       "mpmath_returned_token": "ValueError: polygamma pole",
-      "elapsed_ms": 0.013958,
+      "elapsed_ms": 0.010605,
       "notes": "L_pole: head=Digamma returned ValueError: polygamma pole"
     },
     {
@@ -1379,7 +1379,7 @@
       "status": "success",
       "value": "-16.8798767526278220577624806600045095428938253290643993265690",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.083092,
+      "elapsed_ms": 0.059144,
       "notes": null
     },
     {
@@ -1387,7 +1387,7 @@
       "status": "success",
       "value": "-98.7138237244206092568075826137992957527354833771067943331893",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.276216,
+      "elapsed_ms": 0.16704,
       "notes": null
     },
     {
@@ -1395,7 +1395,7 @@
       "status": "success",
       "value": "-1666.87605781053665641320267896144695882638187172428268335814",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.091235,
+      "elapsed_ms": 0.058669,
       "notes": null
     },
     {
@@ -1403,7 +1403,7 @@
       "status": "success",
       "value": "-9998.74358170634532519956911428526121954960062790090450411252",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.254206,
+      "elapsed_ms": 0.166257,
       "notes": null
     },
     {
@@ -1411,7 +1411,7 @@
       "status": "success",
       "value": "16.4610973559577772508482977419093259759075290981586079518525",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.086294,
+      "elapsed_ms": 0.055971,
       "notes": null
     },
     {
@@ -1419,7 +1419,7 @@
       "status": "success",
       "value": "101.226051057279734955973443085186899474362071788058715848481",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.220859,
+      "elapsed_ms": 0.151315,
       "notes": null
     },
     {
@@ -1427,7 +1427,7 @@
       "status": "success",
       "value": "1666.45735191370953294994021972550576909446547742694246266852",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.085349,
+      "elapsed_ms": 0.056996,
       "notes": null
     },
     {
@@ -1435,7 +1435,7 @@
       "status": "success",
       "value": "10001.2558170424085288222557278671341384033769024491269565367",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.227667,
+      "elapsed_ms": 0.144324,
       "notes": null
     },
     {
@@ -1446,7 +1446,7 @@
         "im": "-3.14159265358979323846264338327950288419716939937510582097494"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.203399,
+      "elapsed_ms": 0.122717,
       "notes": null
     },
     {
@@ -1454,7 +1454,7 @@
       "status": "success",
       "value": "1000002.64453619809762720023743515201878159303427050917937486",
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.476258,
+      "elapsed_ms": 0.836852,
       "notes": null
     },
     {
@@ -1465,7 +1465,7 @@
         "im": "-6.28318530717958647692528676655900576839433879875021164194989"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.193547,
+      "elapsed_ms": 0.088684,
       "notes": null
     },
     {
@@ -1473,7 +1473,7 @@
       "status": "success",
       "value": "1000002.64534464805029259825009480677292871030663508396743491",
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.646247,
+      "elapsed_ms": 0.803324,
       "notes": null
     },
     {
@@ -1484,7 +1484,7 @@
         "im": "-6.28318530717958647692528676655900576839433879875021164194989"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.264181,
+      "elapsed_ms": 0.12183,
       "notes": null
     },
     {
@@ -1492,7 +1492,7 @@
       "status": "success",
       "value": "1000002.89478660776731031311120022128372184135963938325808614",
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.678171,
+      "elapsed_ms": 0.785551,
       "notes": null
     },
     {
@@ -1503,7 +1503,7 @@
         "im": "-9.42477796076937971538793014983850865259150819812531746292483"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.193557,
+      "elapsed_ms": 0.084303,
       "notes": null
     },
     {
@@ -1511,7 +1511,7 @@
       "status": "success",
       "value": "1000002.89509483542537070389469492065033665175930441110037470",
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.404441,
+      "elapsed_ms": 0.786604,
       "notes": null
     },
     {
@@ -1519,7 +1519,7 @@
       "status": "success",
       "value": "-2000000002.39763216483324031504872809160828672062088423166111",
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.298798,
+      "elapsed_ms": 0.798434,
       "notes": null
     },
     {
@@ -1527,7 +1527,7 @@
       "status": "success",
       "value": "1999999997.58937966586823866370247193344173403011141591939069",
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.23053,
+      "elapsed_ms": 0.809663,
       "notes": null
     },
     {
@@ -1535,7 +1535,7 @@
       "status": "success",
       "value": "-2000000000.39161494063277031760331366800591408493901687965111",
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.195065,
+      "elapsed_ms": 0.794345,
       "notes": null
     },
     {
@@ -1543,7 +1543,7 @@
       "status": "success",
       "value": "1999999999.58405257554254540494354341442155848011189569298675",
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.248602,
+      "elapsed_ms": 1.23063,
       "notes": null
     },
     {
@@ -1551,7 +1551,7 @@
       "status": "success",
       "value": "-2000000000.14190569913481244630442206798501689421657558183199",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.916449,
+      "elapsed_ms": 0.882046,
       "notes": null
     },
     {
@@ -1559,7 +1559,7 @@
       "status": "success",
       "value": "1999999999.83367795023027965720814721644456883619299589702891",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.880719,
+      "elapsed_ms": 0.861358,
       "notes": null
     },
     {
@@ -1570,7 +1570,7 @@
         "im": "0.0239096162611406286680524022485466909488630950668830803277095"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 3.490224,
+      "elapsed_ms": 3.473748,
       "notes": null
     },
     {
@@ -1581,7 +1581,7 @@
         "im": "0.0000000000305230289488572255314496422461255540874851834171503057059969"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.995624,
+      "elapsed_ms": 0.958063,
       "notes": null
     },
     {
@@ -1592,7 +1592,7 @@
         "im": "-0.000000000927993280613902554750248341605581251564566112666495556759579"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.727823,
+      "elapsed_ms": 0.728812,
       "notes": null
     },
     {
@@ -1603,7 +1603,7 @@
         "im": "-0.0807780335377483528977633464107896261889461528833883426825591"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.598114,
+      "elapsed_ms": 0.577292,
       "notes": null
     },
     {
@@ -1614,7 +1614,7 @@
         "im": "9.88407027618225407111879146496719860483190377945797501636339"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.691868,
+      "elapsed_ms": 0.699245,
       "notes": null
     },
     {
@@ -1625,7 +1625,7 @@
         "im": "-8.76394307977495846367237421049554135739425568694844081999218"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.238983,
+      "elapsed_ms": 1.287031,
       "notes": null
     },
     {
@@ -1636,7 +1636,7 @@
         "im": "4.31962708760160069784690956282683057647984575494162324397319"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.966298,
+      "elapsed_ms": 0.987536,
       "notes": null
     },
     {
@@ -1647,7 +1647,7 @@
         "im": "-3.92027037363206090238337955270061812691404418837986891396846"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.651003,
+      "elapsed_ms": 0.650119,
       "notes": null
     },
     {
@@ -1658,7 +1658,7 @@
         "im": "1.25050335277013525774292576215407333001938655130063237795429"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 2.092016,
+      "elapsed_ms": 2.115191,
       "notes": null
     },
     {
@@ -1669,7 +1669,7 @@
         "im": "2.25011324153968379656017897710923002006363266259625934048177"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 2.211797,
+      "elapsed_ms": 2.579767,
       "notes": null
     },
     {
@@ -1680,7 +1680,7 @@
         "im": "-2.64326324553002703938413139633378504100924329262852118748608"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 2.228947,
+      "elapsed_ms": 2.394891,
       "notes": null
     },
     {
@@ -1691,7 +1691,7 @@
         "im": "-0.861976818808479699261117702784420065445518469877684709905198"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.882214,
+      "elapsed_ms": 2.155871,
       "notes": null
     },
     {
@@ -1702,7 +1702,7 @@
         "im": "-0.657651345276375852468364551731828235128428844248238893958345"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.61321,
+      "elapsed_ms": 1.721768,
       "notes": null
     },
     {
@@ -1713,7 +1713,7 @@
         "im": "-0.154044038738547012790810980075397111473334183940792370176321"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.724675,
+      "elapsed_ms": 1.878615,
       "notes": null
     },
     {
@@ -1724,7 +1724,7 @@
         "im": "0.0863529035330171842565517824448873402638194296855802467136696"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.646661,
+      "elapsed_ms": 1.824132,
       "notes": null
     },
     {
@@ -1735,7 +1735,7 @@
         "im": "0.0934360910883796057662085685069547181520825878355747839845098"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.464778,
+      "elapsed_ms": 1.682241,
       "notes": null
     },
     {
@@ -1746,7 +1746,7 @@
         "im": "-0.107941759529996427161778554516786949436746483807800827858523"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 11.292043,
+      "elapsed_ms": 12.445821,
       "notes": null
     },
     {
@@ -1757,7 +1757,7 @@
         "im": "-457304237962908888.693140984169454655917862667005020722778164"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 13.5138,
+      "elapsed_ms": 15.941435,
       "notes": null
     },
     {
@@ -1768,7 +1768,7 @@
         "im": "15829.8495808852528349341940290540760165103258559365543966239"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 13.224133,
+      "elapsed_ms": 11.963531,
       "notes": null
     },
     {
@@ -1779,7 +1779,7 @@
         "im": "0.0000839599749226976789785663227849108756694071870409366157744629"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 11.464701,
+      "elapsed_ms": 9.882141,
       "notes": null
     },
     {
@@ -1790,7 +1790,7 @@
         "im": "-0.00788257179346226246681357800840934732896366285398199818847284"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.996446,
+      "elapsed_ms": 1.760392,
       "notes": null
     },
     {
@@ -1801,7 +1801,7 @@
         "im": "-0.0399710334770475305657717037929951777145376542517516830017483"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 2.070805,
+      "elapsed_ms": 1.748408,
       "notes": null
     },
     {
@@ -1812,7 +1812,7 @@
         "im": "8.17147496112015345753844949354125711297339317067751890825472"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.855368,
+      "elapsed_ms": 1.728519,
       "notes": null
     },
     {
@@ -1823,7 +1823,7 @@
         "im": "-0.00766968422923995892011830304999794821240119771695077379429303"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 2.03078,
+      "elapsed_ms": 1.595178,
       "notes": null
     },
     {
@@ -1834,7 +1834,7 @@
         "im": "0.0316271917202122654928000086994753667833662193595043216694606"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 3.786931,
+      "elapsed_ms": 2.580018,
       "notes": null
     },
     {
@@ -1845,7 +1845,7 @@
         "im": "0.805616325734202084096838238360184132645626938647427823657546"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.512319,
+      "elapsed_ms": 1.175863,
       "notes": null
     },
     {
@@ -1856,7 +1856,7 @@
         "im": "-8.39363943630069086711957227141356685381498187513802207522242"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.409962,
+      "elapsed_ms": 1.129332,
       "notes": null
     },
     {
@@ -1867,7 +1867,7 @@
         "im": "-0.0249849268137224533781290623952066640241499662867507184180626"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.311917,
+      "elapsed_ms": 1.119649,
       "notes": null
     },
     {
@@ -1878,7 +1878,7 @@
         "im": "-0.210942763447561680035383305687631460078258869450656575570539"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.102026,
+      "elapsed_ms": 0.86875,
       "notes": null
     },
     {
@@ -1889,7 +1889,7 @@
         "im": "-95.1227796523974029246725430908252898471037712030521541946412"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.340769,
+      "elapsed_ms": 0.267182,
       "notes": null
     },
     {
@@ -1900,7 +1900,7 @@
         "im": "-104.929733364622824626226822930224764304363564421173934518794"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.27989,
+      "elapsed_ms": 0.234757,
       "notes": null
     },
     {
@@ -1911,7 +1911,7 @@
         "im": "0.0379798585995799408276731976993138988432633370316778343527809"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.21917,
+      "elapsed_ms": 0.19357,
       "notes": null
     },
     {
@@ -1922,7 +1922,7 @@
         "im": "-0.00905820981338579978293899170305127086180216515948068238277250"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.474732,
+      "elapsed_ms": 0.403486,
       "notes": null
     },
     {
@@ -1933,7 +1933,7 @@
         "im": "-194.441852952112718600554050010781264984275777093105532827953"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.445992,
+      "elapsed_ms": 1.240679,
       "notes": null
     },
     {
@@ -1944,7 +1944,7 @@
         "im": "0.0854511555157016037468360981822214486260404214083051998255557"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.457583,
+      "elapsed_ms": 1.277589,
       "notes": null
     },
     {
@@ -1955,7 +1955,7 @@
         "im": "0.276242031136916394824106125321445589187564575405636043981835"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.424037,
+      "elapsed_ms": 0.370028,
       "notes": null
     },
     {
@@ -1966,7 +1966,7 @@
         "im": "1.00497072084719086825199580749987261990537046314555284128821"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.123261,
+      "elapsed_ms": 0.944541,
       "notes": null
     },
     {
@@ -1977,7 +1977,7 @@
         "im": "-12657.2171660156456818843587008919698054261067240200329822690"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.331577,
+      "elapsed_ms": 0.309007,
       "notes": null
     },
     {
@@ -1988,7 +1988,7 @@
         "im": "40.4597528079751781970584682027649095048363607479996718870164"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.308533,
+      "elapsed_ms": 0.278898,
       "notes": null
     },
     {
@@ -1999,7 +1999,7 @@
         "im": "0.0136604207752750998328030717243313410513223682617153202833428"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.414816,
+      "elapsed_ms": 0.392699,
       "notes": null
     },
     {
@@ -2007,7 +2007,7 @@
       "status": "success",
       "value": "1.77245385090551602729816748334114518279754945612238712821381",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.029446,
+      "elapsed_ms": 0.02623,
       "notes": null
     },
     {
@@ -2015,7 +2015,7 @@
       "status": "success",
       "value": "0.886226925452758013649083741670572591398774728061193564106904",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.022262,
+      "elapsed_ms": 0.020038,
       "notes": null
     },
     {
@@ -2023,7 +2023,7 @@
       "status": "success",
       "value": "-3.54490770181103205459633496668229036559509891224477425642762",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.02229,
+      "elapsed_ms": 0.019634,
       "notes": null
     },
     {
@@ -2031,7 +2031,7 @@
       "status": "success",
       "value": "0.572364942924700087071713675676529355823647406457655785756812",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.03763,
+      "elapsed_ms": 0.032053,
       "notes": null
     },
     {
@@ -2039,7 +2039,7 @@
       "status": "success",
       "value": "-0.120782237635245222345518445781647212251852727902599468363868",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.030818,
+      "elapsed_ms": 0.025983,
       "notes": null
     },
     {
@@ -2050,7 +2050,7 @@
         "im": "-3.14159265358979323846264338327950288419716939937510582097494"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.047581,
+      "elapsed_ms": 0.036898,
       "notes": null
     },
     {
@@ -2058,7 +2058,7 @@
       "status": "success",
       "value": "-1.96351002602142347944097633299875556719315960466043410704713",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.162114,
+      "elapsed_ms": 0.150266,
       "notes": null
     },
     {
@@ -2066,7 +2066,7 @@
       "status": "success",
       "value": "0.0364899739785765205590236670012444328068403953395658929528727",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.116259,
+      "elapsed_ms": 0.110041,
       "notes": null
     },
     {
@@ -2074,7 +2074,7 @@
       "status": "success",
       "value": "0.0364899739785765205590236670012444328068403953395658929528727",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.126433,
+      "elapsed_ms": 0.118938,
       "notes": null
     },
     {
@@ -2082,7 +2082,7 @@
       "status": "success",
       "value": "4.93480220054467930941724549993807556765684970362039531320667",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.661479,
+      "elapsed_ms": 0.619392,
       "notes": null
     },
     {
@@ -2090,7 +2090,7 @@
       "status": "success",
       "value": "0.934802200544679309417245499938075567656849703620395313206675",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.610578,
+      "elapsed_ms": 0.613231,
       "notes": null
     },
     {
@@ -2098,7 +2098,7 @@
       "status": "success",
       "value": "8.93480220054467930941724549993807556765684970362039531320667",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.607016,
+      "elapsed_ms": 0.610312,
       "notes": null
     },
     {
@@ -2106,7 +2106,7 @@
       "status": "success",
       "value": "0.750000000000000000000000000000000000000000000000000000000000",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.056257,
+      "elapsed_ms": 0.057161,
       "notes": null
     },
     {
@@ -2114,7 +2114,7 @@
       "status": "success",
       "value": "29.5312500000000000000000000000000000000000000000000000000000",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.038711,
+      "elapsed_ms": 0.039747,
       "notes": null
     },
     {
@@ -2122,7 +2122,7 @@
       "status": "success",
       "value": "639383.862304687500000000000000000000000000000000000000000000",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.0355,
+      "elapsed_ms": 0.035499,
       "notes": null
     },
     {
@@ -2130,7 +2130,7 @@
       "status": "success",
       "value": "3.75000000000000000000000000000000000000000000000000000000000",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.034944,
+      "elapsed_ms": 0.0344,
       "notes": null
     },
     {
@@ -2138,7 +2138,7 @@
       "status": "success",
       "value": "324.843750000000000000000000000000000000000000000000000000000",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.034146,
+      "elapsed_ms": 0.032398,
       "notes": null
     },
     {
@@ -2146,7 +2146,7 @@
       "status": "success",
       "value": "13427061.1083984375000000000000000000000000000000000000000000",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.03617,
+      "elapsed_ms": 0.0326,
       "notes": null
     },
     {
@@ -2154,7 +2154,7 @@
       "status": "success",
       "value": "0.278805585280661976499232611077439172088550082497174470158499",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.633741,
+      "elapsed_ms": 0.632544,
       "notes": null
     },
     {
@@ -2162,7 +2162,7 @@
       "status": "success",
       "value": "1.49364826562485405079893487226370601070899937362521265805531",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.148981,
+      "elapsed_ms": 0.15342,
       "notes": null
     },
     {
@@ -2170,7 +2170,7 @@
       "status": "success",
       "value": "0.842700792949714869341220635082609259296066997966302908459938",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.143956,
+      "elapsed_ms": 0.143652,
       "notes": null
     },
     {
@@ -2178,7 +2178,7 @@
       "status": "success",
       "value": "0.157299207050285130658779364917390740703933002033697091540062",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.557822,
+      "elapsed_ms": 0.69617,
       "notes": null
     },
     {
@@ -2186,7 +2186,7 @@
       "status": "success",
       "value": "0.00277460326041280931949083572726032941202100797914371413289361",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.481275,
+      "elapsed_ms": 0.495634,
       "notes": null
     },
     {
@@ -2194,7 +2194,7 @@
       "status": "success",
       "value": "1.76967924764510321797867664761388485338552844814324341408091",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.163493,
+      "elapsed_ms": 0.162769,
       "notes": null
     },
     {
@@ -2202,7 +2202,7 @@
       "status": "success",
       "value": "0.998434597741997450322500196021614097689565425314017194657400",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.167499,
+      "elapsed_ms": 0.175146,
       "notes": null
     },
     {
@@ -2210,7 +2210,7 @@
       "status": "success",
       "value": "0.00156540225800254967749980397838590231043457468598280534259973",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.739347,
+      "elapsed_ms": 0.766928,
       "notes": null
     },
     {
@@ -2218,7 +2218,7 @@
       "status": "success",
       "value": "0.507282233811773309845140075700180453490086172280355069587086",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.500106,
+      "elapsed_ms": 0.51875,
       "notes": null
     },
     {
@@ -2226,7 +2226,7 @@
       "status": "success",
       "value": "0.378944691640984703803943665970392137908688555780838494519818",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.134935,
+      "elapsed_ms": 0.146685,
       "notes": null
     },
     {
@@ -2234,7 +2234,7 @@
       "status": "success",
       "value": "0.427593295529120166000952385641271893927159968027033389929189",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.138318,
+      "elapsed_ms": 0.143827,
       "notes": null
     },
     {
@@ -2242,7 +2242,7 @@
       "status": "success",
       "value": "0.572406704470879833999047614358728106072840031972966610070811",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.497258,
+      "elapsed_ms": 0.548146,
       "notes": null
     },
     {
@@ -2250,7 +2250,7 @@
       "status": "success",
       "value": "0.0164538091489522224057144785380321286844334848470468835018627",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.476814,
+      "elapsed_ms": 0.507601,
       "notes": null
     },
     {
@@ -2258,7 +2258,7 @@
       "status": "success",
       "value": "0.869773116303805791243369263132540462714341243214146680605041",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.164397,
+      "elapsed_ms": 0.167428,
       "notes": null
     },
     {
@@ -2266,7 +2266,7 @@
       "status": "success",
       "value": "0.981433864536956766696828566092281620778851654387959751686706",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.175002,
+      "elapsed_ms": 0.173704,
       "notes": null
     },
     {
@@ -2274,7 +2274,7 @@
       "status": "success",
       "value": "0.0185661354630432333031714339077183792211483456120402483132936",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.479114,
+      "elapsed_ms": 0.524712,
       "notes": null
     },
     {
@@ -2282,7 +2282,7 @@
       "status": "success",
       "value": "3.14159265358979323846264338327950288419716939937510582097494",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.049411,
+      "elapsed_ms": 0.054952,
       "notes": null
     },
     {
@@ -2290,7 +2290,7 @@
       "status": "success",
       "value": "1.57079632679489661923132169163975144209858469968755291048747",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.037059,
+      "elapsed_ms": 0.039109,
       "notes": null
     },
     {
@@ -2298,7 +2298,7 @@
       "status": "success",
       "value": "1.17809724509617246442349126872981358157393852476566468286560",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.03547,
+      "elapsed_ms": 0.036518,
       "notes": null
     },
     {
@@ -2306,7 +2306,7 @@
       "status": "success",
       "value": "0.392699081698724154807830422909937860524646174921888227621868",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.034108,
+      "elapsed_ms": 0.035279,
       "notes": null
     },
     {
@@ -2314,7 +2314,7 @@
       "status": "success",
       "value": "0.196349540849362077403915211454968930262323087460944113810934",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.038245,
+      "elapsed_ms": 0.039293,
       "notes": null
     },
     {
@@ -2322,7 +2322,7 @@
       "status": "success",
       "value": "0.0736310778185107790264682042956133488483711577978540426791003",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.037217,
+      "elapsed_ms": 0.043833,
       "notes": null
     },
     {
@@ -2330,7 +2330,7 @@
       "status": "success",
       "value": "359.134205369575398776044010460286909612621718085629728775613",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.059371,
+      "elapsed_ms": 0.066451,
       "notes": null
     },
     {
@@ -2338,7 +2338,7 @@
       "status": "success",
       "value": "1409.20206747041178748737726654573792239140583498431401276284",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.092779,
+      "elapsed_ms": 0.092816,
       "notes": null
     },
     {
@@ -2346,7 +2346,7 @@
       "status": "success",
       "value": "5905.22042320918121182607691236144078984894240971543259002339",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.066467,
+      "elapsed_ms": 0.070406,
       "notes": null
     },
     {
@@ -2354,7 +2354,7 @@
       "status": "success",
       "value": "2298.10109442043236126560813962412127429267557034397262965930",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.082544,
+      "elapsed_ms": 0.092249,
       "notes": null
     },
     {
@@ -2362,7 +2362,7 @@
       "status": "success",
       "value": "4.60016185273808740019860558557585072686681279076852805437077",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.090259,
+      "elapsed_ms": 0.098199,
       "notes": null
     },
     {
@@ -2370,7 +2370,7 @@
       "status": "success",
       "value": "5.70211488206463726797964011763155351885952271343058727058319",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.074559,
+      "elapsed_ms": 0.082416,
       "notes": null
     },
     {
@@ -2378,7 +2378,7 @@
       "status": "success",
       "value": "6.90725519564881205205000611425149774547951983376888006696786",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.071633,
+      "elapsed_ms": 0.07783,
       "notes": null
     },
     {
@@ -2386,7 +2386,7 @@
       "status": "success",
       "value": "6.30282327822895730319792022429991950437886742465576695203590",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.086524,
+      "elapsed_ms": 0.095012,
       "notes": null
     },
     {
@@ -2394,7 +2394,7 @@
       "status": "success",
       "value": "0.0100501666633335713952456684657014225356282011755346238824472",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.336569,
+      "elapsed_ms": 0.369798,
       "notes": null
     },
     {
@@ -2402,7 +2402,7 @@
       "status": "success",
       "value": "0.00333889506171467774947029468909866984574603106953445678456412",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.231721,
+      "elapsed_ms": 0.245618,
       "notes": null
     },
     {
@@ -2410,7 +2410,7 @@
       "status": "success",
       "value": "0.00100050016666663333335714282380959956684645471311312101832102",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.173031,
+      "elapsed_ms": 0.192682,
       "notes": null
     },
     {
@@ -2418,7 +2418,7 @@
       "status": "success",
       "value": "0.00127802618875423997678478645077131279148138963932269952435020",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.198793,
+      "elapsed_ms": 0.231929,
       "notes": null
     },
     {
@@ -2426,7 +2426,7 @@
       "status": "success",
       "value": "5.57458576120760588132343171174197715562728861094835817524639e+196",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.016936,
+      "elapsed_ms": 0.018733,
       "notes": null
     },
     {
@@ -2434,7 +2434,7 @@
       "status": "success",
       "value": "4.26906800900470527493925188889956653806881863605673610384916e+304",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.024009,
+      "elapsed_ms": 0.029776,
       "notes": null
     },
     {
@@ -2442,7 +2442,7 @@
       "status": "success",
       "value": "3.75727673578104432258929276190174952073248121530054978679182e-42",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.054168,
+      "elapsed_ms": 0.065749,
       "notes": null
     },
     {
@@ -2450,7 +2450,7 @@
       "status": "success",
       "value": "3.75727673578104432258929276190174952073248121530054978679182e-42",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.0571,
+      "elapsed_ms": 0.068492,
       "notes": null
     },
     {
@@ -2458,7 +2458,7 @@
       "status": "success",
       "value": "1.54960826694601614812761343824120643043863446555775063452992e-128",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.038401,
+      "elapsed_ms": 0.042917,
       "notes": null
     },
     {
@@ -2466,7 +2466,7 @@
       "status": "success",
       "value": "1.54960826694601614812761343824120643043863446555775063452992e-128",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.044057,
+      "elapsed_ms": 0.048982,
       "notes": null
     },
     {
@@ -2474,7 +2474,7 @@
       "status": "success",
       "value": "5.08103485644700622205710128905391125622490488217573019919423e-432",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.035707,
+      "elapsed_ms": 0.038537,
       "notes": null
     },
     {
@@ -2482,7 +2482,7 @@
       "status": "success",
       "value": "5.08103485644700622205710128905391125622490488217573019919423e-432",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.04492,
+      "elapsed_ms": 0.045988,
       "notes": null
     },
     {
@@ -2490,7 +2490,7 @@
       "status": "success",
       "value": "4.08366063091061127228859216631951925304018296583735091659422e-26",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.051253,
+      "elapsed_ms": 0.046659,
       "notes": null
     },
     {
@@ -2498,7 +2498,7 @@
       "status": "success",
       "value": "1.12534739608427338852750004583320085235895694605306187075458e-31",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.052617,
+      "elapsed_ms": 0.055565,
       "notes": null
     },
     {
@@ -2506,7 +2506,7 @@
       "status": "success",
       "value": "1.04454981347807314939647266076785175209101981702850199558717e-108",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.042605,
+      "elapsed_ms": 0.044669,
       "notes": null
     },
     {
@@ -2514,7 +2514,7 @@
       "status": "success",
       "value": "2.87849926553701815861020905193962674187340117126461087849198e-114",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.050523,
+      "elapsed_ms": 0.053498,
       "notes": null
     },
     {
@@ -2522,7 +2522,7 @@
       "status": "success",
       "value": "5.12201057037806592353316361800474699591062337344576621110570e-408",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.042939,
+      "elapsed_ms": 0.043316,
       "notes": null
     },
     {
@@ -2530,7 +2530,7 @@
       "status": "success",
       "value": "1.41148880356538412795777216104628168979018501252363486858072e-413",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.051082,
+      "elapsed_ms": 0.053268,
       "notes": null
     },
     {
@@ -2538,7 +2538,7 @@
       "status": "success",
       "value": "4.30619256499771538211559864037929484578612331960375516802354e+120",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.832507,
+      "elapsed_ms": 0.837463,
       "notes": null
     },
     {
@@ -2546,7 +2546,7 @@
       "status": "success",
       "value": "2.32981075041745923878397066973471262361883792546514431947398e+1266",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.563559,
+      "elapsed_ms": 0.581286,
       "notes": null
     },
     {
@@ -2554,7 +2554,7 @@
       "status": "success",
       "value": "102637533405916909.402111439395302693465208695933221137054439",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.08171,
+      "elapsed_ms": 0.082557,
       "notes": null
     },
     {
@@ -2562,7 +2562,7 @@
       "status": "success",
       "value": "19007567002915090.5978885606046973065347913040667788629455609",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.198064,
+      "elapsed_ms": 0.206844,
       "notes": null
     },
     {
@@ -2570,7 +2570,7 @@
       "status": "success",
       "value": "0.156254275256737367441237741585655305202138633865055978294583",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.17784,
+      "elapsed_ms": 0.184565,
       "notes": null
     },
     {
@@ -2578,7 +2578,7 @@
       "status": "success",
       "value": "0.843745724743262632558762258414344694797861366134944021705417",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.07827,
+      "elapsed_ms": 0.111417,
       "notes": null
     },
     {
@@ -2586,7 +2586,7 @@
       "status": "success",
       "value": "57204492442642251.0970102893453147604209035608327669088264218",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.053318,
+      "elapsed_ms": 0.084579,
       "notes": null
     },
     {
@@ -2594,7 +2594,7 @@
       "status": "success",
       "value": "64440607966189748.9029897106546852395790964391672330911735782",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.160819,
+      "elapsed_ms": 0.301396,
       "notes": null
     },
     {
@@ -2602,7 +2602,7 @@
       "status": "success",
       "value": "0.529742733160760012687809645826281917287633865718349219033188",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.164853,
+      "elapsed_ms": 0.247935,
       "notes": null
     },
     {
@@ -2610,7 +2610,7 @@
       "status": "success",
       "value": "0.470257266839239987312190354173718082712366134281650780966812",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.069168,
+      "elapsed_ms": 0.100054,
       "notes": null
     },
     {
@@ -2618,7 +2618,7 @@
       "status": "success",
       "value": "19087828303247065.4366530309869111020416444300232162651872603",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.079982,
+      "elapsed_ms": 0.085699,
       "notes": null
     },
     {
@@ -2626,7 +2626,7 @@
       "status": "success",
       "value": "102557272105584934.563346969013088897958355569976783734812740",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.192437,
+      "elapsed_ms": 0.207223,
       "notes": null
     },
     {
@@ -2634,7 +2634,7 @@
       "status": "success",
       "value": "0.843085925868813699183511105243825569458300209083702867872453",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.185583,
+      "elapsed_ms": 0.183063,
       "notes": null
     },
     {
@@ -2642,7 +2642,7 @@
       "status": "success",
       "value": "0.156914074131186300816488894756174430541699790916297132127547",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.075536,
+      "elapsed_ms": 0.0742,
       "notes": null
     },
     {
@@ -2650,7 +2650,7 @@
       "status": "success",
       "value": "7.85600493193774127498186553102406047610253251633679019014067e+155",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.083432,
+      "elapsed_ms": 0.079809,
       "notes": null
     },
     {
@@ -2658,7 +2658,7 @@
       "status": "success",
       "value": "1.47661661245667399318805835460260957296906431010137195671863e+155",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.954946,
+      "elapsed_ms": 1.022267,
       "notes": null
     },
     {
@@ -2666,7 +2666,7 @@
       "status": "success",
       "value": "0.158220989186430168104969699670910531699823345743347387984191",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.399849,
+      "elapsed_ms": 0.40795,
       "notes": null
     },
     {
@@ -2674,7 +2674,7 @@
       "status": "success",
       "value": "0.841779010813569831895030300329089468300176654256652612015809",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.108132,
+      "elapsed_ms": 0.115323,
       "notes": null
     },
     {
@@ -2682,7 +2682,7 @@
       "status": "success",
       "value": "4.54219812086266942936914708308623503962451704934201744905836e+155",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.084747,
+      "elapsed_ms": 0.087631,
       "notes": null
     },
     {
@@ -2690,7 +2690,7 @@
       "status": "success",
       "value": "4.79042342353174583880077680254043500944707977709614469780094e+155",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.342289,
+      "elapsed_ms": 0.378277,
       "notes": null
     },
     {
@@ -2698,7 +2698,7 @@
       "status": "success",
       "value": "0.513298798279148664857314256564029163470925149927945073959628",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.350836,
+      "elapsed_ms": 0.347432,
       "notes": null
     },
     {
@@ -2706,7 +2706,7 @@
       "status": "success",
       "value": "0.486701201720851335142685743435970836529074850072054926040372",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.10172,
+      "elapsed_ms": 0.098231,
       "notes": null
     },
     {
@@ -2714,7 +2714,7 @@
       "status": "success",
       "value": "1.47715492622086411022742597488088090180315843123533484581747e+155",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.081096,
+      "elapsed_ms": 0.076101,
       "notes": null
     },
     {
@@ -2722,7 +2722,7 @@
       "status": "success",
       "value": "7.85546661817355115794249791074578914726843839520282730104182e+155",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.33534,
+      "elapsed_ms": 0.321363,
       "notes": null
     },
     {
@@ -2730,7 +2730,7 @@
       "status": "success",
       "value": "0.841721329939912906198299620982968853193350030865822294556062",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.329128,
+      "elapsed_ms": 0.318687,
       "notes": null
     },
     {
@@ -2738,7 +2738,7 @@
       "status": "success",
       "value": "0.158278670060087093801700379017031146806649969134177705443938",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.113032,
+      "elapsed_ms": 0.088793,
       "notes": null
     },
     {
@@ -2746,7 +2746,7 @@
       "status": "success",
       "value": "3.31850309818200644382548414605783285777345238750839973365312e+372",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.136598,
+      "elapsed_ms": 0.143075,
       "notes": null
     },
     {
@@ -2754,7 +2754,7 @@
       "status": "success",
       "value": "6.24786238641946073936331923603092453702227500927466582820596e+371",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.463363,
+      "elapsed_ms": 0.477915,
       "notes": null
     },
     {
@@ -2762,7 +2762,7 @@
       "status": "success",
       "value": "0.158442910290008868647058254095674932353504073802587794920558",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.472709,
+      "elapsed_ms": 0.572191,
       "notes": null
     },
     {
@@ -2770,7 +2770,7 @@
       "status": "success",
       "value": "0.841557089709991131352941745904325067646495926197412205079442",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.154908,
+      "elapsed_ms": 0.239628,
       "notes": null
     },
     {
@@ -2778,7 +2778,7 @@
       "status": "success",
       "value": "1.93456427045434291762422482765277263910604009768274619883548e+372",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.11123,
+      "elapsed_ms": 0.130335,
       "notes": null
     },
     {
@@ -2786,7 +2786,7 @@
       "status": "success",
       "value": "2.00872506636960960013759124200815267236963979075312011763823e+372",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.406279,
+      "elapsed_ms": 0.485689,
       "notes": null
     },
     {
@@ -2794,7 +2794,7 @@
       "status": "success",
       "value": "0.509403418007236325027825459574527043154972168599140501542389",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.419504,
+      "elapsed_ms": 0.433118,
       "notes": null
     },
     {
@@ -2802,7 +2802,7 @@
       "status": "success",
       "value": "0.490596581992763674972174540425472956845027831400859498457611",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.129417,
+      "elapsed_ms": 0.123173,
       "notes": null
     },
     {
@@ -2810,7 +2810,7 @@
       "status": "success",
       "value": "6.24866428175211491802967224180223421773349390343539891721557e+371",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.128116,
+      "elapsed_ms": 0.121587,
       "notes": null
     },
     {
@@ -2818,7 +2818,7 @@
       "status": "success",
       "value": "3.31842290864874102595884884548070188970233049809232642475216e+372",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.477758,
+      "elapsed_ms": 0.450688,
       "notes": null
     },
     {
@@ -2826,7 +2826,7 @@
       "status": "success",
       "value": "0.841536754013972942385156432257908879096145901548442973839907",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.44103,
+      "elapsed_ms": 0.468972,
       "notes": null
     },
     {
@@ -2834,7 +2834,7 @@
       "status": "success",
       "value": "0.158463245986027057614843567742091120903854098451557026160093",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.144222,
+      "elapsed_ms": 0.150552,
       "notes": null
     },
     {
@@ -2842,7 +2842,7 @@
       "status": "success",
       "value": "520111.553671432023415241851790287887122549234843147862934644",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.568411,
+      "elapsed_ms": 0.537059,
       "notes": null
     },
     {
@@ -2850,7 +2850,7 @@
       "status": "success",
       "value": "176226.572083930050425314527745249467126987444083607656972961",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.548648,
+      "elapsed_ms": 0.519477,
       "notes": null
     },
     {
@@ -2858,7 +2858,7 @@
       "status": "success",
       "value": "2.06493563742626636248582626392181417521486521612496219654342e+63",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.489326,
+      "elapsed_ms": 0.484749,
       "notes": null
     },
     {
@@ -2866,7 +2866,7 @@
       "status": "success",
       "value": "6.77588727717829806838787559549086139727990780653054722555922e+62",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.477794,
+      "elapsed_ms": 0.479807,
       "notes": null
     },
     {
@@ -2874,7 +2874,7 @@
       "status": "success",
       "value": "-99.5507844477675755551675011928322529306017884753485727015885",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.198052,
+      "elapsed_ms": 0.184355,
       "notes": null
     },
     {
@@ -2882,7 +2882,7 @@
       "status": "success",
       "value": "10002.6415175789025374625940568066282904206808703932507258791",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.801738,
+      "elapsed_ms": 0.751452,
       "notes": null
     },
     {
@@ -2890,7 +2890,7 @@
       "status": "success",
       "value": "-2000000.27917836749871186187852125029568839134240393869692643",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.757416,
+      "elapsed_ms": 0.729262,
       "notes": null
     },
     {
@@ -2898,7 +2898,7 @@
       "status": "success",
       "value": "-999999.577184264303152606777806482476982076030452071294271505",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.176472,
+      "elapsed_ms": 0.168184,
       "notes": null
     },
     {
@@ -2906,7 +2906,7 @@
       "status": "success",
       "value": "999999999945.133604632798822756019839105034749781511186874473",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.673374,
+      "elapsed_ms": 0.657281,
       "notes": null
     },
     {
@@ -2914,7 +2914,7 @@
       "status": "success",
       "value": "-1999999999827466013.31675644414775378085403277792445547112824",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.710244,
+      "elapsed_ms": 0.70333,
       "notes": null
     },
     {
@@ -2922,7 +2922,7 @@
       "status": "success",
       "value": "100.396312705845306113201758587181275324242501305386659170303",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.158873,
+      "elapsed_ms": 0.152932,
       "notes": null
     },
     {
@@ -2930,7 +2930,7 @@
       "status": "success",
       "value": "10002.6496001504609818423597910604301175251257576924737889908",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.717541,
+      "elapsed_ms": 0.718089,
       "notes": null
     },
     {
@@ -2938,7 +2938,7 @@
       "status": "success",
       "value": "1999999.47086212323819925425298687892235108027531460093237356",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.707625,
+      "elapsed_ms": 0.746466,
       "notes": null
     },
     {
@@ -2946,7 +2946,7 @@
       "status": "success",
       "value": "1000000.42286395680215152197067479128653071607327205061097750",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.153759,
+      "elapsed_ms": 0.153328,
       "notes": null
     },
     {
@@ -2954,7 +2954,7 @@
       "status": "success",
       "value": "1000000000167.17821038388047789177331322475972346683711021807",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.635565,
+      "elapsed_ms": 0.660012,
       "notes": null
     },
     {
@@ -2962,7 +2962,7 @@
       "status": "success",
       "value": "2000000000493599827.35491369350091487697307635420296118961321",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.686314,
+      "elapsed_ms": 0.706987,
       "notes": null
     },
     {
@@ -2970,7 +2970,7 @@
       "status": "success",
       "value": "-99.0482718849535052011658890625827005548965525309607107803998",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.164033,
+      "elapsed_ms": 0.164444,
       "notes": null
     },
     {
@@ -2978,7 +2978,7 @@
       "status": "success",
       "value": "10002.8940364546885024657319614752965610389044167563361402822",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.735933,
+      "elapsed_ms": 0.934477,
       "notes": null
     },
     {
@@ -2986,7 +2986,7 @@
       "status": "success",
       "value": "-2000000.02539055263844552593384891825853544326804074133893038",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.725803,
+      "elapsed_ms": 0.75673,
       "notes": null
     },
     {
@@ -2994,7 +2994,7 @@
       "status": "success",
       "value": "-999999.077295036605496377494131765710255914618655068130708374",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.168295,
+      "elapsed_ms": 0.180048,
       "notes": null
     },
     {
@@ -3002,7 +3002,7 @@
       "status": "success",
       "value": "1000000000167.42820982565305279914922771338912656860707922298",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.64114,
+      "elapsed_ms": 0.669749,
       "notes": null
     },
     {
@@ -3010,7 +3010,7 @@
       "status": "success",
       "value": "-2000000000493599827.91314093113980331523287525471332830028003",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.67175,
+      "elapsed_ms": 0.70754,
       "notes": null
     },
     {
@@ -3018,7 +3018,7 @@
       "status": "success",
       "value": "100.893825143658472473974036817261592815810036622321797784021",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.154635,
+      "elapsed_ms": 0.16014,
       "notes": null
     },
     {
@@ -3026,7 +3026,7 @@
       "status": "success",
       "value": "10002.8971187766816606755909799113710402142908374151682906595",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.714815,
+      "elapsed_ms": 0.781367,
       "notes": null
     },
     {
@@ -3034,7 +3034,7 @@
       "status": "success",
       "value": "1999999.71714944629241749274571606617196713098699200734263602",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.705393,
+      "elapsed_ms": 0.906233,
       "notes": null
     },
     {
@@ -3042,7 +3042,7 @@
       "status": "success",
       "value": "1000000.92264166219736363844253406724816861230135885143806053",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.143808,
+      "elapsed_ms": 0.159369,
       "notes": null
     },
     {
@@ -3050,7 +3050,7 @@
       "status": "success",
       "value": "999999999723.339000322128290264987571611020347481484604010712",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.640477,
+      "elapsed_ms": 0.658883,
       "notes": null
     },
     {
@@ -3058,7 +3058,7 @@
       "status": "success",
       "value": "1999999999161332198.20796643393178733196473079447191658142062",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.651482,
+      "elapsed_ms": 0.726637,
       "notes": null
     },
     {
@@ -3066,7 +3066,7 @@
       "status": "success",
       "value": "-98.7138237244206092568075826137992957527354833771067943331893",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.151491,
+      "elapsed_ms": 0.176278,
       "notes": null
     },
     {
@@ -3074,7 +3074,7 @@
       "status": "success",
       "value": "10003.0058920272179150956577633331972832946830398447170679770",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.659487,
+      "elapsed_ms": 0.883415,
       "notes": null
     },
     {
@@ -3082,7 +3082,7 @@
       "status": "success",
       "value": "-1999999.95057090520613213919563010151983048249864101831956118",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.676097,
+      "elapsed_ms": 0.754286,
       "notes": null
     },
     {
@@ -3090,7 +3090,7 @@
       "status": "success",
       "value": "-999998.743739547556101976437197792372089694652848326784645522",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.158674,
+      "elapsed_ms": 0.179207,
       "notes": null
     },
     {
@@ -3098,7 +3098,7 @@
       "status": "success",
       "value": "999999999723.450111199085899816074195877869589682933103295301",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.647557,
+      "elapsed_ms": 0.702844,
       "notes": null
     },
     {
@@ -3106,7 +3106,7 @@
       "status": "success",
       "value": "-1999999999161332198.44211989842210319844159277297992926309866",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.655465,
+      "elapsed_ms": 0.715281,
       "notes": null
     },
     {
@@ -3114,7 +3114,7 @@
       "status": "success",
       "value": "101.226051057279734955973443085186899474362071788058715848481",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.139617,
+      "elapsed_ms": 0.15771,
       "notes": null
     },
     {
@@ -3122,7 +3122,7 @@
       "status": "success",
       "value": "10003.0074928343631432355667446085499180522509620601825028092",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.684463,
+      "elapsed_ms": 0.745965,
       "notes": null
     },
     {
@@ -3130,7 +3130,7 @@
       "status": "success",
       "value": "1999999.79048769059905042815585441102280533192378528324325812",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.721423,
+      "elapsed_ms": 0.758555,
       "notes": null
     },
     {
@@ -3138,7 +3138,7 @@
       "status": "success",
       "value": "1000001.25597488441962288215857278567006543207442628558533462",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.146045,
+      "elapsed_ms": 0.158889,
       "notes": null
     },
     {
@@ -3146,7 +3146,7 @@
       "status": "success",
       "value": "999999999723.450111359165364328691271660614216222600617093860",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.629058,
+      "elapsed_ms": 0.687193,
       "notes": null
     },
     {
@@ -3154,7 +3154,7 @@
       "status": "success",
       "value": "1999999999161332198.28204043393183670429943567396982984633294",
       "mpmath_returned_token": null,
-      "elapsed_ms": 0.665359,
+      "elapsed_ms": 0.716005,
       "notes": null
     },
     {
@@ -3165,7 +3165,7 @@
         "im": "479.426806485162464933234388821077530959796561270720796722502"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 2.39745,
+      "elapsed_ms": 2.49249,
       "notes": null
     },
     {
@@ -3176,7 +3176,7 @@
         "im": "909.299832009778407869435837573510685494455766038567509799906"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.694476,
+      "elapsed_ms": 1.706312,
       "notes": null
     },
     {
@@ -3187,7 +3187,7 @@
         "im": "479.426926446886782992738109923793800629440308994640151371209"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 2.086724,
+      "elapsed_ms": 2.099852,
       "notes": null
     },
     {
@@ -3198,7 +3198,7 @@
         "im": "909.300059239349325905653910581342037304641921719234751531675"
       },
       "mpmath_returned_token": null,
-      "elapsed_ms": 1.768257,
+      "elapsed_ms": 2.695597,
       "notes": null
     }
   ],

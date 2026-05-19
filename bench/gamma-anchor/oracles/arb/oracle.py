@@ -612,15 +612,18 @@ def call_head(head: str, inp: dict) -> acb:
         return (z ** (a - acb(1))) * ((-z).exp()) / a.gamma()
 
     if head == "IncompleteBeta":
-        # B(z; a, b) UNregularised — `acb.beta_lower(a, b, regularized=0)`
-        # computes B(a, b; z) with z = self. Convention matches the
-        # corpus's 3-arg envelope `{z, a, b}`. Verified by probe:
-        # `acb('0.3').beta_lower(2, 3, regularized=1)` returns
-        # I_{0.3}(2, 3) = 0.3483 = BetaRegularized[0.3, 2, 3].
+        # I_z(a, b) REGULARISED per corpus-spec.md ("IncompleteBeta: I_z(a, b)";
+        # DLMF §8.17.2 notation uses I for regularised). `acb.beta_lower(a, b,
+        # regularized=1)` returns I_z(a, b) with z = self, matching the corpus's
+        # 3-arg envelope `{z, a, b}` and Wolfram's `BetaRegularized[z, a, b]`.
+        # Fixed 2026-05-19 — G8 cross-agreement caught the previous
+        # `regularized=0` as 36/40 of the unexplained findings; the original
+        # subagent left a probe-comment that even cited `regularized=1` as
+        # producing the corpus-aligned value but then dispatched `=0`.
         a = parse_kind_acb(inp["a"])
         b = parse_kind_acb(inp["b"])
         z = parse_z_acb(inp["z"])
-        return z.beta_lower(a, b, regularized=0)
+        return z.beta_lower(a, b, regularized=1)
 
     raise ValueError(f"unknown head: {head!r}")
 

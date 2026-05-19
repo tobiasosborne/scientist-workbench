@@ -2,7 +2,7 @@
   "oracle_id": "arb",
   "oracle_version": "python-flint 0.8.0 / FLINT C 3.0.1 (Ubuntu libflint-dev 3.0.1-3.1build1)",
   "python_version": "3.12.3 (main, Mar 23 2026, 19:04:32) [GCC 13.3.0]",
-  "generated_at": "2026-05-19T08:19:48.623Z",
+  "generated_at": "2026-05-19T08:47:00.514Z",
   "corpus_seed": 20260519,
   "corpus_bead": "scientist-workbench-0kq3",
   "corpus_adr": "0042",
@@ -18,7 +18,7 @@
   "relative_radius_target": 1e-50,
   "per_input_timeout_s": 30,
   "total_corpus_inputs": 377,
-  "total_elapsed_ms": 100.841012,
+  "total_elapsed_ms": 116.776921,
   "cancellation_retries": {
     "rows_with_bump": 2,
     "max_attempts_seen": 2,
@@ -38,7 +38,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.160655,
+      "elapsed_ms": 0.195664,
       "notes": null
     },
     {
@@ -51,7 +51,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.015474,
+      "elapsed_ms": 0.019526,
       "notes": null
     },
     {
@@ -64,7 +64,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.007204,
+      "elapsed_ms": 0.008829,
       "notes": null
     },
     {
@@ -77,7 +77,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.00479,
+      "elapsed_ms": 0.005713,
       "notes": null
     },
     {
@@ -90,7 +90,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.068707,
+      "elapsed_ms": 0.081072,
       "notes": null
     },
     {
@@ -103,7 +103,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.008665,
+      "elapsed_ms": 0.009516,
       "notes": null
     },
     {
@@ -116,7 +116,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.004466,
+      "elapsed_ms": 0.00514,
       "notes": null
     },
     {
@@ -129,7 +129,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.005885,
+      "elapsed_ms": 0.00623,
       "notes": null
     },
     {
@@ -142,7 +142,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.013048,
+      "elapsed_ms": 0.015255,
       "notes": null
     },
     {
@@ -155,7 +155,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.013692,
+      "elapsed_ms": 0.015653,
       "notes": null
     },
     {
@@ -168,7 +168,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.015521,
+      "elapsed_ms": 0.017569,
       "notes": null
     },
     {
@@ -181,7 +181,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.011109,
+      "elapsed_ms": 0.01356,
       "notes": null
     },
     {
@@ -194,7 +194,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.004779,
+      "elapsed_ms": 0.005744,
       "notes": null
     },
     {
@@ -207,7 +207,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.004239,
+      "elapsed_ms": 0.005276,
       "notes": null
     },
     {
@@ -220,7 +220,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.110274,
+      "elapsed_ms": 0.121687,
       "notes": null
     },
     {
@@ -233,7 +233,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.026816,
+      "elapsed_ms": 0.026211,
       "notes": null
     },
     {
@@ -246,7 +246,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.11346,
+      "elapsed_ms": 0.130283,
       "notes": null
     },
     {
@@ -259,7 +259,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.065456,
+      "elapsed_ms": 0.076643,
       "notes": null
     },
     {
@@ -272,7 +272,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.06387,
+      "elapsed_ms": 0.202297,
       "notes": null
     },
     {
@@ -285,7 +285,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.07124,
+      "elapsed_ms": 0.085933,
       "notes": null
     },
     {
@@ -298,7 +298,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.006889,
+      "elapsed_ms": 0.008915,
       "notes": null
     },
     {
@@ -311,7 +311,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.004406,
+      "elapsed_ms": 0.005109,
       "notes": null
     },
     {
@@ -324,7 +324,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.004608,
+      "elapsed_ms": 0.005084,
       "notes": null
     },
     {
@@ -337,7 +337,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.004329,
+      "elapsed_ms": 0.005147,
       "notes": null
     },
     {
@@ -350,7 +350,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.365564,
+      "elapsed_ms": 0.423823,
       "notes": null
     },
     {
@@ -363,7 +363,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.078921,
+      "elapsed_ms": 0.092802,
       "notes": null
     },
     {
@@ -376,7 +376,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.071607,
+      "elapsed_ms": 0.083217,
       "notes": null
     },
     {
@@ -389,7 +389,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.007452,
+      "elapsed_ms": 0.009028,
       "notes": null
     },
     {
@@ -402,7 +402,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.064778,
+      "elapsed_ms": 0.07964,
       "notes": null
     },
     {
@@ -415,7 +415,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.022353,
+      "elapsed_ms": 0.03265,
       "notes": null
     },
     {
@@ -428,7 +428,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.008552,
+      "elapsed_ms": 0.010838,
       "notes": null
     },
     {
@@ -441,7 +441,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.006384,
+      "elapsed_ms": 0.007949,
       "notes": null
     },
     {
@@ -454,7 +454,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.00469,
+      "elapsed_ms": 0.005192,
       "notes": null
     },
     {
@@ -467,7 +467,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.004464,
+      "elapsed_ms": 0.005133,
       "notes": null
     },
     {
@@ -480,7 +480,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.0044,
+      "elapsed_ms": 0.00511,
       "notes": null
     },
     {
@@ -493,7 +493,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.006813,
+      "elapsed_ms": 0.007559,
       "notes": null
     },
     {
@@ -506,7 +506,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.006858,
+      "elapsed_ms": 0.008316,
       "notes": null
     },
     {
@@ -519,7 +519,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.006836,
+      "elapsed_ms": 0.008116,
       "notes": null
     },
     {
@@ -532,7 +532,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.064467,
+      "elapsed_ms": 0.073022,
       "notes": null
     },
     {
@@ -545,7 +545,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.024123,
+      "elapsed_ms": 0.028246,
       "notes": null
     },
     {
@@ -558,7 +558,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.006541,
+      "elapsed_ms": 0.006974,
       "notes": null
     },
     {
@@ -571,7 +571,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.029738,
+      "elapsed_ms": 0.03475,
       "notes": null
     },
     {
@@ -584,7 +584,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.037355,
+      "elapsed_ms": 0.043845,
       "notes": null
     },
     {
@@ -597,7 +597,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.045131,
+      "elapsed_ms": 0.052454,
       "notes": null
     },
     {
@@ -610,7 +610,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.03397,
+      "elapsed_ms": 0.039214,
       "notes": null
     },
     {
@@ -623,7 +623,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.047246,
+      "elapsed_ms": 0.048602,
       "notes": null
     },
     {
@@ -636,7 +636,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.027917,
+      "elapsed_ms": 0.033045,
       "notes": null
     },
     {
@@ -649,7 +649,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.029289,
+      "elapsed_ms": 0.033919,
       "notes": null
     },
     {
@@ -662,7 +662,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.041488,
+      "elapsed_ms": 0.047927,
       "notes": null
     },
     {
@@ -675,7 +675,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.034477,
+      "elapsed_ms": 0.039573,
       "notes": null
     },
     {
@@ -688,7 +688,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.042215,
+      "elapsed_ms": 0.0497,
       "notes": null
     },
     {
@@ -701,7 +701,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.026779,
+      "elapsed_ms": 0.031793,
       "notes": null
     },
     {
@@ -714,7 +714,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.033849,
+      "elapsed_ms": 0.041695,
       "notes": null
     },
     {
@@ -727,7 +727,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.026565,
+      "elapsed_ms": 0.030152,
       "notes": null
     },
     {
@@ -740,7 +740,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.021339,
+      "elapsed_ms": 0.02452,
       "notes": null
     },
     {
@@ -753,7 +753,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.00547,
+      "elapsed_ms": 0.006481,
       "notes": null
     },
     {
@@ -766,7 +766,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.027049,
+      "elapsed_ms": 0.030096,
       "notes": null
     },
     {
@@ -779,7 +779,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.033843,
+      "elapsed_ms": 0.037617,
       "notes": null
     },
     {
@@ -790,7 +790,7 @@
       "arb_returned_token": null,
       "prec_attempts": null,
       "final_prec": null,
-      "elapsed_ms": 0.006391,
+      "elapsed_ms": 0.007666,
       "notes": "python-flint 0.8.0 has no direct InverseIncompleteGamma{P,Q}; Newton-iteration substitute would not be byte-deterministic"
     },
     {
@@ -801,7 +801,7 @@
       "arb_returned_token": null,
       "prec_attempts": null,
       "final_prec": null,
-      "elapsed_ms": 0.003611,
+      "elapsed_ms": 0.004105,
       "notes": "python-flint 0.8.0 has no direct InverseIncompleteGamma{P,Q}; Newton-iteration substitute would not be byte-deterministic"
     },
     {
@@ -812,7 +812,7 @@
       "arb_returned_token": null,
       "prec_attempts": null,
       "final_prec": null,
-      "elapsed_ms": 0.00257,
+      "elapsed_ms": 0.002795,
       "notes": "python-flint 0.8.0 has no direct InverseIncompleteGamma{P,Q}; Newton-iteration substitute would not be byte-deterministic"
     },
     {
@@ -823,7 +823,7 @@
       "arb_returned_token": null,
       "prec_attempts": null,
       "final_prec": null,
-      "elapsed_ms": 0.001647,
+      "elapsed_ms": 0.001966,
       "notes": "python-flint 0.8.0 has no direct InverseIncompleteGamma{P,Q}; Newton-iteration substitute would not be byte-deterministic"
     },
     {
@@ -834,7 +834,7 @@
       "arb_returned_token": null,
       "prec_attempts": null,
       "final_prec": null,
-      "elapsed_ms": 0.001771,
+      "elapsed_ms": 0.002081,
       "notes": "python-flint 0.8.0 has no direct InverseIncompleteGamma{P,Q}; Newton-iteration substitute would not be byte-deterministic"
     },
     {
@@ -845,7 +845,7 @@
       "arb_returned_token": null,
       "prec_attempts": null,
       "final_prec": null,
-      "elapsed_ms": 0.001589,
+      "elapsed_ms": 0.001816,
       "notes": "python-flint 0.8.0 has no direct InverseIncompleteGamma{P,Q}; Newton-iteration substitute would not be byte-deterministic"
     },
     {
@@ -856,7 +856,7 @@
       "arb_returned_token": null,
       "prec_attempts": null,
       "final_prec": null,
-      "elapsed_ms": 0.001914,
+      "elapsed_ms": 0.002577,
       "notes": "python-flint 0.8.0 has no direct InverseIncompleteGamma{P,Q}; Newton-iteration substitute would not be byte-deterministic"
     },
     {
@@ -867,7 +867,7 @@
       "arb_returned_token": null,
       "prec_attempts": null,
       "final_prec": null,
-      "elapsed_ms": 0.001737,
+      "elapsed_ms": 0.001841,
       "notes": "python-flint 0.8.0 has no direct InverseIncompleteGamma{P,Q}; Newton-iteration substitute would not be byte-deterministic"
     },
     {
@@ -878,7 +878,7 @@
       "arb_returned_token": null,
       "prec_attempts": null,
       "final_prec": null,
-      "elapsed_ms": 0.001537,
+      "elapsed_ms": 0.001935,
       "notes": "python-flint 0.8.0 has no direct InverseIncompleteGamma{P,Q}; Newton-iteration substitute would not be byte-deterministic"
     },
     {
@@ -889,7 +889,7 @@
       "arb_returned_token": null,
       "prec_attempts": null,
       "final_prec": null,
-      "elapsed_ms": 0.001594,
+      "elapsed_ms": 0.001749,
       "notes": "python-flint 0.8.0 has no direct InverseIncompleteGamma{P,Q}; Newton-iteration substitute would not be byte-deterministic"
     },
     {
@@ -900,7 +900,7 @@
       "arb_returned_token": null,
       "prec_attempts": null,
       "final_prec": null,
-      "elapsed_ms": 0.00166,
+      "elapsed_ms": 0.001888,
       "notes": "python-flint 0.8.0 has no direct InverseIncompleteGamma{P,Q}; Newton-iteration substitute would not be byte-deterministic"
     },
     {
@@ -911,7 +911,7 @@
       "arb_returned_token": null,
       "prec_attempts": null,
       "final_prec": null,
-      "elapsed_ms": 0.001696,
+      "elapsed_ms": 0.001765,
       "notes": "python-flint 0.8.0 has no direct InverseIncompleteGamma{P,Q}; Newton-iteration substitute would not be byte-deterministic"
     },
     {
@@ -924,7 +924,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.01183,
+      "elapsed_ms": 0.013959,
       "notes": null
     },
     {
@@ -937,7 +937,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.006347,
+      "elapsed_ms": 0.007394,
       "notes": null
     },
     {
@@ -950,7 +950,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.021223,
+      "elapsed_ms": 0.024093,
       "notes": null
     },
     {
@@ -963,7 +963,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.005212,
+      "elapsed_ms": 0.006875,
       "notes": null
     },
     {
@@ -976,7 +976,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.011492,
+      "elapsed_ms": 0.013021,
       "notes": null
     },
     {
@@ -989,7 +989,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.006372,
+      "elapsed_ms": 0.007433,
       "notes": null
     },
     {
@@ -1002,7 +1002,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.020573,
+      "elapsed_ms": 0.023246,
       "notes": null
     },
     {
@@ -1015,7 +1015,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.007266,
+      "elapsed_ms": 0.007907,
       "notes": null
     },
     {
@@ -1028,7 +1028,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.00558,
+      "elapsed_ms": 0.006504,
       "notes": null
     },
     {
@@ -1041,7 +1041,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.016742,
+      "elapsed_ms": 0.018934,
       "notes": null
     },
     {
@@ -1054,7 +1054,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.00725,
+      "elapsed_ms": 0.00788,
       "notes": null
     },
     {
@@ -1067,7 +1067,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.014046,
+      "elapsed_ms": 0.01489,
       "notes": null
     },
     {
@@ -1080,7 +1080,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.030229,
+      "elapsed_ms": 0.02682,
       "notes": null
     },
     {
@@ -1093,7 +1093,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.010413,
+      "elapsed_ms": 0.011972,
       "notes": null
     },
     {
@@ -1106,7 +1106,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.008025,
+      "elapsed_ms": 0.008744,
       "notes": null
     },
     {
@@ -1119,85 +1119,85 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.006345,
+      "elapsed_ms": 0.007214,
       "notes": null
     },
     {
       "input_id": "T1-incompletebeta-001",
       "status": "success",
-      "value": "0.02902499999999999836797215380101988989134452333390295324",
-      "value_radius": "1.135739186e-61",
+      "value": "0.3482999999999999804156658456122386786961342800068354388",
+      "value_radius": "1.440674723e-60",
       "arb_returned_token": null,
       "prec_attempts": [
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.018141,
+      "elapsed_ms": 0.019329,
       "notes": null
     },
     {
       "input_id": "T1-incompletebeta-002",
       "status": "success",
-      "value": "1.037897309859288283623159787625337189166709680507270583",
-      "value_radius": "4.450143545e-60",
+      "value": "0.6607459491435451463350092750533846335738725680217854281",
+      "value_radius": "5.880967689e-60",
       "arb_returned_token": null,
       "prec_attempts": [
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.073793,
+      "elapsed_ms": 0.084171,
       "notes": null
     },
     {
       "input_id": "T1-incompletebeta-003",
       "status": "success",
-      "value": "0.05729166666666666666666666666666666666666666666666666667",
-      "value_radius": "1.312667297e-61",
+      "value": "0.6875000000000000000000000000000000000000000000000000000",
+      "value_radius": "2.197502293e-60",
       "arb_returned_token": null,
       "prec_attempts": [
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.00953,
+      "elapsed_ms": 0.011364,
       "notes": null
     },
     {
       "input_id": "T1-incompletebeta-004",
       "status": "success",
-      "value": "1.285398163397448309615660845819875721049292349843776455",
-      "value_radius": "6.106679996e-60",
+      "value": "0.8183098861837906715377675267450287240689192914809128975",
+      "value_radius": "7.472347970e-60",
       "arb_returned_token": null,
       "prec_attempts": [
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.129147,
+      "elapsed_ms": 0.109747,
       "notes": null
     },
     {
       "input_id": "T1-incompletebeta-005",
       "status": "success",
-      "value": "0.08302500000000000019984014443252813536801811039009804820",
-      "value_radius": "1.484757003e-60",
+      "value": "0.9963000000000000023980817331903376244162173246811765784",
+      "value_radius": "1.851406192e-59",
       "arb_returned_token": null,
       "prec_attempts": [
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.0106,
+      "elapsed_ms": 0.011982,
       "notes": null
     },
     {
       "input_id": "T1-incompletebeta-006",
       "status": "success",
-      "value": "1.549045772398254433231403908115466602718646299612781630",
-      "value_radius": "1.954945446e-59",
+      "value": "0.9861531670111409559853955299239300806087057371854595919",
+      "value_radius": "1.376602797e-59",
       "arb_returned_token": null,
       "prec_attempts": [
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.123677,
+      "elapsed_ms": 0.111777,
       "notes": null
     },
     {
@@ -1210,7 +1210,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.01183,
+      "elapsed_ms": 0.014215,
       "notes": null
     },
     {
@@ -1223,7 +1223,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.013689,
+      "elapsed_ms": 0.012576,
       "notes": null
     },
     {
@@ -1236,7 +1236,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.009616,
+      "elapsed_ms": 0.010288,
       "notes": null
     },
     {
@@ -1249,7 +1249,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.010292,
+      "elapsed_ms": 0.011722,
       "notes": null
     },
     {
@@ -1262,7 +1262,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.005019,
+      "elapsed_ms": 0.005326,
       "notes": null
     },
     {
@@ -1275,7 +1275,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.009528,
+      "elapsed_ms": 0.010783,
       "notes": null
     },
     {
@@ -1288,7 +1288,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.010595,
+      "elapsed_ms": 0.01155,
       "notes": null
     },
     {
@@ -1301,7 +1301,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.012027,
+      "elapsed_ms": 0.016703,
       "notes": null
     },
     {
@@ -1320,7 +1320,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.032116,
+      "elapsed_ms": 0.033483,
       "notes": null
     },
     {
@@ -1339,7 +1339,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.048999,
+      "elapsed_ms": 0.053797,
       "notes": null
     },
     {
@@ -1358,7 +1358,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.017719,
+      "elapsed_ms": 0.01903,
       "notes": null
     },
     {
@@ -1377,7 +1377,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.016628,
+      "elapsed_ms": 0.018212,
       "notes": null
     },
     {
@@ -1396,7 +1396,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.02175,
+      "elapsed_ms": 0.024754,
       "notes": null
     },
     {
@@ -1415,7 +1415,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.021922,
+      "elapsed_ms": 0.024485,
       "notes": null
     },
     {
@@ -1434,7 +1434,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.018915,
+      "elapsed_ms": 0.022337,
       "notes": null
     },
     {
@@ -1453,7 +1453,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.021244,
+      "elapsed_ms": 0.024143,
       "notes": null
     },
     {
@@ -1466,7 +1466,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.03352,
+      "elapsed_ms": 0.039339,
       "notes": null
     },
     {
@@ -1479,7 +1479,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.025175,
+      "elapsed_ms": 0.029124,
       "notes": null
     },
     {
@@ -1492,7 +1492,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.022724,
+      "elapsed_ms": 0.026519,
       "notes": null
     },
     {
@@ -1505,7 +1505,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.023109,
+      "elapsed_ms": 0.026302,
       "notes": null
     },
     {
@@ -1518,7 +1518,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.02027,
+      "elapsed_ms": 0.023848,
       "notes": null
     },
     {
@@ -1531,7 +1531,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.029133,
+      "elapsed_ms": 0.034348,
       "notes": null
     },
     {
@@ -1544,7 +1544,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.024277,
+      "elapsed_ms": 0.030215,
       "notes": null
     },
     {
@@ -1557,7 +1557,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.026518,
+      "elapsed_ms": 0.031724,
       "notes": null
     },
     {
@@ -1570,7 +1570,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.09962,
+      "elapsed_ms": 0.119126,
       "notes": null
     },
     {
@@ -1583,7 +1583,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.086287,
+      "elapsed_ms": 0.096152,
       "notes": null
     },
     {
@@ -1596,7 +1596,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.083006,
+      "elapsed_ms": 0.092991,
       "notes": null
     },
     {
@@ -1609,7 +1609,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.082227,
+      "elapsed_ms": 0.099366,
       "notes": null
     },
     {
@@ -1622,7 +1622,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.08028,
+      "elapsed_ms": 0.089191,
       "notes": null
     },
     {
@@ -1635,7 +1635,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.086125,
+      "elapsed_ms": 0.098073,
       "notes": null
     },
     {
@@ -1648,7 +1648,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.085833,
+      "elapsed_ms": 0.095724,
       "notes": null
     },
     {
@@ -1661,7 +1661,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.091669,
+      "elapsed_ms": 0.107253,
       "notes": null
     },
     {
@@ -1674,7 +1674,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.07875,
+      "elapsed_ms": 0.093502,
       "notes": null
     },
     {
@@ -1687,7 +1687,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.091012,
+      "elapsed_ms": 0.107837,
       "notes": null
     },
     {
@@ -1700,7 +1700,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.090567,
+      "elapsed_ms": 0.10617,
       "notes": null
     },
     {
@@ -1713,7 +1713,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.008624,
+      "elapsed_ms": 0.012201,
       "notes": null
     },
     {
@@ -1726,7 +1726,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.008225,
+      "elapsed_ms": 0.011762,
       "notes": null
     },
     {
@@ -1739,7 +1739,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.005581,
+      "elapsed_ms": 0.006927,
       "notes": null
     },
     {
@@ -1752,7 +1752,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.003898,
+      "elapsed_ms": 0.004825,
       "notes": null
     },
     {
@@ -1765,7 +1765,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.009175,
+      "elapsed_ms": 0.014098,
       "notes": null
     },
     {
@@ -1778,7 +1778,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.02955,
+      "elapsed_ms": 0.033589,
       "notes": null
     },
     {
@@ -1791,7 +1791,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.011213,
+      "elapsed_ms": 0.026399,
       "notes": null
     },
     {
@@ -1804,7 +1804,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.024613,
+      "elapsed_ms": 0.029696,
       "notes": null
     },
     {
@@ -1817,7 +1817,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.003646,
+      "elapsed_ms": 0.005552,
       "notes": "L_pole: head=Gamma returned non-finite ball"
     },
     {
@@ -1830,7 +1830,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.002972,
+      "elapsed_ms": 0.003827,
       "notes": "L_pole: head=Digamma returned non-finite ball"
     },
     {
@@ -1843,7 +1843,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.00933,
+      "elapsed_ms": 0.013324,
       "notes": null
     },
     {
@@ -1856,7 +1856,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.052421,
+      "elapsed_ms": 0.04104,
       "notes": null
     },
     {
@@ -1869,7 +1869,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.01169,
+      "elapsed_ms": 0.012707,
       "notes": null
     },
     {
@@ -1882,7 +1882,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.026832,
+      "elapsed_ms": 0.032891,
       "notes": null
     },
     {
@@ -1895,7 +1895,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.008871,
+      "elapsed_ms": 0.011941,
       "notes": null
     },
     {
@@ -1908,7 +1908,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.023707,
+      "elapsed_ms": 0.030268,
       "notes": null
     },
     {
@@ -1921,7 +1921,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.008423,
+      "elapsed_ms": 0.012576,
       "notes": null
     },
     {
@@ -1934,7 +1934,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.025378,
+      "elapsed_ms": 0.03378,
       "notes": null
     },
     {
@@ -1947,7 +1947,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.003046,
+      "elapsed_ms": 0.005177,
       "notes": "L_pole: head=Gamma returned non-finite ball"
     },
     {
@@ -1960,7 +1960,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.002721,
+      "elapsed_ms": 0.003125,
       "notes": "L_pole: head=Digamma returned non-finite ball"
     },
     {
@@ -1973,7 +1973,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.007995,
+      "elapsed_ms": 0.011972,
       "notes": null
     },
     {
@@ -1986,7 +1986,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.023468,
+      "elapsed_ms": 0.031076,
       "notes": null
     },
     {
@@ -1999,7 +1999,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.007289,
+      "elapsed_ms": 0.009814,
       "notes": null
     },
     {
@@ -2012,7 +2012,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.022359,
+      "elapsed_ms": 0.032068,
       "notes": null
     },
     {
@@ -2025,7 +2025,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.007781,
+      "elapsed_ms": 0.01169,
       "notes": null
     },
     {
@@ -2038,7 +2038,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.0248,
+      "elapsed_ms": 0.032289,
       "notes": null
     },
     {
@@ -2051,7 +2051,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.006775,
+      "elapsed_ms": 0.010914,
       "notes": null
     },
     {
@@ -2064,7 +2064,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.021734,
+      "elapsed_ms": 0.027076,
       "notes": null
     },
     {
@@ -2077,7 +2077,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.002764,
+      "elapsed_ms": 0.00472,
       "notes": "L_pole: head=Gamma returned non-finite ball"
     },
     {
@@ -2090,7 +2090,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.002737,
+      "elapsed_ms": 0.003092,
       "notes": "L_pole: head=Digamma returned non-finite ball"
     },
     {
@@ -2103,7 +2103,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.008263,
+      "elapsed_ms": 0.011837,
       "notes": null
     },
     {
@@ -2116,7 +2116,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.023043,
+      "elapsed_ms": 0.030454,
       "notes": null
     },
     {
@@ -2129,7 +2129,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.007042,
+      "elapsed_ms": 0.009586,
       "notes": null
     },
     {
@@ -2142,7 +2142,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.022092,
+      "elapsed_ms": 0.028048,
       "notes": null
     },
     {
@@ -2155,7 +2155,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.008655,
+      "elapsed_ms": 0.011891,
       "notes": null
     },
     {
@@ -2168,7 +2168,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.022595,
+      "elapsed_ms": 0.027578,
       "notes": null
     },
     {
@@ -2181,7 +2181,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.007123,
+      "elapsed_ms": 0.013205,
       "notes": null
     },
     {
@@ -2194,7 +2194,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.021846,
+      "elapsed_ms": 0.029988,
       "notes": null
     },
     {
@@ -2207,7 +2207,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.002819,
+      "elapsed_ms": 0.004054,
       "notes": "L_pole: head=Gamma returned non-finite ball"
     },
     {
@@ -2220,7 +2220,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.002575,
+      "elapsed_ms": 0.003503,
       "notes": "L_pole: head=Digamma returned non-finite ball"
     },
     {
@@ -2233,7 +2233,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.008331,
+      "elapsed_ms": 0.013797,
       "notes": null
     },
     {
@@ -2246,7 +2246,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.02287,
+      "elapsed_ms": 0.035568,
       "notes": null
     },
     {
@@ -2259,7 +2259,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.00825,
+      "elapsed_ms": 0.010993,
       "notes": null
     },
     {
@@ -2272,7 +2272,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.02242,
+      "elapsed_ms": 0.025096,
       "notes": null
     },
     {
@@ -2285,7 +2285,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.008266,
+      "elapsed_ms": 0.008956,
       "notes": null
     },
     {
@@ -2298,7 +2298,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.022557,
+      "elapsed_ms": 0.036198,
       "notes": null
     },
     {
@@ -2311,7 +2311,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.006908,
+      "elapsed_ms": 0.010175,
       "notes": null
     },
     {
@@ -2324,7 +2324,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.022442,
+      "elapsed_ms": 0.027841,
       "notes": null
     },
     {
@@ -2343,7 +2343,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.020099,
+      "elapsed_ms": 0.035269,
       "notes": null
     },
     {
@@ -2356,7 +2356,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.090993,
+      "elapsed_ms": 0.114198,
       "notes": null
     },
     {
@@ -2375,7 +2375,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.02001,
+      "elapsed_ms": 0.02045,
       "notes": null
     },
     {
@@ -2388,7 +2388,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.08602,
+      "elapsed_ms": 0.097059,
       "notes": null
     },
     {
@@ -2407,7 +2407,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.013821,
+      "elapsed_ms": 0.017706,
       "notes": null
     },
     {
@@ -2420,7 +2420,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.083824,
+      "elapsed_ms": 0.09772,
       "notes": null
     },
     {
@@ -2439,7 +2439,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.012813,
+      "elapsed_ms": 0.019581,
       "notes": null
     },
     {
@@ -2452,7 +2452,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.083129,
+      "elapsed_ms": 0.09629,
       "notes": null
     },
     {
@@ -2465,7 +2465,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.07966,
+      "elapsed_ms": 0.091132,
       "notes": null
     },
     {
@@ -2478,7 +2478,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.073018,
+      "elapsed_ms": 0.08219,
       "notes": null
     },
     {
@@ -2491,7 +2491,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.092227,
+      "elapsed_ms": 0.107465,
       "notes": null
     },
     {
@@ -2504,7 +2504,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.090397,
+      "elapsed_ms": 0.113078,
       "notes": null
     },
     {
@@ -2517,7 +2517,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.091355,
+      "elapsed_ms": 0.103436,
       "notes": null
     },
     {
@@ -2530,7 +2530,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.088259,
+      "elapsed_ms": 0.098202,
       "notes": null
     },
     {
@@ -2549,7 +2549,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.06687,
+      "elapsed_ms": 0.087104,
       "notes": null
     },
     {
@@ -2568,7 +2568,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.13555,
+      "elapsed_ms": 0.108378,
       "notes": null
     },
     {
@@ -2587,7 +2587,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.052032,
+      "elapsed_ms": 0.057017,
       "notes": null
     },
     {
@@ -2606,7 +2606,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.043704,
+      "elapsed_ms": 0.046631,
       "notes": null
     },
     {
@@ -2625,7 +2625,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.046956,
+      "elapsed_ms": 0.054727,
       "notes": null
     },
     {
@@ -2644,7 +2644,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.040259,
+      "elapsed_ms": 0.043216,
       "notes": null
     },
     {
@@ -2663,7 +2663,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.032421,
+      "elapsed_ms": 0.036815,
       "notes": null
     },
     {
@@ -2682,7 +2682,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.042216,
+      "elapsed_ms": 0.046532,
       "notes": null
     },
     {
@@ -2701,7 +2701,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.065559,
+      "elapsed_ms": 0.072945,
       "notes": null
     },
     {
@@ -2720,7 +2720,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.053963,
+      "elapsed_ms": 0.106224,
       "notes": null
     },
     {
@@ -2739,7 +2739,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.052001,
+      "elapsed_ms": 0.058468,
       "notes": null
     },
     {
@@ -2758,7 +2758,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.05198,
+      "elapsed_ms": 0.058138,
       "notes": null
     },
     {
@@ -2777,7 +2777,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.147004,
+      "elapsed_ms": 0.159151,
       "notes": null
     },
     {
@@ -2796,7 +2796,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.143233,
+      "elapsed_ms": 0.151431,
       "notes": null
     },
     {
@@ -2815,7 +2815,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.14097,
+      "elapsed_ms": 0.153851,
       "notes": null
     },
     {
@@ -2834,7 +2834,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.114191,
+      "elapsed_ms": 0.123476,
       "notes": null
     },
     {
@@ -2853,7 +2853,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.303257,
+      "elapsed_ms": 0.351569,
       "notes": null
     },
     {
@@ -2872,7 +2872,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.315053,
+      "elapsed_ms": 0.341155,
       "notes": null
     },
     {
@@ -2891,7 +2891,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.316655,
+      "elapsed_ms": 0.329393,
       "notes": null
     },
     {
@@ -2910,7 +2910,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.25303,
+      "elapsed_ms": 0.280758,
       "notes": null
     },
     {
@@ -2929,7 +2929,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.152961,
+      "elapsed_ms": 0.16878,
       "notes": null
     },
     {
@@ -2948,7 +2948,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.142173,
+      "elapsed_ms": 0.156478,
       "notes": null
     },
     {
@@ -2967,7 +2967,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.144621,
+      "elapsed_ms": 0.149169,
       "notes": null
     },
     {
@@ -2986,7 +2986,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.123807,
+      "elapsed_ms": 0.129708,
       "notes": null
     },
     {
@@ -3005,7 +3005,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.126468,
+      "elapsed_ms": 0.108891,
       "notes": null
     },
     {
@@ -3024,7 +3024,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.079167,
+      "elapsed_ms": 0.088621,
       "notes": null
     },
     {
@@ -3043,7 +3043,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.084834,
+      "elapsed_ms": 0.091705,
       "notes": null
     },
     {
@@ -3062,7 +3062,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.06218,
+      "elapsed_ms": 0.067301,
       "notes": null
     },
     {
@@ -3081,7 +3081,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.011563,
+      "elapsed_ms": 0.024804,
       "notes": null
     },
     {
@@ -3100,7 +3100,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.011238,
+      "elapsed_ms": 0.011174,
       "notes": null
     },
     {
@@ -3119,7 +3119,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.010696,
+      "elapsed_ms": 0.011797,
       "notes": null
     },
     {
@@ -3138,7 +3138,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.009738,
+      "elapsed_ms": 0.010691,
       "notes": null
     },
     {
@@ -3157,7 +3157,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.086397,
+      "elapsed_ms": 0.092257,
       "notes": null
     },
     {
@@ -3176,7 +3176,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.098914,
+      "elapsed_ms": 0.102236,
       "notes": null
     },
     {
@@ -3195,7 +3195,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.091171,
+      "elapsed_ms": 0.096642,
       "notes": null
     },
     {
@@ -3214,7 +3214,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.063488,
+      "elapsed_ms": 0.063298,
       "notes": null
     },
     {
@@ -3233,7 +3233,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.061557,
+      "elapsed_ms": 0.065282,
       "notes": null
     },
     {
@@ -3252,7 +3252,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.088551,
+      "elapsed_ms": 0.099142,
       "notes": null
     },
     {
@@ -3271,7 +3271,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.071429,
+      "elapsed_ms": 0.078008,
       "notes": null
     },
     {
@@ -3290,7 +3290,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.06223,
+      "elapsed_ms": 0.066483,
       "notes": null
     },
     {
@@ -3303,7 +3303,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.006324,
+      "elapsed_ms": 0.007567,
       "notes": null
     },
     {
@@ -3316,7 +3316,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.005698,
+      "elapsed_ms": 0.005812,
       "notes": null
     },
     {
@@ -3329,7 +3329,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.004994,
+      "elapsed_ms": 0.005554,
       "notes": null
     },
     {
@@ -3342,7 +3342,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.006917,
+      "elapsed_ms": 0.007747,
       "notes": null
     },
     {
@@ -3355,7 +3355,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.006436,
+      "elapsed_ms": 0.006089,
       "notes": null
     },
     {
@@ -3374,7 +3374,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.022025,
+      "elapsed_ms": 0.021311,
       "notes": null
     },
     {
@@ -3387,7 +3387,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.02892,
+      "elapsed_ms": 0.030483,
       "notes": null
     },
     {
@@ -3400,7 +3400,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.02173,
+      "elapsed_ms": 0.022783,
       "notes": null
     },
     {
@@ -3413,7 +3413,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.021307,
+      "elapsed_ms": 0.022073,
       "notes": null
     },
     {
@@ -3426,7 +3426,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.080563,
+      "elapsed_ms": 0.085861,
       "notes": null
     },
     {
@@ -3439,7 +3439,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.090995,
+      "elapsed_ms": 0.095413,
       "notes": null
     },
     {
@@ -3452,7 +3452,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.08985,
+      "elapsed_ms": 0.093488,
       "notes": null
     },
     {
@@ -3465,7 +3465,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.009704,
+      "elapsed_ms": 0.01164,
       "notes": null
     },
     {
@@ -3478,7 +3478,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.005958,
+      "elapsed_ms": 0.006712,
       "notes": null
     },
     {
@@ -3491,7 +3491,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.005619,
+      "elapsed_ms": 0.006313,
       "notes": null
     },
     {
@@ -3504,7 +3504,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.005009,
+      "elapsed_ms": 0.00537,
       "notes": null
     },
     {
@@ -3517,7 +3517,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.004894,
+      "elapsed_ms": 0.005265,
       "notes": null
     },
     {
@@ -3530,7 +3530,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.004728,
+      "elapsed_ms": 0.005328,
       "notes": null
     },
     {
@@ -3543,7 +3543,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.028028,
+      "elapsed_ms": 0.034448,
       "notes": null
     },
     {
@@ -3556,7 +3556,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.038204,
+      "elapsed_ms": 0.040109,
       "notes": null
     },
     {
@@ -3569,7 +3569,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.041885,
+      "elapsed_ms": 0.041404,
       "notes": null
     },
     {
@@ -3582,7 +3582,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.025902,
+      "elapsed_ms": 0.026964,
       "notes": null
     },
     {
@@ -3595,7 +3595,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.037139,
+      "elapsed_ms": 0.063235,
       "notes": null
     },
     {
@@ -3608,7 +3608,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.033604,
+      "elapsed_ms": 0.035677,
       "notes": null
     },
     {
@@ -3621,7 +3621,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.036656,
+      "elapsed_ms": 0.038566,
       "notes": null
     },
     {
@@ -3634,7 +3634,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.03426,
+      "elapsed_ms": 0.037156,
       "notes": null
     },
     {
@@ -3647,7 +3647,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.023659,
+      "elapsed_ms": 0.025832,
       "notes": null
     },
     {
@@ -3660,7 +3660,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.037297,
+      "elapsed_ms": 0.039383,
       "notes": null
     },
     {
@@ -3673,7 +3673,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.037989,
+      "elapsed_ms": 0.039508,
       "notes": null
     },
     {
@@ -3686,7 +3686,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.024096,
+      "elapsed_ms": 0.024671,
       "notes": null
     },
     {
@@ -3699,7 +3699,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.033685,
+      "elapsed_ms": 0.036916,
       "notes": null
     },
     {
@@ -3712,7 +3712,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.031329,
+      "elapsed_ms": 0.033178,
       "notes": null
     },
     {
@@ -3725,7 +3725,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.032498,
+      "elapsed_ms": 0.033024,
       "notes": null
     },
     {
@@ -3738,7 +3738,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.033313,
+      "elapsed_ms": 0.033215,
       "notes": null
     },
     {
@@ -3751,7 +3751,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.010423,
+      "elapsed_ms": 0.013561,
       "notes": null
     },
     {
@@ -3764,7 +3764,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.007925,
+      "elapsed_ms": 0.008249,
       "notes": null
     },
     {
@@ -3777,7 +3777,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.007324,
+      "elapsed_ms": 0.008046,
       "notes": null
     },
     {
@@ -3790,7 +3790,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.007435,
+      "elapsed_ms": 0.007442,
       "notes": null
     },
     {
@@ -3803,7 +3803,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.008433,
+      "elapsed_ms": 0.009055,
       "notes": null
     },
     {
@@ -3816,7 +3816,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.007699,
+      "elapsed_ms": 0.00841,
       "notes": null
     },
     {
@@ -3829,7 +3829,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.010644,
+      "elapsed_ms": 0.01313,
       "notes": null
     },
     {
@@ -3842,7 +3842,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.009179,
+      "elapsed_ms": 0.009356,
       "notes": null
     },
     {
@@ -3855,7 +3855,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.027608,
+      "elapsed_ms": 0.029497,
       "notes": null
     },
     {
@@ -3868,7 +3868,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.019595,
+      "elapsed_ms": 0.024126,
       "notes": null
     },
     {
@@ -3881,7 +3881,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.019885,
+      "elapsed_ms": 0.027861,
       "notes": null
     },
     {
@@ -3894,7 +3894,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.012887,
+      "elapsed_ms": 0.0133,
       "notes": null
     },
     {
@@ -3907,7 +3907,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.009946,
+      "elapsed_ms": 0.010482,
       "notes": null
     },
     {
@@ -3920,7 +3920,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.011708,
+      "elapsed_ms": 0.011916,
       "notes": null
     },
     {
@@ -3933,7 +3933,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.064079,
+      "elapsed_ms": 0.066005,
       "notes": null
     },
     {
@@ -3946,7 +3946,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.042248,
+      "elapsed_ms": 0.043959,
       "notes": null
     },
     {
@@ -3959,7 +3959,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.036982,
+      "elapsed_ms": 0.038985,
       "notes": null
     },
     {
@@ -3972,7 +3972,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.046595,
+      "elapsed_ms": 0.050918,
       "notes": null
     },
     {
@@ -3985,7 +3985,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.00565,
+      "elapsed_ms": 0.005509,
       "notes": null
     },
     {
@@ -3998,7 +3998,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.005661,
+      "elapsed_ms": 0.005655,
       "notes": null
     },
     {
@@ -4011,7 +4011,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.007803,
+      "elapsed_ms": 0.008443,
       "notes": null
     },
     {
@@ -4024,7 +4024,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.006207,
+      "elapsed_ms": 0.008305,
       "notes": null
     },
     {
@@ -4037,7 +4037,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.005696,
+      "elapsed_ms": 0.007064,
       "notes": null
     },
     {
@@ -4050,7 +4050,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.005863,
+      "elapsed_ms": 0.005974,
       "notes": null
     },
     {
@@ -4063,7 +4063,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.005844,
+      "elapsed_ms": 0.006629,
       "notes": null
     },
     {
@@ -4076,7 +4076,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.006204,
+      "elapsed_ms": 0.006662,
       "notes": null
     },
     {
@@ -4089,7 +4089,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.020523,
+      "elapsed_ms": 0.024247,
       "notes": null
     },
     {
@@ -4102,7 +4102,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.012864,
+      "elapsed_ms": 0.016386,
       "notes": null
     },
     {
@@ -4115,7 +4115,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.011922,
+      "elapsed_ms": 0.012146,
       "notes": null
     },
     {
@@ -4128,7 +4128,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.012089,
+      "elapsed_ms": 0.01198,
       "notes": null
     },
     {
@@ -4141,7 +4141,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.011972,
+      "elapsed_ms": 0.012285,
       "notes": null
     },
     {
@@ -4154,7 +4154,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.012226,
+      "elapsed_ms": 0.012365,
       "notes": null
     },
     {
@@ -4167,7 +4167,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.007678,
+      "elapsed_ms": 0.009969,
       "notes": null
     },
     {
@@ -4180,7 +4180,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.010661,
+      "elapsed_ms": 0.01122,
       "notes": null
     },
     {
@@ -4193,7 +4193,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.047037,
+      "elapsed_ms": 0.052241,
       "notes": null
     },
     {
@@ -4206,7 +4206,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.042117,
+      "elapsed_ms": 0.044449,
       "notes": null
     },
     {
@@ -4219,7 +4219,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.040424,
+      "elapsed_ms": 0.04236,
       "notes": null
     },
     {
@@ -4232,7 +4232,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.03965,
+      "elapsed_ms": 0.043003,
       "notes": null
     },
     {
@@ -4245,7 +4245,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.042857,
+      "elapsed_ms": 0.047013,
       "notes": null
     },
     {
@@ -4258,7 +4258,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.039055,
+      "elapsed_ms": 0.044006,
       "notes": null
     },
     {
@@ -4271,7 +4271,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.07545,
+      "elapsed_ms": 0.101026,
       "notes": null
     },
     {
@@ -4284,7 +4284,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.039533,
+      "elapsed_ms": 0.045057,
       "notes": null
     },
     {
@@ -4297,7 +4297,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.051202,
+      "elapsed_ms": 0.05678,
       "notes": null
     },
     {
@@ -4310,7 +4310,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.047183,
+      "elapsed_ms": 0.057813,
       "notes": null
     },
     {
@@ -4323,7 +4323,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.046143,
+      "elapsed_ms": 0.050538,
       "notes": null
     },
     {
@@ -4336,7 +4336,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.046195,
+      "elapsed_ms": 0.051678,
       "notes": null
     },
     {
@@ -4349,7 +4349,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.070242,
+      "elapsed_ms": 0.075011,
       "notes": null
     },
     {
@@ -4362,7 +4362,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.06669,
+      "elapsed_ms": 0.068483,
       "notes": null
     },
     {
@@ -4375,7 +4375,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.068699,
+      "elapsed_ms": 0.071584,
       "notes": null
     },
     {
@@ -4388,7 +4388,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.060489,
+      "elapsed_ms": 0.068553,
       "notes": null
     },
     {
@@ -4401,7 +4401,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.07064,
+      "elapsed_ms": 0.074489,
       "notes": null
     },
     {
@@ -4414,7 +4414,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.066928,
+      "elapsed_ms": 0.072513,
       "notes": null
     },
     {
@@ -4427,7 +4427,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.069108,
+      "elapsed_ms": 0.072144,
       "notes": null
     },
     {
@@ -4440,7 +4440,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.067597,
+      "elapsed_ms": 0.072466,
       "notes": null
     },
     {
@@ -4453,7 +4453,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.046812,
+      "elapsed_ms": 0.049606,
       "notes": null
     },
     {
@@ -4466,7 +4466,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.073279,
+      "elapsed_ms": 0.080375,
       "notes": null
     },
     {
@@ -4479,7 +4479,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.070925,
+      "elapsed_ms": 0.077551,
       "notes": null
     },
     {
@@ -4492,7 +4492,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.037788,
+      "elapsed_ms": 0.041587,
       "notes": null
     },
     {
@@ -4505,7 +4505,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.088591,
+      "elapsed_ms": 0.098076,
       "notes": null
     },
     {
@@ -4519,7 +4519,7 @@
         264
       ],
       "final_prec": 264,
-      "elapsed_ms": 2.214474,
+      "elapsed_ms": 2.231236,
       "notes": null
     },
     {
@@ -4533,7 +4533,7 @@
         264
       ],
       "final_prec": 264,
-      "elapsed_ms": 1.930383,
+      "elapsed_ms": 3.491966,
       "notes": null
     },
     {
@@ -4546,7 +4546,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.107259,
+      "elapsed_ms": 0.185502,
       "notes": null
     },
     {
@@ -4559,7 +4559,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.09491,
+      "elapsed_ms": 0.14945,
       "notes": null
     },
     {
@@ -4572,7 +4572,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.14686,
+      "elapsed_ms": 0.219116,
       "notes": null
     },
     {
@@ -4585,7 +4585,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.137995,
+      "elapsed_ms": 0.204459,
       "notes": null
     },
     {
@@ -4598,7 +4598,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.093383,
+      "elapsed_ms": 0.142705,
       "notes": null
     },
     {
@@ -4611,7 +4611,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.074328,
+      "elapsed_ms": 0.125371,
       "notes": null
     },
     {
@@ -4624,7 +4624,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.146267,
+      "elapsed_ms": 0.206952,
       "notes": null
     },
     {
@@ -4637,7 +4637,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.175669,
+      "elapsed_ms": 0.204906,
       "notes": null
     },
     {
@@ -4650,7 +4650,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.120991,
+      "elapsed_ms": 0.112463,
       "notes": null
     },
     {
@@ -4663,7 +4663,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.096333,
+      "elapsed_ms": 0.11068,
       "notes": null
     },
     {
@@ -4676,7 +4676,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.093079,
+      "elapsed_ms": 0.091502,
       "notes": null
     },
     {
@@ -4689,7 +4689,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.069389,
+      "elapsed_ms": 0.107927,
       "notes": null
     },
     {
@@ -4702,7 +4702,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.071596,
+      "elapsed_ms": 0.119104,
       "notes": null
     },
     {
@@ -4715,7 +4715,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.049097,
+      "elapsed_ms": 0.090116,
       "notes": null
     },
     {
@@ -4728,7 +4728,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.114859,
+      "elapsed_ms": 0.214967,
       "notes": null
     },
     {
@@ -4741,7 +4741,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.111233,
+      "elapsed_ms": 0.209628,
       "notes": null
     },
     {
@@ -4754,7 +4754,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.031441,
+      "elapsed_ms": 0.059715,
       "notes": null
     },
     {
@@ -4767,7 +4767,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.097812,
+      "elapsed_ms": 0.195857,
       "notes": null
     },
     {
@@ -4780,7 +4780,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.098117,
+      "elapsed_ms": 0.206045,
       "notes": null
     },
     {
@@ -4793,7 +4793,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.027539,
+      "elapsed_ms": 0.056661,
       "notes": null
     },
     {
@@ -4806,7 +4806,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.093026,
+      "elapsed_ms": 0.185993,
       "notes": null
     },
     {
@@ -4819,7 +4819,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.094167,
+      "elapsed_ms": 0.19981,
       "notes": null
     },
     {
@@ -4832,7 +4832,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.024529,
+      "elapsed_ms": 0.053336,
       "notes": null
     },
     {
@@ -4845,7 +4845,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.088992,
+      "elapsed_ms": 0.184114,
       "notes": null
     },
     {
@@ -4858,7 +4858,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.094612,
+      "elapsed_ms": 0.201175,
       "notes": null
     },
     {
@@ -4871,7 +4871,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.025507,
+      "elapsed_ms": 0.056384,
       "notes": null
     },
     {
@@ -4884,7 +4884,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.09176,
+      "elapsed_ms": 0.19108,
       "notes": null
     },
     {
@@ -4897,7 +4897,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.096598,
+      "elapsed_ms": 0.221932,
       "notes": null
     },
     {
@@ -4910,7 +4910,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.032434,
+      "elapsed_ms": 0.117057,
       "notes": null
     },
     {
@@ -4923,7 +4923,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.088923,
+      "elapsed_ms": 0.18381,
       "notes": null
     },
     {
@@ -4936,7 +4936,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.096023,
+      "elapsed_ms": 0.202567,
       "notes": null
     },
     {
@@ -4949,7 +4949,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.026529,
+      "elapsed_ms": 0.053759,
       "notes": null
     },
     {
@@ -4962,7 +4962,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.092096,
+      "elapsed_ms": 0.176354,
       "notes": null
     },
     {
@@ -4975,7 +4975,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.094974,
+      "elapsed_ms": 0.203919,
       "notes": null
     },
     {
@@ -4988,7 +4988,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.025406,
+      "elapsed_ms": 0.055608,
       "notes": null
     },
     {
@@ -5001,7 +5001,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.090704,
+      "elapsed_ms": 0.1759,
       "notes": null
     },
     {
@@ -5014,7 +5014,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.098218,
+      "elapsed_ms": 0.19606,
       "notes": null
     },
     {
@@ -5027,7 +5027,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.026082,
+      "elapsed_ms": 0.055166,
       "notes": null
     },
     {
@@ -5040,7 +5040,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.092956,
+      "elapsed_ms": 0.179744,
       "notes": null
     },
     {
@@ -5053,7 +5053,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.098399,
+      "elapsed_ms": 0.21011,
       "notes": null
     },
     {
@@ -5066,7 +5066,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.026585,
+      "elapsed_ms": 0.055036,
       "notes": null
     },
     {
@@ -5079,7 +5079,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.095043,
+      "elapsed_ms": 0.174465,
       "notes": null
     },
     {
@@ -5092,7 +5092,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.099058,
+      "elapsed_ms": 0.196701,
       "notes": null
     },
     {
@@ -5105,7 +5105,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.024822,
+      "elapsed_ms": 0.052275,
       "notes": null
     },
     {
@@ -5118,7 +5118,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.090322,
+      "elapsed_ms": 0.172259,
       "notes": null
     },
     {
@@ -5131,7 +5131,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.096759,
+      "elapsed_ms": 0.197866,
       "notes": null
     },
     {
@@ -5144,7 +5144,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.025551,
+      "elapsed_ms": 0.052363,
       "notes": null
     },
     {
@@ -5157,7 +5157,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.089431,
+      "elapsed_ms": 0.171546,
       "notes": null
     },
     {
@@ -5170,7 +5170,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.095651,
+      "elapsed_ms": 0.190188,
       "notes": null
     },
     {
@@ -5189,7 +5189,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.100703,
+      "elapsed_ms": 0.146159,
       "notes": null
     },
     {
@@ -5208,7 +5208,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.063954,
+      "elapsed_ms": 0.12005,
       "notes": null
     },
     {
@@ -5227,7 +5227,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.057955,
+      "elapsed_ms": 0.116668,
       "notes": null
     },
     {
@@ -5246,7 +5246,7 @@
         200
       ],
       "final_prec": 200,
-      "elapsed_ms": 0.055412,
+      "elapsed_ms": 0.104008,
       "notes": null
     }
   ],
