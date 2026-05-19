@@ -1,0 +1,3213 @@
+{
+  "oracle_id": "mpmath",
+  "oracle_version": "mpmath 1.3.0 / Python 3.12.3",
+  "python_version": "3.12.3 (main, Mar 23 2026, 19:04:32) [GCC 13.3.0]",
+  "generated_at": "2026-05-19T08:13:27.572Z",
+  "corpus_seed": 20260519,
+  "corpus_bead": "scientist-workbench-0kq3",
+  "corpus_adr": "0042",
+  "corpus_generated_at": "2026-05-19T00:00:00Z",
+  "tier": "gold",
+  "precision_decimals_compute": 60,
+  "precision_decimals_emit": 60,
+  "per_input_timeout_s": 30,
+  "total_corpus_inputs": 377,
+  "total_elapsed_ms": 294.245982,
+  "results": [
+    {
+      "input_id": "T1-gamma-001",
+      "status": "success",
+      "value": "1.00000000000000000000000000000000000000000000000000000000000",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.045519,
+      "notes": null
+    },
+    {
+      "input_id": "T1-gamma-002",
+      "status": "success",
+      "value": "1.00000000000000000000000000000000000000000000000000000000000",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.022598,
+      "notes": null
+    },
+    {
+      "input_id": "T1-gamma-003",
+      "status": "success",
+      "value": "24.0000000000000000000000000000000000000000000000000000000000",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.012458,
+      "notes": null
+    },
+    {
+      "input_id": "T1-gamma-004",
+      "status": "success",
+      "value": "39916800.0000000000000000000000000000000000000000000000000000",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.010839,
+      "notes": null
+    },
+    {
+      "input_id": "T1-gamma-005",
+      "status": "success",
+      "value": "10319.7531091276416495823363646825700041047879633876378750656",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 2.694485,
+      "notes": null
+    },
+    {
+      "input_id": "T1-loggamma-001",
+      "status": "success",
+      "value": "0.0",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.019864,
+      "notes": null
+    },
+    {
+      "input_id": "T1-loggamma-002",
+      "status": "success",
+      "value": "0.0",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.013827,
+      "notes": null
+    },
+    {
+      "input_id": "T1-loggamma-003",
+      "status": "success",
+      "value": "3.17805383034794561964694160129705540887399096090351521409673",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.05127,
+      "notes": null
+    },
+    {
+      "input_id": "T1-loggamma-004",
+      "status": "success",
+      "value": "17.5023078458738858392876529072161996717039575982293536474075",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.054948,
+      "notes": null
+    },
+    {
+      "input_id": "T1-loggamma-005",
+      "status": "success",
+      "value": "15.2801521702521703809799779706640839421920949074373393454172",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.096347,
+      "notes": null
+    },
+    {
+      "input_id": "T1-digamma-001",
+      "status": "success",
+      "value": "-0.577215664901532860606512090082402431042159335939923598805767",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.27449,
+      "notes": null
+    },
+    {
+      "input_id": "T1-digamma-002",
+      "status": "success",
+      "value": "0.422784335098467139393487909917597568957840664060076401194233",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.12197,
+      "notes": null
+    },
+    {
+      "input_id": "T1-digamma-003",
+      "status": "success",
+      "value": "1.50611766843180047272682124325093090229117399739340973452757",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.105419,
+      "notes": null
+    },
+    {
+      "input_id": "T1-digamma-004",
+      "status": "success",
+      "value": "2.44266167997581201673836525479494244630271800893742127853911",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.096458,
+      "notes": null
+    },
+    {
+      "input_id": "T1-digamma-005",
+      "status": "success",
+      "value": "2.84656528799628898116137190396727447982932986591017539246577",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.146383,
+      "notes": null
+    },
+    {
+      "input_id": "T1-trigamma-001",
+      "status": "success",
+      "value": "1.64493406684822643647241516664602518921894990120679843773556",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.660426,
+      "notes": null
+    },
+    {
+      "input_id": "T1-trigamma-002",
+      "status": "success",
+      "value": "0.644934066848226436472415166646025189218949901206798437735558",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.601526,
+      "notes": null
+    },
+    {
+      "input_id": "T1-trigamma-003",
+      "status": "success",
+      "value": "0.221322955737115325361304055534914078107838790095687326624447",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.580826,
+      "notes": null
+    },
+    {
+      "input_id": "T1-trigamma-004",
+      "status": "success",
+      "value": "0.0869018728717683907503001804617749357046271228147559764290277",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.554589,
+      "notes": null
+    },
+    {
+      "input_id": "T1-trigamma-005",
+      "status": "success",
+      "value": "0.250336573102507825848673560950690143591601404586665054695161",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.63587,
+      "notes": null
+    },
+    {
+      "input_id": "T1-barnesg-001",
+      "status": "success",
+      "value": "1.00000000000000000000000000000000000000000000000000000000000",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 4.56476,
+      "notes": null
+    },
+    {
+      "input_id": "T1-barnesg-002",
+      "status": "success",
+      "value": "1.00000000000000000000000000000000000000000000000000000000000",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.666933,
+      "notes": null
+    },
+    {
+      "input_id": "T1-barnesg-003",
+      "status": "success",
+      "value": "12.0000000000000000000000000000000000000000000000000000000000",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.626296,
+      "notes": null
+    },
+    {
+      "input_id": "T1-barnesg-004",
+      "status": "success",
+      "value": "6658606584104736522240000000.00000000000000000000000000000000",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 3.103689,
+      "notes": null
+    },
+    {
+      "input_id": "T1-barnesg-005",
+      "status": "success",
+      "value": "8.21236619356956355478314010088976294610877584085254040948386e+87",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 4.253219,
+      "notes": null
+    },
+    {
+      "input_id": "T1-polygamma-001",
+      "status": "success",
+      "value": "-2.40411380631918857079947632302289998152997258468099776358454",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.659487,
+      "notes": null
+    },
+    {
+      "input_id": "T1-polygamma-002",
+      "status": "success",
+      "value": "-0.0487897322451144967254022489488259074558985106069236895104690",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.616532,
+      "notes": null
+    },
+    {
+      "input_id": "T1-polygamma-003",
+      "status": "success",
+      "value": "6.49393940226682914909602217924700741664850571151236144609786",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.622761,
+      "notes": null
+    },
+    {
+      "input_id": "T1-polygamma-004",
+      "status": "success",
+      "value": "0.0214278281927550750219481051729333425744316374382873720237832",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.602296,
+      "notes": null
+    },
+    {
+      "input_id": "T1-pochhammer-001",
+      "status": "success",
+      "value": "0.500000000000000000000000000000000000000000000000000000000000",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.069802,
+      "notes": null
+    },
+    {
+      "input_id": "T1-pochhammer-002",
+      "status": "success",
+      "value": "639383.862304687500000000000000000000000000000000000000000000",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.05524,
+      "notes": null
+    },
+    {
+      "input_id": "T1-pochhammer-003",
+      "status": "success",
+      "value": "1741523785768368007345660.75773909687995910644531250000000000",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.044736,
+      "notes": null
+    },
+    {
+      "input_id": "T1-pochhammer-004",
+      "status": "success",
+      "value": "2.00000000000000000000000000000000000000000000000000000000000",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.02068,
+      "notes": null
+    },
+    {
+      "input_id": "T1-pochhammer-005",
+      "status": "success",
+      "value": "39916800.0000000000000000000000000000000000000000000000000000",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.021506,
+      "notes": null
+    },
+    {
+      "input_id": "T1-pochhammer-006",
+      "status": "success",
+      "value": "403291461126605635584000000.000000000000000000000000000000000",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.017105,
+      "notes": null
+    },
+    {
+      "input_id": "T1-pochhammer-007",
+      "status": "success",
+      "value": "1.69999999999999995559107901499373838305473327636718750000000",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.114803,
+      "notes": null
+    },
+    {
+      "input_id": "T1-pochhammer-008",
+      "status": "success",
+      "value": "21194706.9261411078220398075377299368343267349996880546174881",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.090741,
+      "notes": null
+    },
+    {
+      "input_id": "T1-pochhammer-009",
+      "status": "success",
+      "value": "166336087513862530699994608.292814735662744389760017274057802",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.087056,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletegammaupper-001",
+      "status": "success",
+      "value": "0.0806471179603176907886260730213051757013592921681669005967214",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.521999,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletegammaupper-002",
+      "status": "success",
+      "value": "0.507282233811773309845140075700180453490086172280355069587086",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.491168,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletegammaupper-003",
+      "status": "success",
+      "value": "0.199148273471455771917369662600247106526798368753692862270511",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.053966,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletegammaupper-004",
+      "status": "success",
+      "value": "10.5718388415650978746219599759198776464449989079201290401494",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.053331,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletegammaupper-005",
+      "status": "success",
+      "value": "0.0365244062353930610618127995459249401393189002337678320332292",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.556855,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletegammalower-001",
+      "status": "success",
+      "value": "1.69180673294519833650954141031984000709619016395422022761709",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.165013,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletegammalower-002",
+      "status": "success",
+      "value": "0.378944691640984703803943665970392137908688555780838494519818",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.135675,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletegammalower-003",
+      "status": "success",
+      "value": "0.800851726528544228082630337399752893473201631246307137729489",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.499172,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletegammalower-004",
+      "status": "success",
+      "value": "13.4281611584349021253780400240801223535550010920798709598506",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.148385,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletegammalower-005",
+      "status": "success",
+      "value": "0.872114326617897380499752898356026754394611733441992427936945",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.224686,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletegammap-001",
+      "status": "success",
+      "value": "0.954499736103641585599434725666933125056447552596643132032668",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.16128,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletegammap-002",
+      "status": "success",
+      "value": "0.427593295529120166000952385641271893927159968027033389929189",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.13747,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletegammap-003",
+      "status": "success",
+      "value": "0.800851726528544228082630337399752893473201631246307137729489",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.122828,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletegammap-004",
+      "status": "success",
+      "value": "0.559506714934787588557418334336671764731458378836661289993776",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.126074,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletegammap-005",
+      "status": "success",
+      "value": "0.959803159479345767901335826580739696088040601884439074539738",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.251482,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletegammaq-001",
+      "status": "success",
+      "value": "0.0455002638963584144005652743330668749435524474033568679673320",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.518132,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletegammaq-002",
+      "status": "success",
+      "value": "0.572406704470879833999047614358728106072840031972966610070811",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.503456,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletegammaq-003",
+      "status": "success",
+      "value": "0.199148273471455771917369662600247106526798368753692862270511",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.057515,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletegammaq-004",
+      "status": "success",
+      "value": "0.440493285065212411442581665663328235268541621163338710006224",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.051286,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletegammaq-005",
+      "status": "success",
+      "value": "0.0401968405206542320986641734192603039119593981155609254602622",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.731566,
+      "notes": null
+    },
+    {
+      "input_id": "T1-inverseincompletegammap-001",
+      "status": "unsupported",
+      "value": null,
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.004934,
+      "notes": "mpmath has no direct InverseIncompleteGamma{P,Q}; R5 §3.2 documents findroot workaround as non-gold-tier"
+    },
+    {
+      "input_id": "T1-inverseincompletegammap-002",
+      "status": "unsupported",
+      "value": null,
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.003022,
+      "notes": "mpmath has no direct InverseIncompleteGamma{P,Q}; R5 §3.2 documents findroot workaround as non-gold-tier"
+    },
+    {
+      "input_id": "T1-inverseincompletegammap-003",
+      "status": "unsupported",
+      "value": null,
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.00185,
+      "notes": "mpmath has no direct InverseIncompleteGamma{P,Q}; R5 §3.2 documents findroot workaround as non-gold-tier"
+    },
+    {
+      "input_id": "T1-inverseincompletegammap-004",
+      "status": "unsupported",
+      "value": null,
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.001401,
+      "notes": "mpmath has no direct InverseIncompleteGamma{P,Q}; R5 §3.2 documents findroot workaround as non-gold-tier"
+    },
+    {
+      "input_id": "T1-inverseincompletegammap-005",
+      "status": "unsupported",
+      "value": null,
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.001377,
+      "notes": "mpmath has no direct InverseIncompleteGamma{P,Q}; R5 §3.2 documents findroot workaround as non-gold-tier"
+    },
+    {
+      "input_id": "T1-inverseincompletegammap-006",
+      "status": "unsupported",
+      "value": null,
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.001313,
+      "notes": "mpmath has no direct InverseIncompleteGamma{P,Q}; R5 §3.2 documents findroot workaround as non-gold-tier"
+    },
+    {
+      "input_id": "T1-inverseincompletegammaq-001",
+      "status": "unsupported",
+      "value": null,
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.001464,
+      "notes": "mpmath has no direct InverseIncompleteGamma{P,Q}; R5 §3.2 documents findroot workaround as non-gold-tier"
+    },
+    {
+      "input_id": "T1-inverseincompletegammaq-002",
+      "status": "unsupported",
+      "value": null,
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.001256,
+      "notes": "mpmath has no direct InverseIncompleteGamma{P,Q}; R5 §3.2 documents findroot workaround as non-gold-tier"
+    },
+    {
+      "input_id": "T1-inverseincompletegammaq-003",
+      "status": "unsupported",
+      "value": null,
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.001229,
+      "notes": "mpmath has no direct InverseIncompleteGamma{P,Q}; R5 §3.2 documents findroot workaround as non-gold-tier"
+    },
+    {
+      "input_id": "T1-inverseincompletegammaq-004",
+      "status": "unsupported",
+      "value": null,
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.00117,
+      "notes": "mpmath has no direct InverseIncompleteGamma{P,Q}; R5 §3.2 documents findroot workaround as non-gold-tier"
+    },
+    {
+      "input_id": "T1-inverseincompletegammaq-005",
+      "status": "unsupported",
+      "value": null,
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.001123,
+      "notes": "mpmath has no direct InverseIncompleteGamma{P,Q}; R5 §3.2 documents findroot workaround as non-gold-tier"
+    },
+    {
+      "input_id": "T1-inverseincompletegammaq-006",
+      "status": "unsupported",
+      "value": null,
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.001318,
+      "notes": "mpmath has no direct InverseIncompleteGamma{P,Q}; R5 §3.2 documents findroot workaround as non-gold-tier"
+    },
+    {
+      "input_id": "T1-beta-001",
+      "status": "success",
+      "value": "3.14159265358979323846264338327950288419716939937510582097494",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.053085,
+      "notes": null
+    },
+    {
+      "input_id": "T1-beta-002",
+      "status": "success",
+      "value": "0.0833333333333333333333333333333333333333333333333333333333333",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.030045,
+      "notes": null
+    },
+    {
+      "input_id": "T1-beta-003",
+      "status": "success",
+      "value": "0.176686604524017487349837097343288429748099024512375579788853",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.130504,
+      "notes": null
+    },
+    {
+      "input_id": "T1-beta-004",
+      "status": "success",
+      "value": "0.00909090909090909090909090909090909090909090909090909090909091",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.034616,
+      "notes": null
+    },
+    {
+      "input_id": "T1-logbeta-001",
+      "status": "success",
+      "value": "1.14472988584940017414342735135305871164729481291531157151362",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.08063,
+      "notes": null
+    },
+    {
+      "input_id": "T1-logbeta-002",
+      "status": "success",
+      "value": "-2.48490664978800031022970947983887884079849082654325995997605",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.022531,
+      "notes": null
+    },
+    {
+      "input_id": "T1-logbeta-003",
+      "status": "success",
+      "value": "-1.73337771167549012118519495141780107577620698419910775603700",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.219666,
+      "notes": null
+    },
+    {
+      "input_id": "T1-logbeta-004",
+      "status": "success",
+      "value": "-4.70048036579241622807993503264949350742280834256619015125190",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.056489,
+      "notes": null
+    },
+    {
+      "input_id": "T1-gammaratio-001",
+      "status": "success",
+      "value": "504.000000000000000000000000000000000000000000000000000000000",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.016294,
+      "notes": null
+    },
+    {
+      "input_id": "T1-gammaratio-002",
+      "status": "success",
+      "value": "27.0278840892358260955108242798830615472855473416562593178789",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.084556,
+      "notes": null
+    },
+    {
+      "input_id": "T1-gammadeltaratio-001",
+      "status": "success",
+      "value": "0.458515979010240030027645522538278672939926860661027642387574",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.025461,
+      "notes": null
+    },
+    {
+      "input_id": "T1-gammadeltaratio-002",
+      "status": "success",
+      "value": "0.0315333242476168016926655450361515214544521547307571982775205",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.077721,
+      "notes": null
+    },
+    {
+      "input_id": "T1-gammapderivative-001",
+      "status": "success",
+      "value": "0.483941449038286699595660385871121309657343941474870050975110",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.065655,
+      "notes": null
+    },
+    {
+      "input_id": "T1-gammapderivative-002",
+      "status": "success",
+      "value": "0.00170007332050406836256716299293324769107137709260574429706938",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.052176,
+      "notes": null
+    },
+    {
+      "input_id": "T1-gammapderivative-003",
+      "status": "success",
+      "value": "0.00157950692633498287396822795570619909750499514449788269709086",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.036507,
+      "notes": null
+    },
+    {
+      "input_id": "T1-gammapderivative-004",
+      "status": "success",
+      "value": "0.175467369767850705641563761019490214813791276754038683080873",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.029648,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletebeta-001",
+      "status": "success",
+      "value": "0.0290249999999999983679721538010198898913445233339029532374188",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.579132,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletebeta-002",
+      "status": "success",
+      "value": "1.03789730985928828362315978762533718916670968050727058344537",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.65457,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletebeta-003",
+      "status": "success",
+      "value": "0.0572916666666666666666666666666666666666666666666666666666667",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.087206,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletebeta-004",
+      "status": "success",
+      "value": "1.28539816339744830961566084581987572104929234984377645524374",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.221255,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletebeta-005",
+      "status": "success",
+      "value": "0.0830250000000000001998401444325281353680181103900980482022456",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.100635,
+      "notes": null
+    },
+    {
+      "input_id": "T1-incompletebeta-006",
+      "status": "success",
+      "value": "1.54904577239825443323140390811546660271864629961278162981437",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.941188,
+      "notes": null
+    },
+    {
+      "input_id": "T2-gamma-001",
+      "status": "success",
+      "value": "-4.32685110882519272045577265644616327603260949941314463140087",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.077144,
+      "notes": null
+    },
+    {
+      "input_id": "T2-gamma-002",
+      "status": "success",
+      "value": "-4.27366998241084336111858920516679617884193060359290777902382",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.057637,
+      "notes": null
+    },
+    {
+      "input_id": "T2-gamma-003",
+      "status": "success",
+      "value": "3.32834700678860928081138189097809466705725905952965044826945",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.049399,
+      "notes": null
+    },
+    {
+      "input_id": "T2-gamma-004",
+      "status": "success",
+      "value": "-0.931082784838963965458595939286894070582530483317423500234255",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.046888,
+      "notes": null
+    },
+    {
+      "input_id": "T2-gamma-005",
+      "status": "success",
+      "value": "0.270088205852269108921625521271031646902483726647220895727818",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.025746,
+      "notes": null
+    },
+    {
+      "input_id": "T2-gamma-006",
+      "status": "success",
+      "value": "0.00939320626735433609304724566489250524884893807177911391436781",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.042995,
+      "notes": null
+    },
+    {
+      "input_id": "T2-gamma-007",
+      "status": "success",
+      "value": "-0.0000504081774715116112962815336161643791936473873755139158507329",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.06019,
+      "notes": null
+    },
+    {
+      "input_id": "T2-gamma-008",
+      "status": "success",
+      "value": "0.0000000181011973737688876464263372569280604233795515328745027134027",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.047324,
+      "notes": null
+    },
+    {
+      "input_id": "T2-loggamma-001",
+      "status": "complex-success",
+      "value": {
+        "re": "1.46484005085760253047093038994595307526445744299354077478387",
+        "im": "-3.14159265358979323846264338327950288419716939937510582097494"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.106911,
+      "notes": null
+    },
+    {
+      "input_id": "T2-loggamma-002",
+      "status": "complex-success",
+      "value": {
+        "re": "1.45247293875680780848780111472117363944160922421002012284645",
+        "im": "-3.14159265358979323846264338327950288419716939937510582097494"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.091928,
+      "notes": null
+    },
+    {
+      "input_id": "T2-loggamma-003",
+      "status": "complex-success",
+      "value": {
+        "re": "1.20247578639011132696246717722342485101304718795673631364627",
+        "im": "-6.28318530717958647692528676655900576839433879875021164194989"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.088539,
+      "notes": null
+    },
+    {
+      "input_id": "T2-loggamma-004",
+      "status": "complex-success",
+      "value": {
+        "re": "-0.0714070853156456876840304502110772967264890705497322293862470",
+        "im": "-9.42477796076937971538793014983850865259150819812531746292483"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.084904,
+      "notes": null
+    },
+    {
+      "input_id": "T2-loggamma-005",
+      "status": "complex-success",
+      "value": {
+        "re": "-1.30900668499304204636071515208265744568452869777445155986720",
+        "im": "-12.5663706143591729538505735331180115367886775975004232838998"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.066983,
+      "notes": null
+    },
+    {
+      "input_id": "T2-loggamma-006",
+      "status": "complex-success",
+      "value": {
+        "re": "-4.66776858852234193519200085130233142647892274253186102129263",
+        "im": "-18.8495559215387594307758602996770173051830163962506349258497"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.081851,
+      "notes": null
+    },
+    {
+      "input_id": "T2-loggamma-007",
+      "status": "complex-success",
+      "value": {
+        "re": "-9.89535714462940784869551198109000441786244002949437553460170",
+        "im": "-28.2743338823081391461637904495155259577745245943759523887745"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.080991,
+      "notes": null
+    },
+    {
+      "input_id": "T2-loggamma-008",
+      "status": "complex-success",
+      "value": {
+        "re": "-8.10211374599843019207409905490770556765384489304574519919274",
+        "im": "-25.1327412287183459077011470662360230735773551950008465677996"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.077889,
+      "notes": null
+    },
+    {
+      "input_id": "T2-digamma-001",
+      "status": "success",
+      "value": "2.11330977963539887340710620283014336984936093950791944883693",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.263676,
+      "notes": null
+    },
+    {
+      "input_id": "T2-digamma-002",
+      "status": "success",
+      "value": "-2.07395279362870378310204552829665700436924753342809866399568",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.33851,
+      "notes": null
+    },
+    {
+      "input_id": "T2-digamma-003",
+      "status": "success",
+      "value": "2.88254054886616730378696836330441341208647613937395311547749",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.140447,
+      "notes": null
+    },
+    {
+      "input_id": "T2-digamma-004",
+      "status": "success",
+      "value": "-1.11534712914068961191020291402860794892534658054415814154608",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.136318,
+      "notes": null
+    },
+    {
+      "input_id": "T2-digamma-005",
+      "status": "success",
+      "value": "1.38887092635952890151140461938219681375922134772051827390525",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.180315,
+      "notes": null
+    },
+    {
+      "input_id": "T2-digamma-006",
+      "status": "success",
+      "value": "-0.456872304932382787310623764434260112725942441528760057734699",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.135779,
+      "notes": null
+    },
+    {
+      "input_id": "T2-digamma-007",
+      "status": "success",
+      "value": "4.45778923322088022586525488731984252369584543801682021605357",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.253419,
+      "notes": null
+    },
+    {
+      "input_id": "T2-digamma-008",
+      "status": "success",
+      "value": "0.942598003864290175459543071889560283587040098112807256276215",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.238515,
+      "notes": null
+    },
+    {
+      "input_id": "T2-trigamma-001",
+      "status": "success",
+      "value": "13.9451602678057224889014082181274263806397325542340331129264",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.751775,
+      "notes": null
+    },
+    {
+      "input_id": "T2-trigamma-002",
+      "status": "success",
+      "value": "14.2861808726383396265435786922036039968572504277220211426879",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.738635,
+      "notes": null
+    },
+    {
+      "input_id": "T2-trigamma-003",
+      "status": "success",
+      "value": "14.5368762441370796404968308129327611274190162634582049992996",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.778601,
+      "notes": null
+    },
+    {
+      "input_id": "T2-trigamma-004",
+      "status": "success",
+      "value": "14.7693758451323150181651576094715164592561287943140876327426",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.740152,
+      "notes": null
+    },
+    {
+      "input_id": "T2-trigamma-005",
+      "status": "success",
+      "value": "9.62087929805034824365760831172945878761149822969749281887561",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.712658,
+      "notes": null
+    },
+    {
+      "input_id": "T2-trigamma-006",
+      "status": "success",
+      "value": "14.9184699179113490157810195687813546708985237464258100995466",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.799002,
+      "notes": null
+    },
+    {
+      "input_id": "T2-trigamma-007",
+      "status": "success",
+      "value": "14.9658990763387809130403788827153376242528760524640407037830",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.825648,
+      "notes": null
+    },
+    {
+      "input_id": "T2-trigamma-008",
+      "status": "success",
+      "value": "19.7775985684446678031358389043123693470772949184410705354729",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.843435,
+      "notes": null
+    },
+    {
+      "input_id": "T2-polygamma-001",
+      "status": "success",
+      "value": "67.6390811998831600402125591672852718509741503744142948288021",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.880335,
+      "notes": null
+    },
+    {
+      "input_id": "T2-polygamma-002",
+      "status": "success",
+      "value": "68.5494134711621342321141179449619028438171009317543373556399",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.876509,
+      "notes": null
+    },
+    {
+      "input_id": "T2-polygamma-003",
+      "status": "success",
+      "value": "-68.9329390232637987607560837382681154474555337996731923759824",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.939375,
+      "notes": null
+    },
+    {
+      "input_id": "T2-pochhammer-001",
+      "status": "success",
+      "value": "-0.273000000000000032418512319054569205433007960975303367456708",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.211848,
+      "notes": null
+    },
+    {
+      "input_id": "T2-pochhammer-002",
+      "status": "success",
+      "value": "0.390000000000000071054273576010020559264689810342013529321413",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.366705,
+      "notes": null
+    },
+    {
+      "input_id": "T2-pochhammer-003",
+      "status": "success",
+      "value": "0.0",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.02671,
+      "notes": null
+    },
+    {
+      "input_id": "T2-pochhammer-004",
+      "status": "success",
+      "value": "-60.0000000000000000000000000000000000000000000000000000000000",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.08025,
+      "notes": null
+    },
+    {
+      "input_id": "T2-pochhammer-005",
+      "status": "success",
+      "value": "0.562500000000000000000000000000000000000000000000000000000000",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.079222,
+      "notes": null
+    },
+    {
+      "input_id": "T2-beta-001",
+      "status": "success",
+      "value": "-4.76190476190476150195990036275507546408972299434909831836585",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.132577,
+      "notes": null
+    },
+    {
+      "input_id": "T2-beta-002",
+      "status": "success",
+      "value": "-3.14159265358979323846264338327950288419716939937510582097494",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.06368,
+      "notes": null
+    },
+    {
+      "input_id": "T2-beta-003",
+      "status": "success",
+      "value": "5.79450036172328855291027574633385769774552690429580622056075",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.17675,
+      "notes": null
+    },
+    {
+      "input_id": "T3-gamma-001",
+      "status": "refused",
+      "value": null,
+      "mpmath_returned_token": "ValueError: gamma function pole",
+      "elapsed_ms": 0.028427,
+      "notes": "L_pole: head=Gamma returned ValueError: gamma function pole"
+    },
+    {
+      "input_id": "T3-digamma-001",
+      "status": "refused",
+      "value": null,
+      "mpmath_returned_token": "ValueError: polygamma pole",
+      "elapsed_ms": 0.034692,
+      "notes": "L_pole: head=Digamma returned ValueError: polygamma pole"
+    },
+    {
+      "input_id": "T3-gamma-002",
+      "status": "success",
+      "value": "99.4325851191506016320669886977252870710446382396037307283502",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.07116,
+      "notes": null
+    },
+    {
+      "input_id": "T3-digamma-002",
+      "status": "success",
+      "value": "-100.560885457868672415475307271708142978338178279089145718982",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.211059,
+      "notes": null
+    },
+    {
+      "input_id": "T3-gamma-003",
+      "status": "success",
+      "value": "9999.42288323162371158838192282991110581241762441031010642724",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.074252,
+      "notes": null
+    },
+    {
+      "input_id": "T3-digamma-003",
+      "status": "success",
+      "value": "-10000.5770511835138556326395794057254409046072807392873986971",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.189966,
+      "notes": null
+    },
+    {
+      "input_id": "T3-gamma-004",
+      "status": "success",
+      "value": "-100.587197964410777111954213668338689846780885317018853730844",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.071572,
+      "notes": null
+    },
+    {
+      "input_id": "T3-digamma-004",
+      "status": "success",
+      "value": "99.4062136959444027735513394607315658028073452841662938805741",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.229265,
+      "notes": null
+    },
+    {
+      "input_id": "T3-gamma-005",
+      "status": "success",
+      "value": "-10000.5773145795763590276116903025586422000221083973225623696",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.078102,
+      "notes": null
+    },
+    {
+      "input_id": "T3-digamma-005",
+      "status": "success",
+      "value": "9999.42261982966965164084911416800712903402900722992710579256",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.177078,
+      "notes": null
+    },
+    {
+      "input_id": "T3-gamma-006",
+      "status": "refused",
+      "value": null,
+      "mpmath_returned_token": "ValueError: gamma function pole",
+      "elapsed_ms": 0.019599,
+      "notes": "L_pole: head=Gamma returned ValueError: gamma function pole"
+    },
+    {
+      "input_id": "T3-digamma-006",
+      "status": "refused",
+      "value": null,
+      "mpmath_returned_token": "ValueError: polygamma pole",
+      "elapsed_ms": 0.013359,
+      "notes": "L_pole: head=Digamma returned ValueError: polygamma pole"
+    },
+    {
+      "input_id": "T3-gamma-007",
+      "status": "success",
+      "value": "-100.436954665808601814521553781937725009697754997372653164302",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.072173,
+      "notes": null
+    },
+    {
+      "input_id": "T3-digamma-007",
+      "status": "success",
+      "value": "-99.5507844477675755551675011928322529306017884753485727015885",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.530106,
+      "notes": null
+    },
+    {
+      "input_id": "T3-gamma-008",
+      "status": "success",
+      "value": "-10000.4229255252779496914620663091723517680083990926427986821",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.085774,
+      "notes": null
+    },
+    {
+      "input_id": "T3-digamma-008",
+      "status": "success",
+      "value": "-9999.57695117461467601955528052072595625323013361672648215873",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.295247,
+      "notes": null
+    },
+    {
+      "input_id": "T3-gamma-009",
+      "status": "success",
+      "value": "99.5912851132779103960107102893812196851276653959033634271753",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.080972,
+      "notes": null
+    },
+    {
+      "input_id": "T3-digamma-009",
+      "status": "success",
+      "value": "100.396312705845306113201758587181275324242501305386659170303",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.190672,
+      "notes": null
+    },
+    {
+      "input_id": "T3-gamma-010",
+      "status": "success",
+      "value": "9999.57735684499379022494738881148810122196306082424261106508",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.100249,
+      "notes": null
+    },
+    {
+      "input_id": "T3-digamma-010",
+      "status": "success",
+      "value": "10000.4225198407704722277657097215985530832756772925251734473",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.18632,
+      "notes": null
+    },
+    {
+      "input_id": "T3-gamma-011",
+      "status": "refused",
+      "value": null,
+      "mpmath_returned_token": "ValueError: gamma function pole",
+      "elapsed_ms": 0.023293,
+      "notes": "L_pole: head=Gamma returned ValueError: gamma function pole"
+    },
+    {
+      "input_id": "T3-digamma-011",
+      "status": "refused",
+      "value": null,
+      "mpmath_returned_token": "ValueError: polygamma pole",
+      "elapsed_ms": 0.015069,
+      "notes": "L_pole: head=Digamma returned ValueError: polygamma pole"
+    },
+    {
+      "input_id": "T3-gamma-012",
+      "status": "success",
+      "value": "50.4708314903560815390917524233645898136616393999013825726488",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.078914,
+      "notes": null
+    },
+    {
+      "input_id": "T3-digamma-012",
+      "status": "success",
+      "value": "-99.0482718849535052011658890625827005548965525309607107803998",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.232839,
+      "notes": null
+    },
+    {
+      "input_id": "T3-gamma-013",
+      "status": "success",
+      "value": "5000.46148583693079384935122309143161549024266873424554898701",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.078682,
+      "notes": null
+    },
+    {
+      "input_id": "T3-digamma-013",
+      "status": "success",
+      "value": "-9999.07692617336461351918375271994508587323225158379870280029",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.224575,
+      "notes": null
+    },
+    {
+      "input_id": "T3-gamma-014",
+      "status": "success",
+      "value": "-49.5479030414329060161594315284698455140688828064310636363273",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.090278,
+      "notes": null
+    },
+    {
+      "input_id": "T3-digamma-014",
+      "status": "success",
+      "value": "100.893825143658472473974036817261592815810036622321797784021",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.217132,
+      "notes": null
+    },
+    {
+      "input_id": "T3-gamma-015",
+      "status": "success",
+      "value": "-4999.53870147632032147759791251935180455969056623127816455179",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.085056,
+      "notes": null
+    },
+    {
+      "input_id": "T3-digamma-015",
+      "status": "success",
+      "value": "10000.9224948198159485983769858676604544661098478994369008961",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.206535,
+      "notes": null
+    },
+    {
+      "input_id": "T3-gamma-016",
+      "status": "refused",
+      "value": null,
+      "mpmath_returned_token": "ValueError: gamma function pole",
+      "elapsed_ms": 0.020314,
+      "notes": "L_pole: head=Gamma returned ValueError: gamma function pole"
+    },
+    {
+      "input_id": "T3-digamma-016",
+      "status": "refused",
+      "value": null,
+      "mpmath_returned_token": "ValueError: polygamma pole",
+      "elapsed_ms": 0.013958,
+      "notes": "L_pole: head=Digamma returned ValueError: polygamma pole"
+    },
+    {
+      "input_id": "T3-gamma-017",
+      "status": "success",
+      "value": "-16.8798767526278220577624806600045095428938253290643993265690",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.083092,
+      "notes": null
+    },
+    {
+      "input_id": "T3-digamma-017",
+      "status": "success",
+      "value": "-98.7138237244206092568075826137992957527354833771067943331893",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.276216,
+      "notes": null
+    },
+    {
+      "input_id": "T3-gamma-018",
+      "status": "success",
+      "value": "-1666.87605781053665641320267896144695882638187172428268335814",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.091235,
+      "notes": null
+    },
+    {
+      "input_id": "T3-digamma-018",
+      "status": "success",
+      "value": "-9998.74358170634532519956911428526121954960062790090450411252",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.254206,
+      "notes": null
+    },
+    {
+      "input_id": "T3-gamma-019",
+      "status": "success",
+      "value": "16.4610973559577772508482977419093259759075290981586079518525",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.086294,
+      "notes": null
+    },
+    {
+      "input_id": "T3-digamma-019",
+      "status": "success",
+      "value": "101.226051057279734955973443085186899474362071788058715848481",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.220859,
+      "notes": null
+    },
+    {
+      "input_id": "T3-gamma-020",
+      "status": "success",
+      "value": "1666.45735191370953294994021972550576909446547742694246266852",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.085349,
+      "notes": null
+    },
+    {
+      "input_id": "T3-digamma-020",
+      "status": "success",
+      "value": "10001.2558170424085288222557278671341384033769024491269565367",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.227667,
+      "notes": null
+    },
+    {
+      "input_id": "T3-loggamma-001",
+      "status": "complex-success",
+      "value": {
+        "re": "6.90817938571743632821192486857450457144092707247457339491517",
+        "im": "-3.14159265358979323846264338327950288419716939937510582097494"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.203399,
+      "notes": null
+    },
+    {
+      "input_id": "T3-trigamma-001",
+      "status": "success",
+      "value": "1000002.64453619809762720023743515201878159303427050917937486",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.476258,
+      "notes": null
+    },
+    {
+      "input_id": "T3-loggamma-002",
+      "status": "complex-success",
+      "value": {
+        "re": "6.90733381718205507900690655501890183464980291521108457503160",
+        "im": "-6.28318530717958647692528676655900576839433879875021164194989"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.193547,
+      "notes": null
+    },
+    {
+      "input_id": "T3-trigamma-002",
+      "status": "success",
+      "value": "1000002.64534464805029259825009480677292871030663508396743491",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.646247,
+      "notes": null
+    },
+    {
+      "input_id": "T3-loggamma-003",
+      "status": "complex-success",
+      "value": {
+        "re": "6.21553233019928423668970309662076262577424509306138963536563",
+        "im": "-6.28318530717958647692528676655900576839433879875021164194989"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.264181,
+      "notes": null
+    },
+    {
+      "input_id": "T3-trigamma-003",
+      "status": "success",
+      "value": "1000002.89478660776731031311120022128372184135963938325808614",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.678171,
+      "notes": null
+    },
+    {
+      "input_id": "T3-loggamma-004",
+      "status": "complex-success",
+      "value": {
+        "re": "6.21368676158045877671515306825998563700972719312005147980184",
+        "im": "-9.42477796076937971538793014983850865259150819812531746292483"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.193557,
+      "notes": null
+    },
+    {
+      "input_id": "T3-trigamma-004",
+      "status": "success",
+      "value": "1000002.89509483542537070389469492065033665175930441110037470",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.404441,
+      "notes": null
+    },
+    {
+      "input_id": "T3-polygamma-001",
+      "status": "success",
+      "value": "-2000000002.39763216483324031504872809160828672062088423166111",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.298798,
+      "notes": null
+    },
+    {
+      "input_id": "T3-polygamma-002",
+      "status": "success",
+      "value": "1999999997.58937966586823866370247193344173403011141591939069",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.23053,
+      "notes": null
+    },
+    {
+      "input_id": "T3-polygamma-003",
+      "status": "success",
+      "value": "-2000000000.39161494063277031760331366800591408493901687965111",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.195065,
+      "notes": null
+    },
+    {
+      "input_id": "T3-polygamma-004",
+      "status": "success",
+      "value": "1999999999.58405257554254540494354341442155848011189569298675",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.248602,
+      "notes": null
+    },
+    {
+      "input_id": "T3-polygamma-005",
+      "status": "success",
+      "value": "-2000000000.14190569913481244630442206798501689421657558183199",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.916449,
+      "notes": null
+    },
+    {
+      "input_id": "T3-polygamma-006",
+      "status": "success",
+      "value": "1999999999.83367795023027965720814721644456883619299589702891",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.880719,
+      "notes": null
+    },
+    {
+      "input_id": "T4-gamma-001",
+      "status": "complex-success",
+      "value": {
+        "re": "-0.0215427327906438759633386096581621398440728779582069960481852",
+        "im": "0.0239096162611406286680524022485466909488630950668830803277095"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 3.490224,
+      "notes": null
+    },
+    {
+      "input_id": "T4-gamma-002",
+      "status": "complex-success",
+      "value": {
+        "re": "0.00000000000612126192553543981462043135087796095192882011443470932032672",
+        "im": "0.0000000000305230289488572255314496422461255540874851834171503057059969"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.995624,
+      "notes": null
+    },
+    {
+      "input_id": "T4-gamma-003",
+      "status": "complex-success",
+      "value": {
+        "re": "0.000000000979845643724826516218553742174827537692563439541277193354946",
+        "im": "-0.000000000927993280613902554750248341605581251564566112666495556759579"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.727823,
+      "notes": null
+    },
+    {
+      "input_id": "T4-gamma-004",
+      "status": "complex-success",
+      "value": {
+        "re": "-0.944852862208737136472223489404371279545360532771549240153983",
+        "im": "-0.0807780335377483528977633464107896261889461528833883426825591"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.598114,
+      "notes": null
+    },
+    {
+      "input_id": "T4-loggamma-001",
+      "status": "complex-success",
+      "value": {
+        "re": "-7.91810492843142958933520964539598632874133073716401438214899",
+        "im": "9.88407027618225407111879146496719860483190377945797501636339"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.691868,
+      "notes": null
+    },
+    {
+      "input_id": "T4-loggamma-002",
+      "status": "complex-success",
+      "value": {
+        "re": "-1.40290512074697936891161989677504108557016609811389955200139",
+        "im": "-8.76394307977495846367237421049554135739425568694844081999218"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.238983,
+      "notes": null
+    },
+    {
+      "input_id": "T4-loggamma-003",
+      "status": "complex-success",
+      "value": {
+        "re": "1.36049389751189860792297337517564333934766992220361497435500",
+        "im": "4.31962708760160069784690956282683057647984575494162324397319"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.966298,
+      "notes": null
+    },
+    {
+      "input_id": "T4-loggamma-004",
+      "status": "complex-success",
+      "value": {
+        "re": "4.88990608140807235719226164845344410494828582877469388819785",
+        "im": "-3.92027037363206090238337955270061812691404418837986891396846"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.651003,
+      "notes": null
+    },
+    {
+      "input_id": "T4-digamma-001",
+      "status": "complex-success",
+      "value": {
+        "re": "1.81827524814309904575107315702480673145965978073470839067207",
+        "im": "1.25050335277013525774292576215407333001938655130063237795429"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 2.092016,
+      "notes": null
+    },
+    {
+      "input_id": "T4-digamma-002",
+      "status": "complex-success",
+      "value": {
+        "re": "1.96610448678644060598280694813982190562588218587569982394741",
+        "im": "2.25011324153968379656017897710923002006363266259625934048177"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 2.211797,
+      "notes": null
+    },
+    {
+      "input_id": "T4-digamma-003",
+      "status": "complex-success",
+      "value": {
+        "re": "1.07966159054843298511211479586914580706373272615623552929193",
+        "im": "-2.64326324553002703938413139633378504100924329262852118748608"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 2.228947,
+      "notes": null
+    },
+    {
+      "input_id": "T4-digamma-004",
+      "status": "complex-success",
+      "value": {
+        "re": "1.72099729800480623154848569845788471298659994865001721980368",
+        "im": "-0.861976818808479699261117702784420065445518469877684709905198"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.882214,
+      "notes": null
+    },
+    {
+      "input_id": "T4-trigamma-001",
+      "status": "complex-success",
+      "value": {
+        "re": "0.389863957962930502666148043723397501418029768843089292943616",
+        "im": "-0.657651345276375852468364551731828235128428844248238893958345"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.61321,
+      "notes": null
+    },
+    {
+      "input_id": "T4-trigamma-002",
+      "status": "complex-success",
+      "value": {
+        "re": "-0.155076710914400316217131690507751303983016499384324933225633",
+        "im": "-0.154044038738547012790810980075397111473334183940792370176321"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.724675,
+      "notes": null
+    },
+    {
+      "input_id": "T4-trigamma-003",
+      "status": "complex-success",
+      "value": {
+        "re": "-0.0694713380630510119645499799899774259032270618373014616589018",
+        "im": "0.0863529035330171842565517824448873402638194296855802467136696"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.646661,
+      "notes": null
+    },
+    {
+      "input_id": "T4-trigamma-004",
+      "status": "complex-success",
+      "value": {
+        "re": "0.0514352099852230725529046303209586306972336424108181631407162",
+        "im": "0.0934360910883796057662085685069547181520825878355747839845098"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.464778,
+      "notes": null
+    },
+    {
+      "input_id": "T4-barnesg-001",
+      "status": "complex-success",
+      "value": {
+        "re": "0.142399109568389868059542824272018873615102110015037172857402",
+        "im": "-0.107941759529996427161778554516786949436746483807800827858523"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 11.292043,
+      "notes": null
+    },
+    {
+      "input_id": "T4-barnesg-002",
+      "status": "complex-success",
+      "value": {
+        "re": "20103161114177337.9950265428277680408626450045057480804712247",
+        "im": "-457304237962908888.693140984169454655917862667005020722778164"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 13.5138,
+      "notes": null
+    },
+    {
+      "input_id": "T4-barnesg-003",
+      "status": "complex-success",
+      "value": {
+        "re": "39560.8593714452870516003819909394302690027197795319799922099",
+        "im": "15829.8495808852528349341940290540760165103258559365543966239"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 13.224133,
+      "notes": null
+    },
+    {
+      "input_id": "T4-barnesg-004",
+      "status": "complex-success",
+      "value": {
+        "re": "-0.000109893846164923488176232983722287637751917608339761256096523",
+        "im": "0.0000839599749226976789785663227849108756694071870409366157744629"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 11.464701,
+      "notes": null
+    },
+    {
+      "input_id": "T4-polygamma-001",
+      "status": "complex-success",
+      "value": {
+        "re": "0.127641336120557155950478762161936563831988680724382265316136",
+        "im": "-0.00788257179346226246681357800840934732896366285398199818847284"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.996446,
+      "notes": null
+    },
+    {
+      "input_id": "T4-polygamma-002",
+      "status": "complex-success",
+      "value": {
+        "re": "0.00944803647472085501446593822639276738039644842872010670504427",
+        "im": "-0.0399710334770475305657717037929951777145376542517516830017483"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 2.070805,
+      "notes": null
+    },
+    {
+      "input_id": "T4-polygamma-003",
+      "status": "complex-success",
+      "value": {
+        "re": "-5.58696487879015063539331571995745099505763801093957792895785",
+        "im": "8.17147496112015345753844949354125711297339317067751890825472"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.855368,
+      "notes": null
+    },
+    {
+      "input_id": "T4-polygamma-004",
+      "status": "complex-success",
+      "value": {
+        "re": "-0.0168327178049086502432859803994551745915767881962490658411773",
+        "im": "-0.00766968422923995892011830304999794821240119771695077379429303"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 2.03078,
+      "notes": null
+    },
+    {
+      "input_id": "T4-incompletegammaupper-001",
+      "status": "complex-success",
+      "value": {
+        "re": "0.0120215096288821781709039183793928732020926965858799886052385",
+        "im": "0.0316271917202122654928000086994753667833662193595043216694606"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 3.786931,
+      "notes": null
+    },
+    {
+      "input_id": "T4-incompletegammaupper-002",
+      "status": "complex-success",
+      "value": {
+        "re": "-0.467219530231215389443544276069250089033703151523312386877467",
+        "im": "0.805616325734202084096838238360184132645626938647427823657546"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.512319,
+      "notes": null
+    },
+    {
+      "input_id": "T4-incompletegammaupper-003",
+      "status": "complex-success",
+      "value": {
+        "re": "2.90297692785203832170125492510044137620652274980080391387139",
+        "im": "-8.39363943630069086711957227141356685381498187513802207522242"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.409962,
+      "notes": null
+    },
+    {
+      "input_id": "T4-incompletegammaupper-004",
+      "status": "complex-success",
+      "value": {
+        "re": "0.00944924264249345356030111403889070688437009137432326821186300",
+        "im": "-0.0249849268137224533781290623952066640241499662867507184180626"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.311917,
+      "notes": null
+    },
+    {
+      "input_id": "T4-incompletegammaupper-005",
+      "status": "complex-success",
+      "value": {
+        "re": "0.487827091111806503984802581156266390019446982923188365857291",
+        "im": "-0.210942763447561680035383305687631460078258869450656575570539"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.102026,
+      "notes": null
+    },
+    {
+      "input_id": "T4-incompletegammaupper-006",
+      "status": "complex-success",
+      "value": {
+        "re": "198.987383989985449111993070151964926116242058124241842523305",
+        "im": "-95.1227796523974029246725430908252898471037712030521541946412"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.340769,
+      "notes": null
+    },
+    {
+      "input_id": "T4-incompletegammaupper-007",
+      "status": "complex-success",
+      "value": {
+        "re": "-37.5337654993500836332264143499606085500843900708171821803765",
+        "im": "-104.929733364622824626226822930224764304363564421173934518794"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.27989,
+      "notes": null
+    },
+    {
+      "input_id": "T4-incompletegammaupper-008",
+      "status": "complex-success",
+      "value": {
+        "re": "0.0116160066954929176862144219898099185503115146509665475082578",
+        "im": "0.0379798585995799408276731976993138988432633370316778343527809"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.21917,
+      "notes": null
+    },
+    {
+      "input_id": "T4-incompletegammalower-001",
+      "status": "complex-success",
+      "value": {
+        "re": "1.78770074485878450809851476298626258654360147410699822427194",
+        "im": "-0.00905820981338579978293899170305127086180216515948068238277250"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.474732,
+      "notes": null
+    },
+    {
+      "input_id": "T4-incompletegammalower-002",
+      "status": "complex-success",
+      "value": {
+        "re": "-102.506559819338122698882875653557238909387192723731663000343",
+        "im": "-194.441852952112718600554050010781264984275777093105532827953"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.445992,
+      "notes": null
+    },
+    {
+      "input_id": "T4-incompletegammalower-003",
+      "status": "complex-success",
+      "value": {
+        "re": "-15.3814889163562281709004060486047504039180382439842762877486",
+        "im": "0.0854511555157016037468360981822214486260404214083051998255557"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.457583,
+      "notes": null
+    },
+    {
+      "input_id": "T4-incompletegammalower-004",
+      "status": "complex-success",
+      "value": {
+        "re": "1.70579033901120314455118334599494266376066042218414926906751",
+        "im": "0.276242031136916394824106125321445589187564575405636043981835"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.424037,
+      "notes": null
+    },
+    {
+      "input_id": "T4-incompletegammalower-005",
+      "status": "complex-success",
+      "value": {
+        "re": "-0.260744402978370176963357081275773455054479609248079950225455",
+        "im": "1.00497072084719086825199580749987261990537046314555284128821"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.123261,
+      "notes": null
+    },
+    {
+      "input_id": "T4-incompletegammalower-006",
+      "status": "complex-success",
+      "value": {
+        "re": "672.334279195249642679317908589070831089940989578131511883479",
+        "im": "-12657.2171660156456818843587008919698054261067240200329822690"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.331577,
+      "notes": null
+    },
+    {
+      "input_id": "T4-incompletegammalower-007",
+      "status": "complex-success",
+      "value": {
+        "re": "-51.5651448282459814925674907094619953981325833961041388053868",
+        "im": "40.4597528079751781970584682027649095048363607479996718870164"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.308533,
+      "notes": null
+    },
+    {
+      "input_id": "T4-incompletegammalower-008",
+      "status": "complex-success",
+      "value": {
+        "re": "1.01363018371615690377318123216654695611517168686402613942426",
+        "im": "0.0136604207752750998328030717243313410513223682617153202833428"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.414816,
+      "notes": null
+    },
+    {
+      "input_id": "T5-gamma-001",
+      "status": "success",
+      "value": "1.77245385090551602729816748334114518279754945612238712821381",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.029446,
+      "notes": null
+    },
+    {
+      "input_id": "T5-gamma-002",
+      "status": "success",
+      "value": "0.886226925452758013649083741670572591398774728061193564106904",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.022262,
+      "notes": null
+    },
+    {
+      "input_id": "T5-gamma-003",
+      "status": "success",
+      "value": "-3.54490770181103205459633496668229036559509891224477425642762",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.02229,
+      "notes": null
+    },
+    {
+      "input_id": "T5-loggamma-001",
+      "status": "success",
+      "value": "0.572364942924700087071713675676529355823647406457655785756812",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.03763,
+      "notes": null
+    },
+    {
+      "input_id": "T5-loggamma-002",
+      "status": "success",
+      "value": "-0.120782237635245222345518445781647212251852727902599468363868",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.030818,
+      "notes": null
+    },
+    {
+      "input_id": "T5-loggamma-003",
+      "status": "complex-success",
+      "value": {
+        "re": "1.26551212348464539648894579713470592389914754081791103987749",
+        "im": "-3.14159265358979323846264338327950288419716939937510582097494"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.047581,
+      "notes": null
+    },
+    {
+      "input_id": "T5-digamma-001",
+      "status": "success",
+      "value": "-1.96351002602142347944097633299875556719315960466043410704713",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.162114,
+      "notes": null
+    },
+    {
+      "input_id": "T5-digamma-002",
+      "status": "success",
+      "value": "0.0364899739785765205590236670012444328068403953395658929528727",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.116259,
+      "notes": null
+    },
+    {
+      "input_id": "T5-digamma-003",
+      "status": "success",
+      "value": "0.0364899739785765205590236670012444328068403953395658929528727",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.126433,
+      "notes": null
+    },
+    {
+      "input_id": "T5-trigamma-001",
+      "status": "success",
+      "value": "4.93480220054467930941724549993807556765684970362039531320667",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.661479,
+      "notes": null
+    },
+    {
+      "input_id": "T5-trigamma-002",
+      "status": "success",
+      "value": "0.934802200544679309417245499938075567656849703620395313206675",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.610578,
+      "notes": null
+    },
+    {
+      "input_id": "T5-trigamma-003",
+      "status": "success",
+      "value": "8.93480220054467930941724549993807556765684970362039531320667",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.607016,
+      "notes": null
+    },
+    {
+      "input_id": "T5-pochhammer-001",
+      "status": "success",
+      "value": "0.750000000000000000000000000000000000000000000000000000000000",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.056257,
+      "notes": null
+    },
+    {
+      "input_id": "T5-pochhammer-002",
+      "status": "success",
+      "value": "29.5312500000000000000000000000000000000000000000000000000000",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.038711,
+      "notes": null
+    },
+    {
+      "input_id": "T5-pochhammer-003",
+      "status": "success",
+      "value": "639383.862304687500000000000000000000000000000000000000000000",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.0355,
+      "notes": null
+    },
+    {
+      "input_id": "T5-pochhammer-004",
+      "status": "success",
+      "value": "3.75000000000000000000000000000000000000000000000000000000000",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.034944,
+      "notes": null
+    },
+    {
+      "input_id": "T5-pochhammer-005",
+      "status": "success",
+      "value": "324.843750000000000000000000000000000000000000000000000000000",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.034146,
+      "notes": null
+    },
+    {
+      "input_id": "T5-pochhammer-006",
+      "status": "success",
+      "value": "13427061.1083984375000000000000000000000000000000000000000000",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.03617,
+      "notes": null
+    },
+    {
+      "input_id": "T5-incompletegammaupper-001",
+      "status": "success",
+      "value": "0.278805585280661976499232611077439172088550082497174470158499",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.633741,
+      "notes": null
+    },
+    {
+      "input_id": "T5-incompletegammalower-001",
+      "status": "success",
+      "value": "1.49364826562485405079893487226370601070899937362521265805531",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.148981,
+      "notes": null
+    },
+    {
+      "input_id": "T5-incompletegammap-001",
+      "status": "success",
+      "value": "0.842700792949714869341220635082609259296066997966302908459938",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.143956,
+      "notes": null
+    },
+    {
+      "input_id": "T5-incompletegammaq-001",
+      "status": "success",
+      "value": "0.157299207050285130658779364917390740703933002033697091540062",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.557822,
+      "notes": null
+    },
+    {
+      "input_id": "T5-incompletegammaupper-002",
+      "status": "success",
+      "value": "0.00277460326041280931949083572726032941202100797914371413289361",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.481275,
+      "notes": null
+    },
+    {
+      "input_id": "T5-incompletegammalower-002",
+      "status": "success",
+      "value": "1.76967924764510321797867664761388485338552844814324341408091",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.163493,
+      "notes": null
+    },
+    {
+      "input_id": "T5-incompletegammap-002",
+      "status": "success",
+      "value": "0.998434597741997450322500196021614097689565425314017194657400",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.167499,
+      "notes": null
+    },
+    {
+      "input_id": "T5-incompletegammaq-002",
+      "status": "success",
+      "value": "0.00156540225800254967749980397838590231043457468598280534259973",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.739347,
+      "notes": null
+    },
+    {
+      "input_id": "T5-incompletegammaupper-003",
+      "status": "success",
+      "value": "0.507282233811773309845140075700180453490086172280355069587086",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.500106,
+      "notes": null
+    },
+    {
+      "input_id": "T5-incompletegammalower-003",
+      "status": "success",
+      "value": "0.378944691640984703803943665970392137908688555780838494519818",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.134935,
+      "notes": null
+    },
+    {
+      "input_id": "T5-incompletegammap-003",
+      "status": "success",
+      "value": "0.427593295529120166000952385641271893927159968027033389929189",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.138318,
+      "notes": null
+    },
+    {
+      "input_id": "T5-incompletegammaq-003",
+      "status": "success",
+      "value": "0.572406704470879833999047614358728106072840031972966610070811",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.497258,
+      "notes": null
+    },
+    {
+      "input_id": "T5-incompletegammaupper-004",
+      "status": "success",
+      "value": "0.0164538091489522224057144785380321286844334848470468835018627",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.476814,
+      "notes": null
+    },
+    {
+      "input_id": "T5-incompletegammalower-004",
+      "status": "success",
+      "value": "0.869773116303805791243369263132540462714341243214146680605041",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.164397,
+      "notes": null
+    },
+    {
+      "input_id": "T5-incompletegammap-004",
+      "status": "success",
+      "value": "0.981433864536956766696828566092281620778851654387959751686706",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.175002,
+      "notes": null
+    },
+    {
+      "input_id": "T5-incompletegammaq-004",
+      "status": "success",
+      "value": "0.0185661354630432333031714339077183792211483456120402483132936",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.479114,
+      "notes": null
+    },
+    {
+      "input_id": "T5-beta-001",
+      "status": "success",
+      "value": "3.14159265358979323846264338327950288419716939937510582097494",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.049411,
+      "notes": null
+    },
+    {
+      "input_id": "T5-beta-002",
+      "status": "success",
+      "value": "1.57079632679489661923132169163975144209858469968755291048747",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.037059,
+      "notes": null
+    },
+    {
+      "input_id": "T5-beta-003",
+      "status": "success",
+      "value": "1.17809724509617246442349126872981358157393852476566468286560",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.03547,
+      "notes": null
+    },
+    {
+      "input_id": "T5-beta-004",
+      "status": "success",
+      "value": "0.392699081698724154807830422909937860524646174921888227621868",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.034108,
+      "notes": null
+    },
+    {
+      "input_id": "T5-beta-005",
+      "status": "success",
+      "value": "0.196349540849362077403915211454968930262323087460944113810934",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.038245,
+      "notes": null
+    },
+    {
+      "input_id": "T5-beta-006",
+      "status": "success",
+      "value": "0.0736310778185107790264682042956133488483711577978540426791003",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.037217,
+      "notes": null
+    },
+    {
+      "input_id": "T6-loggamma-001",
+      "status": "success",
+      "value": "359.134205369575398776044010460286909612621718085629728775613",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.059371,
+      "notes": null
+    },
+    {
+      "input_id": "T6-loggamma-002",
+      "status": "success",
+      "value": "1409.20206747041178748737726654573792239140583498431401276284",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.092779,
+      "notes": null
+    },
+    {
+      "input_id": "T6-loggamma-003",
+      "status": "success",
+      "value": "5905.22042320918121182607691236144078984894240971543259002339",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.066467,
+      "notes": null
+    },
+    {
+      "input_id": "T6-loggamma-004",
+      "status": "success",
+      "value": "2298.10109442043236126560813962412127429267557034397262965930",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.082544,
+      "notes": null
+    },
+    {
+      "input_id": "T6-digamma-001",
+      "status": "success",
+      "value": "4.60016185273808740019860558557585072686681279076852805437077",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.090259,
+      "notes": null
+    },
+    {
+      "input_id": "T6-digamma-002",
+      "status": "success",
+      "value": "5.70211488206463726797964011763155351885952271343058727058319",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.074559,
+      "notes": null
+    },
+    {
+      "input_id": "T6-digamma-003",
+      "status": "success",
+      "value": "6.90725519564881205205000611425149774547951983376888006696786",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.071633,
+      "notes": null
+    },
+    {
+      "input_id": "T6-digamma-004",
+      "status": "success",
+      "value": "6.30282327822895730319792022429991950437886742465576695203590",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.086524,
+      "notes": null
+    },
+    {
+      "input_id": "T6-trigamma-001",
+      "status": "success",
+      "value": "0.0100501666633335713952456684657014225356282011755346238824472",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.336569,
+      "notes": null
+    },
+    {
+      "input_id": "T6-trigamma-002",
+      "status": "success",
+      "value": "0.00333889506171467774947029468909866984574603106953445678456412",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.231721,
+      "notes": null
+    },
+    {
+      "input_id": "T6-trigamma-003",
+      "status": "success",
+      "value": "0.00100050016666663333335714282380959956684645471311312101832102",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.173031,
+      "notes": null
+    },
+    {
+      "input_id": "T6-trigamma-004",
+      "status": "success",
+      "value": "0.00127802618875423997678478645077131279148138963932269952435020",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.198793,
+      "notes": null
+    },
+    {
+      "input_id": "T6-gamma-001",
+      "status": "success",
+      "value": "5.57458576120760588132343171174197715562728861094835817524639e+196",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.016936,
+      "notes": null
+    },
+    {
+      "input_id": "T6-gamma-002",
+      "status": "success",
+      "value": "4.26906800900470527493925188889956653806881863605673610384916e+304",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.024009,
+      "notes": null
+    },
+    {
+      "input_id": "T6-incompletegammaupper-001",
+      "status": "success",
+      "value": "3.75727673578104432258929276190174952073248121530054978679182e-42",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.054168,
+      "notes": null
+    },
+    {
+      "input_id": "T6-incompletegammaq-001",
+      "status": "success",
+      "value": "3.75727673578104432258929276190174952073248121530054978679182e-42",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.0571,
+      "notes": null
+    },
+    {
+      "input_id": "T6-incompletegammaupper-002",
+      "status": "success",
+      "value": "1.54960826694601614812761343824120643043863446555775063452992e-128",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.038401,
+      "notes": null
+    },
+    {
+      "input_id": "T6-incompletegammaq-002",
+      "status": "success",
+      "value": "1.54960826694601614812761343824120643043863446555775063452992e-128",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.044057,
+      "notes": null
+    },
+    {
+      "input_id": "T6-incompletegammaupper-003",
+      "status": "success",
+      "value": "5.08103485644700622205710128905391125622490488217573019919423e-432",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.035707,
+      "notes": null
+    },
+    {
+      "input_id": "T6-incompletegammaq-003",
+      "status": "success",
+      "value": "5.08103485644700622205710128905391125622490488217573019919423e-432",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.04492,
+      "notes": null
+    },
+    {
+      "input_id": "T6-incompletegammaupper-004",
+      "status": "success",
+      "value": "4.08366063091061127228859216631951925304018296583735091659422e-26",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.051253,
+      "notes": null
+    },
+    {
+      "input_id": "T6-incompletegammaq-004",
+      "status": "success",
+      "value": "1.12534739608427338852750004583320085235895694605306187075458e-31",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.052617,
+      "notes": null
+    },
+    {
+      "input_id": "T6-incompletegammaupper-005",
+      "status": "success",
+      "value": "1.04454981347807314939647266076785175209101981702850199558717e-108",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.042605,
+      "notes": null
+    },
+    {
+      "input_id": "T6-incompletegammaq-005",
+      "status": "success",
+      "value": "2.87849926553701815861020905193962674187340117126461087849198e-114",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.050523,
+      "notes": null
+    },
+    {
+      "input_id": "T6-incompletegammaupper-006",
+      "status": "success",
+      "value": "5.12201057037806592353316361800474699591062337344576621110570e-408",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.042939,
+      "notes": null
+    },
+    {
+      "input_id": "T6-incompletegammaq-006",
+      "status": "success",
+      "value": "1.41148880356538412795777216104628168979018501252363486858072e-413",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.051082,
+      "notes": null
+    },
+    {
+      "input_id": "T6-barnesg-001",
+      "status": "success",
+      "value": "4.30619256499771538211559864037929484578612331960375516802354e+120",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.832507,
+      "notes": null
+    },
+    {
+      "input_id": "T6-barnesg-002",
+      "status": "success",
+      "value": "2.32981075041745923878397066973471262361883792546514431947398e+1266",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.563559,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammaupper-001",
+      "status": "success",
+      "value": "102637533405916909.402111439395302693465208695933221137054439",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.08171,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammalower-001",
+      "status": "success",
+      "value": "19007567002915090.5978885606046973065347913040667788629455609",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.198064,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammap-001",
+      "status": "success",
+      "value": "0.156254275256737367441237741585655305202138633865055978294583",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.17784,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammaq-001",
+      "status": "success",
+      "value": "0.843745724743262632558762258414344694797861366134944021705417",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.07827,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammaupper-002",
+      "status": "success",
+      "value": "57204492442642251.0970102893453147604209035608327669088264218",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.053318,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammalower-002",
+      "status": "success",
+      "value": "64440607966189748.9029897106546852395790964391672330911735782",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.160819,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammap-002",
+      "status": "success",
+      "value": "0.529742733160760012687809645826281917287633865718349219033188",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.164853,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammaq-002",
+      "status": "success",
+      "value": "0.470257266839239987312190354173718082712366134281650780966812",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.069168,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammaupper-003",
+      "status": "success",
+      "value": "19087828303247065.4366530309869111020416444300232162651872603",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.079982,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammalower-003",
+      "status": "success",
+      "value": "102557272105584934.563346969013088897958355569976783734812740",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.192437,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammap-003",
+      "status": "success",
+      "value": "0.843085925868813699183511105243825569458300209083702867872453",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.185583,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammaq-003",
+      "status": "success",
+      "value": "0.156914074131186300816488894756174430541699790916297132127547",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.075536,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammaupper-004",
+      "status": "success",
+      "value": "7.85600493193774127498186553102406047610253251633679019014067e+155",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.083432,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammalower-004",
+      "status": "success",
+      "value": "1.47661661245667399318805835460260957296906431010137195671863e+155",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.954946,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammap-004",
+      "status": "success",
+      "value": "0.158220989186430168104969699670910531699823345743347387984191",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.399849,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammaq-004",
+      "status": "success",
+      "value": "0.841779010813569831895030300329089468300176654256652612015809",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.108132,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammaupper-005",
+      "status": "success",
+      "value": "4.54219812086266942936914708308623503962451704934201744905836e+155",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.084747,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammalower-005",
+      "status": "success",
+      "value": "4.79042342353174583880077680254043500944707977709614469780094e+155",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.342289,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammap-005",
+      "status": "success",
+      "value": "0.513298798279148664857314256564029163470925149927945073959628",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.350836,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammaq-005",
+      "status": "success",
+      "value": "0.486701201720851335142685743435970836529074850072054926040372",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.10172,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammaupper-006",
+      "status": "success",
+      "value": "1.47715492622086411022742597488088090180315843123533484581747e+155",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.081096,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammalower-006",
+      "status": "success",
+      "value": "7.85546661817355115794249791074578914726843839520282730104182e+155",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.33534,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammap-006",
+      "status": "success",
+      "value": "0.841721329939912906198299620982968853193350030865822294556062",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.329128,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammaq-006",
+      "status": "success",
+      "value": "0.158278670060087093801700379017031146806649969134177705443938",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.113032,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammaupper-007",
+      "status": "success",
+      "value": "3.31850309818200644382548414605783285777345238750839973365312e+372",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.136598,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammalower-007",
+      "status": "success",
+      "value": "6.24786238641946073936331923603092453702227500927466582820596e+371",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.463363,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammap-007",
+      "status": "success",
+      "value": "0.158442910290008868647058254095674932353504073802587794920558",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.472709,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammaq-007",
+      "status": "success",
+      "value": "0.841557089709991131352941745904325067646495926197412205079442",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.154908,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammaupper-008",
+      "status": "success",
+      "value": "1.93456427045434291762422482765277263910604009768274619883548e+372",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.11123,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammalower-008",
+      "status": "success",
+      "value": "2.00872506636960960013759124200815267236963979075312011763823e+372",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.406279,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammap-008",
+      "status": "success",
+      "value": "0.509403418007236325027825459574527043154972168599140501542389",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.419504,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammaq-008",
+      "status": "success",
+      "value": "0.490596581992763674972174540425472956845027831400859498457611",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.129417,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammaupper-009",
+      "status": "success",
+      "value": "6.24866428175211491802967224180223421773349390343539891721557e+371",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.128116,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammalower-009",
+      "status": "success",
+      "value": "3.31842290864874102595884884548070188970233049809232642475216e+372",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.477758,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammap-009",
+      "status": "success",
+      "value": "0.841536754013972942385156432257908879096145901548442973839907",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.44103,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammaq-009",
+      "status": "success",
+      "value": "0.158463245986027057614843567742091120903854098451557026160093",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.144222,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammaupper-010",
+      "status": "success",
+      "value": "520111.553671432023415241851790287887122549234843147862934644",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.568411,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammaupper-011",
+      "status": "success",
+      "value": "176226.572083930050425314527745249467126987444083607656972961",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.548648,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammaupper-012",
+      "status": "success",
+      "value": "2.06493563742626636248582626392181417521486521612496219654342e+63",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.489326,
+      "notes": null
+    },
+    {
+      "input_id": "T7-incompletegammaupper-013",
+      "status": "success",
+      "value": "6.77588727717829806838787559549086139727990780653054722555922e+62",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.477794,
+      "notes": null
+    },
+    {
+      "input_id": "T8-digamma-001",
+      "status": "success",
+      "value": "-99.5507844477675755551675011928322529306017884753485727015885",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.198052,
+      "notes": null
+    },
+    {
+      "input_id": "T8-trigamma-001",
+      "status": "success",
+      "value": "10002.6415175789025374625940568066282904206808703932507258791",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.801738,
+      "notes": null
+    },
+    {
+      "input_id": "T8-polygamma-001",
+      "status": "success",
+      "value": "-2000000.27917836749871186187852125029568839134240393869692643",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.757416,
+      "notes": null
+    },
+    {
+      "input_id": "T8-digamma-002",
+      "status": "success",
+      "value": "-999999.577184264303152606777806482476982076030452071294271505",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.176472,
+      "notes": null
+    },
+    {
+      "input_id": "T8-trigamma-002",
+      "status": "success",
+      "value": "999999999945.133604632798822756019839105034749781511186874473",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.673374,
+      "notes": null
+    },
+    {
+      "input_id": "T8-polygamma-002",
+      "status": "success",
+      "value": "-1999999999827466013.31675644414775378085403277792445547112824",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.710244,
+      "notes": null
+    },
+    {
+      "input_id": "T8-digamma-003",
+      "status": "success",
+      "value": "100.396312705845306113201758587181275324242501305386659170303",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.158873,
+      "notes": null
+    },
+    {
+      "input_id": "T8-trigamma-003",
+      "status": "success",
+      "value": "10002.6496001504609818423597910604301175251257576924737889908",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.717541,
+      "notes": null
+    },
+    {
+      "input_id": "T8-polygamma-003",
+      "status": "success",
+      "value": "1999999.47086212323819925425298687892235108027531460093237356",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.707625,
+      "notes": null
+    },
+    {
+      "input_id": "T8-digamma-004",
+      "status": "success",
+      "value": "1000000.42286395680215152197067479128653071607327205061097750",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.153759,
+      "notes": null
+    },
+    {
+      "input_id": "T8-trigamma-004",
+      "status": "success",
+      "value": "1000000000167.17821038388047789177331322475972346683711021807",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.635565,
+      "notes": null
+    },
+    {
+      "input_id": "T8-polygamma-004",
+      "status": "success",
+      "value": "2000000000493599827.35491369350091487697307635420296118961321",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.686314,
+      "notes": null
+    },
+    {
+      "input_id": "T8-digamma-005",
+      "status": "success",
+      "value": "-99.0482718849535052011658890625827005548965525309607107803998",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.164033,
+      "notes": null
+    },
+    {
+      "input_id": "T8-trigamma-005",
+      "status": "success",
+      "value": "10002.8940364546885024657319614752965610389044167563361402822",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.735933,
+      "notes": null
+    },
+    {
+      "input_id": "T8-polygamma-005",
+      "status": "success",
+      "value": "-2000000.02539055263844552593384891825853544326804074133893038",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.725803,
+      "notes": null
+    },
+    {
+      "input_id": "T8-digamma-006",
+      "status": "success",
+      "value": "-999999.077295036605496377494131765710255914618655068130708374",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.168295,
+      "notes": null
+    },
+    {
+      "input_id": "T8-trigamma-006",
+      "status": "success",
+      "value": "1000000000167.42820982565305279914922771338912656860707922298",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.64114,
+      "notes": null
+    },
+    {
+      "input_id": "T8-polygamma-006",
+      "status": "success",
+      "value": "-2000000000493599827.91314093113980331523287525471332830028003",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.67175,
+      "notes": null
+    },
+    {
+      "input_id": "T8-digamma-007",
+      "status": "success",
+      "value": "100.893825143658472473974036817261592815810036622321797784021",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.154635,
+      "notes": null
+    },
+    {
+      "input_id": "T8-trigamma-007",
+      "status": "success",
+      "value": "10002.8971187766816606755909799113710402142908374151682906595",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.714815,
+      "notes": null
+    },
+    {
+      "input_id": "T8-polygamma-007",
+      "status": "success",
+      "value": "1999999.71714944629241749274571606617196713098699200734263602",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.705393,
+      "notes": null
+    },
+    {
+      "input_id": "T8-digamma-008",
+      "status": "success",
+      "value": "1000000.92264166219736363844253406724816861230135885143806053",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.143808,
+      "notes": null
+    },
+    {
+      "input_id": "T8-trigamma-008",
+      "status": "success",
+      "value": "999999999723.339000322128290264987571611020347481484604010712",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.640477,
+      "notes": null
+    },
+    {
+      "input_id": "T8-polygamma-008",
+      "status": "success",
+      "value": "1999999999161332198.20796643393178733196473079447191658142062",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.651482,
+      "notes": null
+    },
+    {
+      "input_id": "T8-digamma-009",
+      "status": "success",
+      "value": "-98.7138237244206092568075826137992957527354833771067943331893",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.151491,
+      "notes": null
+    },
+    {
+      "input_id": "T8-trigamma-009",
+      "status": "success",
+      "value": "10003.0058920272179150956577633331972832946830398447170679770",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.659487,
+      "notes": null
+    },
+    {
+      "input_id": "T8-polygamma-009",
+      "status": "success",
+      "value": "-1999999.95057090520613213919563010151983048249864101831956118",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.676097,
+      "notes": null
+    },
+    {
+      "input_id": "T8-digamma-010",
+      "status": "success",
+      "value": "-999998.743739547556101976437197792372089694652848326784645522",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.158674,
+      "notes": null
+    },
+    {
+      "input_id": "T8-trigamma-010",
+      "status": "success",
+      "value": "999999999723.450111199085899816074195877869589682933103295301",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.647557,
+      "notes": null
+    },
+    {
+      "input_id": "T8-polygamma-010",
+      "status": "success",
+      "value": "-1999999999161332198.44211989842210319844159277297992926309866",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.655465,
+      "notes": null
+    },
+    {
+      "input_id": "T8-digamma-011",
+      "status": "success",
+      "value": "101.226051057279734955973443085186899474362071788058715848481",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.139617,
+      "notes": null
+    },
+    {
+      "input_id": "T8-trigamma-011",
+      "status": "success",
+      "value": "10003.0074928343631432355667446085499180522509620601825028092",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.684463,
+      "notes": null
+    },
+    {
+      "input_id": "T8-polygamma-011",
+      "status": "success",
+      "value": "1999999.79048769059905042815585441102280533192378528324325812",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.721423,
+      "notes": null
+    },
+    {
+      "input_id": "T8-digamma-012",
+      "status": "success",
+      "value": "1000001.25597488441962288215857278567006543207442628558533462",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.146045,
+      "notes": null
+    },
+    {
+      "input_id": "T8-trigamma-012",
+      "status": "success",
+      "value": "999999999723.450111359165364328691271660614216222600617093860",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.629058,
+      "notes": null
+    },
+    {
+      "input_id": "T8-polygamma-012",
+      "status": "success",
+      "value": "1999999999161332198.28204043393183670429943567396982984633294",
+      "mpmath_returned_token": null,
+      "elapsed_ms": 0.665359,
+      "notes": null
+    },
+    {
+      "input_id": "T8-digamma-013",
+      "status": "complex-success",
+      "value": {
+        "re": "-877.157456516263653881266427613452152034267004572727477713779",
+        "im": "479.426806485162464933234388821077530959796561270720796722502"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 2.39745,
+      "notes": null
+    },
+    {
+      "input_id": "T8-digamma-014",
+      "status": "complex-success",
+      "value": {
+        "re": "416.568520335351006484636960776804220944268048368042303507306",
+        "im": "909.299832009778407869435837573510685494455766038567509799906"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.694476,
+      "notes": null
+    },
+    {
+      "input_id": "T8-digamma-015",
+      "status": "complex-success",
+      "value": {
+        "re": "-876.657237053140970914423891869995811278108789764391105471794",
+        "im": "479.426926446886782992738109923793800629440308994640151371209"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 2.086724,
+      "notes": null
+    },
+    {
+      "input_id": "T8-digamma-016",
+      "status": "complex-success",
+      "value": {
+        "re": "417.068416217141560577485937473134410522587382995266547619801",
+        "im": "909.300059239349325905653910581342037304641921719234751531675"
+      },
+      "mpmath_returned_token": null,
+      "elapsed_ms": 1.768257,
+      "notes": null
+    }
+  ],
+  "totals": {
+    "success": 300,
+    "complex_success": 57,
+    "refused": 8,
+    "unsupported": 12,
+    "timeout": 0,
+    "error": 0
+  }
+}
