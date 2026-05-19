@@ -42,7 +42,7 @@ import {
 import { abs, neg, sgn, cmp, eq, isZero, lt, gt } from "./comparison.js";
 import { add, sub, mul, div, sqrt, powInt } from "./arithmetic.js";
 import { fromInt, fromString, toFloat64 } from "./conversion.js";
-import { ln2, pi, exp, log, sin } from "./transcendental.js";
+import { ln2, pi, exp, log, sin, cos } from "./transcendental.js";
 import { bernoulliRational } from "./bernoulli.js";
 
 /** B_{2k} as a BigFloat at the requested precision. */
@@ -304,40 +304,45 @@ export function gamma(z: BigFloat, prec: number): BigFloat {
 }
 
 /**
- * `ψ(z)` (digamma) for real `z > 0`. Throws on non-positive z (where the
- * function has poles at integers and complex behaviour off-integer).
+ * `ψ(z)` (digamma) for real `z`. Throws at non-positive integers
+ * (`z ∈ {0, −1, −2, …}`), where ψ has simple poles.
  *
- * Algorithm: shift z up to z + N with N large enough for Stirling-style
- * asymptotic, then use ψ(z) = ψ(z+N) − Σ_{k=0}^{N-1} 1/(z+k).
+ * For `z > 0`: shift `z` up to `z + N` with `N` large enough for the
+ * Stirling-style asymptotic, then use `ψ(z) = ψ(z+N) − Σ_{k=0}^{N−1}
+ * 1/(z+k)`.
+ *
+ * For `z < 0` non-integer: reflection (DLMF §5.5.4),
+ *
+ *     ψ(1 − z) − ψ(z) = π · cot(π z)
+ *   ⟹ ψ(z) = ψ(1 − z) − π · cot(π z)             — note the MINUS.
+ *
+ * The sign is load-bearing. An earlier draft of the surrounding R2/PHASE2
+ * narratives had `+ π · cot(π z)` here; at half-integer z (cot = 0) the
+ * mistake is invisible, but at e.g. z = −0.3 (mpmath gold ψ(−0.3) ≈
+ * +2.1124, ψ(1.3) ≈ −0.1694, π · cot(−0.3π) ≈ −2.2818) the wrong sign
+ * yields ψ(1.3) + π·cot(−0.3π) ≈ −2.4513 — wrong magnitude AND wrong
+ * sign. The tests below pin this with at least one non-half-integer
+ * negative argument.
+ *
+ * Numerical conditioning: `cot(π z)` carries the same near-pole
+ * catastrophic cancellation that bead `oj5j` (worklog 117) fixed for the
+ * complex path in `cdigammaReflect` — `cot` has simple poles at the
+ * integers, so an ε-close `z = m + ζ` makes `cot(π z) ≈ 1/(π ζ)`
+ * enormous, and a naïve `cos(π z) / sin(π z)` truncates the `ζ`
+ * information when it forms `π · z`. The real-axis cure mirrors the
+ * complex one byte-for-byte: reduce `ζ = z − round(z)` *before*
+ * multiplying by π. `cot` is π-periodic, so the integer shift drops
+ * out entirely (no `(−1)ᵐ` sign to carry), and `cot(π z) = cot(π ζ)`
+ * with `ζ ∈ [−½, ½]`. The cancellation depth `lossBits = magBits(z) −
+ * magBits(ζ)` is folded into the working precision so the loss is
+ * *paid for*, not silently swallowed.
+ *
+ * For `trigamma`, see the analogous reflection (DLMF §5.15.6 at n = 1)
+ * in that function's docstring.
  */
 export function digamma(z: BigFloat, prec: number): BigFloat {
   if (sgn(z) <= 0) {
-    // For z ≤ 0, the reflection formula ψ(1-z) - ψ(z) = π cot(π z) lets us
-    // evaluate where finite. Check for poles first.
-    if (isZero(z)) {
-      throw new RangeError(`digamma: argument is zero (ψ has a pole)`);
-    }
-    const zRound = Math.round(toFloat64(z).value);
-    const zRoundedBack = fromInt(BigInt(zRound), z.precision);
-    if (eq(z, zRoundedBack)) {
-      throw new RangeError(`digamma: argument is a non-positive integer (ψ has a pole)`);
-    }
-    const work = prec + 32;
-    const piW = pi(work);
-    const piZ = mul(piW, z, work);
-    const tanPiZ = div(sin(piZ, work), exp(log(abs(sin(piZ, work)), work), work), work);
-    // Use cot(πz) directly: cos(πz)/sin(πz). Implement via cos = sin(π/2-x).
-    // Simpler: ψ(z) = ψ(1-z) - π cot(π z).
-    // cot(πz) = cos(πz)/sin(πz).
-    const cosPiZ = sub(
-      mul(piZ, fromInt(0n, work), work), // unused; just a placeholder for now
-      fromInt(0n, work),
-      work,
-    );
-    // Actually we need a `cos` import. Let me simplify and use:
-    // ψ(z) for z ∈ (0, 1) reflection requires cos. But we already have cos()
-    // via the trig module. Re-import.
-    throw new RangeError(`digamma: negative argument support deferred to v0.2`);
+    return digammaReflect(z, prec);
   }
   // Same precision-bump rationale as lgamma.
   const work = prec + 96;
@@ -391,20 +396,101 @@ function digammaStirling(z: BigFloat, prec: number): BigFloat {
 }
 
 /**
- * Trigamma  ψ'(z) = -ψ^(1)(z) (with the conventional sign, where
- * ψ^(m)(z) = d^m/dz^m ψ(z) without sign-flip; trigamma is ψ'(z) > 0 for
- * z > 0).
+ * Reflection branch of `digamma` for `z ≤ 0`:
  *
- * Algorithm: shift z up via the recurrence ψ'(z) = ψ'(z+1) + 1/z²,
+ *     ψ(z) = ψ(1 − z) − π · cot(π z)            (DLMF §5.5.4, rearranged).
+ *
+ * The real-axis sibling of `cdigammaReflect` (`complex.ts`, bead `oj5j` /
+ * worklog 117). Same near-pole cancellation cure: write `z = m + ζ` with
+ * `m = round(z)` and reduce ζ *before* multiplying by π. `cot` is
+ * π-periodic so `cot(π z) = cot(π ζ)` exactly — no `(−1)ᵐ` to carry.
+ * Working precision is bumped by the measured cancellation depth
+ * `lossBits = magBits(z) − magBits(ζ)` so the truncation loss the
+ * reduction surfaces is genuinely paid for. For `m = 0` (z in (−½, ½))
+ * the lossBits is zero and the path is byte-identical to the unreduced
+ * naïve form modulo the reflection itself.
+ *
+ * Throws at exact non-positive integers (`z = m, m ≤ 0`, ζ = 0) — the
+ * actual poles of ψ. The pole check has to happen *after* the
+ * reduction is formed (so the integer detection is exact at the input's
+ * own precision), but *before* the work-bump (so we don't waste
+ * arithmetic on an input we're about to reject).
+ */
+function digammaReflect(z: BigFloat, prec: number): BigFloat {
+  // Pole detection at z = 0: ζ = z − 0 = z, but we want to surface a
+  // dedicated message for the most common pole case.
+  if (isZero(z)) {
+    throw new RangeError(`digamma: argument is zero (ψ has a pole)`);
+  }
+  const reFloat = toFloat64(z).value;
+  if (!Number.isFinite(reFloat)) {
+    throw new RangeError(`digamma: argument not finite`);
+  }
+  const m = Math.round(reFloat);
+  const inPrec = z.precision;
+  // ζ = z − m, formed at the input's own precision so we measure the
+  // cancellation against the input — not against a reformed-at-`work`
+  // copy that's already lost the leading-bit information.
+  const zeta0 = m === 0 ? z : sub(z, fromInt(BigInt(m), inPrec), inPrec);
+  if (m <= 0 && isZero(zeta0)) {
+    throw new RangeError(
+      `digamma: argument is a non-positive integer (ψ has a pole)`,
+    );
+  }
+  // Cancellation depth: how many leading bits `z − m` annihilates.
+  // For `m = 0` no integer is peeled off and `lossBits = 0`.
+  const lossBits =
+    m === 0 ? 0 : Math.max(0, zMagBits(z) - zMagBits(zeta0));
+  const work = prec + 32 + lossBits;
+  // Re-form ζ at the bumped working precision.
+  const zeta = m === 0 ? z : sub(z, fromInt(BigInt(m), work), work);
+  const piW = pi(work);
+  // π · ζ at the working precision — small magnitude when z is near
+  // an integer, well-conditioned for `sin` / `cos` since the trig
+  // reduction has no large-multiple-of-π/2 to peel off.
+  const piZeta = mul(piW, zeta, work);
+  const sinPiZeta = sin(piZeta, work);
+  const cosPiZeta = cos(piZeta, work);
+  // `sinPiZeta` is zero exactly when ζ ∈ {0, ±1, …} ∩ [−½, ½] — i.e.
+  // ζ = 0 — which we've already rejected above (`isZero(zeta0)`).
+  // A defensive throw here would only fire on a genuine substrate
+  // failure (sin's argument reduction collapsing a non-zero input to
+  // zero); we let `div` raise that naturally.
+  const cotPiZ = div(cosPiZeta, sinPiZeta, work);
+  const piCot = mul(piW, cotPiZ, work);
+  // ψ(1 − z): 1 − z is far from every non-positive-integer pole when z
+  // is near one (1 − z is near a *positive* integer there), so the
+  // recursive call enters the positive branch and never recurses.
+  const oneMinusZ = sub(fromInt(1n, work), z, work);
+  const result = sub(digamma(oneMinusZ, work), piCot, work);
+  return normalise(result.mantissa, result.exponent, prec);
+}
+
+/**
+ * Trigamma  ψ'(z) for real z. Throws at non-positive integers (poles).
+ *
+ * For `z > 0`: shift up via the recurrence `ψ'(z) = ψ'(z+1) + 1/z²` and
  * Stirling-style series at large z.
  *
- * v0.1 ships only m = 1 (trigamma) since the MeijerG benchmark's
- * coalescence handling routes through it. Higher m via Hurwitz-zeta
- * lands in v0.2.
+ * For `z < 0` non-integer: reflection (DLMF §5.15.6 at n = 1),
+ *
+ *     ψ'(1 − z) + ψ'(z) = (π / sin(π z))²
+ *   ⟹ ψ'(z) = (π / sin(π z))² − ψ'(1 − z).
+ *
+ * Sign: PLUS-on-LHS / MINUS-on-rearranged — opposite to digamma. The
+ * `1/sin²(π z)` term is even in `m` (sin² is integer-shift-invariant up
+ * to sign-then-squared), so the integer shift drops out cleanly:
+ * `1/sin²(π z) = 1/sin²(π ζ)`. Same lossBits accounting as
+ * `digammaReflect`; the `1/sin² ≈ 1/(π ζ)²` blowup near integer ζ is
+ * even more aggressive than ψ's `1/(π ζ)`, so the working-precision
+ * bump is more load-bearing here, not less.
+ *
+ * v0.1 ships only m = 0 (digamma) and m = 1 (trigamma); higher m via
+ * Hurwitz-zeta lands in v0.2.
  */
 export function trigamma(z: BigFloat, prec: number): BigFloat {
   if (sgn(z) <= 0) {
-    throw new RangeError(`trigamma: argument must be positive`);
+    return trigammaReflect(z, prec);
   }
   const work = prec + 96;
   const shiftThreshold = Math.max(8, Math.ceil(work / 8));
@@ -455,12 +541,325 @@ function trigammaStirling(z: BigFloat, prec: number): BigFloat {
 }
 
 /**
+ * Reflection branch of `trigamma` for `z ≤ 0`:
+ *
+ *     ψ'(z) = (π / sin(π z))² − ψ'(1 − z)       (DLMF §5.15.6 at n = 1).
+ *
+ * Mirrors `digammaReflect` byte-for-byte in structure: pole detection,
+ * `ζ = z − round(z)`, `lossBits` measurement, `work = prec + 32 +
+ * lossBits`, then reduce the trig argument before multiplying by π.
+ * `sin(π z) = (−1)ᵐ sin(π ζ)`, but only `sin²` enters the formula so
+ * the `(−1)ᵐ` evaporates: `(π / sin(π z))² = (π / sin(π ζ))²`.
+ *
+ * The 1/sin² blowup near a pole is `≈ 1/(π ζ)²` — quadratic, where
+ * `digamma`'s cot was linear — so the `lossBits` bump is even more
+ * load-bearing. Dropping it would lose ~2 · log₁₀|ζ| digits at z near
+ * −n, not ~log₁₀|ζ|.
+ */
+function trigammaReflect(z: BigFloat, prec: number): BigFloat {
+  if (isZero(z)) {
+    throw new RangeError(`trigamma: argument is zero (ψ' has a pole)`);
+  }
+  const reFloat = toFloat64(z).value;
+  if (!Number.isFinite(reFloat)) {
+    throw new RangeError(`trigamma: argument not finite`);
+  }
+  const m = Math.round(reFloat);
+  const inPrec = z.precision;
+  const zeta0 = m === 0 ? z : sub(z, fromInt(BigInt(m), inPrec), inPrec);
+  if (m <= 0 && isZero(zeta0)) {
+    throw new RangeError(
+      `trigamma: argument is a non-positive integer (ψ' has a pole)`,
+    );
+  }
+  const lossBits =
+    m === 0 ? 0 : Math.max(0, zMagBits(z) - zMagBits(zeta0));
+  const work = prec + 32 + lossBits;
+  const zeta = m === 0 ? z : sub(z, fromInt(BigInt(m), work), work);
+  const piW = pi(work);
+  const piZeta = mul(piW, zeta, work);
+  const sinPiZeta = sin(piZeta, work);
+  // (π / sin(π ζ))²
+  const piOverSin = div(piW, sinPiZeta, work);
+  const piOverSinSq = mul(piOverSin, piOverSin, work);
+  const oneMinusZ = sub(fromInt(1n, work), z, work);
+  const result = sub(piOverSinSq, trigamma(oneMinusZ, work), work);
+  return normalise(result.mantissa, result.exponent, prec);
+}
+
+/**
+ * Hurwitz zeta function `ζ(s, z) = Σ_{k≥0} (z+k)^{-s}` for integer `s ≥ 2`
+ * at large real `z`, evaluated via the Euler-Maclaurin (Stirling-analogue)
+ * asymptotic series. Internal helper for `polygamma` m ≥ 2; not exported.
+ *
+ * Algorithm (DLMF §25.11.4, also Appendix B of R2-arbprec-algorithms.md):
+ *
+ *     ζ(s, z) ≈ z^{1-s}/(s-1)  +  (1/2) z^{-s}
+ *              + Σ_{k=1}^{K}  B_{2k} · (s)_{2k-1} / ((2k)! · z^{s+2k-1})
+ *
+ * where `(s)_{2k-1} = s · (s+1) · … · (s+2k-2)` is the rising-Pochhammer
+ * factor — exactly `2k-1` integer factors. Specialising to `s = m + 1`
+ * (the polygamma case), the Pochhammer becomes
+ * `(m+1)(m+2)…(m+2k-1) = (m+2k-1)! / m!`.
+ *
+ * The series is Poincaré-asymptotic — it diverges in K but the optimal
+ * truncation `k* ≈ π z / e` gives an error bounded by the smallest
+ * (next-omitted) term. The `prevTermMag` idiom — used identically in
+ * `lgammaStirling`, `digammaStirling`, `trigammaStirling` above —
+ * catches that minimum automatically: when the term magnitude starts
+ * growing, the series is diverging and we stop *before* adding the
+ * offending term.
+ *
+ * Caller responsibility: the caller (`polygammaHurwitz` below) must
+ * have shifted `z` up via the polygamma recurrence so that `z >
+ * shiftThreshold(prec, m)` — see Appendix B for the explicit formula
+ * `shiftThreshold ≈ max(8, ceil(0.17 · (prec + 2m + 96)))`. Calling
+ * this helper at small `z` produces a wildly wrong answer because the
+ * series is asymptotic, not convergent.
+ *
+ * Working precision is bumped by 32 bits internally; the caller bumps
+ * the outer `prec` by another margin to absorb factorial growth in `m!`.
+ *
+ * MUTATION-PROOF MARKER: the Bernoulli index is `B_{2k}` (the even-index
+ * Bernoulli numbers); using `B_{2k+2}` or `B_k` instead gives wrong
+ * Stirling coefficients. The Pochhammer `(s)_{2k-1}` has `2k-1`
+ * factors starting at `s`; using `2k` factors (or starting at `s-1`)
+ * misaligns the series. Both are pinned by the `polygamma(2, 1) =
+ * −2ζ(3)` and `polygamma(3, 1) = π⁴/15` golden tests.
+ */
+function hurwitzZetaEulerMaclaurin(
+  s: number,
+  z: BigFloat,
+  prec: number,
+): BigFloat {
+  if (!Number.isInteger(s) || s < 2) {
+    throw new RangeError(
+      `hurwitzZetaEulerMaclaurin: s must be integer ≥ 2; got ${s}`,
+    );
+  }
+  const work = prec + 32;
+  // Leading two terms: z^{1-s}/(s-1) + (1/2) z^{-s}.
+  // s ≥ 2 so 1 − s ≤ −1; powInt accepts negative exponents.
+  const oneOverZ = div(fromInt(1n, work), z, work);
+  const oneOverZ2 = mul(oneOverZ, oneOverZ, work);
+  // z^{-(s-1)} = z^{1-s}.
+  const zPow1mS = powInt(z, 1 - s, work);
+  // z^{-s}.
+  const zPowMS = mul(zPow1mS, oneOverZ, work);
+  const half = div(fromInt(1n, work), fromInt(2n, work), work);
+  let result = add(
+    div(zPow1mS, fromInt(BigInt(s - 1), work), work),
+    mul(half, zPowMS, work),
+    work,
+  );
+  // Correction series. At k=1 the term is
+  //     B_2 · (s)_1 / (2! · z^{s+1})
+  //   = (1/6) · s / (2 · z^{s+1}).
+  // We track `zPow` = 1/z^{s+2k-1} starting at 1/z^{s+1} for k=1 and
+  // advance by *1/z² each iteration.
+  //
+  // We also track the Pochhammer numerator (s)_{2k-1} as a BigInt
+  // running product, and the (2k)! denominator likewise. Both are
+  // exact integers; we form the BigFloat ratio once per term.
+  let zPow = mul(zPowMS, oneOverZ, work); // 1/z^{s+1}.
+  // Pochhammer (s)_1 = s. After k=1, push to (s)_3 = s(s+1)(s+2), etc.
+  // We maintain `pochNum` so that at the top of iteration k it equals
+  // (s)_{2k-1}.
+  let pochNum = BigInt(s);
+  // (2k)! similarly.
+  let factDen = 2n; // 2! at k=1.
+  let prevTermMag = Infinity;
+  for (let k = 1; k <= 600; k++) {
+    const B2k = bernoulli(2 * k, work);
+    if (B2k.mantissa === 0n) {
+      // B_{2k} should be nonzero for all k ≥ 1; only happens at
+      // precision underflow, which means we've reached the noise floor.
+      break;
+    }
+    // Coefficient as a BigFloat: pochNum / factDen.
+    // Build via the same long-division pattern as `bernoulli` so we get a
+    // properly-normalised BigFloat without going through fromInt + div
+    // (which round-trips through normalised mantissas twice).
+    const coeff = ratioBigInt(pochNum, factDen, work);
+    const term = mul(mul(B2k, coeff, work), zPow, work);
+    const termAbsMan = term.mantissa < 0n ? -term.mantissa : term.mantissa;
+    const termBits = bitLength(termAbsMan);
+    const termMag = term.exponent + termBits;
+    if (termMag < -prec - 16) {
+      result = add(result, term, work);
+      break;
+    }
+    // Divergence guard — Poincaré-asymptotic series.
+    if (termMag > prevTermMag) {
+      break;
+    }
+    result = add(result, term, work);
+    prevTermMag = termMag;
+    // Advance Pochhammer: (s)_{2(k+1)-1} = (s)_{2k+1} =
+    //   (s)_{2k-1} · (s + 2k - 1) · (s + 2k).
+    pochNum = pochNum * BigInt(s + 2 * k - 1) * BigInt(s + 2 * k);
+    // Advance factorial: (2(k+1))! = (2k)! · (2k+1) · (2k+2).
+    factDen = factDen * BigInt(2 * k + 1) * BigInt(2 * k + 2);
+    // Advance zPow: 1/z^{s+2(k+1)-1} = 1/z^{s+2k+1} = current · 1/z².
+    zPow = mul(zPow, oneOverZ2, work);
+  }
+  return normalise(result.mantissa, result.exponent, prec);
+}
+
+/**
+ * Exact rational `num / den` as a BigFloat at `prec` bits. Both inputs
+ * are BigInts; the long-division pattern mirrors `bernoulli` above so
+ * that the result is a properly-normalised BigFloat with a sticky bit.
+ *
+ * Internal to the Hurwitz path; used to form the Pochhammer / factorial
+ * coefficient at each Euler-Maclaurin step. Keeping the integer
+ * Pochhammer product *as a BigInt* (rather than accumulating as a
+ * BigFloat) means every term carries the same exact numerator until the
+ * very last division — no compounding rounding from the Pochhammer.
+ */
+function ratioBigInt(num: bigint, den: bigint, prec: number): BigFloat {
+  if (num === 0n) return { mantissa: 0n, exponent: 0, precision: prec };
+  const safety = 32;
+  const workingBits = prec + safety;
+  const sign = num < 0n ? -1n : 1n;
+  const absNum = sign === -1n ? -num : num;
+  const numShifted = absNum << BigInt(workingBits);
+  const q = numShifted / den;
+  const remainder = numShifted - q * den;
+  const qWithSticky = remainder === 0n ? q : q | 1n;
+  return normalise(sign * qWithSticky, -workingBits, prec);
+}
+
+/**
+ * `ψ^(m)(z)` for `m ≥ 2`, real `z > 0`, via the Hurwitz-zeta route.
+ *
+ * Algorithm (R2 §2.2, PHASE2-impl-plans §I1b, mirroring Boost.Math's
+ * `polygamma_atinfinityplus`):
+ *
+ *   1. Identity (DLMF §5.15.2):
+ *          ψ^(m)(z) = (-1)^(m+1) · m! · ζ(m+1, z)        m ≥ 1.
+ *
+ *   2. Recurrence shift (DLMF §5.15.5):
+ *          ψ^(m)(z) = ψ^(m)(z+N)  −  (-1)^m · m! · Σ_{k=0}^{N-1} (z+k)^{-(m+1)}.
+ *      Choose N so `z + N > shiftThreshold ≈ 0.17·(prec + 2m + 96)`,
+ *      large enough for the Euler-Maclaurin asymptotic at step 3.
+ *
+ *   3. Evaluate `ζ(m+1, z+N)` via the Euler-Maclaurin / Stirling-analogue
+ *      asymptotic (see `hurwitzZetaEulerMaclaurin` above).
+ *
+ *   4. Multiply by `(-1)^(m+1) · m!` to recover `ψ^(m)(z+N)`, then add
+ *      back the shift correction:
+ *          ψ^(m)(z) = (-1)^(m+1) · m! · (ζEM + Σ_{k=0}^{N-1} (z+k)^{-(m+1)}).
+ *      Equivalent, by factoring the (−1)^(m+1)·m! across both pieces.
+ *
+ * Why the shift is non-optional: the Euler-Maclaurin series is
+ * Poincaré-asymptotic in 1/z, and the (s)_{2k-1} Pochhammer factor
+ * grows like (2k)! / m!, so at small `z` even the smallest term is
+ * large and we cannot reach `2^-prec` accuracy. The shift trades
+ * `N ≈ shiftThreshold − z` arithmetic operations (each a BigFloat
+ * power and a subtract-from-running-sum) for an asymptotic series
+ * that actually converges to the noise floor.
+ *
+ * MUTATION-PROOF MARKERS this function pins:
+ *   M1. The leading sign is `(-1)^(m+1)`. Flipping to `(-1)^m` changes
+ *       the sign of every output; `polygamma(2, 1) = −2ζ(3)` flips
+ *       sign and the golden test goes RED.
+ *   M2. The recurrence shift is mandatory. Removing it (calling the
+ *       Euler-Maclaurin helper at small `z`) produces precision
+ *       collapse — `polygamma(2, 1)` would be off by orders of
+ *       magnitude. Test pinned.
+ *   M3. The shift-correction sum and the Hurwitz-zeta evaluation must
+ *       be combined with consistent overall sign. The grouping above
+ *       — `(-1)^(m+1) · m! · (ζEM + Σ (z+k)^{-(m+1)})` — comes
+ *       directly from the ζ(m+1, z) = Σ + ζ(m+1, z+N) decomposition.
+ *       Adding instead of subtracting the shift sum (or computing it
+ *       at the wrong sign) breaks `polygamma(2, 2) = polygamma(2, 1) +
+ *       2 = −0.4041…`. Pinned.
+ *
+ * Domain: real `z > 0`. The reflection branch (DLMF §5.15.6, involving
+ * derivatives of `cot(π z)`) is deferred to v0.2; for `z ≤ 0` this
+ * function throws, matching the behaviour of `trigamma` pre-`zhrm`
+ * historically (the I1a / digamma-trigamma-reflection bead is the
+ * parallel lift that adds reflection for m = 0, 1).
+ */
+function polygammaHurwitz(m: number, z: BigFloat, prec: number): BigFloat {
+  if (sgn(z) <= 0) {
+    // Reflection for m ≥ 2 deferred — see docstring.
+    throw new RangeError(
+      `polygamma: m ≥ 2 with z ≤ 0 not implemented (reflection branch deferred to v0.2)`,
+    );
+  }
+  // Working precision: bump by 96 bits as for the digamma/trigamma path,
+  // plus extra room for the factorial(m!) multiplier which contributes
+  // about `m · log2(m)` bits of magnitude that can amplify rounding.
+  // Appendix B prescription: `work = prec + 96 + 2 · ceil(log2(m + 1))`.
+  const work = prec + 96 + 2 * Math.ceil(Math.log2(m + 1));
+  // Shift threshold (Appendix B): max(8, ceil(0.17 · (prec + 2m + 96))).
+  // The `2m` term absorbs the additional factorial growth in the
+  // Pochhammer `(m+1)_{2k-1}` — for large m the series is more
+  // asymptotic and needs larger z to be useful.
+  const shiftThreshold = Math.max(
+    8,
+    Math.ceil(0.17 * (prec + 2 * m + 96)),
+  );
+  const zFloat = toFloat64(z).value;
+  if (!Number.isFinite(zFloat)) {
+    throw new RangeError(`polygamma: argument too large`);
+  }
+  const N = Math.max(0, Math.ceil(shiftThreshold - zFloat));
+  // Shift sum: Σ_{k=0}^{N-1} (z+k)^{-(m+1)}.
+  // For each k, raise (z+k) to the power -(m+1). `powInt` accepts
+  // negative exponents and inverts at the end — a single division per
+  // term — which is the right cost shape here (m+1 is small, N is
+  // O(prec)).
+  let shiftSum: BigFloat = { mantissa: 0n, exponent: 0, precision: work };
+  for (let k = 0; k < N; k++) {
+    const zk = add(z, fromInt(BigInt(k), work), work);
+    const inv = powInt(zk, -(m + 1), work);
+    shiftSum = add(shiftSum, inv, work);
+  }
+  // Hurwitz zeta at the shifted argument.
+  const zShifted = N > 0 ? add(z, fromInt(BigInt(N), work), work) : z;
+  const zetaTail = hurwitzZetaEulerMaclaurin(m + 1, zShifted, work);
+  // Full ζ(m+1, z) = shiftSum + zetaTail (since ζ(m+1, z) = Σ_{k=0}^{N-1}
+  //   (z+k)^{-(m+1)} + Σ_{k≥N} (z+k)^{-(m+1)} = shiftSum + ζ(m+1, z+N)).
+  const zetaTotal = add(shiftSum, zetaTail, work);
+  // m! as a BigInt; convert once to BigFloat. m is small (typical use
+  // m ∈ [2, 20]), so the BigInt factorial is cheap and exact.
+  let factM = 1n;
+  for (let i = 2; i <= m; i++) factM *= BigInt(i);
+  const factMBF = fromInt(factM, work);
+  // Sign: (-1)^(m+1). Even m ⇒ sign = -1; odd m ⇒ sign = +1.
+  const signed =
+    m % 2 === 0 ? neg(mul(factMBF, zetaTotal, work)) : mul(factMBF, zetaTotal, work);
+  return normalise(signed.mantissa, signed.exponent, prec);
+}
+
+/**
  * `polygamma(m, z)` = ψ^(m)(z), the m-th derivative of digamma.
  *
- * v0.1: only `m ∈ {0, 1}` is supported. `m = 0` delegates to digamma;
- * `m = 1` to trigamma. Higher orders need a Hurwitz-zeta-based
- * implementation that v0.1 does not yet ship — they throw with a
- * pointer to the future bead.
+ * Dispatch by order:
+ *   m = 0: delegate to `digamma` (the m=0 polygamma is the digamma itself).
+ *   m = 1: delegate to `trigamma` (the dedicated Stirling-style series is
+ *          slightly cheaper than the general Hurwitz route, and the
+ *          existing tests pin it byte-identical).
+ *   m ≥ 2: route through `polygammaHurwitz` — the Hurwitz-zeta /
+ *          Euler-Maclaurin algorithm described above (R2 §2.2).
+ *
+ * The trigamma vs polygamma-m≥2 split is by design, not by accident.
+ * `trigamma`'s series `ψ'(z) = 1/z + 1/(2z²) + Σ B_{2k}/z^{2k+1}` is
+ * just the m=1 specialisation of the Euler-Maclaurin Hurwitz formula
+ * — but it's been in the codebase since v0.1 with golden tests pinning
+ * it to 50 decimal places, so re-routing it through the generic helper
+ * would change exactly nothing observable and would risk byte-level
+ * regression. Keep the specialised path; let `polygammaHurwitz` handle
+ * the m ≥ 2 case it was designed for.
+ *
+ * Hallucination warning: `m = 0` is NOT a special case of the Hurwitz
+ * identity — `ψ^(0)(z) = ψ(z) = -γ + Σ (1/k − 1/(z+k-1))` is finite,
+ * but `ζ(1, z)` diverges (the Hurwitz zeta has a simple pole at s = 1).
+ * The identity `ψ^(m)(z) = (-1)^(m+1) · m! · ζ(m+1, z)` requires `m ≥ 1`
+ * for this reason. Hence the dispatch routes m=0 to `digamma` directly.
  */
 export function polygamma(m: number, z: BigFloat, prec: number): BigFloat {
   if (!Number.isInteger(m) || m < 0) {
@@ -468,7 +867,5 @@ export function polygamma(m: number, z: BigFloat, prec: number): BigFloat {
   }
   if (m === 0) return digamma(z, prec);
   if (m === 1) return trigamma(z, prec);
-  throw new RangeError(
-    `polygamma: orders m ≥ 2 not implemented in v0.1 (filed for v0.2 via Hurwitz zeta)`,
-  );
+  return polygammaHurwitz(m, z, prec);
 }

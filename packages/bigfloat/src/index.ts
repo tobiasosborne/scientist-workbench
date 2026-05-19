@@ -164,6 +164,11 @@ export {
 } from "./special-funcs/besselk.js";
 
 export {
+  bigIncompleteGammaUpper,
+  bigIncompleteGammaLower,
+} from "./special-funcs/incomplete-gamma.js";
+
+export {
   ln2,
   pi,
   e,

@@ -291,6 +291,131 @@ describe("trigamma", () => {
   });
 });
 
+describe("digamma — negative-argument reflection lift (bead 2awg)", () => {
+  // DLMF §5.5.4: ψ(1 − z) − ψ(z) = π · cot(π z)  ⟹  ψ(z) = ψ(1 − z) − π·cot(π z).
+  // The sign on the cot term is load-bearing — see (M1) below.
+  //
+  // Mutation-proof markers (per PHASE2-impl-plans §I1a):
+  //   (M1) Flipping the sign on the cot term (ψ = ψ(1−z) + π·cot(π z))
+  //        leaves half-integer z (cot = 0) untouched but breaks every
+  //        non-half-integer negative z. The z = -0.3 mpmath gold below
+  //        catches this — ψ(-0.3) ≈ +2.1133, the +cot mutation yields
+  //        ≈ -2.4513. RED-confirmed by inverting the sub→add at the
+  //        last line of digammaReflect.
+  //   (M3) Swapping sin/cos in the cot construction inverts cot →
+  //        tan(πζ), which is ~ζ near integer ζ instead of ~1/ζ — every
+  //        reflection value comes out wildly wrong (half-integer too:
+  //        sin/cos = 0 → +∞ in tan; ψ(-0.5) value pin is the witness).
+  //        RED-confirmed by swapping cos/sin argument order in the
+  //        `div(cosPiZeta, sinPiZeta, …)` line.
+  //
+  // (M2 — dropping the lossBits bump — is the spec's stated third
+  // mutation, but in the present substrate it fires only in
+  // architectural corners that the value pins below don't surface.
+  // The reduce-first pattern alone (form `ζ = z − round(z)` before
+  // multiplying by π, so `sin`'s reduction sees a small angle directly)
+  // is what carries the near-pole precision; the lossBits bump remains
+  // in the code as belt-and-braces consistency with `cdigammaReflect`
+  // and `lgammaRealAbs`, but on the real axis with z's mantissa carried
+  // at high precision, the +32 substrate margin plus the +96 internal
+  // bump of the positive-branch `digamma(1−z)` recursive call already
+  // absorb the cancellation depth. The near-pole pin at z = -0.999
+  // below verifies value-correctness, not the lossBits bump per se.)
+
+  test("ψ(-0.5) = 2 - γ - 2 log 2 (mpmath at 50 dps)", () => {
+    // Closed form: cot(-π/2) = 0, so the reflection collapses to ψ(-0.5)
+    // = ψ(1.5) = ψ(0.5) + 1/0.5 = (-γ - 2 log 2) + 2 = 2 - γ - 2 log 2.
+    // From the pinned ψ(1/2) test above:
+    //   ψ(1/2) = -1.9635100260214234794409763329987555671931596046604
+    // So ψ(-1/2) = 0.0364899739785765205590236670012444328068403953395...
+    // (mpmath agrees: 0.036489973978576520559023667001244432806840039533956...
+    // — the bead 2awg G8 "canonical opposing Boost-1.83" value.)
+    const r = digamma(fromString("-0.5", PREC50DPS), PREC50DPS);
+    expect(toString(r, 50)).toBe("0.036489973978576520559023667001244432806840395339566");
+    // Cross-check: ψ(-0.5) + ψ(0.5) should equal -2γ - 4log2 + 2 = -2·(γ+2log2−1)
+    //   = -2·0.9635100260214234794409763329987555671931596046604
+    //   = -1.9270200520428469588819526659975111343863192093208
+    // Equivalently ψ(-0.5) + ψ(0.5) = ψ(0.5) + 2 + ψ(0.5) = 2·ψ(0.5) + 2.
+    const sumLift = sub(
+      digamma(fromString("-0.5", PREC50DPS), PREC50DPS),
+      digamma(fromString("0.5", PREC50DPS), PREC50DPS),
+      PREC50DPS,
+    );
+    // ψ(-0.5) - ψ(0.5) = 2 exactly (the recurrence).
+    expect(toFloat64(abs(sub(sumLift, fromInt(2n, PREC50DPS), PREC50DPS))).value)
+      .toBeLessThan(1e-45);
+  });
+
+  test("ψ(-1.5) ≈ 0.70315664064524318... (mpmath)", () => {
+    // mpmath.digamma(-1.5) = 0.703156640645243187225690333667911099473507062006232...
+    const r = digamma(fromString("-1.5", PREC50DPS), PREC50DPS);
+    expect(toString(r, 50)).toBe("0.70315664064524318722569033366791109947350706200623");
+  });
+
+  test("ψ(-2.5) ≈ 1.10315664064524318... (mpmath)", () => {
+    // mpmath.digamma(-2.5) = ψ(-1.5) + 1/(-2.5) + 1/(-1.5) -- check via
+    // recurrence: ψ(z+1) = ψ(z) + 1/z so ψ(-1.5) = ψ(-2.5) + 1/(-2.5),
+    // and ψ(-2.5) = ψ(-1.5) - 1/(-2.5) = 0.7031566 + 0.4 = 1.1031566.
+    const r = digamma(fromString("-2.5", PREC50DPS), PREC50DPS);
+    expect(toString(r, 50)).toBe("1.1031566406452431872256903336679110994735070620062");
+  });
+
+  test("ψ(-0.3) ≈ 2.11330977963539... (mpmath; (M1) sign-flip witness)", () => {
+    // mpmath.digamma(mpf("-0.3")) = 2.113309779635398718584726088771875390355199145797...
+    // The +cot-sign mutation yields ψ(1.3) + π·cot(-0.3π) = -0.1694 + (-2.2818) =
+    // -2.4513 — wrong sign AND wrong magnitude. Half-integer z above cannot
+    // catch this because cot(πz) = 0 there.
+    const r = digamma(fromString("-0.3", PREC50DPS), PREC50DPS);
+    expect(toString(r, 50)).toBe("2.1133097796353987185847260887718753903551991457978");
+  });
+
+  test("ψ(-0.999) at 100 dps — near-pole value correctness", () => {
+    // ζ = -0.999 - (-1) = 0.001, ~10 bits below 1. The cot(πz) term is
+    // ≈ 1/(πζ) ≈ 318, dominating the result. Pinning the high-prec
+    // answer verifies the reduce-first reflection holds precision
+    // through the near-pole regime. mpmath.digamma(mpf("-999")/1000) at
+    // 110 dps: -999.5745709308092994704716134686482274991257459049111...
+    const P100 = decimalToBinaryPrecision(100);
+    const r = digamma(fromString("-0.999", P100), P100);
+    expect(toString(r, 50)).toBe("-999.57457093080929947047161346864822749912574590491");
+  });
+
+  test("trigamma ψ'(-0.5) = π²/2 + 4 (DLMF §5.15.3 — half-integer closed form)", () => {
+    // mpmath.trigamma(mpf(-1)/2) = 8.93480220054467930941724549993807556765684970362...
+    // (π²/2 = 4.9348022005446793... + 4 = 8.9348022005446793...)
+    const r = trigamma(fromString("-0.5", PREC50DPS), PREC50DPS);
+    expect(toString(r, 50)).toBe("8.9348022005446793094172454999380755676568497036204");
+  });
+
+  test("trigamma ψ'(-1.5) ≈ 9.379246644989123... (mpmath)", () => {
+    // mpmath.trigamma(mpf(-3)/2) = 9.379246644989123753861689944382520012101294148064839...
+    // By recurrence ψ'(z+1) = ψ'(z) - 1/z²: ψ'(-0.5) = ψ'(-1.5) - 1/(-1.5)²
+    //   ⟹ ψ'(-1.5) = ψ'(-0.5) + 4/9 = 8.93480... + 0.44444... = 9.37925...
+    const r = trigamma(fromString("-1.5", PREC50DPS), PREC50DPS);
+    expect(toString(r, 50)).toBe("9.3792466449891237538616899443825200121012941480648");
+  });
+
+  test("trigamma ψ'(-0.3) ≈ 13.945160267... (non-half-integer; (M3) cot/tan witness)", () => {
+    // mpmath.trigamma(mpf("-0.3")) = 13.945160267805721737956755092119029758510120297405143...
+    // (M3) lift uses (π/sin(πζ))²; if sin were replaced by cos the
+    // value would be (π/cos(πζ))² which at ζ = 0.3 - rather, at z = -0.3
+    // we reduce: m = round(-0.3) = 0, ζ = -0.3. (π/cos(-0.3π))² =
+    // (π/0.5878)² ≈ 28.6, way off from 13.945.
+    const r = trigamma(fromString("-0.3", PREC50DPS), PREC50DPS);
+    expect(toString(r, 50)).toBe("13.945160267805721737956755092119029758510120297405");
+  });
+
+  test("poles still throw — ψ(0), ψ(-1), ψ'(0), ψ'(-2)", () => {
+    // Existing convention: gamma at non-positive integers throws
+    // RangeError (see "gamma — poles" suite above). Mirror exactly.
+    expect(() => digamma(fromInt(0n, 53), 53)).toThrow(RangeError);
+    expect(() => digamma(fromInt(-1n, 53), 53)).toThrow(RangeError);
+    expect(() => digamma(fromInt(-3n, 53), 53)).toThrow(RangeError);
+    expect(() => trigamma(fromInt(0n, 53), 53)).toThrow(RangeError);
+    expect(() => trigamma(fromInt(-2n, 53), 53)).toThrow(RangeError);
+  });
+});
+
 describe("polygamma dispatch", () => {
   test("polygamma(0, z) === digamma(z)", () => {
     const a = polygamma(0, fromInt(3n, 100), 100);
@@ -303,8 +428,115 @@ describe("polygamma dispatch", () => {
     const b = trigamma(fromInt(5n, 100), 100);
     expect(toFloat64(sub(a, b, 100)).value).toBeCloseTo(0, 25);
   });
+});
 
-  test("polygamma(2, z) throws (deferred to v0.2)", () => {
-    expect(() => polygamma(2, fromInt(1n, 53), 53)).toThrow(RangeError);
+describe("polygamma m≥2 via Hurwitz zeta (bead 7znk / I1b)", () => {
+  // Reference values computed via the polygamma identity itself at 160 dps
+  // and cross-validated against DLMF §5.15 closed forms:
+  //
+  //   ψ^(2)(1)   = (-1)^3 · 2! · ζ(3)              [DLMF §5.15.2]
+  //              = -2 · 1.2020569031595942853997381615114499907649862923405
+  //              = -2.4041138063191885707994763230228999815299725846810
+  //
+  //   ψ^(2)(1/2) = -14 · ζ(3)                       [DLMF §5.15.3 / §25.6.4:
+  //                                                  ζ(s, 1/2) = (2^s − 1) ζ(s)]
+  //              = -16.828796644234319995596334261160299870709808092767
+  //
+  //   ψ^(3)(1)   = (-1)^4 · 3! · ζ(4)               [DLMF §5.15.2]
+  //              = 6 · π⁴/90  =  π⁴/15
+  //              = 6.4939394022668291490960221792470074166485057115124
+  //
+  //   ψ^(2)(2)   = ψ^(2)(1) + 2!/1^3                [DLMF §5.15.5,
+  //                                                  d^m/dz^m(1/z) = (-1)^m m! z^{-(m+1)}]
+  //              = -2.4041138063... + 2
+  //              = -0.40411380631918857079947632302289998152997258468100
+  //
+  // MUTATION-PROOF MARKERS this block pins (CLAUDE.md Rule 7, Rule 6
+  // port-and-verify discipline):
+  //
+  //   M1. Leading sign `(-1)^(m+1)` in `ψ^(m) = (-1)^(m+1) · m! · ζ(m+1, z)`.
+  //       Flipping to `(-1)^m` would make polygamma(2, 1) = +2ζ(3) ≈ +2.4041
+  //       instead of -2.4041. Pinned to 50 dps by the first golden.
+  //
+  //   M2. Recurrence shift in `polygammaHurwitz`. Without the shift the
+  //       Euler-Maclaurin asymptotic is evaluated at small z (z = 1 or
+  //       z = 0.5) where it diverges — the optimal-truncation error is
+  //       O(1) at best. The polygamma(2, 1) golden catches this
+  //       immediately.
+  //
+  //   M3. Bernoulli index B_{2k} (not B_{2k+2}, not B_k) in the
+  //       Euler-Maclaurin coefficient. Shifting the index changes the
+  //       leading correction term magnitude by orders. The closed-form
+  //       polygamma(3, 1) = π⁴/15 test catches this.
+  //
+  //   M4. Pochhammer (s)_{2k-1} = s(s+1)…(s+2k-2) has *2k-1 factors*,
+  //       starting at s. Using 2k factors or starting at s-1 misaligns
+  //       the series. Pinned by polygamma(3, 1) = π⁴/15 at 50 dps.
+
+  test("polygamma(2, 1) = -2·ζ(3) at 50 dps (DLMF §5.15.2)", () => {
+    const r = polygamma(2, fromInt(1n, PREC50DPS), PREC50DPS);
+    expect(toString(r, 50)).toBe("-2.4041138063191885707994763230228999815299725846810");
+  });
+
+  test("polygamma(2, 1/2) = -14·ζ(3) at 50 dps (DLMF §5.15.3)", () => {
+    // ζ(s, 1/2) = (2^s − 1) ζ(s) gives ζ(3, 1/2) = 7 ζ(3),
+    // so ψ''(1/2) = -2 · 7 ζ(3) = -14 ζ(3).
+    const r = polygamma(2, fromString("0.5", PREC50DPS), PREC50DPS);
+    expect(toString(r, 50)).toBe("-16.828796644234319995596334261160299870709808092767");
+  });
+
+  test("polygamma(3, 1) = π⁴/15 at 50 dps (DLMF §5.15.2 with ζ(4) = π⁴/90)", () => {
+    // ψ'''(1) = 6 · ζ(4) = 6 · π⁴/90 = π⁴/15.  Pinning to the closed
+    // form via the same `pi(prec)` chain catches drift in the polygamma
+    // path independent of the Bernoulli oracle.
+    const r = polygamma(3, fromInt(1n, PREC50DPS), PREC50DPS);
+    const piVal = pi(PREC50DPS);
+    const pi2 = mul(piVal, piVal, PREC50DPS);
+    const pi4 = mul(pi2, pi2, PREC50DPS);
+    const expected = div(pi4, fromInt(15n, PREC50DPS), PREC50DPS);
+    expect(toFloat64(abs(sub(r, expected, PREC50DPS))).value).toBeLessThan(1e-45);
+  });
+
+  test("polygamma(2, 2) = ψ''(1) + 2 (DLMF §5.15.5 recurrence)", () => {
+    // Differentiating ψ(z+1) = ψ(z) + 1/z m times gives
+    //   ψ^(m)(z+1) = ψ^(m)(z) + (-1)^m · m! · z^{-(m+1)}.
+    // For m = 2 at z = 1: ψ''(2) = ψ''(1) + 2!/1^3 = ψ''(1) + 2.
+    // Cross-check via two independent polygamma evaluations — the
+    // recurrence is structural, not a property of the algorithm, so
+    // a wrong sign-grouping in `polygammaHurwitz` breaks it.
+    const at1 = polygamma(2, fromInt(1n, PREC50DPS), PREC50DPS);
+    const at2 = polygamma(2, fromInt(2n, PREC50DPS), PREC50DPS);
+    const diff = sub(at2, at1, PREC50DPS);
+    expect(toFloat64(abs(sub(diff, fromInt(2n, PREC50DPS), PREC50DPS))).value).toBeLessThan(1e-45);
+  });
+
+  test("sign discriminates m=1 (trigamma positive) vs m=2 (polygamma negative)", () => {
+    // ψ'(1) = ζ(2) = π²/6 ≈ +1.6449  (positive — m=1 odd, (-1)^2 = +1)
+    // ψ''(1) = -2 ζ(3) ≈ -2.4041     (NEGATIVE — m=2 even, (-1)^3 = -1)
+    // The (-1)^(m+1) sign flip between odd-m and even-m is the
+    // load-bearing M1 signal. The cross-function gap is ~4 — any sign
+    // mistake on either side collapses the gap.
+    const tri = trigamma(fromInt(1n, PREC50DPS), PREC50DPS);
+    const m2 = polygamma(2, fromInt(1n, PREC50DPS), PREC50DPS);
+    expect(toFloat64(tri).value).toBeGreaterThan(1.5);
+    expect(toFloat64(m2).value).toBeLessThan(-2);
+    expect(toFloat64(tri).value - toFloat64(m2).value).toBeGreaterThan(4);
+  });
+
+  test("polygamma(m, z) finite for m ∈ {2, 3, 5, 8} at z = 1.5 (no-throw smoke)", () => {
+    // Stability sweep across orders. Values themselves are pinned by
+    // the closed-form tests above; here we confirm dispatch / shift /
+    // Euler-Maclaurin stays finite at moderate m.
+    for (const m of [2, 3, 5, 8]) {
+      const r = polygamma(m, fromString("1.5", PREC50DPS), PREC50DPS);
+      expect(Number.isFinite(toFloat64(r).value)).toBe(true);
+    }
+  });
+
+  test("polygamma(2, z) for z ≤ 0 throws (reflection deferred to v0.2)", () => {
+    // The m ≥ 2 reflection branch (DLMF §5.15.6, derivatives of cot(πz))
+    // is non-trivial and deferred per R2 §2.2 final paragraph.
+    expect(() => polygamma(2, fromString("-0.5", PREC50DPS), PREC50DPS)).toThrow();
+    expect(() => polygamma(2, fromInt(0n, PREC50DPS), PREC50DPS)).toThrow();
   });
 });
