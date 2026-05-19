@@ -33,7 +33,9 @@ const r = gaussKronrodAdaptive(Math.sin, 0, Math.PI);
 The integrand `f` is a `Value` tree over the closed vocabulary admitted
 by `@workbench/quadrature`'s `evalNumericExprWithSpecial` (the
 Erf-aware sibling of the elementary evaluator — ADR-0040 §"Decision
-4", bead `scientist-workbench-3ynw` / I5 `xiry`, worklog 133 + 140):
+4", bead `scientist-workbench-3ynw` / I5 `xiry`, worklog 133 + 140;
+the Bessel additivity extension shipped with the Bessel epic, ADR-0041
+§"Decision 4"):
 
 - **Elementary heads:** `+`, `-`, `*`, `/`, `^`, `neg`, `exp`, `sin`,
   `cos`, `tan`, `log`, `sqrt`, `abs`, `asin`, `acos`, `atan`, `sinh`,
@@ -43,6 +45,14 @@ Erf-aware sibling of the elementary evaluator — ADR-0040 §"Decision
   `Erfc`, `Erfcx`, `Erfi`, `InverseErf`, `InverseErfc`. All unary;
   argument may be any closed-vocabulary subexpression (so
   `Erf(sin(x))`, `Erf(x)·exp(-x²)`, and `sin(Erf(x))` are all valid).
+- **Bessel-family heads** (ADR-0041 §"Decision 4"; substrate
+  `packages/quadrature/src/special-funcs/bessel-float64.ts`): `BesselJ`,
+  `BesselY`, `BesselI`, `BesselK`. All arity-2 `(ν, z)` with ν the
+  order and z the argument; both slots may be any closed-vocabulary
+  subexpression (so `BesselJ(0, x)`, `x·BesselJ(0, j01·x)^2`, and
+  `BesselK(rational(1,3), exp(x))` are all valid). `BesselIScaled` /
+  `BesselKScaled` are *not* admitted as primary heads — compose them
+  via `Exp(-Abs(z)) · BesselI(ν, z)` etc.
 - **Constants:** `pi`, `e`.
 - **Numeric leaves:** `integer`, `rational`, `float64`.
 - **Variable:** any `symbol` matching the `var` field; other symbols
@@ -191,11 +201,24 @@ forbidden to "regenerate the manifest to make the tool pass."
 ## Run
 
 ```sh
+# ∫_0^π sin(x) dx = 2
 echo '{"kind":"record","fields":{
   "f":{"kind":"expression","head":"sin","args":[{"kind":"symbol","name":"x"}]},
   "var":{"kind":"symbol","name":"x"},
   "a":{"kind":"float64","bits":"0000000000000000"},
   "b":{"kind":"float64","bits":"400921fb54442d18"}}}' \
+  | bun tools/integrate-1d/tool.ts
+
+# ∫_0^1 x · J_0(x) dx = J_1(1) ≈ 0.4400505857
+echo '{"kind":"record","fields":{
+  "f":{"kind":"expression","head":"*","args":[
+        {"kind":"symbol","name":"x"},
+        {"kind":"expression","head":"BesselJ","args":[
+          {"kind":"float64","bits":"0000000000000000"},
+          {"kind":"symbol","name":"x"}]}]},
+  "var":{"kind":"symbol","name":"x"},
+  "a":{"kind":"float64","bits":"0000000000000000"},
+  "b":{"kind":"float64","bits":"3ff0000000000000"}}}' \
   | bun tools/integrate-1d/tool.ts
 ```
 
