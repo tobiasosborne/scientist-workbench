@@ -96,6 +96,28 @@ import {
   besselIFloat64,
   besselKFloat64,
 } from "./special-funcs/bessel-float64.js";
+import {
+  gammaFloat64,
+  lgammaFloat64,
+  digammaFloat64,
+  trigammaFloat64,
+  polygammaFloat64,
+  pochhammerFloat64,
+  gammaPFloat64,
+  gammaQFloat64,
+  incGammaUpperFloat64,
+  incGammaLowerFloat64,
+  invGammaPFloat64,
+  invGammaQFloat64,
+  betaFloat64,
+  logBetaFloat64,
+  gammaRatioFloat64,
+  gammaDeltaRatioFloat64,
+  gammaPDerivativeFloat64,
+  incBetaFloat64,
+  barnesGFloat64,
+  hyperfactorialFloat64,
+} from "./special-funcs/gamma-float64.js";
 
 /**
  * Special-function heads admitted in addition to the elementary
@@ -120,6 +142,32 @@ export const SPECIAL_HEADS: readonly string[] = [
   "BesselY",
   "BesselI",
   "BesselK",
+  // Gamma family (ADR-0042 §Decision 4). 19 ADMITTED_HEADS per R3 §1.
+  // Vocabulary admits 6 new heads (LogGamma, Pochhammer, IncompleteGamma
+  // Upper/Lower, Beta, BarnesG) per Decision 6; the float64 dispatcher
+  // admits more (P/Q regularised, ratios, derivative, LogBeta,
+  // Hyperfactorial, inverse P/Q) — the Erfi-precedent split between
+  // vocab admission and dispatcher admission.
+  "Gamma",
+  "LogGamma",
+  "Digamma",
+  "Trigamma",
+  "Polygamma",
+  "Pochhammer",
+  "IncompleteGammaUpper",
+  "IncompleteGammaLower",
+  "IncompleteGammaP",
+  "IncompleteGammaQ",
+  "InverseIncompleteGammaP",
+  "InverseIncompleteGammaQ",
+  "Beta",
+  "LogBeta",
+  "IncompleteBeta",
+  "BarnesG",
+  "Hyperfactorial",
+  "GammaRatio",
+  "GammaDeltaRatio",
+  "GammaPDerivative",
 ];
 
 /** Union of elementary + special heads, exported for tool layer messages. */
@@ -204,6 +252,28 @@ const SPECIAL_DISPATCH = new Map<string, (args: number[]) => number>([
       return besselKFloat64(a[0]!, a[1]!);
     },
   ],
+  // Gamma family (ADR-0042 §Decision 4). Per R3 §1 verbatim-port table.
+  // See `gamma-float64.ts` for per-function narrative.
+  ["Gamma", (a) => { requireArity("Gamma", a, 1); return gammaFloat64(a[0]!); }],
+  ["LogGamma", (a) => { requireArity("LogGamma", a, 1); return lgammaFloat64(a[0]!).value; }],
+  ["Digamma", (a) => { requireArity("Digamma", a, 1); return digammaFloat64(a[0]!); }],
+  ["Trigamma", (a) => { requireArity("Trigamma", a, 1); return trigammaFloat64(a[0]!); }],
+  ["BarnesG", (a) => { requireArity("BarnesG", a, 1); return barnesGFloat64(a[0]!); }],
+  ["Hyperfactorial", (a) => { requireArity("Hyperfactorial", a, 1); return hyperfactorialFloat64(a[0]!); }],
+  ["Polygamma", (a) => { requireArity("Polygamma", a, 2); return polygammaFloat64(a[0]!, a[1]!); }],
+  ["Pochhammer", (a) => { requireArity("Pochhammer", a, 2); return pochhammerFloat64(a[0]!, a[1]!); }],
+  ["IncompleteGammaP", (a) => { requireArity("IncompleteGammaP", a, 2); return gammaPFloat64(a[0]!, a[1]!); }],
+  ["IncompleteGammaQ", (a) => { requireArity("IncompleteGammaQ", a, 2); return gammaQFloat64(a[0]!, a[1]!); }],
+  ["IncompleteGammaLower", (a) => { requireArity("IncompleteGammaLower", a, 2); return incGammaLowerFloat64(a[0]!, a[1]!); }],
+  ["IncompleteGammaUpper", (a) => { requireArity("IncompleteGammaUpper", a, 2); return incGammaUpperFloat64(a[0]!, a[1]!); }],
+  ["InverseIncompleteGammaP", (a) => { requireArity("InverseIncompleteGammaP", a, 2); return invGammaPFloat64(a[0]!, a[1]!); }],
+  ["InverseIncompleteGammaQ", (a) => { requireArity("InverseIncompleteGammaQ", a, 2); return invGammaQFloat64(a[0]!, a[1]!); }],
+  ["Beta", (a) => { requireArity("Beta", a, 2); return betaFloat64(a[0]!, a[1]!); }],
+  ["LogBeta", (a) => { requireArity("LogBeta", a, 2); return logBetaFloat64(a[0]!, a[1]!).value; }],
+  ["GammaRatio", (a) => { requireArity("GammaRatio", a, 2); return gammaRatioFloat64(a[0]!, a[1]!); }],
+  ["GammaDeltaRatio", (a) => { requireArity("GammaDeltaRatio", a, 2); return gammaDeltaRatioFloat64(a[0]!, a[1]!); }],
+  ["GammaPDerivative", (a) => { requireArity("GammaPDerivative", a, 2); return gammaPDerivativeFloat64(a[0]!, a[1]!); }],
+  ["IncompleteBeta", (a) => { requireArity("IncompleteBeta", a, 3); return incBetaFloat64(a[0]!, a[1]!, a[2]!); }],
 ]);
 
 function requireArity(head: string, args: number[], n: number): void {

@@ -53,6 +53,7 @@ import {
 import {
   isHalfInteger,
   isNonNegativeInteger,
+  isNonPositiveInteger,
   isPositiveInteger,
 } from "../src/pattern.js";
 
@@ -238,6 +239,105 @@ describe("isNonNegativeInteger", () => {
 });
 
 // =============================================================================
+// isNonPositiveInteger
+// =============================================================================
+//
+// The "dual" of `isNonNegativeInteger`: `n ≤ 0`. The two overlap on
+// zero (both `true` at `int(0n)`) — zero is the shared boundary of the
+// two half-lines. Used by the Gamma-family pole-refusal rules
+// (Phase 2 I4, bead `scientist-workbench-h37z`): Γ(n), LogGamma(n),
+// Digamma(n), Polygamma(m, n) all have simple poles at `n ∈ {0, -1,
+// -2, …}` and the rules must refuse with `tagged "<head>/pole"` rather
+// than emit a divergent answer.
+
+describe("isNonPositiveInteger", () => {
+  test("int(0) → true (zero IS non-positive — Γ has a pole here)", () => {
+    expect(isNonPositiveInteger(int(0n))).toBe(true);
+  });
+
+  test("int(-3) → true (Γ pole at n = -3)", () => {
+    expect(isNonPositiveInteger(int(-3n))).toBe(true);
+  });
+
+  test("int(-1) → true", () => {
+    expect(isNonPositiveInteger(int(-1n))).toBe(true);
+  });
+
+  test("int(-42) → true", () => {
+    expect(isNonPositiveInteger(int(-42n))).toBe(true);
+  });
+
+  test("int(-very-large) → true (BigInt path, no Number-precision loss)", () => {
+    // -(10^40 + 1) — far outside Number.MIN_SAFE_INTEGER.
+    const big = -BigInt("10000000000000000000000000000000000000001");
+    expect(isNonPositiveInteger(int(big))).toBe(true);
+  });
+
+  test("int(1) → true positives are NOT non-positive", () => {
+    expect(isNonPositiveInteger(int(1n))).toBe(false);
+  });
+
+  test("int(42) → false", () => {
+    expect(isNonPositiveInteger(int(42n))).toBe(false);
+  });
+
+  test("int(very-large positive) → false (BigInt path)", () => {
+    const big = BigInt("99999999999999999999999999999999999999");
+    expect(isNonPositiveInteger(int(big))).toBe(false);
+  });
+
+  test("rat(-4/2) → true (reduces to integer -2)", () => {
+    expect(isNonPositiveInteger(rat(-4n, 2n))).toBe(true);
+  });
+
+  test("rat(-1/2) → false (= -1/2 is not an exact integer)", () => {
+    expect(isNonPositiveInteger(rat(-1n, 2n))).toBe(false);
+  });
+
+  test("rat(0/5) → true (reduces to integer 0)", () => {
+    expect(isNonPositiveInteger(rat(0n, 5n))).toBe(true);
+  });
+
+  test("rat(6/3) → false (reduces to integer 2 — positive)", () => {
+    expect(isNonPositiveInteger(rat(6n, 3n))).toBe(false);
+  });
+
+  test("rat(3/2) → false (non-integer rational)", () => {
+    expect(isNonPositiveInteger(rat(3n, 2n))).toBe(false);
+  });
+
+  test("rat(-3/2) → false (non-integer rational, even though negative)", () => {
+    expect(isNonPositiveInteger(rat(-3n, 2n))).toBe(false);
+  });
+
+  test("raw non-canonical rational -4/2 → true (reduces to -2)", () => {
+    const raw: Value = { kind: "rational", num: "-4", den: "2" };
+    expect(isNonPositiveInteger(raw)).toBe(true);
+  });
+
+  test("raw rational with negative denominator (4 / -2 = -2) → true", () => {
+    const raw: Value = { kind: "rational", num: "4", den: "-2" };
+    expect(isNonPositiveInteger(raw)).toBe(true);
+  });
+
+  test("raw non-canonical rational 0/7 → true (reduces to 0)", () => {
+    const raw: Value = { kind: "rational", num: "0", den: "7" };
+    expect(isNonPositiveInteger(raw)).toBe(true);
+  });
+
+  test("degenerate rational with zero denominator → false (not throw)", () => {
+    const raw: Value = { kind: "rational", num: "0", den: "0" };
+    expect(isNonPositiveInteger(raw)).toBe(false);
+  });
+
+  for (const { label, v } of NON_NUMERIC_KINDS) {
+    test(`${label} → false (non-numeric kind)`, () => {
+      expect(isNonPositiveInteger(v)).toBe(false);
+    });
+  }
+});
+
+// =============================================================================
 // isHalfInteger
 // =============================================================================
 
@@ -367,10 +467,12 @@ describe("cross-predicate invariants", () => {
     rat(7n, 2n),
     rat(0n, 5n),
     rat(6n, 3n),
+    rat(-6n, 3n),
     rat(3n, 2n),
     rat(5n, 3n),
     sym("x"),
     float64FromNumber(0.5),
+    float64FromNumber(0.0),
     expr("f", [int(1n)]),
   ];
 
@@ -411,7 +513,36 @@ describe("cross-predicate invariants", () => {
     for (const v of CORPUS) {
       expect(typeof isPositiveInteger(v)).toBe("boolean");
       expect(typeof isNonNegativeInteger(v)).toBe("boolean");
+      expect(typeof isNonPositiveInteger(v)).toBe("boolean");
       expect(typeof isHalfInteger(v)).toBe("boolean");
+    }
+  });
+
+  test("isNonPositiveInteger ∧ isNonNegativeInteger ⟺ v == 0 (zero is the only overlap)", () => {
+    // The two non-strict half-lines share exactly the boundary {0}; on
+    // the corpus, the predicates agree iff the value reduces to integer 0.
+    for (const v of CORPUS) {
+      const both = isNonPositiveInteger(v) && isNonNegativeInteger(v);
+      const isZero =
+        (v.kind === "integer" && BigInt(v.value) === 0n) ||
+        (v.kind === "rational" && BigInt(v.num) === 0n && BigInt(v.den) !== 0n);
+      expect(both).toBe(isZero);
+    }
+  });
+
+  test("isPositiveInteger ⟹ ¬isNonPositiveInteger (strict positivity excludes ≤ 0)", () => {
+    for (const v of CORPUS) {
+      if (isPositiveInteger(v)) {
+        expect(isNonPositiveInteger(v)).toBe(false);
+      }
+    }
+  });
+
+  test("isNonPositiveInteger ⟹ ¬isHalfInteger (integers are not half-integers)", () => {
+    for (const v of CORPUS) {
+      if (isNonPositiveInteger(v)) {
+        expect(isHalfInteger(v)).toBe(false);
+      }
     }
   });
 });

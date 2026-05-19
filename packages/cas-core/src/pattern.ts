@@ -115,6 +115,13 @@
 // * `docs/adr/0041-bessel-family-per-head-substrate.md` §Decision 6 —
 //   the architectural pin: `packages/cas-core/src/pattern.ts` extends
 //   with `isPositiveInteger`, `isNonNegativeInteger`, `isHalfInteger`.
+//   `isNonPositiveInteger` joins the family for the Gamma-family pole-
+//   refusal rules (Phase 2 I4, bead `scientist-workbench-h37z`): Γ, LogGamma,
+//   Digamma all have simple poles at the non-positive integers
+//   `{0, -1, -2, …}` and the identity rules must refuse to fire there
+//   with a `tagged "<head>/pole"` rather than emitting a divergent
+//   answer. The predicate joins as a named member by the same Rule 8 /
+//   honest-scope argument that motivated the original three.
 // * `packages/cas-core/src/special-funcs/erf-identities.ts` — the
 //   styling exemplar; per-head pattern predicates currently live there
 //   (`isZeroLiteral`, `isPosInfinity`, etc.) and are bespoke. Future
@@ -289,6 +296,77 @@ export function isNonNegativeInteger(v: Value): boolean {
     if (reduced === null) return false;
     const [num, den] = reduced;
     return den === 1n && num >= 0n;
+  }
+  return false;
+}
+
+/**
+ * isNonPositiveInteger — true iff `v` encodes the exact integer `n`
+ * with `n ≤ 0`.
+ *
+ * The "dual" of `isNonNegativeInteger`. The boundary is `≤ 0`, which
+ * includes zero: zero is both non-negative and non-positive (it is the
+ * shared boundary of the two half-lines). The two predicates therefore
+ * are NOT a partition — they overlap on `{0}` and together cover the
+ * integers without leaving a hole.
+ *
+ * Accepts:
+ *   - `IntegerValue` with `value ≤ 0` (e.g. `int(0n)`, `int(-1n)`,
+ *     `int(-42n)`).
+ *   - `RationalValue` that reduces to an integer `≤ 0` (e.g.
+ *     `{kind:"rational", num:"-4", den:"2"}` reduces to `-2/1`;
+ *     returns `true`).
+ *
+ * Rejects (returns `false`):
+ *   - Positive integers (`int(1n)`, `int(42n)`).
+ *   - Non-integer rationals (`rat(-1n, 2n)` → `-1/2` is not an exact
+ *     integer; returns `false`).
+ *   - `float64` — even `float64FromNumber(0.0)` and
+ *     `float64FromNumber(-3.0)` return `false`. Exact-integer-ness is
+ *     by Value KIND, not by representable equality: a user who passed
+ *     `float64(0.0)` opted into the floating-point world and the
+ *     symbolic pole-refusal rule must NOT fire (the user might have
+ *     meant `0.0 + ε`).
+ *   - `symbol`, `string`, `expression`, `list`, `record`, `tagged`,
+ *     `boolean`.
+ *
+ * Used by (LOAD-BEARING — the gamma-identities module does not ship
+ * without this predicate):
+ *   - Γ(n) at `n ∈ {0, -1, -2, …}`: simple poles. Phase 2 I4 rule
+ *     refuses to fire with `tagged "gamma/pole"`.
+ *   - LogGamma(n) at the same locations: simple log-poles. Phase 2 I4
+ *     rule refuses with `tagged "loggamma/pole"`.
+ *   - Digamma ψ(n) at the same locations: simple poles. Phase 2 I4
+ *     rule refuses with `tagged "digamma/pole"`.
+ *   - Polygamma ψ^{(m)}(n) at the same locations for m ≥ 1: poles of
+ *     order m+1. Phase 2 I4 rule refuses with
+ *     `tagged "polygamma/pole"`.
+ *
+ * Mirrors `isPositiveInteger` / `isNonNegativeInteger` / `isHalfInteger`
+ * exactly: BigInt arithmetic on the canonical reduced form; accepts
+ * both `integer` and reduced `rational` Value kinds; the rational path
+ * reduces by GCD internally so raw non-canonical literals (e.g.
+ * `{kind:"rational", num:"-4", den:"2"}`) classify on the mathematical
+ * value, not the literal bytes.
+ *
+ * Examples:
+ *   isNonPositiveInteger(int(0n))                                  // true   (0 is non-positive)
+ *   isNonPositiveInteger(int(-3n))                                 // true
+ *   isNonPositiveInteger(int(1n))                                  // false
+ *   isNonPositiveInteger(rat(-4n, 2n))                             // true   (reduces to -2)
+ *   isNonPositiveInteger(rat(-1n, 2n))                             // false  (= -1/2 not integer)
+ *   isNonPositiveInteger(sym("n"))                                 // false
+ *   isNonPositiveInteger(float64FromNumber(0))                     // false  (float64, not exact)
+ */
+export function isNonPositiveInteger(v: Value): boolean {
+  if (v.kind === "integer") {
+    return bigintOfIntegerValueField(v.value) <= 0n;
+  }
+  if (v.kind === "rational") {
+    const reduced = normalizeRational(v);
+    if (reduced === null) return false;
+    const [num, den] = reduced;
+    return den === 1n && num <= 0n;
   }
   return false;
 }

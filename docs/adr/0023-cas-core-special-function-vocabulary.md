@@ -283,3 +283,64 @@ distinct spherical-modified-Bessel functions" without a tag-
 disambiguator the substrate doesn't yet support). See
 `docs/refs/besselj-research/R1-symbolic-identities.md` §13 for the
 per-head Erfi-precedent justification.
+
+### Amendment 3 — 2026-05-19 (ADR-0042 §"Decision 6"; bead `scientist-workbench-mozz`)
+
+The vocabulary admits six additional heads at the substrate
+prototype-3 landing (Gamma family per ADR-0042 §"Decision 6"):
+`LogGamma`, `Pochhammer`, `IncompleteGammaUpper`,
+`IncompleteGammaLower`, `Beta`, `BarnesG`. Arities: `LogGamma` and
+`BarnesG` are fixed-1; `Pochhammer(a, n)`, `IncompleteGammaUpper(a, z)`,
+`IncompleteGammaLower(a, z)`, and `Beta(a, b)` are fixed-2. Total head
+count 32 → 38. Each passes the Erfi-precedent test (Amendment 1 above)
+per R1 §1 / §2.2-§2.8 of the gamma-research artefact at
+`docs/refs/gamma-research/R1-symbolic-identities.md`: `LogGamma`
+carries principal-value semantics that `log(Gamma(z))` cannot (multi-
+valued for `z ∉ ℝ₊`); `Pochhammer` is a first-class argument in
+`HypergeometricPFQ` and every hypergeometric identity;
+`IncompleteGammaUpper` and `IncompleteGammaLower` are the primary DLMF
+Chapter 8 objects, and crucially they are the *only* Gamma-family
+heads that have canonical Meijer-G forms (shapes (2,0,1,2) and
+(1,1,1,2) respectively; ADR-0042 §"Decision 5" documents the
+structural asymmetry whereby Γ itself has *no* Meijer-G form because
+it is the building block of the G-function kernel, not a value the
+kernel produces); `Beta` is canonical in DLMF §5.12 with direct diff
+rules; `BarnesG` is an entire function of order 2 satisfying
+`G(z+1) = Γ(z)·G(z)` (DLMF §5.17.1) load-bearing for random-matrix-
+theory determinant formulae.
+
+Diff rules shipped in v0.1:
+
+| Head | d/dz rule | Source |
+|---|---|---|
+| `LogGamma(z)` | `Digamma(z)` | DLMF §5.2.2 |
+| `IncompleteGammaUpper(a, z)` | `-z^{a-1} · exp(-z)` (w.r.t. z; var ≠ a) | DLMF §8.8.2 |
+| `IncompleteGammaLower(a, z)` | `+z^{a-1} · exp(-z)` (w.r.t. z; var ≠ a) | DLMF §8.8.1 |
+| `Beta(a, b)` | `B(a, b) · [ψ(a) - ψ(a+b)]` (∂/∂a; symmetric for ∂/∂b) | DLMF §5.12.2 |
+
+Diff rules deferred to v0.2 (refuse via `cas-diff/out-of-scope` —
+honest scope per ADR-0023's original deferred-rule discipline):
+`Pochhammer(a, n)` w.r.t. either argument (discrete-`n` refusal is
+uniform with `rulePolygamma`; the continuous `a`-derivative
+`(a)_n · [ψ(a+n) - ψ(a)]` is deferred alongside the v0.2
+`applyGammaRewrites` simplify pre-pass per ADR-0042 §"Decision 13");
+`BarnesG(z)` (the rule `G(z) · [(z-1)·Digamma(z) - LogGamma(z) +
+(1/2)·log(2π)]` needs the additive-constant canonicalisation the v0.2
+pass provides); `Beta`'s multivariable both-depend case (the additive
+chain-rule composition is canonicalisable only after v0.2's pass).
+
+`IncompleteGammaP` and `IncompleteGammaQ` are deliberately NOT
+admitted as vocabulary heads (ADR-0042 §"Tension Resolution A" /
+§"Decision 4"). They are derivable from the primitives via
+`P(a, z) = IncompleteGammaLower(a, z) / Gamma(a)` and
+`Q(a, z) = IncompleteGammaUpper(a, z) / Gamma(a)`, and any v0.1
+symbolic rule for P / Q follows by dividing existing Upper / Lower
+rules. The float64 dispatcher admits P / Q as `ADMITTED_HEADS` entries
+for numerical stability (Cephes `igam.c` implements them directly),
+but the cas-core vocabulary carries only the primitives — the same
+discipline ADR-0040 used to defer `Erfcx` as a float64-only variant
+while admitting `Erfi` as a first-class vocabulary head. See
+`docs/refs/gamma-research/R1-symbolic-identities.md` §1 and ADR-0042
+§"Decision 6" / §"Tension Resolution A" for the full per-head
+Erfi-precedent justification and the P/Q dispatcher-vs-vocabulary
+split.

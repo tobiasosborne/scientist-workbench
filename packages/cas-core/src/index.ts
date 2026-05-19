@@ -152,6 +152,7 @@ export {
 export {
   isPositiveInteger,
   isNonNegativeInteger,
+  isNonPositiveInteger,
   isHalfInteger,
 } from "./pattern.js";
 

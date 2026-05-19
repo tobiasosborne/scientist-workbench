@@ -68,6 +68,10 @@ import {
   isBesselFamilyHead,
   tryBesselSimplify,
 } from "./special-funcs/bessel-identities.js";
+import {
+  isGammaFamilyHead,
+  tryGammaSimplify,
+} from "./special-funcs/gamma-identities.js";
 
 export const SIMPLIFY_TAG = "cas-simplify/out-of-scope";
 
@@ -84,19 +88,33 @@ const ERF_REWRITE_MAX_ITERATIONS = 8;
  */
 const BESSEL_REWRITE_MAX_ITERATIONS = 8;
 
+/**
+ * Bound on per-node Gamma-rewrite cascade iterations. The Gamma
+ * recurrence rules (`Γ(z+n) → Γ(z)·z·(z+1)·…`) can cascade deeper
+ * than the Bessel envelope because each recurrence application strips
+ * one shift level; a `Γ(z+5)` input takes 5 iterations to fully
+ * unroll. The bound of 16 covers `Γ(z+N)` for `N ≤ 16` cleanly and
+ * leaves headroom for the duplication-then-recurrence cascade
+ * (`Γ(2z)` → `(2^(2z-1)/√π)·Γ(z)·Γ(z+1/2)` followed by recurrence on
+ * either factor if `z` is an integer literal).
+ */
+const GAMMA_REWRITE_MAX_ITERATIONS = 16;
+
 export function casSimplify(v: Value): Value {
   if (v.kind === "tagged" && v.tag === SIMPLIFY_TAG) return v;
   // Pre-passes: run the per-head identity tables bottom-up. The result
   // is structurally either the same Value (if no rule fires anywhere)
   // or a new Value with the per-head rewrites applied (Erf-family
   // rewrites + Erf/Erfc complement collapses, then Bessel-family
-  // rewrites). The two passes are independent: an Erf-pass-rewritten
-  // sub-tree contains no Bessel-family heads and vice versa, so the
-  // ordering between them is mathematically irrelevant. Running Erf
-  // first matches declaration order in this file (the historical
-  // first pre-pass).
+  // rewrites, then Gamma-family rewrites — ADR-0042 §"Decision 13"
+  // pins this exact ordering). The three passes are independent: an
+  // Erf-pass-rewritten sub-tree contains no Bessel-family or
+  // Gamma-family heads and vice versa, so the ordering between them is
+  // mathematically irrelevant. The declared sequence matches the
+  // historical landing order (Erf → Bessel → Gamma).
   const afterErf = applyErfRewrites(v);
-  const rewritten = applyBesselRewrites(afterErf);
+  const afterBessel = applyBesselRewrites(afterErf);
+  const rewritten = applyGammaRewrites(afterBessel);
   try {
     const rf = valueToRatFn(rewritten);
     return ratFnToValue(rf);
@@ -316,6 +334,96 @@ function applyBesselRewrites(v: Value): Value {
           // J + i·Y produces both J and Y children that might match
           // class-C half-integer closures) get a chance to fire.
           current = applyBesselRewrites(result);
+        }
+      }
+
+      return current;
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Gamma-family pre-pass
+// -----------------------------------------------------------------------------
+//
+// Parallel to `applyErfRewrites` and `applyBesselRewrites` — bottom-up
+// rewrite walker, bounded fixed-point per node, the same idempotence
+// + foreign-pass-through invariants. Per ADR-0042 §"Decision 13" this
+// is the third (and presently last) per-head substrate pre-pass; it
+// runs after Erf and Bessel and before the RatFn fold.
+//
+// The Gamma cascade is potentially deeper than the Bessel cascade
+// because the recurrences (`Γ(z+1) → z·Γ(z)`) chain through every
+// integer shift level. `Γ(z+5)` is rewritten through 5 recurrence
+// applications, each producing a `Γ(z+k)` shape the next iteration
+// rewrites further. The iteration bound `GAMMA_REWRITE_MAX_ITERATIONS
+// = 16` is comfortable for the v0.1 input space; if a future input
+// genuinely needs deeper unrolling, the bound is the right knob to
+// raise (a cycle bug would manifest as the loop exceeding the bound
+// without convergence, which is a louder signal than silently looping
+// forever — CLAUDE.md Rule 1).
+//
+// See `gamma-identities.ts`'s top-of-file narrative for the per-rule
+// cascade analysis.
+
+function applyGammaRewrites(v: Value): Value {
+  switch (v.kind) {
+    case "integer":
+    case "rational":
+    case "float64":
+    case "boolean":
+    case "string":
+    case "symbol":
+      return v;
+    case "tagged":
+      // Tagged values are opaque to the rewriter — foreign-pass-through
+      // invariant. The payload was simplified at the time it was tagged.
+      return v;
+    case "list":
+      return list(v.items.map(applyGammaRewrites));
+    case "record": {
+      const f: Record<string, Value> = {};
+      for (const [k, vv] of Object.entries(v.fields)) {
+        f[k] = applyGammaRewrites(vv);
+      }
+      return record(f);
+    }
+    case "expression": {
+      // Recurse children first (bottom-up).
+      const newArgs = v.args.map(applyGammaRewrites);
+      let current: Value;
+      if (sameArgs(v.args, newArgs)) {
+        current = v;
+      } else {
+        // Smart-ctor rebuild for the elementary heads that have one,
+        // direct `expr` rebuild otherwise. (Same shape as the Bessel
+        // pre-pass; the three pre-passes are syntactically parallel by
+        // design — Decision 13 explicitly pins the "literally additive"
+        // contract.)
+        if (v.head === "neg" && newArgs.length === 1) {
+          current = mkNeg(newArgs[0]!);
+        } else if (v.head === "+") {
+          current = mkPlus(newArgs);
+        } else if (v.head === "*") {
+          current = mkTimes(...newArgs);
+        } else {
+          current = expr(v.head, newArgs);
+        }
+      }
+
+      // Per-head Gamma-family rewrites with bounded cascade.
+      if (current.kind === "expression" && isGammaFamilyHead(current.head)) {
+        for (let i = 0; i < GAMMA_REWRITE_MAX_ITERATIONS; i++) {
+          if (current.kind !== "expression") break;
+          if (!isGammaFamilyHead(current.head)) break;
+          const result = tryGammaSimplify(current.head, current.args);
+          if (result === null) break;
+          // Re-walk the rewritten result so any newly-introduced
+          // Gamma-family sub-expressions (e.g. priority-C `Γ(z+1) →
+          // z·Γ(z)` produces a fresh `Γ(z)` that may itself match a
+          // priority-A special-value rule if z is a literal) get a
+          // chance to fire.
+          current = applyGammaRewrites(result);
         }
       }
 

@@ -24,10 +24,36 @@
 // emit special-function heads that the elementary `evalNumericExpr` does
 // not admit; structural unit tests against DLMF-cited closed forms are
 // the load-bearing oracle.
+//
+// Mutation-prove points for the 2026-05-19 Gamma extensions (ADR-0042
+// §"Decision 6"; bead `mozz`) — each of these mutations has been
+// verified to drive at least one specific test to RED before
+// implementation was restored. Future regressions in these rule shapes
+// will surface here.
+//
+//   * LogGamma — flipping `Digamma` to `Gamma` in `ruleLogGamma` fails
+//     the "d/dz LogGamma(z) = Digamma(z)  (DLMF §5.2.2)" test
+//     (canonicalised output `Gamma` vs expected `Digamma`).
+//   * IncompleteGammaLower — flipping the sign from `+integrand` to
+//     `-integrand` in `ruleIncompleteGamma(sign=+1)` fails the
+//     "d/dz γ(a,z) = +z^{a-1}·exp(-z)  (DLMF §8.8.1)" test (canonical
+//     `neg(...)` wrap appears where it should not).
+//   * IncompleteGammaUpper — flipping the sign from `-integrand` to
+//     `+integrand` fails the "d/dz Γ(a,z) = -z^{a-1}·exp(-z)
+//     (DLMF §8.8.2)" test (canonical `neg(...)` wrap disappears).
+//   * Beta — swapping `Digamma(a) - Digamma(a+b)` to `Digamma(a+b) -
+//     Digamma(a)` fails the "∂/∂a B(a,b)" test (sign on the bracketed
+//     Digamma difference flips).
+//
+// Each mutation was applied, tests run (RED confirmed), and the
+// original implementation restored before commit. See the per-rule
+// narratives in `packages/cas-core/src/special-functions.ts` for the
+// DLMF citation chain that the mutation tests cross-validate against.
 
 import { describe, expect, test } from "bun:test";
 import { canonicalize, expr, int, list, rat, sym, type Value } from "@workbench/protocol";
 import { CasDiffOutOfScopeError, differentiate } from "../src/diff.js";
+import { SIMPLIFY_TAG, casSimplify } from "../src/simplify.js";
 import {
   SPECIAL_FUNCTION_HEADS,
   SPECIAL_FUNCTION_DIFFERENTIABLE_HEADS,
@@ -52,9 +78,13 @@ function diff(e: Value, wrt = z): Value {
 // -----------------------------------------------------------------------------
 
 describe("SPECIAL_FUNCTION_HEADS — vocabulary table", () => {
-  test("contains exactly the 32 heads ADR-0023 admits (Hankel + spherical Bessel added 2026-05-17 per ADR-0041)", () => {
+  test("contains exactly the 38 heads ADR-0023 admits (Gamma extensions added 2026-05-19 per ADR-0042)", () => {
     const expected = [
       "Gamma", "Digamma", "Polygamma",
+      // Gamma extensions admitted 2026-05-19 (ADR-0042 §"Decision 6").
+      "LogGamma", "Pochhammer",
+      "IncompleteGammaUpper", "IncompleteGammaLower",
+      "Beta", "BarnesG",
       "BesselJ", "BesselY", "BesselI", "BesselK",
       "HankelH1", "HankelH2",
       "SphericalBesselJ", "SphericalBesselY",
@@ -71,11 +101,11 @@ describe("SPECIAL_FUNCTION_HEADS — vocabulary table", () => {
       "Polylog", "LerchPhi",
       "MeijerG",
     ];
-    // 32 heads after ADR-0041 §"Decision 6" admitted the four Bessel-
-    // family boundary heads (HankelH1, HankelH2, SphericalBesselJ,
-    // SphericalBesselY). Re-count to guard against drift on future
-    // vocabulary additions:
-    expect(expected.length).toBe(32);
+    // 38 heads after ADR-0042 §"Decision 6" admitted the six Gamma-
+    // family extensions (LogGamma, Pochhammer, IncompleteGammaUpper,
+    // IncompleteGammaLower, Beta, BarnesG). Re-count to guard against
+    // drift on future vocabulary additions:
+    expect(expected.length).toBe(38);
     // The set the module exports must match this array exactly.
     expect([...SPECIAL_FUNCTION_HEADS].sort()).toEqual([...expected].sort());
   });
@@ -113,8 +143,10 @@ describe("specialFunctionArity — arity contracts", () => {
   });
 
   test("single-z heads have arity 1", () => {
+    // `LogGamma` and `BarnesG` added 2026-05-19 per ADR-0042 §"Decision 6".
     for (const h of ["Gamma", "Digamma", "Erf", "Erfc", "Erfi",
-                     "ExpIntegralEi", "FresnelC", "FresnelS"]) {
+                     "ExpIntegralEi", "FresnelC", "FresnelS",
+                     "LogGamma", "BarnesG"]) {
       const a = specialFunctionArity(h);
       expect(a).not.toBeNull();
       expect(a!.shape).toBe("fixed");
@@ -123,12 +155,17 @@ describe("specialFunctionArity — arity contracts", () => {
   });
 
   test("two-arg heads have arity 2", () => {
+    // `Pochhammer(a, n)`, `IncompleteGammaUpper(a, z)`,
+    // `IncompleteGammaLower(a, z)`, `Beta(a, b)` added 2026-05-19 per
+    // ADR-0042 §"Decision 6".
     for (const h of ["Polygamma", "BesselJ", "BesselY", "BesselI", "BesselK",
                      "HankelH1", "HankelH2",
                      "SphericalBesselJ", "SphericalBesselY",
                      "ExpIntegralE", "LegendreP", "LegendreQ",
                      "LaguerreL", "HermiteH", "ChebyshevT", "ChebyshevU",
-                     "Polylog", "ParabolicCylinderD"]) {
+                     "Polylog", "ParabolicCylinderD",
+                     "Pochhammer", "IncompleteGammaUpper",
+                     "IncompleteGammaLower", "Beta"]) {
       const a = specialFunctionArity(h);
       expect(a).not.toBeNull();
       expect(a!.shape).toBe("fixed");
@@ -167,9 +204,17 @@ describe("specialFunctionArity — arity contracts", () => {
 // -----------------------------------------------------------------------------
 
 describe("SPECIAL_FUNCTION_DIFFERENTIABLE_HEADS — v0.1 subset", () => {
-  test("matches ADR-0023's shipped subset exactly (incl. Erfi per ADR-0040 + Hankel/spherical Bessel per ADR-0041)", () => {
+  test("matches ADR-0023's shipped subset exactly (incl. Erfi per ADR-0040; Hankel/spherical Bessel per ADR-0041; LogGamma/IncompleteGamma/Beta per ADR-0042)", () => {
     const expected = [
       "Gamma", "Digamma", "Polygamma",
+      // Gamma extensions with v0.1 diff rules (ADR-0042 §"Decision 6").
+      // Pochhammer and BarnesG are admitted to the vocabulary but
+      // their diff rules are deferred to v0.2 — they refuse honestly
+      // via `CasDiffOutOfScopeError`, the same path foreign heads
+      // take.
+      "LogGamma",
+      "IncompleteGammaUpper", "IncompleteGammaLower",
+      "Beta",
       "Erf", "Erfc", "Erfi",
       "ExpIntegralEi", "ExpIntegralE",
       "FresnelC", "FresnelS",
@@ -818,5 +863,423 @@ describe("differentiate — determinism on special-function rules", () => {
     const a = canonicalize(diff(f));
     const b = canonicalize(diff(f));
     expect(a).toBe(b);
+  });
+});
+
+// -----------------------------------------------------------------------------
+// Gamma family extensions — admitted 2026-05-19 per ADR-0042 §"Decision 6"
+// -----------------------------------------------------------------------------
+//
+// Six new heads land in this amendment:
+//
+//   * `LogGamma(z)`  — principal-value log Γ; diff rule `Digamma(z)` (DLMF §5.2.2)
+//   * `Pochhammer(a, n)` — rising factorial (a)_n; diff rule deferred (refuses)
+//   * `IncompleteGammaUpper(a, z)` — Γ(a, z); d/dz = −z^{a-1}·e^{-z} (DLMF §8.8.2)
+//   * `IncompleteGammaLower(a, z)` — γ(a, z); d/dz = +z^{a-1}·e^{-z} (DLMF §8.8.1)
+//   * `Beta(a, b)`  — B(a, b); ∂/∂a = B(a,b)·[ψ(a) − ψ(a+b)] (DLMF §5.12.2)
+//   * `BarnesG(z)`  — Barnes G; diff rule deferred (refuses)
+//
+// Per ADR-0042 §"Decision 6" the Pochhammer derivative w.r.t. `a` is
+// also deferred (the continuous-extension form `(a)_n = Γ(a+n)/Γ(a)`
+// admits the rule but cas-simplify doesn't yet canonicalise the
+// Gamma-quotient shape); the discrete-`n` direction is refused
+// uniformly. The Beta partial w.r.t. the *other* argument (the
+// multivariable both-depend case) is refused, again pending the v0.2
+// canonicalisation pass.
+
+describe("specialFunctionArity — Gamma extensions (ADR-0042 §\"Decision 6\")", () => {
+  test("LogGamma → fixed count 1", () => {
+    const a = specialFunctionArity("LogGamma");
+    expect(a).not.toBeNull();
+    expect(a!.shape).toBe("fixed");
+    expect((a as Extract<SpecialFunctionArity, { shape: "fixed" }>).count).toBe(1);
+  });
+
+  test("Pochhammer → fixed count 2  (a, n)", () => {
+    const a = specialFunctionArity("Pochhammer");
+    expect(a).not.toBeNull();
+    expect(a!.shape).toBe("fixed");
+    expect((a as Extract<SpecialFunctionArity, { shape: "fixed" }>).count).toBe(2);
+  });
+
+  test("IncompleteGammaUpper → fixed count 2  (a, z)", () => {
+    const a = specialFunctionArity("IncompleteGammaUpper");
+    expect(a).not.toBeNull();
+    expect(a!.shape).toBe("fixed");
+    expect((a as Extract<SpecialFunctionArity, { shape: "fixed" }>).count).toBe(2);
+  });
+
+  test("IncompleteGammaLower → fixed count 2  (a, z)", () => {
+    const a = specialFunctionArity("IncompleteGammaLower");
+    expect(a).not.toBeNull();
+    expect(a!.shape).toBe("fixed");
+    expect((a as Extract<SpecialFunctionArity, { shape: "fixed" }>).count).toBe(2);
+  });
+
+  test("Beta → fixed count 2  (a, b)", () => {
+    const a = specialFunctionArity("Beta");
+    expect(a).not.toBeNull();
+    expect(a!.shape).toBe("fixed");
+    expect((a as Extract<SpecialFunctionArity, { shape: "fixed" }>).count).toBe(2);
+  });
+
+  test("BarnesG → fixed count 1", () => {
+    const a = specialFunctionArity("BarnesG");
+    expect(a).not.toBeNull();
+    expect(a!.shape).toBe("fixed");
+    expect((a as Extract<SpecialFunctionArity, { shape: "fixed" }>).count).toBe(1);
+  });
+
+  test("IncompleteGammaP / Q are NOT vocabulary heads (ADR-0042 §\"Tension Resolution A\")", () => {
+    // P and Q are float64-dispatcher-only entries per ADR-0042 §"Decision 4";
+    // any caller asking for arity on these must see the null contract
+    // (the master vocabulary set is the gatekeeper).
+    expect(specialFunctionArity("IncompleteGammaP")).toBeNull();
+    expect(specialFunctionArity("IncompleteGammaQ")).toBeNull();
+  });
+});
+
+describe("differentiate — LogGamma (DLMF §5.2.2)", () => {
+  test("d/dz LogGamma(z) = Digamma(z)  (DLMF §5.2.2)", () => {
+    // The principal-value `LogGamma` derivative is exactly `Digamma`,
+    // no chain-rule prefactor. With `wrt = z` and `dz = 1`, `mkTimes`'s
+    // smart constructor drops the `1` and the result is the bare
+    // `Digamma(z)` expression. This is the canonical-form witness
+    // mutation-prove flips to `Gamma(z)` against.
+    const got = diff(expr("LogGamma", [z]));
+    const want = expr("Digamma", [z]);
+    expect(eq(got, want)).toBe(true);
+  });
+
+  test("chain rule: d/dz LogGamma(2z) = Digamma(2z) · 2", () => {
+    const inner = expr("*", [int(2n), z]);
+    const got = diff(expr("LogGamma", [inner]));
+    const want = expr("*", [expr("Digamma", [inner]), int(2n)]);
+    expect(eq(got, want)).toBe(true);
+  });
+
+  test("d/dw LogGamma(z) = 0  (free-symbol-independence; z ≠ w)", () => {
+    const got = diff(expr("LogGamma", [z]), w);
+    expect(eq(got, int(0n))).toBe(true);
+  });
+
+  test("composition: d/dz exp(LogGamma(z)) = exp(LogGamma(z)) · Digamma(z)", () => {
+    // The classic identity `exp(LogGamma(z)) = Gamma(z)` (on the
+    // principal branch) is *not* applied here — cas-diff is a pure
+    // differentiator, not a simplifier. The result is the literal
+    // chain-rule composition, which a downstream cas-simplify pass
+    // could later canonicalise.
+    const got = diff(expr("exp", [expr("LogGamma", [z])]));
+    const want = expr("*", [
+      expr("exp", [expr("LogGamma", [z])]),
+      expr("Digamma", [z]),
+    ]);
+    expect(eq(got, want)).toBe(true);
+  });
+});
+
+describe("differentiate — IncompleteGamma (DLMF §8.8.1 / §8.8.2)", () => {
+  test("d/dz γ(a, z) = +z^{a-1} · exp(-z)  (DLMF §8.8.1)", () => {
+    // The lower incomplete gamma's derivative w.r.t. `z` is the
+    // integrand of its defining integral evaluated at the upper
+    // bound — positive sign, no `neg` wrap. Mutation-prove flips the
+    // sign to `-` against this test.
+    const a = sym("a");
+    const got = diff(expr("IncompleteGammaLower", [a, z]));
+    const want = expr("*", [
+      expr("^", [z, expr("-", [a, int(1n)])]),
+      expr("exp", [expr("neg", [z])]),
+    ]);
+    expect(eq(got, want)).toBe(true);
+  });
+
+  test("d/dz Γ(a, z) = -z^{a-1} · exp(-z)  (DLMF §8.8.2)", () => {
+    // Upper incomplete gamma is the partition complement of lower:
+    // `γ(a, z) + Γ(a, z) = Γ(a)`, so derivatives w.r.t. `z` are
+    // exact negatives. Mutation-prove flips the sign to `+` against
+    // this test (the `neg` wrap disappears).
+    const a = sym("a");
+    const got = diff(expr("IncompleteGammaUpper", [a, z]));
+    const want = expr("neg", [
+      expr("*", [
+        expr("^", [z, expr("-", [a, int(1n)])]),
+        expr("exp", [expr("neg", [z])]),
+      ]),
+    ]);
+    expect(eq(got, want)).toBe(true);
+  });
+
+  test("integer-`a` shifts: d/dz γ(3, z) = z² · exp(-z)  (smart ctor folds 3-1 to 2)", () => {
+    // `mkMinus(int(3n), int(1n))` canonicalises to `int(2n)` via the
+    // diff.ts smart constructor (worklog 077). The output is the
+    // tight literal `z² · exp(-z)`, not the unreduced `z^{3-1}`.
+    const got = diff(expr("IncompleteGammaLower", [int(3n), z]));
+    const want = expr("*", [
+      expr("^", [z, int(2n)]),
+      expr("exp", [expr("neg", [z])]),
+    ]);
+    expect(eq(got, want)).toBe(true);
+  });
+
+  test("d/da γ(a, z) refuses (parameter derivative deferred to v0.2)", () => {
+    // DLMF §8.8.16 gives the parameter derivative as a Meijer-G
+    // value; the symbolic encoding requires the `MeijerG` head's
+    // list-shift smart constructor, which is itself a deferred v0.2
+    // bead (ADR-0023). Honest refusal until both ship.
+    const a = sym("a");
+    expect(() => diff(expr("IncompleteGammaLower", [a, z]), a)).toThrow(
+      CasDiffOutOfScopeError,
+    );
+  });
+
+  test("d/da Γ(a, z) refuses (parameter derivative deferred to v0.2)", () => {
+    const a = sym("a");
+    expect(() => diff(expr("IncompleteGammaUpper", [a, z]), a)).toThrow(
+      CasDiffOutOfScopeError,
+    );
+  });
+
+  test("d/dw γ(a, z) = 0  (free-symbol-independence; neither a nor z = w)", () => {
+    const a = sym("a");
+    const got = diff(expr("IncompleteGammaLower", [a, z]), w);
+    expect(eq(got, int(0n))).toBe(true);
+  });
+
+  test("chain rule: d/dz γ(a, 2z) = (((2z)^{a-1}) · exp(-2z)) · 2", () => {
+    const a = sym("a");
+    const inner = expr("*", [int(2n), z]);
+    const got = diff(expr("IncompleteGammaLower", [a, inner]));
+    const want = expr("*", [
+      expr("*", [
+        expr("^", [inner, expr("-", [a, int(1n)])]),
+        expr("exp", [expr("neg", [inner])]),
+      ]),
+      int(2n),
+    ]);
+    expect(eq(got, want)).toBe(true);
+  });
+});
+
+describe("differentiate — Beta (DLMF §5.12.2)", () => {
+  test("∂/∂a B(a, b) = B(a, b) · (Digamma(a) - Digamma(a+b))  (DLMF §5.12.2)", () => {
+    // The canonical SymPy `beta.fdiff(1)` shape. Mutation-prove swaps
+    // the Digamma terms (`Digamma(a+b) - Digamma(a)`) and flips the
+    // sign on the bracketed difference; this test catches that.
+    const a = sym("a");
+    const b = sym("b");
+    const got = diff(expr("Beta", [a, b]), a);
+    const want = expr("*", [
+      expr("Beta", [a, b]),
+      expr("-", [
+        expr("Digamma", [a]),
+        expr("Digamma", [expr("+", [a, b])]),
+      ]),
+    ]);
+    expect(eq(got, want)).toBe(true);
+  });
+
+  test("∂/∂b B(a, b) = B(a, b) · (Digamma(b) - Digamma(a+b))  (DLMF §5.12.2; symmetric)", () => {
+    const a = sym("a");
+    const b = sym("b");
+    const got = diff(expr("Beta", [a, b]), b);
+    const want = expr("*", [
+      expr("Beta", [a, b]),
+      expr("-", [
+        expr("Digamma", [b]),
+        expr("Digamma", [expr("+", [a, b])]),
+      ]),
+    ]);
+    expect(eq(got, want)).toBe(true);
+  });
+
+  test("d/dw B(a, b) = 0  (free-symbol-independence; neither a nor b = w)", () => {
+    const a = sym("a");
+    const b = sym("b");
+    const got = diff(expr("Beta", [a, b]), w);
+    expect(eq(got, int(0n))).toBe(true);
+  });
+
+  test("both-depend case refuses (multivariable chain rule deferred to v0.2)", () => {
+    // When both `a` and `b` of `B(a, b)` depend on `wrt`, the answer is
+    // an additive composition of the two partials — `∂B/∂a · da/dz +
+    // ∂B/∂b · db/dz`. v0.1 refuses this case (ADR-0042 §"Decision 6"):
+    // no canonical DLMF / SymPy source emits a single-rule encoding,
+    // and the additive composition belongs to a v0.2 bead alongside
+    // `applyGammaRewrites`.
+    const t = sym("t");
+    const f = expr("Beta", [
+      expr("*", [int(2n), t]),
+      expr("+", [t, int(1n)]),
+    ]);
+    expect(() => diff(f, t)).toThrow(CasDiffOutOfScopeError);
+  });
+});
+
+describe("differentiate — Pochhammer (deferred to v0.2)", () => {
+  test("d/dn (a)_n refuses (discrete-order parameter; uniform with rulePolygamma)", () => {
+    // Mirror of Polygamma / ExpIntegralE / BesselJ-with-symbolic-ν: the
+    // discrete-order direction refuses uniformly across the v0.1
+    // differentiable subset.
+    const a = sym("a");
+    const nn = sym("n");
+    expect(() => diff(expr("Pochhammer", [a, nn]), nn)).toThrow(
+      CasDiffOutOfScopeError,
+    );
+  });
+
+  test("d/da (a)_n refuses (continuous-extension form deferred to v0.2)", () => {
+    // `(a)_n = Γ(a+n)/Γ(a)` yields `(a)_n · [ψ(a+n) - ψ(a)]` (R1 §2.3)
+    // but the canonicalisation belongs to v0.2's applyGammaRewrites pass.
+    const a = sym("a");
+    const nn = sym("n");
+    expect(() => diff(expr("Pochhammer", [a, nn]), a)).toThrow(
+      CasDiffOutOfScopeError,
+    );
+  });
+
+  test("d/dw (a)_n = 0  (free-symbol-independence; neither a nor n = w)", () => {
+    const a = sym("a");
+    const nn = sym("n");
+    const got = diff(expr("Pochhammer", [a, nn]), w);
+    expect(eq(got, int(0n))).toBe(true);
+  });
+});
+
+describe("differentiate — BarnesG (deferred to v0.2)", () => {
+  test("d/dz G(z) refuses (rule deferred — additive `(1/2)·log(2π)` constant)", () => {
+    // The full rule `G(z) · [(z-1)·Digamma(z) - LogGamma(z) +
+    // (1/2)·log(2π)]` requires the additive-constant encoding
+    // canonicalised by v0.2's applyGammaRewrites pass (ADR-0042
+    // §"Decision 13").
+    expect(() => diff(expr("BarnesG", [z]))).toThrow(CasDiffOutOfScopeError);
+  });
+
+  test("d/dw G(z) = 0  (free-symbol-independence; z ≠ w)", () => {
+    // The free-symbol-independence short-circuit fires before the
+    // deferred-rule refusal, mirroring how `rulePolygamma` and
+    // `ruleBesselFirstKind` short-circuit on constant arguments while
+    // their main rule body refuses for the discrete-parameter case.
+    const got = diff(expr("BarnesG", [z]), w);
+    expect(eq(got, int(0n))).toBe(true);
+  });
+});
+
+describe("differentiate — Gamma extensions composition with elementary heads", () => {
+  test("d/dz (Beta(a, z) · sin(z)) — Beta's ∂/∂b shape composes with sin (product rule)", () => {
+    // The `b` argument of `Beta` is `z`; Beta refuses on `a` (constant
+    // here) but ∂/∂b returns `B(a, z) · [Digamma(z) - Digamma(a+z)]`.
+    // The full product-rule output composes that with `sin(z)`'s
+    // derivative `cos(z)`. The exact canonical shape is a fingerprint
+    // of the diff cascade.
+    const a = sym("a");
+    const got = diff(expr("*", [
+      expr("Beta", [a, z]),
+      expr("sin", [z]),
+    ]));
+    const want = expr("+", [
+      expr("*", [
+        expr("*", [
+          expr("Beta", [a, z]),
+          expr("-", [
+            expr("Digamma", [z]),
+            expr("Digamma", [expr("+", [a, z])]),
+          ]),
+        ]),
+        expr("sin", [z]),
+      ]),
+      expr("*", [expr("Beta", [a, z]), expr("cos", [z])]),
+    ]);
+    expect(eq(got, want)).toBe(true);
+  });
+});
+
+describe("differentiate — Gamma extensions determinism", () => {
+  test("LogGamma(z): hash-equal across two calls", () => {
+    const f = expr("LogGamma", [z]);
+    const a = canonicalize(diff(f));
+    const b = canonicalize(diff(f));
+    expect(a).toBe(b);
+  });
+
+  test("IncompleteGammaLower(a, z): hash-equal across two calls", () => {
+    const f = expr("IncompleteGammaLower", [sym("a"), z]);
+    const a = canonicalize(diff(f));
+    const b = canonicalize(diff(f));
+    expect(a).toBe(b);
+  });
+
+  test("Beta(a, b) ∂/∂a: hash-equal across two calls", () => {
+    const a = sym("a");
+    const b = sym("b");
+    const f = expr("Beta", [a, b]);
+    const x1 = canonicalize(diff(f, a));
+    const x2 = canonicalize(diff(f, a));
+    expect(x1).toBe(x2);
+  });
+});
+
+// -----------------------------------------------------------------------------
+// cas-simplify foreign-pass-through — Gamma extensions round-trip honestly
+// -----------------------------------------------------------------------------
+//
+// cas-simplify's rewriter (`packages/cas-core/src/simplify.ts`) has rule
+// tables only for the Erf family (`applyErfRewrites`) and the Bessel
+// family (`applyBesselRewrites`). The six new Gamma-family heads
+// admitted by ADR-0042 §"Decision 6" have *no* simplify rules in v0.1
+// — the `applyGammaRewrites` pre-pass is a deferred ADR-0042
+// §"Decision 13" landing.
+//
+// Until that pre-pass lands, expressions whose head is one of the new
+// six must round-trip through cas-simplify as `tagged
+// "cas-simplify/out-of-scope"` (the foreign-pass-through path that
+// catches every head outside the elementary rational-function fold).
+// This is the same honest-scope discipline `Erf(z)` follows in
+// `erf-identities.test.ts` when no Erf rule fires.
+//
+// One test per new head — six total. The tests fix the foreign-pass-
+// through contract; any future v0.2 amendment that adds simplify rules
+// for these heads will have to update these tests deliberately.
+
+describe("casSimplify — Gamma extensions foreign-pass-through (no rules in v0.1)", () => {
+  test("LogGamma(z) round-trips through cas-simplify (no rule yet — tagged out-of-scope)", () => {
+    const out = casSimplify(expr("LogGamma", [z]));
+    expect(out.kind).toBe("tagged");
+    if (out.kind !== "tagged") throw new Error("unreachable");
+    expect(out.tag).toBe(SIMPLIFY_TAG);
+  });
+
+  test("Pochhammer(a, n) round-trips through cas-simplify", () => {
+    const out = casSimplify(expr("Pochhammer", [sym("a"), int(3n)]));
+    expect(out.kind).toBe("tagged");
+    if (out.kind !== "tagged") throw new Error("unreachable");
+    expect(out.tag).toBe(SIMPLIFY_TAG);
+  });
+
+  test("IncompleteGammaUpper(a, z) round-trips through cas-simplify", () => {
+    const out = casSimplify(expr("IncompleteGammaUpper", [sym("a"), z]));
+    expect(out.kind).toBe("tagged");
+    if (out.kind !== "tagged") throw new Error("unreachable");
+    expect(out.tag).toBe(SIMPLIFY_TAG);
+  });
+
+  test("IncompleteGammaLower(a, z) round-trips through cas-simplify", () => {
+    const out = casSimplify(expr("IncompleteGammaLower", [sym("a"), z]));
+    expect(out.kind).toBe("tagged");
+    if (out.kind !== "tagged") throw new Error("unreachable");
+    expect(out.tag).toBe(SIMPLIFY_TAG);
+  });
+
+  test("Beta(a, b) round-trips through cas-simplify", () => {
+    const out = casSimplify(expr("Beta", [sym("a"), sym("b")]));
+    expect(out.kind).toBe("tagged");
+    if (out.kind !== "tagged") throw new Error("unreachable");
+    expect(out.tag).toBe(SIMPLIFY_TAG);
+  });
+
+  test("BarnesG(z) round-trips through cas-simplify", () => {
+    const out = casSimplify(expr("BarnesG", [z]));
+    expect(out.kind).toBe("tagged");
+    if (out.kind !== "tagged") throw new Error("unreachable");
+    expect(out.tag).toBe(SIMPLIFY_TAG);
   });
 });

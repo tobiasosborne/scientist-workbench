@@ -375,6 +375,81 @@ failure: integration with Erf in the integrand requires the agent to
 opt into `tools/special-eval` (filed under ADR-0040 Decision 7) when
 that ships.
 
+## Bessel-family extension (ADR-0041)
+
+Per ADR-0041 §Decision 4, the special-function dispatcher is extended
+with the Bessel family. Per-head implementations live in
+`src/special-funcs/bessel-float64.ts` (~2715 LOC):
+
+- **Heads added:** `BesselJ`, `BesselY`, `BesselI`, `BesselK`. All
+  arity-2 `(ν, z)`; all float64 → float64. Plus internal scaled
+  variants (`besselIScaledFloat64`, `besselKScaledFloat64`) and 4
+  complex entry points (`besselJComplexFloat64`, etc.) reachable
+  directly without going through the AST evaluator.
+- **Sources** (per R3 §0.1): SunPro 1993 `j0.c` / `j1.c` / `jn.c` for
+  integer-order J/Y; Cephes (Moshier 2000) `i0.c` / `i1.c` / `k0.c` /
+  `k1.c` for I/K integer order; DLMF series + Hankel asymptotic for
+  general-ν; AMOS-rotation path for complex (full Fortran port deferred
+  as `BESSEL-AMOS-FULL`).
+- **Accuracy** (per ADR-0041 §Acceptance): ≤ 2-4 ULP for real
+  J/Y/I/K integer order; ≤ 4 ULP typical for general-ν; complex paths
+  ≤ ~10-12 dp at v0.1.
+
+## Gamma-family extension (ADR-0042)
+
+Per ADR-0042 §Decision 4, the special-function dispatcher is extended
+with the Gamma family. Per-head implementations live in
+`src/special-funcs/gamma-float64.ts` (~2100 LOC):
+
+- **Heads added (19 entries):** `Gamma`, `LogGamma`, `Digamma`,
+  `Trigamma`, `Polygamma`, `Pochhammer`, `IncompleteGammaUpper`,
+  `IncompleteGammaLower`, `IncompleteGammaP`, `IncompleteGammaQ`,
+  `InverseIncompleteGammaP`, `InverseIncompleteGammaQ`, `Beta`,
+  `LogBeta`, `IncompleteBeta`, `BarnesG`, `Hyperfactorial`,
+  `GammaRatio`, `GammaDeltaRatio`, `GammaPDerivative`. Arities 1
+  (`Gamma`/`LogGamma`/`Digamma`/`Trigamma`/`BarnesG`/`Hyperfactorial`),
+  2 (most), and 3 (`IncompleteBeta`). All float64 → float64; plus 3
+  complex entry points (`lgammaComplexFloat64`, `gammaComplexFloat64`,
+  `digammaComplexFloat64`) for `(re, im) → {re, im}`.
+- **Sources** (per R3 §0.0 + §1 verbatim-port table):
+  - `gammaFloat64` — Cephes `gamma.c` (Moshier 2000), P[7]/Q[8] rational
+    on `[2, 3]` + Stirling `stirf` for x > 33 + integer factorial table
+    for n ≤ 22.
+  - `lgammaFloat64` — FreeBSD `e_lgamma_r.c` (SunPro 1993 lineage; same
+    provenance as `j0.c` and `s_erf.c`). Five-region dispatch with
+    minimax pivot at `tc ≈ 1.46163` + sign tracked via `{value, sign}`
+    discriminated record.
+  - `digammaFloat64` — Boost.Math `digamma.hpp` 53-bit specialisation
+    `(x - root) · (Y + R(x-1))` rational on `[1, 2]` + Stirling for
+    x ≥ 10 + reflection for x < 0. **The reflection identity (DLMF
+    §5.5.4) is implemented directly**, so `digamma(-0.5) ≈ 0.03649`
+    per DLMF, NOT the Boost-1.83 buggy `ψ(1/2)` value.
+  - `trigammaFloat64` / `polygammaFloat64` — Boost.Math
+    `polygamma.hpp` Bernoulli expansion via Hurwitz zeta route.
+  - `gammaPFloat64` / `gammaQFloat64` — Cephes `igam.c` mutual-dispatch
+    (series for `x < a + 1`, continued fraction otherwise; CF rescaling
+    via `IGAM_BIG = 4.5e15` empirically calibrated constants).
+  - `incBetaFloat64` — Cephes `incbet.c` series + CF1/CF2 dispatch.
+  - `barnesGFloat64` — Adamchik 1998 asymptotic (DLMF §5.17.5) +
+    integer table + Glaisher-Kinkelin constant. v0.1 accuracy at
+    non-integer x is ~1e-5 (asymptotic carve-out per R3 §9.5; v0.2
+    upgrade filed).
+  - **Complex paths**: SciPy `_loggamma.pxd` Stirling + reflection (≤
+    14 dp). Complex incomplete gamma, complex BarnesG, complex
+    polygamma m ≥ 2 are honest refusals — no battle-tested float64
+    algorithm exists; the arb-prec lane carries those cases.
+
+- **Accuracy** (per ADR-0042 §Acceptance):
+  - Closed-form goldens (`Γ(1/2)=√π`, `Γ(-1/2)=-2√π`, `Beta(1/2,1/2)=π`,
+    `ψ(1)=-γ`, `ψ^(2)(1)=-2ζ(3)`): match within 2-16 ULP.
+  - mpmath gold-tier oracle cross-validation: max relative error
+    ≤ 5e-15 on 35 T1/T5 inputs (excluding BarnesG at large x, the
+    documented v0.1 carve-out).
+  - `P(a, z) + Q(a, z) = 1` to machine precision; `γ(a, z) + Γ(a, z) =
+    Γ(a)` to ≤ 1e-12 relative.
+  - Digamma reflection: `digamma(-0.5) = ψ(3/2) ≈ 0.0365` (NOT
+    Boost-1.83's bug value `-1.96`).
+
 ## Scope
 
 - **In:** finite real intervals `[a, b]` with `a < b`. Float64 tier
