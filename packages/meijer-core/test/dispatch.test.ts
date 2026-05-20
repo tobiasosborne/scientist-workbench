@@ -331,6 +331,162 @@ describe("dispatch — per-rule anchors", () => {
 });
 
 // -----------------------------------------------------------------------------
+// Layer 1b — IncompleteGamma family (bead `0pvl`, bateman-5-6 (38)/(40))
+// -----------------------------------------------------------------------------
+//
+// Six structural anchors covering the two new rules and their discrimination
+// against the colliding Erfc / ExpIntegralE / Erf rules in sibling files. Per
+// the file-section header in `dispatch-rules/bateman-5-6.ts` ("Shape
+// collision lattice"), discrimination is enforced by CROSS-FILE ordering in
+// `dispatch.ts::ALL_RULES`: `ERF_FORWARD_FORM_A`, `ERFC_FORWARD`,
+// `DLMF_16_18` precede `BATEMAN_5_6`, so the more-specific literal-only
+// rules in those files win on the collision inputs.
+//
+// MUTATION-PROOF: every test asserts the exact `ruleId` AND inspects the
+// emitted head name in `r.expr`. A naïve "if `r.kind` is matched, pass"
+// test would silently admit any wrong rule; the explicit `ruleId` check
+// catches an Erfc-shadowed-by-Gamma regression (or vice versa).
+
+// `cas-simplify` wraps non-Q(x) subterms (special-function heads) in
+// `tagged "cas-simplify/out-of-scope"` (see `dispatch.ts::
+// canonicaliseOutput` / `casSimplify`'s out-of-scope contract). Tests
+// that want to inspect the underlying special-function expression
+// must unwrap one `tagged` layer first.
+function unwrapTagged(v: Value): Value {
+  if (v.kind === "tagged" && v.tag === "cas-simplify/out-of-scope") {
+    return v.payload;
+  }
+  return v;
+}
+
+describe("dispatch — IncompleteGamma family (bateman-5-6 (38)/(40))", () => {
+  test("(2,0,1,2): ap=[1], bm=[a(symbolic), 0] → IncompleteGammaUpper(a, z)", () => {
+    // Input order [sym("a"), int(0)] — canonical sort puts int(0)
+    // first (`{"k...` with value `"0"` < `sym("a")`'s name bytes).
+    // Pattern B fires (bm = [lit-int 0, free a]).
+    const a = sym("a");
+    const r = meijergSymbolic(P([], [I(1)], [a, I(0)], []), Z);
+    expectMatched(r);
+    expect(r.ruleId).toBe("bateman-5-6-38b");
+    expect(JSON.stringify(r.expr)).toContain("IncompleteGammaUpper");
+    // The emitted Value should be a 2-arg expression carrying `a` and z
+    // (wrapped one `tagged "cas-simplify/out-of-scope"` layer).
+    const inner = unwrapTagged(r.expr);
+    expect(inner.kind).toBe("expression");
+    if (inner.kind === "expression") {
+      expect(inner.head).toBe("IncompleteGammaUpper");
+      expect(inner.args.length).toBe(2);
+      // First arg = the symbolic `a` we passed in.
+      expect(inner.args[0]!.kind).toBe("symbol");
+      if (inner.args[0]!.kind === "symbol") {
+        expect(inner.args[0]!.name).toBe("a");
+      }
+      // Second arg = `z`.
+      expect(inner.args[1]!.kind).toBe("symbol");
+      if (inner.args[1]!.kind === "symbol") {
+        expect(inner.args[1]!.name).toBe("z");
+      }
+    }
+  });
+
+  test("(2,0,1,2): ap=[1], bm=[a(rational 2/3), 0] → IncompleteGammaUpper(2/3, z)", () => {
+    // Input [rat(2,3), int(0)] — canonical sort puts rat first
+    // (rationals serialize starting `{"d...` which precedes int's
+    // `{"k...`). Pattern A fires (bm = [free a, lit-int 0]).
+    const a = R(2, 3);
+    const r = meijergSymbolic(P([], [I(1)], [a, I(0)], []), Z);
+    expectMatched(r);
+    expect(r.ruleId).toBe("bateman-5-6-38a");
+    expect(JSON.stringify(r.expr)).toContain("IncompleteGammaUpper");
+    // The first argument of the emitted expression should be the
+    // rational `2/3` byte-identically.
+    const inner = unwrapTagged(r.expr);
+    expect(inner.kind).toBe("expression");
+    if (inner.kind === "expression" && inner.head === "IncompleteGammaUpper") {
+      const a0 = inner.args[0]!;
+      expect(a0.kind).toBe("rational");
+      if (a0.kind === "rational") {
+        expect(a0.num).toBe("2");
+        expect(a0.den).toBe("3");
+      }
+    }
+  });
+
+  test("(2,0,1,2) discrimination: bm=[0, 1/2] fires Erfc (NOT IncompleteGammaUpper)", () => {
+    // The Erfc rule in `erfc-forward.ts` has `bm = [lit-rat 1/2,
+    // lit-int 0]` (canonical-sorted). User-input order [int(0),
+    // rat(1,2)] canonicalises to [rat(1,2), int(0)] — and the
+    // Erfc rule fires (registered before bateman-5-6 in dispatch.ts).
+    const r = meijergSymbolic(P([], [I(1)], [I(0), R(1, 2)], []), Z);
+    expectMatched(r);
+    expect(r.ruleId).toBe("erfc-bridge");
+    expect(JSON.stringify(r.expr)).toContain("Erfc");
+    expect(JSON.stringify(r.expr)).not.toContain("IncompleteGamma");
+  });
+
+  test("(2,0,1,2) discrimination: bm=[0, 0] fires ExpIntegralE(1) (NOT IncompleteGammaUpper)", () => {
+    // The dlmf-16-17-e1 rule has bm = [lit-int 0, lit-int 0], which
+    // is registered before bateman-5-6 in dispatch.ts. Both literal
+    // entries are exact, so the rule wins ahead of our free-bearing
+    // IncompleteGammaUpper rules.
+    const r = meijergSymbolic(P([], [I(1)], [I(0), I(0)], []), Z);
+    expectMatched(r);
+    expect(r.ruleId).toBe("dlmf-16-17-e1");
+    expect(JSON.stringify(r.expr)).toContain("ExpIntegralE");
+    expect(JSON.stringify(r.expr)).not.toContain("IncompleteGamma");
+  });
+
+  test("(1,1,1,2): an=[1], bm=[a(symbolic)], bq=[0] → IncompleteGammaLower(a, z)", () => {
+    const a = sym("a");
+    const r = meijergSymbolic(P([I(1)], [], [a], [I(0)]), Z);
+    expectMatched(r);
+    expect(r.ruleId).toBe("bateman-5-6-40");
+    expect(JSON.stringify(r.expr)).toContain("IncompleteGammaLower");
+    const inner = unwrapTagged(r.expr);
+    expect(inner.kind).toBe("expression");
+    if (inner.kind === "expression") {
+      expect(inner.head).toBe("IncompleteGammaLower");
+      expect(inner.args.length).toBe(2);
+      expect(inner.args[0]!.kind).toBe("symbol");
+      if (inner.args[0]!.kind === "symbol") {
+        expect(inner.args[0]!.name).toBe("a");
+      }
+    }
+  });
+
+  test("(1,1,1,2) discrimination: an=[1], bm=[1/2], bq=[0] fires Erf (NOT IncompleteGammaLower)", () => {
+    // The dlmf-16-18-erf rule has an=[1], bm=[lit-rat 1/2], bq=[0],
+    // which is registered before bateman-5-6 in dispatch.ts. The
+    // literal-1/2 pattern beats our free-a pattern at `a = 1/2`.
+    const r = meijergSymbolic(P([I(1)], [], [R(1, 2)], [I(0)]), Z);
+    expectMatched(r);
+    expect(r.ruleId).toBe("dlmf-16-18-erf");
+    expect(JSON.stringify(r.expr)).toContain("Erf");
+    expect(JSON.stringify(r.expr)).not.toContain("IncompleteGamma");
+  });
+
+  test("(1,1,1,2): an=[1], bm=[a(rational 2/3)], bq=[0] → IncompleteGammaLower(2/3, z)", () => {
+    // Positive coverage: a non-1/2 rational `a` should fall through
+    // the Erf literal rule and fire the IncompleteGammaLower
+    // free-bearing rule.
+    const r = meijergSymbolic(P([I(1)], [], [R(2, 3)], [I(0)]), Z);
+    expectMatched(r);
+    expect(r.ruleId).toBe("bateman-5-6-40");
+    expect(JSON.stringify(r.expr)).toContain("IncompleteGammaLower");
+    const inner = unwrapTagged(r.expr);
+    expect(inner.kind).toBe("expression");
+    if (inner.kind === "expression" && inner.head === "IncompleteGammaLower") {
+      const a0 = inner.args[0]!;
+      expect(a0.kind).toBe("rational");
+      if (a0.kind === "rational") {
+        expect(a0.num).toBe("2");
+        expect(a0.den).toBe("3");
+      }
+    }
+  });
+});
+
+// -----------------------------------------------------------------------------
 // Layer 2 — permutation invariance (ADR-0025 §7)
 // -----------------------------------------------------------------------------
 

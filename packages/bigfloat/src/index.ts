@@ -107,6 +107,11 @@ export {
   clgamma,
   cgamma,
   cdigamma,
+  ctrigamma,
+  cpolygamma,
+  cIncompleteGammaUpper,
+  cIncompleteGammaLower,
+  cBeta,
   bigW,
   bigCErf,
   bigCErfc,
@@ -166,7 +171,22 @@ export {
 export {
   bigIncompleteGammaUpper,
   bigIncompleteGammaLower,
+  bigGammaP,
+  bigGammaQ,
 } from "./special-funcs/incomplete-gamma.js";
+
+export {
+  bigBeta,
+  bigLogBeta,
+} from "./special-funcs/beta.js";
+
+export {
+  bigPochhammer,
+} from "./special-funcs/pochhammer.js";
+
+export {
+  bigBarnesG,
+} from "./special-funcs/barnes-g.js";
 
 export {
   ln2,

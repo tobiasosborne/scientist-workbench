@@ -163,6 +163,21 @@ The closure test layer is in addition to (not a replacement for) the
 mpmath numerical re-validation and the per-bridge structural tests in
 `bridges-erf.test.ts`.
 
+## Closure validation (Gamma-family bridge round-trip)
+
+`gamma-closure.test.ts` (bead `scientist-workbench-boyu`, ADR-0042
+Phase 3) is the Gamma-family analogue. It verifies forward closure for
+the two incomplete-gamma heads that have G-forms — `IncompleteGammaUpper`
+at the `(2,0,1,2)` shape (Bateman §5.6 (38), both symbolic-`a` rule
+`38b` and rational-`a` rule `38a`) and `IncompleteGammaLower` at the
+`(1,1,1,2)` shape (rule `40`) — and backward discrimination for the
+shared `(2,0,1,2)` shape: `bm = [0, ½]` → Erfc (not
+`IncompleteGammaUpper`), `bm = [0, 0]` → ExpIntegralE(1, z) (not
+`IncompleteGammaUpper(0, z)`), and `(1,1,1,2)` with `an = [½]` → Erf
+(not `IncompleteGammaLower`). The discipline matches the Erf-closure
+layer: any new gamma-emitting rule without a probe-inventory row fails
+the coverage test by construction. See `docs/worklog/175-gamma-epic-close.md`.
+
 ## Standard flags
 
 `--schema --examples --invariants --version --help --provenance-of <hash> --test`
@@ -173,7 +188,7 @@ v0.1 ships ≥30 reduction rules across five files:
 
 | File | Source | Rule count (v0.1) |
 |---|---|---|
-| `dispatch-rules/bateman-5-6.ts` | Bateman §5.6 pp. 215–222 | 27 |
+| `dispatch-rules/bateman-5-6.ts` | Bateman §5.6 pp. 215–222 | 29 (incl. §5.6 (38a/38b/40) incomplete-gamma rules, bead `0pvl`) |
 | `dispatch-rules/dlmf-16-18.ts` | DLMF §16.17–§16.18 | 6 |
 | `dispatch-rules/erf-forward-form-a.ts` | R4 §1 (PBM / SymPy / diofant canonical Erf Form A) | 1 |
 | `dispatch-rules/erfc-forward.ts` | R4 §1.c (PBM / SymPy / diofant canonical Erfc) | 1 |

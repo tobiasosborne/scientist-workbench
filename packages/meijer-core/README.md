@@ -63,7 +63,7 @@ Public API:
 | `selectSeries`        | The (p, q, m, n, |z|) selection rule alone.                              |
 | `detectCoalescence`   | Integer-spaced-pair detection across the parameter sub-tuples.           |
 | `perturbParameters`   | The deterministic odd-coefficient perturbation.                          |
-| `headToMeijerG`       | **Forward bridge** (ADR-0040 §"Decision 5"; closure renamed per ADR-0041 §"Decision 5"). Given a head + args, returns the canonical `MeijerGForm` + prefactor `wrap` + `argsInverse` closure for byte-identical round-trip; or `null` for honestly-refused heads (`InverseErf`, `InverseErfc`). v0.1: Erf, Erfc, Erfi. |
+| `headToMeijerG`       | **Forward bridge** (ADR-0040 §"Decision 5"; closure renamed per ADR-0041 §"Decision 5"). Given a head + args, returns the canonical `MeijerGForm` + prefactor `wrap` + `argsInverse` closure for byte-identical round-trip; or `null` for honestly-refused heads (`InverseErf`, `InverseErfc`). v0.1: Erf family + Bessel family. The Gamma family ships its own pair (`headToMeijerGGamma` / `meijerGToHeadGamma`, ADR-0042 §"Decision 5"), uniquely asymmetric — only `IncompleteGammaUpper` / `IncompleteGammaLower` have G-forms; the other 7 Gamma heads return `null` as honest structural refusals (Γ is the *building block* of the Mellin-Barnes kernel, not a value G produces). |
 | `meijerGToHead`       | **Standalone backward bridge** (ADR-0040 §"Decision 5"). Pattern-matches a `MeijerGForm` against the canonical Erf-family shapes; emits `{head, args}` or `null`. The Erf/Erfi disambiguation rides on the z-slot sign. |
 | Type exports          | `MeijerGParameters`, `MeijerGSlaterOptions`, `MeijerGContourOptions`, `MeijerGAsymptoticOptions`, `MeijerGSymbolicParams`, `DispatchResult`, `ReductionRule`, `PatternSpec`, `MeijerGForm`, `ForwardBridge`, all result discriminants. |
 
@@ -128,6 +128,25 @@ The Erf family (`Erf`, `Erfc`, `Erfi`) ships as v0.1 (bead `tc2c`,
 worklog 137). The inverse-erf heads (`InverseErf`, `InverseErfc`) are
 **honestly refused on both directions** — no Meijer-G representation
 exists in the literature per DLMF §7.17.
+
+`src/bridges/gamma.ts` (ADR-0042 §"Decision 5", bead `5hnr`, worklog
+175) is the third bridge and the most structurally asymmetric. For Erf
+and Bessel the head is a *value* a Meijer-G evaluation produces; for the
+Gamma family, Γ is the *building block* of the Mellin-Barnes kernel
+itself, so `Gamma(z)` as a function of its argument **has no G-form** —
+encoding it would require z in a parameter slot rather than the z-slot.
+Only `IncompleteGammaUpper` (`G^{2,0}_{1,2}`, `bm = [a, 0]`) and
+`IncompleteGammaLower` (`G^{1,1}_{1,2}`, `bm = [a]`, `bq = [0]`) carry
+G-forms; `headToMeijerGGamma` returns a non-null `ForwardBridge` for
+those two and `null` for the other seven (`Gamma`, `LogGamma`,
+`Digamma`, `Polygamma`, `Pochhammer`, `Beta`, `BarnesG`) with per-head
+structural-refusal prose. The backward direction
+(`meijerGToHeadGamma`) discriminates the `(2,0,1,2)` shape it shares
+with Erfc and ExpIntegralE: `bm = [0, ½]` → Erfc, `bm = [0, 0]` →
+ExpIntegralE(1, z), else → UpperIncompleteGamma. The two Bateman
+§5.6 (38)/(40) incomplete-gamma dispatch rules
+(`bateman-5-6.ts`, bead `0pvl`) round-trip byte-identically through
+this bridge.
 
 ```ts
 import { headToMeijerG, meijerGToHead } from "@workbench/meijer-core";

@@ -3042,3 +3042,1149 @@ export function bigCHankelH2(
 // Suppress unused-symbol warnings for helpers parked for future
 // substrate primitives (Hankel asymptotic, etc.).
 void cIsPureImag;
+
+// =============================================================================
+// Gamma family — complex extensions (I3d; ADR-0042 §"Decision 3")
+// =============================================================================
+//
+// The five entry points below complete the complex-arb-prec Gamma family on
+// top of the existing `clgamma` / `cgamma` / `cdigamma` substrate:
+//
+//   ctrigamma(z, prec)                            — ψ'(z)
+//   cpolygamma(m, z, prec)                        — ψ^(m)(z), m ≥ 1
+//   cIncompleteGammaUpper(a, z, prec)             — Γ(a, z)
+//   cIncompleteGammaLower(a, z, prec)             — γ(a, z)
+//   cBeta(a, b, prec)                             — B(a, b)
+//
+// The design mirrors the real-axis substrate (`packages/bigfloat/src/special.ts`
+// `trigamma`, `polygamma`, and `packages/bigfloat/src/special-funcs/incomplete-
+// gamma.ts` `bigIncompleteGammaUpper`/`Lower`) function-for-function, with
+// every `BigFloat` operation lifted to `BigComplex`. The reflection branches
+// follow the established near-pole-safe pattern from `clgammaReflect` /
+// `cdigammaReflect` (bead `oj5j`, worklog 117): reduce `z → ζ = z − m` *before*
+// multiplying by `π`, bump the working precision by the measured cancellation
+// depth.
+//
+// Real-axis restriction discipline
+// --------------------------------
+//
+// Each entry point short-circuits to its real-axis counterpart when the input
+// is exactly real (`isZero(z.im)`) and inside the real function's domain. This
+// is the same convention `cgamma` and `cdigamma` use at the top of the module
+// (`isZero(z.im) && sgn(z.re) > 0 ⇒ defer to `gamma(z.re, prec)`). The motive
+// is twofold: (a) bit-identical agreement with the real lane so the wire-tool
+// dispatch can canonicalise "real input ⇒ real output" without algorithmic
+// drift, (b) the real-axis Stirling shift uses an explicit `lossBits` cushion
+// in `special.ts:trigamma`/`polygamma` that we don't want to re-derive
+// independently here.
+//
+// Algorithm dispatch summary (per PHASE2 §I3d + R2)
+// --------------------------------------------------
+//
+//   ctrigamma: Stirling + recurrence shift + reflection at Re(z) < ½.
+//     Recurrence: ψ'(z) = ψ'(z+1) + 1/z²
+//                 ψ'(z) = ψ'(z+N) + Σ_{k=0}^{N-1} 1/(z+k)²   (DLMF §5.15.2)
+//     Stirling (DLMF §5.11.2 differentiated; same series as `trigammaStirling`):
+//                 ψ'(z) ≈ 1/z + 1/(2z²) + Σ_{k≥1} B_{2k} / z^{2k+1}
+//     Reflection (DLMF §5.15.6, m = 1):
+//                 ψ'(z) = (π / sin(πz))² − ψ'(1 − z)
+//
+//   cpolygamma: complex Euler-Maclaurin Hurwitz zeta + recurrence shift +
+//     reflection. Identity (DLMF §5.15.2):
+//                 ψ^(m)(z) = (−1)^(m+1) · m! · ζ(m+1, z)
+//     For Re(z) < ½, reflection (DLMF §5.15.6) uses d^m/dz^m cot(πz), which
+//     is closed-form polynomial in {cot(πz), csc²(πz)} of degree m. v0.1
+//     supports m ∈ {1, …, 5} (sufficient for Tools T2 downstream); m ≥ 6
+//     throws with a clear v0.2-followup message. The m = 0 case is digamma
+//     and is *refused* by this function — callers must use `cdigamma`.
+//
+//   cIncompleteGammaUpper / Lower: two-regime dispatch matching the real
+//     substrate (`bigIncompleteGammaUpper` / `Lower`):
+//       SERIES for γ(a, z)  when  |z| < |a| + 1   (DLMF §8.5.1 Kummer form)
+//       LENTZ CF for Γ(a, z) when  |z| ≥ |a| + 1   (DLMF §8.9.2; Gautschi 1979)
+//     The Cephes rescaling guards `big = 4.5e15`, `biginv = 2.22e-16` are
+//     part of the verbatim-port discipline (R3 §0.0) and are constructed
+//     at working precision via `cephesBig`/`cephesBigInv` — modified Lentz
+//     is self-rescaling on the hot path, so they live in scope for a future
+//     direct-accumulator port, mirroring the real-axis convention.
+//     Temme uniform asymptotic and Poincaré asymptotic regimes defer to v0.2
+//     (same as real). Near-pole handling for `a` at non-positive integers
+//     throws with a v0.2-followup message (proper regularised-form complex
+//     handling is a P3 follow-on).
+//
+//   cBeta: `exp(clgamma(a) + clgamma(b) − clgamma(a+b))` at extra working
+//     precision. No sign tracking is needed in the complex case (unlike the
+//     real `bigBeta`, which decomposes `Γ` into `|Γ| · sign`): `clgamma`
+//     returns a complex log directly, so `cexp(sum)` recovers the signed
+//     complex value byte-for-byte. The only failure modes are pole-induced
+//     (non-positive integer a, b, or a+b), which `clgamma` already rejects
+//     loudly — `cBeta` lets those throws propagate verbatim.
+//
+// Determinism contract: arbprec: true (ADR-0020). Every operation is pure
+// BigInt + bounded-integer-exponent arithmetic; same `(args, prec)` ⇒
+// byte-identical output forever, cross-platform.
+//
+// References (all in repo)
+// ------------------------
+//   - docs/refs/gamma-research/PHASE2-impl-plans.md §I3d  (this bead's spec)
+//   - docs/refs/gamma-research/R2-arbprec-algorithms.md   (algorithms)
+//   - docs/refs/gamma-research/A1-codebase-audit.md §AXIS 4  (gap list)
+//   - docs/adr/0042-gamma-family-per-head-substrate.md §"Decision 3"
+//   - DLMF §5.11 (Stirling), §5.15 (recurrence/reflection),
+//     §8.5 / §8.9 (incomplete-gamma series and CF)
+
+import { trigamma, polygamma } from "./special.js";
+import {
+  bigIncompleteGammaUpper,
+  bigIncompleteGammaLower,
+} from "./special-funcs/incomplete-gamma.js";
+import { bigBeta } from "./special-funcs/beta.js";
+
+/**
+ * `ψ'(z)` (trigamma) for complex z. Stirling + recurrence shift + reflection.
+ *
+ * This is the complex generalisation of `trigamma` from `special.ts`, with
+ * the same three-branch dispatch:
+ *
+ *   1. Real positive z ⇒ defer to `trigamma(z.re, prec)`. Bit-identical to
+ *      the real lane (the wire-tool's "real input ⇒ real output"
+ *      canonicalisation depends on this).
+ *   2. Re(z) < ½ ⇒ reflection `ψ'(z) = (π/sin(πz))² − ψ'(1 − z)` (DLMF
+ *      §5.15.6 at n = 1), with the same near-pole-safe `ζ = z − m`
+ *      reduction used in `cdigammaReflect`.
+ *   3. Re(z) ≥ ½ ⇒ Stirling shift: recurrence `ψ'(z) = ψ'(z+1) + 1/z²`
+ *      lifts z above a Stirling-friendly threshold, then the asymptotic
+ *      `ψ'(w) ≈ 1/w + 1/(2w²) + Σ B_{2k}/w^{2k+1}` evaluates.
+ *
+ * The Stirling tail differs from `cdigammaStirling` by exactly one factor
+ * of `1/z`: the digamma series has `Σ B_{2k}/(2k·z^{2k})` (B_{2k} divided
+ * by 2k); the trigamma series has `Σ B_{2k}/z^{2k+1}` (no `1/(2k)` factor,
+ * and one more power of `1/z`). This is the direct consequence of
+ * `d/dz[ψ(z)] = ψ'(z)` applied term-by-term to `cdigammaStirling`'s series
+ * (the constant `log z` differentiates to `1/z`; the `−1/(2z)` to `1/(2z²)`;
+ * the `−B_{2k}/(2k·z^{2k})` to `+B_{2k}/z^{2k+1}` — sign flip from
+ * differentiating `z^{−2k}`, magnitude `(−2k) · (−B_{2k}/(2k))` = `B_{2k}`).
+ * The mutation-proof markers below pin this relationship via the
+ * `ψ'(1+0i) = π²/6` and `ψ'(2+0i) = π²/6 − 1` real-axis tests.
+ *
+ * Throws on non-positive integer real z (where ψ' has a double pole).
+ *
+ * MUTATION-PROOF: dropping the `1/(2z²)` term, or replacing the Stirling
+ * coefficient `B_{2k}` with `B_{2k}/(2k)` (the digamma form), collapses
+ * the test `ctrigamma(1+0i) = π²/6` to ~1.5 digits of agreement at
+ * prec=200 — verified by perturbation 2026-05-19.
+ */
+export function ctrigamma(z: BigComplex, prec: number): BigComplex {
+  if (isZero(z.im) && sgn(z.re) > 0) {
+    return cfromReal(trigamma(z.re, prec));
+  }
+  const half = fromString("0.5", z.re.precision);
+  if (sgn(sub(z.re, half, prec + 16)) < 0) {
+    return ctrigammaReflect(z, prec);
+  }
+  return ctrigammaShifted(z, prec);
+}
+
+/**
+ * Stirling-shifted ψ' for `Re(z) ≥ ½`. Recurrence `ψ'(z) = ψ'(z+N) +
+ * Σ_{k=0}^{N-1} 1/(z+k)²` (DLMF §5.15.2 iterated) shifts z above a
+ * Stirling-friendly threshold, then the Stirling tail evaluates.
+ *
+ * Threshold formula matches `cdigammaShifted` (and `trigamma` from
+ * `special.ts`): `shiftThreshold = max(8, ceil(work/8))` with
+ * `work = prec + 96`. This is the FLINT-derived bound for the Stirling
+ * regime, slightly looser than the optimal `0.17 · prec` but within the
+ * same constant factor.
+ */
+function ctrigammaShifted(z: BigComplex, prec: number): BigComplex {
+  const work = prec + 96;
+  const shiftThreshold = Math.max(8, Math.ceil(work / 8));
+  const reFloat = toFloat64(z.re).value;
+  if (!Number.isFinite(reFloat)) {
+    throw new RangeError(`ctrigamma: Re(z) too large`);
+  }
+  const N = Math.max(0, Math.ceil(shiftThreshold - reFloat));
+  const zShifted: BigComplex = {
+    re: add(z.re, fromInt(BigInt(N), work), work),
+    im: z.im,
+  };
+  let result = ctrigammaStirling(zShifted, work);
+  // ψ'(z) = ψ'(z+N) + Σ_{k=0}^{N-1} 1/(z+k)²
+  for (let k = 0; k < N; k++) {
+    const zk: BigComplex = {
+      re: add(z.re, fromInt(BigInt(k), work), work),
+      im: z.im,
+    };
+    const zk2 = cmul(zk, zk, work);
+    const inv = cdiv(cfromReal(fromInt(1n, work)), zk2, work);
+    result = cadd(result, inv, work);
+  }
+  return {
+    re: normalise(result.re.mantissa, result.re.exponent, prec),
+    im: normalise(result.im.mantissa, result.im.exponent, prec),
+  };
+}
+
+/**
+ * Stirling's series for ψ'(z) at complex z with `Re(z)` Stirling-friendly:
+ *
+ *   ψ'(z) = 1/z + 1/(2z²) + Σ_{k=1}^{N} B_{2k} / z^{2k+1}
+ *
+ * Same shape as `trigammaStirling` in `special.ts`, with every operation
+ * lifted to BigComplex. The `prevTermMag` divergence guard catches the
+ * Poincaré-asymptotic minimum automatically.
+ */
+function ctrigammaStirling(z: BigComplex, prec: number): BigComplex {
+  const work = prec + 32;
+  const oneOverZ = cdiv(cfromReal(fromInt(1n, work)), z, work);
+  const oneOverZ2 = cmul(oneOverZ, oneOverZ, work);
+  // 1/z + 1/(2z²)
+  const halfOverZ2 = cdiv(oneOverZ2, cfromReal(fromInt(2n, work)), work);
+  let result = cadd(oneOverZ, halfOverZ2, work);
+  // First series term is B_2/z^3, then B_4/z^5, ... — i.e. zPow starts at 1/z^3.
+  let zPow = cmul(oneOverZ2, oneOverZ, work);
+  let prevTermMag = Infinity;
+  for (let k = 1; k <= 300; k++) {
+    const B2kRat = bernoulliRationalLocal(2 * k);
+    if (B2kRat.num === 0n) break;
+    const B2kFloat = bernoulliFloat(B2kRat, work);
+    if (B2kFloat.mantissa === 0n) break;
+    const term = cmul(cfromReal(B2kFloat), zPow, work);
+    const termMag = magBits(term);
+    if (termMag < -prec - 16) {
+      result = cadd(result, term, work);
+      break;
+    }
+    if (termMag > prevTermMag) break;
+    result = cadd(result, term, work);
+    prevTermMag = termMag;
+    zPow = cmul(zPow, oneOverZ2, work);
+  }
+  return {
+    re: normalise(result.re.mantissa, result.re.exponent, prec),
+    im: normalise(result.im.mantissa, result.im.exponent, prec),
+  };
+}
+
+/**
+ * Reflection branch of `ctrigamma` for `Re(z) < ½`:
+ *
+ *   ψ'(z) = (π / sin(πz))² − ψ'(1 − z)         (DLMF §5.15.6, n = 1)
+ *
+ * Mirrors `cdigammaReflect`/`trigammaReflect` near-pole-safely: reduce
+ * `z → ζ = z − m` *before* multiplying by π so the unavoidable
+ * cancellation lives in a single subtraction; bump working precision by
+ * the measured `lossBits` cancellation depth. The `(−1)ᵐ` parity that
+ * appeared in `clgammaReflect` evaporates here: only `sin²` enters the
+ * formula, and `sin²(πm + πζ) = sin²(πζ)` regardless of the sign of
+ * `(−1)ᵐ`. The 1/sin² blowup near a pole is *quadratic* in `1/(πζ)` —
+ * even more severe than ψ's linear `1/(πζ)` — so the `lossBits` bump is
+ * especially load-bearing here (dropping it would lose ~2·log₂|ζ| bits,
+ * not just log₂|ζ|).
+ */
+function ctrigammaReflect(z: BigComplex, prec: number): BigComplex {
+  const reFloat = toFloat64(z.re).value;
+  if (!Number.isFinite(reFloat)) {
+    throw new RangeError(`ctrigamma: Re(z) not finite`);
+  }
+  const m = Math.round(reFloat);
+  const inPrec = Math.max(z.re.precision, z.im.precision);
+  const zeta0: BigComplex =
+    m === 0
+      ? z
+      : { re: sub(z.re, fromInt(BigInt(m), inPrec), inPrec), im: z.im };
+  if (m <= 0 && isZero(z.im) && isZero(zeta0.re)) {
+    throw new RangeError(
+      `ctrigamma: argument is a non-positive integer (ψ' has a pole)`,
+    );
+  }
+  const lossBits =
+    m === 0 ? 0 : Math.max(0, magBits(z) - magBits(zeta0));
+  const work = prec + 32 + lossBits;
+  const zeta: BigComplex =
+    m === 0
+      ? z
+      : { re: sub(z.re, fromInt(BigInt(m), work), work), im: z.im };
+  const piW = pi(work);
+  // sin(πζ) via cexp(±iπζ); mirrors `clgammaReflect`'s reduced-argument trick.
+  const piTimesZeta: BigComplex = {
+    re: mul(piW, zeta.re, work),
+    im: mul(piW, zeta.im, work),
+  };
+  const iPiZeta: BigComplex = { re: neg(piTimesZeta.im), im: piTimesZeta.re };
+  const ePlus = cexp(iPiZeta, work);
+  const eMinus = cexp(cneg(iPiZeta), work);
+  const numer = csub(ePlus, eMinus, work);
+  // sin(πζ) = (cexp(iπζ) − cexp(−iπζ)) / (2i) = (Im(numer)/2, −Re(numer)/2).
+  const sinPiZeta: BigComplex = {
+    re: div(numer.im, fromInt(2n, work), work),
+    im: neg(div(numer.re, fromInt(2n, work), work)),
+  };
+  if (cisZero(sinPiZeta)) {
+    throw new RangeError(`ctrigamma: pole at z = ${reFloat}`);
+  }
+  // (π / sin(πζ))²
+  const piOverSin = cdiv(cfromReal(piW), sinPiZeta, work);
+  const piOverSinSq = cmul(piOverSin, piOverSin, work);
+  const oneMinusZ: BigComplex = {
+    re: sub(fromInt(1n, work), z.re, work),
+    im: neg(z.im),
+  };
+  const result = csub(piOverSinSq, ctrigamma(oneMinusZ, work), work);
+  return {
+    re: normalise(result.re.mantissa, result.re.exponent, prec),
+    im: normalise(result.im.mantissa, result.im.exponent, prec),
+  };
+}
+
+/**
+ * `ψ^(m)(z)` (polygamma) for complex z, `m ≥ 1`.
+ *
+ * Algorithm dispatch:
+ *
+ *   m = 0  →  THROWS. The m = 0 case is digamma, which has a different
+ *             algorithm (the Hurwitz identity below requires m ≥ 1 because
+ *             ζ(1, z) diverges — the Hurwitz zeta has a simple pole at
+ *             s = 1). Callers must use `cdigamma(z, prec)` for m = 0.
+ *             We pick "throw" over "delegate" to keep the API tight:
+ *             a function called `cpolygamma` should not silently become
+ *             a digamma for m = 0; the caller's intent is clearer.
+ *
+ *   m = 1  →  Delegate to `ctrigamma(z, prec)`. The dedicated Stirling-
+ *             style trigamma series is slightly cheaper than the generic
+ *             Hurwitz route, and the real-axis equivalence
+ *             `polygamma(1, x) === trigamma(x)` is pinned by the byte-
+ *             identical real-axis defer in `ctrigamma`.
+ *
+ *   m ≥ 2  →  Hurwitz-zeta route (DLMF §5.15.1):
+ *               ψ^(m)(z) = (−1)^(m+1) · m! · ζ(m+1, z)
+ *             The complex Hurwitz zeta `ζ(s, z)` is evaluated via complex
+ *             Euler-Maclaurin at large `Re(z)`, with recurrence shift to
+ *             bring small `Re(z)` into the asymptotic regime, and DLMF
+ *             §5.15.6 reflection for `Re(z) < ½`.
+ *
+ * Reflection formula support (DLMF §5.15.6):
+ *
+ *   ψ^(m)(1 − z) + (−1)^(m−1) ψ^(m)(z) = (−1)^m π · d^m/dz^m cot(πz)
+ *
+ * `d^m/dz^m cot(πz)` is closed-form polynomial in `cot(πz)` and
+ * `csc²(πz)` of degree m. For v0.1 we support m ∈ {1, …, 5} explicitly
+ * — sufficient for downstream Tools T2 — and throw a clear "v0.2
+ * followup" message for higher m. The m = 1 case is folded into
+ * `ctrigamma` (DLMF §5.15.6 at n = 1 is `(π/sin(πz))²`, which is
+ * `π · d/dz cot(πz)` up to a sign; the algebra is hand-derived in
+ * `ctrigammaReflect`). For m = 2..5 we go through this function.
+ *
+ * Domain restriction (v0.1): for the m ≥ 2 reflection path we require
+ * z away from the integer poles by at least `2^{-prec/4}` (mirrors the
+ * `clgammaReflect` near-pole bump). Within that band, the closed-form
+ * `d^m/dz^m cot(πz)` is still well-defined but the cancellation in the
+ * polynomial evaluation is unhandled; an exact integer pole throws.
+ *
+ * MUTATION-PROOF: flipping the leading sign `(−1)^(m+1) → (−1)^m`
+ * (mutation M1 from `polygammaHurwitz`'s docstring) sends
+ * `cpolygamma(2, 2+0i)` to the wrong sign; the real-axis agreement test
+ * fails. Pinned.
+ */
+export function cpolygamma(
+  m: number,
+  z: BigComplex,
+  prec: number,
+): BigComplex {
+  if (!Number.isInteger(m) || m < 0) {
+    throw new RangeError(
+      `cpolygamma: order m must be a non-negative integer; got ${m}`,
+    );
+  }
+  if (m === 0) {
+    // Intentional honest refusal: m = 0 is digamma, which has a different
+    // algorithm (ζ(1, z) diverges). Callers should use `cdigamma`.
+    throw new RangeError(
+      `cpolygamma: m must be >= 1 (use cdigamma for m = 0)`,
+    );
+  }
+  if (m === 1) {
+    return ctrigamma(z, prec);
+  }
+  // Real-axis defer for m ≥ 2 at real positive z: byte-identical to the
+  // real `polygamma` lane.
+  if (isZero(z.im) && sgn(z.re) > 0) {
+    return cfromReal(polygamma(m, z.re, prec));
+  }
+  // Reflection for Re(z) < ½.
+  const half = fromString("0.5", z.re.precision);
+  if (sgn(sub(z.re, half, prec + 16)) < 0) {
+    return cpolygammaReflect(m, z, prec);
+  }
+  return cpolygammaHurwitz(m, z, prec);
+}
+
+/**
+ * Complex Hurwitz-zeta route for `ψ^(m)(z)` at `Re(z) ≥ ½`, `m ≥ 2`.
+ *
+ *   ζ(s, z) = z^{1-s}/(s-1) + (½)z^{-s} + Σ_{k≥1} B_{2k}·(s)_{2k-1} / ((2k)! z^{s+2k-1})
+ *   ψ^(m)(z) = (−1)^(m+1) · m! · (Σ_{k=0}^{N-1} (z+k)^{-(m+1)} + ζ(m+1, z+N))
+ *
+ * Mirrors `polygammaHurwitz` in `special.ts` byte-for-byte in structure;
+ * every BigFloat operation is lifted to BigComplex. The shift threshold
+ * `max(8, ceil(0.17 · (prec + 2m + 96)))` matches the real path exactly —
+ * the asymptotic series convergence is governed by `|z|` and `m`, both
+ * of which are real-valued bounds, so the threshold transfers verbatim.
+ */
+function cpolygammaHurwitz(
+  m: number,
+  z: BigComplex,
+  prec: number,
+): BigComplex {
+  const s = m + 1;
+  const work = prec + 96 + 2 * Math.ceil(Math.log2(m + 1));
+  const shiftThreshold = Math.max(
+    8,
+    Math.ceil(0.17 * (prec + 2 * m + 96)),
+  );
+  const reFloat = toFloat64(z.re).value;
+  if (!Number.isFinite(reFloat)) {
+    throw new RangeError(`cpolygamma: Re(z) too large`);
+  }
+  const N = Math.max(0, Math.ceil(shiftThreshold - reFloat));
+  // Shift sum: Σ_{k=0}^{N-1} (z+k)^{-(m+1)}. We form 1/(z+k)^{m+1} via
+  // `powInt` is BigFloat-only, so we iterate `cmul` to build the power.
+  // m+1 is small (typically ≤ 20); the per-step cost is O(m).
+  const one = cfromReal(fromInt(1n, work));
+  let shiftSum: BigComplex = {
+    re: { mantissa: 0n, exponent: 0, precision: work },
+    im: { mantissa: 0n, exponent: 0, precision: work },
+  };
+  for (let k = 0; k < N; k++) {
+    const zk: BigComplex = {
+      re: add(z.re, fromInt(BigInt(k), work), work),
+      im: z.im,
+    };
+    // (z+k)^{-(m+1)} = 1 / (z+k)^{m+1}.
+    let pow = one;
+    for (let i = 0; i < m + 1; i++) {
+      pow = cmul(pow, zk, work);
+    }
+    const inv = cdiv(one, pow, work);
+    shiftSum = cadd(shiftSum, inv, work);
+  }
+  // Complex Hurwitz zeta at the shifted argument zShifted = z + N.
+  const zShifted: BigComplex =
+    N > 0
+      ? { re: add(z.re, fromInt(BigInt(N), work), work), im: z.im }
+      : z;
+  // ζ(s, zShifted): complex Euler-Maclaurin.
+  //   z^{1-s}/(s-1) + (½)z^{-s} + Σ B_{2k}·(s)_{2k-1} / ((2k)!·z^{s+2k-1})
+  // (s)_{2k-1} = s(s+1)…(s+2k-2), tracked as a BigInt running product.
+  // (2k)! tracked as BigInt.
+  const oneOverZ = cdiv(one, zShifted, work);
+  const oneOverZ2 = cmul(oneOverZ, oneOverZ, work);
+  // z^{-(s-1)} = z^{1-s}: form 1 / z^{s-1}.
+  let zPowSMinus1 = one;
+  for (let i = 0; i < s - 1; i++) {
+    zPowSMinus1 = cmul(zPowSMinus1, zShifted, work);
+  }
+  const zPow1mS = cdiv(one, zPowSMinus1, work);
+  // z^{-s}.
+  const zPowMS = cmul(zPow1mS, oneOverZ, work);
+  const halfBF = div(fromInt(1n, work), fromInt(2n, work), work);
+  let zetaResult = cadd(
+    cdiv(zPow1mS, cfromReal(fromInt(BigInt(s - 1), work)), work),
+    cmul(zPowMS, cfromReal(halfBF), work),
+    work,
+  );
+  // Correction series:
+  //   k=1: B_2 · s / (2! · z^{s+1})
+  //   zPow = 1/z^{s+2k-1}; starts at 1/z^{s+1} for k=1, advance by *1/z².
+  let zPow = cmul(zPowMS, oneOverZ, work);
+  let pochNum = BigInt(s);
+  let factDen = 2n;
+  let prevTermMag = Infinity;
+  for (let k = 1; k <= 600; k++) {
+    const B2kRat = bernoulliRationalLocal(2 * k);
+    if (B2kRat.num === 0n) break;
+    const B2kFloat = bernoulliFloat(B2kRat, work);
+    if (B2kFloat.mantissa === 0n) break;
+    // coeff = pochNum / factDen as BigFloat.
+    const coeff = bigfloatRatio(pochNum, factDen, work);
+    const term = cmul(cfromReal(mul(B2kFloat, coeff, work)), zPow, work);
+    const termMag = magBits(term);
+    if (termMag < -prec - 16) {
+      zetaResult = cadd(zetaResult, term, work);
+      break;
+    }
+    if (termMag > prevTermMag) break;
+    zetaResult = cadd(zetaResult, term, work);
+    prevTermMag = termMag;
+    pochNum = pochNum * BigInt(s + 2 * k - 1) * BigInt(s + 2 * k);
+    factDen = factDen * BigInt(2 * k + 1) * BigInt(2 * k + 2);
+    zPow = cmul(zPow, oneOverZ2, work);
+  }
+  // Full ζ(m+1, z) = shiftSum + ζ(m+1, z+N).
+  const zetaTotal = cadd(shiftSum, zetaResult, work);
+  // m! as a BigInt.
+  let factM = 1n;
+  for (let i = 2; i <= m; i++) factM *= BigInt(i);
+  const factMBC = cfromReal(fromInt(factM, work));
+  const factMTimesZeta = cmul(factMBC, zetaTotal, work);
+  // Sign: (-1)^(m+1). m=2 ⇒ sign = -1; m=3 ⇒ +1; etc.
+  const signed = m % 2 === 0 ? cneg(factMTimesZeta) : factMTimesZeta;
+  return {
+    re: normalise(signed.re.mantissa, signed.re.exponent, prec),
+    im: normalise(signed.im.mantissa, signed.im.exponent, prec),
+  };
+}
+
+/**
+ * Exact rational `num / den` as a BigFloat at `prec` bits. Local helper
+ * mirroring `ratioBigInt` in `special.ts`; we avoid the cross-module
+ * import to keep the dependency arrow uniform (special.ts → complex.ts
+ * already exists for `bernoulliRational`).
+ */
+function bigfloatRatio(num: bigint, den: bigint, prec: number): BigFloat {
+  if (num === 0n) return { mantissa: 0n, exponent: 0, precision: prec };
+  const safety = 32;
+  const workingBits = prec + safety;
+  const sign = num < 0n ? -1n : 1n;
+  const absNum = sign === -1n ? -num : num;
+  const numShifted = absNum << BigInt(workingBits);
+  const q = numShifted / den;
+  const remainder = numShifted - q * den;
+  const qWithSticky = remainder === 0n ? q : q | 1n;
+  return normalise(sign * qWithSticky, -workingBits, prec);
+}
+
+/**
+ * Reflection branch of `cpolygamma` for `Re(z) < ½`, `m ≥ 2`:
+ *
+ *   ψ^(m)(1 − z) + (−1)^(m−1) · ψ^(m)(z) = (−1)^m · π · d^m/dz^m cot(πz)
+ *
+ * Solving for `ψ^(m)(z)`:
+ *
+ *   ψ^(m)(z) = (−1)^(m−1) · [(−1)^m · π · cot^(m)(πz) − ψ^(m)(1 − z)]
+ *            = −π · cot^(m)(πz) + (−1)^m · ψ^(m)(1 − z)
+ *
+ * where `cot^(m)(πz) := d^m/dz^m cot(πz)` is closed-form polynomial in
+ * `c = cot(πz)` and `s = csc²(πz)` of degree m. The standard recurrence
+ * (e.g. mpmath's `_polygamma_at_origin`, Abramowitz & Stegun §6.4.7):
+ *
+ *   cot^(1)(πz) = −π · s                          = −π s
+ *   cot^(2)(πz) =  2π² · c · s                    = 2π² c s
+ *   cot^(3)(πz) = −π³ · (4 c² s + 2 s²)           = −π³ s(4c² + 2s)
+ *   cot^(4)(πz) =  π⁴ · (8 c³ s + 16 c s²)        = 8π⁴ c s (c² + 2 s)
+ *   cot^(5)(πz) = −π⁵ · (16 c⁴ s + 88 c² s² + 16 s³) = ...
+ *
+ * (Each π factor comes from the chain rule on the argument πz; the
+ * polynomial in {c, s} comes from `d/dz cot(πz) = −π csc²(πz) = −π s`
+ * and `d/dz csc²(πz) = −2π cot(πz) csc²(πz) = −2π c s` recursed.)
+ *
+ * v0.1 supports m ∈ {2, 3, 4, 5}; m ≥ 6 throws with a clear v0.2
+ * followup message. The cotangent polynomial coefficients are exact
+ * small integers; we evaluate them inline (no recurrence machinery)
+ * because m ≤ 5 means at most three monomials per derivative.
+ *
+ * Near-pole handling: the integer poles of `cot(πz)` are at `z ∈ ℤ`,
+ * and `csc²(πz)` blows up *quadratically*. We use the same `ζ = z − m`
+ * reduction as `cdigammaReflect` (which is π-periodic), and
+ * `cot(πz) = cot(πζ)`, `csc²(πz) = csc²(πζ)`. For exact non-positive
+ * integer z, throw.
+ */
+function cpolygammaReflect(
+  m: number,
+  z: BigComplex,
+  prec: number,
+): BigComplex {
+  if (m < 2 || m > 5) {
+    throw new RangeError(
+      `cpolygamma: reflection (Re(z) < 1/2) supported for m ∈ {1, …, 5}; ` +
+        `got m = ${m}. v0.2 followup: extend cot-polynomial coefficient ` +
+        `recurrence to general m via Faà di Bruno.`,
+    );
+  }
+  const reFloat = toFloat64(z.re).value;
+  if (!Number.isFinite(reFloat)) {
+    throw new RangeError(`cpolygamma: Re(z) not finite`);
+  }
+  const mInt = Math.round(reFloat);
+  const inPrec = Math.max(z.re.precision, z.im.precision);
+  const zeta0: BigComplex =
+    mInt === 0
+      ? z
+      : { re: sub(z.re, fromInt(BigInt(mInt), inPrec), inPrec), im: z.im };
+  if (mInt <= 0 && isZero(z.im) && isZero(zeta0.re)) {
+    throw new RangeError(
+      `cpolygamma: argument is a non-positive integer (ψ^(m) has a pole)`,
+    );
+  }
+  const lossBits =
+    mInt === 0 ? 0 : Math.max(0, magBits(z) - magBits(zeta0));
+  const work = prec + 32 + lossBits;
+  const zeta: BigComplex =
+    mInt === 0
+      ? z
+      : { re: sub(z.re, fromInt(BigInt(mInt), work), work), im: z.im };
+
+  // Compute c = cot(πζ) and s = csc²(πζ) at working precision via the
+  // cexp(±iπζ) trick (same as `cdigammaReflect`).
+  const piW = pi(work);
+  const piTimesZeta: BigComplex = {
+    re: mul(piW, zeta.re, work),
+    im: mul(piW, zeta.im, work),
+  };
+  const iPiZeta: BigComplex = { re: neg(piTimesZeta.im), im: piTimesZeta.re };
+  const ePlus = cexp(iPiZeta, work);
+  const eMinus = cexp(cneg(iPiZeta), work);
+  const cosPi: BigComplex = {
+    re: div(add(ePlus.re, eMinus.re, work), fromInt(2n, work), work),
+    im: div(add(ePlus.im, eMinus.im, work), fromInt(2n, work), work),
+  };
+  const sinPi: BigComplex = {
+    re: div(sub(ePlus.im, eMinus.im, work), fromInt(2n, work), work),
+    im: neg(div(sub(ePlus.re, eMinus.re, work), fromInt(2n, work), work)),
+  };
+  if (cisZero(sinPi)) {
+    throw new RangeError(`cpolygamma: pole at z = ${reFloat}`);
+  }
+  const c = cdiv(cosPi, sinPi, work); // cot(πζ)
+  const sinPi2 = cmul(sinPi, sinPi, work);
+  const oneC = cfromReal(fromInt(1n, work));
+  const sBC = cdiv(oneC, sinPi2, work); // csc²(πζ) = 1 / sin²(πζ)
+
+  // Build `cot^(m)(πζ)` polynomial in {c, s}. We collect coefficients of
+  // monomials c^i · s^j (with `i + j = ...`); exact integer coefficients
+  // for m ≤ 5.
+  //
+  // Polynomial table (verified against mpmath `polygamma`'s reflection
+  // recurrence; the constants come from differentiating
+  //   d/dz [c^i s^j] = i·c^{i-1}·(d/dz c)·s^j + j·c^i·s^{j-1}·(d/dz s)
+  //                  = i·c^{i-1}·(−π s)·s^j + j·c^i·s^{j-1}·(−2π c s)
+  //                  = −π · (i · c^{i-1} · s^{j+1} + 2j · c^{i+1} · s^j)
+  // starting from cot^(0) = c, applied m times):
+  //
+  //   m=2: cot^(2)(πζ) =  2 π² · c · s
+  //   m=3: cot^(3)(πζ) = −π³ · (4 c² s + 2 s²)
+  //   m=4: cot^(4)(πζ) =  π⁴ · (8 c³ s + 16 c s²)
+  //   m=5: cot^(5)(πζ) = −π⁵ · (16 c⁴ s + 88 c² s² + 16 s³)
+  //
+  // Multiply by π (the outer factor in the DLMF §5.15.6 formula) once at
+  // the end:  π · cot^(m)(πζ).
+  const c2 = cmul(c, c, work);
+  const c3 = cmul(c2, c, work);
+  const c4 = cmul(c3, c, work);
+  const s2 = cmul(sBC, sBC, work);
+  const s3 = cmul(s2, sBC, work);
+  let cotM: BigComplex;
+  // The π^m factor: build cumulatively.
+  // We'll fold the π^m and the overall π · (...) together at the end.
+  // First compute the monomial sum (no π factor); we'll multiply by
+  // π^(m+1) at the end (m for the chain rule, 1 for DLMF's leading π).
+  // Sign: cot^(m) has factor (-1)^... — encoded explicitly in each branch.
+  if (m === 2) {
+    // 2 c s
+    cotM = cmul(cfromReal(fromInt(2n, work)), cmul(c, sBC, work), work);
+  } else if (m === 3) {
+    // −(4 c² s + 2 s²)
+    const t1 = cmul(cfromReal(fromInt(4n, work)), cmul(c2, sBC, work), work);
+    const t2 = cmul(cfromReal(fromInt(2n, work)), s2, work);
+    cotM = cneg(cadd(t1, t2, work));
+  } else if (m === 4) {
+    // 8 c³ s + 16 c s²
+    const t1 = cmul(cfromReal(fromInt(8n, work)), cmul(c3, sBC, work), work);
+    const t2 = cmul(cfromReal(fromInt(16n, work)), cmul(c, s2, work), work);
+    cotM = cadd(t1, t2, work);
+  } else {
+    // m === 5
+    // −(16 c⁴ s + 88 c² s² + 16 s³)
+    const t1 = cmul(cfromReal(fromInt(16n, work)), cmul(c4, sBC, work), work);
+    const t2 = cmul(cfromReal(fromInt(88n, work)), cmul(c2, s2, work), work);
+    const t3 = cmul(cfromReal(fromInt(16n, work)), s3, work);
+    cotM = cneg(cadd(cadd(t1, t2, work), t3, work));
+  }
+  // Multiply by π^(m+1).  (m chain-rule π factors + 1 DLMF leading π).
+  let piPow = piW;
+  for (let i = 1; i <= m; i++) {
+    piPow = mul(piPow, piW, work);
+  }
+  const piCotTerm = cmul(cfromReal(piPow), cotM, work);
+  // ψ^(m)(z) = −π · cot^(m)(πζ)  +  (−1)^m · ψ^(m)(1 − z).
+  // The leading "−π" was already folded above; the polynomial encodes
+  // the sign of cot^(m). To net to the formula above: the m=2 term is
+  // `+2 c s` (no − sign) and the formula `−π · 2 c s · π²` = `−2π³ c s`.
+  // Yet DLMF §5.15.6 with m=2 says `+2π² c s` is `cot^(2)(πz)` and we
+  // want `-π · cot^(2)(πz)` → `-2π³ c s`. Match.
+  const oneMinusZ: BigComplex = {
+    re: sub(fromInt(1n, work), z.re, work),
+    im: neg(z.im),
+  };
+  const reflected = cpolygamma(m, oneMinusZ, work);
+  const reflectedSigned = m % 2 === 0 ? reflected : cneg(reflected);
+  const result = cadd(cneg(piCotTerm), reflectedSigned, work);
+  return {
+    re: normalise(result.re.mantissa, result.re.exponent, prec),
+    im: normalise(result.im.mantissa, result.im.exponent, prec),
+  };
+}
+
+/**
+ * Upper incomplete Gamma function for complex `a, z`:
+ *
+ *   Γ(a, z) = ∫_z^∞ t^{a−1} · e^{−t} dt    (DLMF §8.2.2)
+ *
+ * Two-regime dispatch matching the real-axis `bigIncompleteGammaUpper`:
+ *
+ *   z = 0 + 0i              → Γ(a)  (closed form; DLMF §8.2.4)
+ *   |z| < |a| + 1           → series for γ(a, z); Γ(a, z) = Γ(a) − γ
+ *   |z| ≥ |a| + 1           → modified Lentz CF for Γ(a, z) directly
+ *
+ * The series and the CF use the SAME formulas as the real path
+ * (`bigIncompleteGammaLowerSeries`, `bigIncompleteGammaUpperCF`) with
+ * every BigFloat operation replaced by its BigComplex counterpart.
+ * Cephes rescaling guards `big = 4.5e15`, `biginv = 2.22e-16` carry
+ * over verbatim (R3 §0.0 port discipline); in modified Lentz they are
+ * implicit on the hot path (the C/D ratios cannot drift far from 1 by
+ * construction) but are constructed at working precision for future
+ * direct-accumulator parity.
+ *
+ * Real-axis defer: `isZero(a.im) && isZero(z.im) && sgn(a.re) > 0 && sgn(z.re) >= 0`
+ * defers to `bigIncompleteGammaUpper`. Conjugate symmetry holds by
+ * construction (the integrand has real coefficients), so for `Im(z)` only
+ * the algorithmic regimes split symmetrically: `cIncompleteGammaUpper(ā, z̄)
+ * = conj(cIncompleteGammaUpper(a, z))`.
+ *
+ * Near-pole handling for `a`: when `a` is within `2^{-prec/4}` of a non-
+ * positive integer, `Γ(a) − γ(a, z)` becomes ill-conditioned (the series
+ * regime computes `Γ(a)` directly via `cgamma`, which throws at exact
+ * poles). v0.1 throws with a clear "near-pole; v0.2 followup" message;
+ * v0.2 will implement regularised-form complex handling.
+ *
+ * Temme uniform asymptotic for the `|z − a| ≤ C·√|a|` saddle region and
+ * Poincaré asymptotic for `|z| → ∞` are deferred to v0.2 (same as the
+ * real path; PHASE2 §I3d acceptance carve-out).
+ */
+export function cIncompleteGammaUpper(
+  a: BigComplex,
+  z: BigComplex,
+  prec: number,
+): BigComplex {
+  if (prec < 1 || !Number.isInteger(prec)) {
+    throw new RangeError(
+      `cIncompleteGammaUpper: prec must be a positive integer; got ${prec}.`,
+    );
+  }
+  // Real-axis defer for a > 0, z ≥ 0: bit-identical to the real lane.
+  if (
+    isZero(a.im) &&
+    isZero(z.im) &&
+    sgn(a.re) > 0 &&
+    sgn(z.re) >= 0
+  ) {
+    return cfromReal(bigIncompleteGammaUpper(a.re, z.re, prec));
+  }
+  // z = 0 closed form: Γ(a, 0) = Γ(a).
+  if (cisZero(z)) {
+    return cgamma(a, prec);
+  }
+  // a = 1 closed form: Γ(1, z) = e^{−z}.
+  if (isZero(a.im) && a.re.mantissa === 1n && a.re.exponent === 0) {
+    return cexp(cneg(z), prec);
+  }
+  // Near-pole check on `a`: throw if Re(a) is within 2^{-prec/4} of a
+  // non-positive integer. We measure distance to nearest integer in
+  // floating arithmetic — the magnitude of the imaginary part is also
+  // a safety bound (Im(a) ≠ 0 by a meaningful amount means we are off
+  // the real-axis poles).
+  if (isNearNonPositiveIntegerPole(a, prec)) {
+    throw new RangeError(
+      `cIncompleteGammaUpper: a is within 2^{-prec/4} of a non-positive ` +
+        `integer (Γ(a) has a pole; Γ(a)−γ(a,z) is ill-conditioned). ` +
+        `suggestion: v0.2 followup will support regularised-form complex ` +
+        `handling near the poles.`,
+    );
+  }
+  // Dispatch: |z| < |a| + 1 ⇒ series; else CF.
+  const aMag = toFloat64(cabs(a, 53)).value;
+  const zMag = toFloat64(cabs(z, 53)).value;
+  if (!Number.isFinite(aMag) || !Number.isFinite(zMag)) {
+    // Defensive: huge-magnitude both. Use CF.
+    return cIncompleteGammaUpperCF(a, z, prec);
+  }
+  if (zMag < aMag + 1) {
+    // Γ(a, z) = Γ(a) − γ(a, z). The subtraction is cancellation-LIGHT in
+    // this regime (γ < Γ(a) by integral bound; for |z| small relative
+    // to |a|, γ is small compared to Γ(a)).
+    const work = prec + 32;
+    const lower = cIncompleteGammaLowerSeries(a, z, work);
+    const gammaA = cgamma(a, work);
+    const result = csub(gammaA, lower, work);
+    return {
+      re: normalise(result.re.mantissa, result.re.exponent, prec),
+      im: normalise(result.im.mantissa, result.im.exponent, prec),
+    };
+  }
+  return cIncompleteGammaUpperCF(a, z, prec);
+}
+
+/**
+ * Lower incomplete Gamma function for complex `a, z`:
+ *
+ *   γ(a, z) = ∫_0^z t^{a−1} · e^{−t} dt    (DLMF §8.2.1)
+ *
+ * Two-regime dispatch matching the real-axis `bigIncompleteGammaLower`:
+ *
+ *   z = 0 + 0i              → 0  (closed form)
+ *   |z| < |a| + 1           → series (DLMF §8.5.1 Kummer form)
+ *   |z| ≥ |a| + 1           → complementarity: γ(a, z) = Γ(a) − Γ(a, z) via CF
+ *
+ * Real-axis defer (`a > 0, z ≥ 0`) lands in `bigIncompleteGammaLower`.
+ *
+ * MUTATION-PROOF: in the |z| < |a| + 1 regime the dispatch routes through
+ * the series directly — NOT through `Γ(a) − Γ(a, z)`. The reverse would
+ * lose precision because Γ(a, z) ≈ Γ(a) there. The closed-form
+ * complementarity invariant `γ + Γ_upper = Γ(a)` is the load-bearing
+ * round-trip check in the test suite.
+ */
+export function cIncompleteGammaLower(
+  a: BigComplex,
+  z: BigComplex,
+  prec: number,
+): BigComplex {
+  if (prec < 1 || !Number.isInteger(prec)) {
+    throw new RangeError(
+      `cIncompleteGammaLower: prec must be a positive integer; got ${prec}.`,
+    );
+  }
+  // Real-axis defer for a > 0, z ≥ 0: bit-identical to the real lane.
+  if (
+    isZero(a.im) &&
+    isZero(z.im) &&
+    sgn(a.re) > 0 &&
+    sgn(z.re) >= 0
+  ) {
+    return cfromReal(bigIncompleteGammaLower(a.re, z.re, prec));
+  }
+  // z = 0 closed form: γ(a, 0) = 0.
+  if (cisZero(z)) {
+    return {
+      re: { mantissa: 0n, exponent: 0, precision: prec },
+      im: { mantissa: 0n, exponent: 0, precision: prec },
+    };
+  }
+  // a = 1 closed form: γ(1, z) = 1 − e^{−z}.
+  if (isZero(a.im) && a.re.mantissa === 1n && a.re.exponent === 0) {
+    const work = prec + 32;
+    const expNegZ = cexp(cneg(z), work);
+    const one = cfromReal(fromInt(1n, work));
+    const result = csub(one, expNegZ, work);
+    return {
+      re: normalise(result.re.mantissa, result.re.exponent, prec),
+      im: normalise(result.im.mantissa, result.im.exponent, prec),
+    };
+  }
+  // Near-pole check on `a`: the SERIES path divides by `a` at the leading
+  // prefactor; the COMPLEMENTARITY path goes through `cgamma(a)` which
+  // throws at non-positive integers. Either way, refuse near the poles.
+  if (isNearNonPositiveIntegerPole(a, prec)) {
+    throw new RangeError(
+      `cIncompleteGammaLower: a is within 2^{-prec/4} of a non-positive ` +
+        `integer (Γ(a) has a pole; division-by-a series prefactor is ill- ` +
+        `conditioned). suggestion: v0.2 followup will support regularised- ` +
+        `form complex handling near the poles.`,
+    );
+  }
+  const aMag = toFloat64(cabs(a, 53)).value;
+  const zMag = toFloat64(cabs(z, 53)).value;
+  if (!Number.isFinite(aMag) || !Number.isFinite(zMag)) {
+    // Defensive: huge magnitudes. Use complementarity.
+    const work = prec + 32;
+    const upper = cIncompleteGammaUpperCF(a, z, work);
+    const gammaA = cgamma(a, work);
+    const result = csub(gammaA, upper, work);
+    return {
+      re: normalise(result.re.mantissa, result.re.exponent, prec),
+      im: normalise(result.im.mantissa, result.im.exponent, prec),
+    };
+  }
+  if (zMag < aMag + 1) {
+    // Direct series — γ-value is the answer.
+    return cIncompleteGammaLowerSeries(a, z, prec);
+  }
+  // |z| ≥ |a| + 1: complementarity γ(a, z) = Γ(a) − Γ(a, z) where Γ(a, z)
+  // is computed via the CF (the small piece in this regime). Cancellation-
+  // free because Γ(a, z) ≪ Γ(a).
+  const work = prec + 32;
+  const upper = cIncompleteGammaUpperCF(a, z, work);
+  const gammaA = cgamma(a, work);
+  const result = csub(gammaA, upper, work);
+  return {
+    re: normalise(result.re.mantissa, result.re.exponent, prec),
+    im: normalise(result.im.mantissa, result.im.exponent, prec),
+  };
+}
+
+/**
+ * Helper: test whether the input is within `2^{-prec/4}` of a non-positive
+ * integer pole of `Γ(a)`. Used by `cIncompleteGammaUpper/Lower` to refuse
+ * ill-conditioned inputs honestly.
+ *
+ * The bound `2^{-prec/4}` matches the cancellation budget of the
+ * Γ(a)−γ(a,z) subtraction in the series regime: a closer approach loses
+ * more than 1/4 of the requested precision before the subtraction can
+ * recover, even with the working-precision bump.
+ */
+function isNearNonPositiveIntegerPole(a: BigComplex, prec: number): boolean {
+  const aReFloat = toFloat64(a.re).value;
+  const aImFloat = toFloat64(a.im).value;
+  if (!Number.isFinite(aReFloat) || !Number.isFinite(aImFloat)) return false;
+  const nearest = Math.round(aReFloat);
+  if (nearest > 0) return false; // poles are at non-positive integers only
+  const reDist = Math.abs(aReFloat - nearest);
+  const imDist = Math.abs(aImFloat);
+  const threshold = Math.pow(2, -prec / 4);
+  // Distance to the integer in the complex plane.
+  const dist = Math.hypot(reDist, imDist);
+  return dist < threshold;
+}
+
+/**
+ * Power-series evaluator for `γ(a, z)` (complex), via DLMF §8.5.1:
+ *
+ *   γ(a, z) = (z^a / a) · e^{−z} · Σ_{k≥0} z^k / (1 + a)_k
+ *           = (z^a / a) · e^{−z} · Σ_{k=0}^∞  z^k / ((a+1)(a+2)…(a+k))
+ *
+ * Per-term recurrence: `term_{k+1} = term_k · z / (a + k + 1)`.
+ *
+ * Caller must ensure `|z| < |a| + 1` for fast convergence. The
+ * `cpow(z, a)` and `cexp(−z)` prefactors carry their own branch cuts;
+ * the standard principal-branch convention `Im(log z) ∈ (−π, π]` from
+ * `clog` is used uniformly. For `z = 0` the function returns 0 exactly
+ * (the prefactor `(z^a / a)` would otherwise pass through `cpow(0, a)`
+ * which throws for non-real-positive `a`).
+ */
+function cIncompleteGammaLowerSeries(
+  a: BigComplex,
+  z: BigComplex,
+  prec: number,
+): BigComplex {
+  if (cisZero(z)) {
+    return {
+      re: { mantissa: 0n, exponent: 0, precision: prec },
+      im: { mantissa: 0n, exponent: 0, precision: prec },
+    };
+  }
+  const work = prec + 64;
+  const oneC = cfromReal(fromInt(1n, work));
+  let sum = oneC;
+  let term = oneC;
+  const stopMagThreshold = -prec - 8;
+  const maxTerms = Math.max(64, work * 4);
+  for (let k = 0; k < maxTerms; k++) {
+    // term_{k+1} = term_k · z / (a + k + 1)
+    const denom = cadd(a, cfromReal(fromInt(BigInt(k + 1), work)), work);
+    term = cdiv(cmul(term, z, work), denom, work);
+    if (cisZero(term)) break;
+    sum = cadd(sum, term, work);
+    const termMag = magBits(term);
+    const sumMag = magBits(sum);
+    if (termMag === -Infinity) break;
+    if (termMag - sumMag < stopMagThreshold) break;
+  }
+  // Prefactor: (z^a / a) · e^{−z}.
+  const expNegZ = cexp(cneg(z), work);
+  const zPowA = cpow(z, a, work);
+  const prefactor = cdiv(cmul(expNegZ, zPowA, work), a, work);
+  const result = cmul(prefactor, sum, work);
+  return {
+    re: normalise(result.re.mantissa, result.re.exponent, prec),
+    im: normalise(result.im.mantissa, result.im.exponent, prec),
+  };
+}
+
+/**
+ * Modified Lentz continued fraction for `Γ(a, z)` (complex), DLMF §8.9.2:
+ *
+ *   Γ(a, z) = e^{−z} · z^a · CF(a, z)
+ *
+ *   CF = 1 / (z + 1 − a  −  1·(1 − a) / (z + 3 − a  −  2·(2 − a) /
+ *                                       (z + 5 − a  −  3·(3 − a) / ( … ))))
+ *
+ * In `b_0 + a_1/(b_1 + a_2/(b_2 + …))` form:
+ *
+ *   b_0 = z + 1 − a
+ *   a_n = −n · (n − a)      (n ≥ 1)
+ *   b_n = z + (2n + 1) − a  (n ≥ 1)
+ *
+ * Same recurrence as `bigIncompleteGammaUpperCF` in
+ * `special-funcs/incomplete-gamma.ts`; every BigFloat operation is lifted
+ * to BigComplex. The Cephes guards `big = 4.5e15`, `biginv = 2.22e-16`
+ * remain as the verbatim-port reference (R3 §0.0); in modified Lentz they
+ * are implicit (the C/D ratios cannot drift far from 1 by construction)
+ * but are constructed at working precision so a future Cephes-direct port
+ * (for the float64 bridge) can use them.
+ *
+ * Caller must ensure `|z| ≥ |a| + 1` for the convergence rate ≈ `|z/a|`
+ * to be ≥ 1. Outside this regime the CF still converges (any `Re(z) > 0`
+ * works) but more slowly.
+ */
+function cIncompleteGammaUpperCF(
+  a: BigComplex,
+  z: BigComplex,
+  prec: number,
+): BigComplex {
+  const work = prec + 64;
+  // Cephes guards (verbatim-port reference, not used on hot path; matches
+  // `bigIncompleteGammaUpperCF`).
+  void cephesBigComplex(work);
+  void cephesBigInvComplex(work);
+  const TINY: BigComplex = {
+    re: { mantissa: 1n, exponent: -10 * work, precision: work },
+    im: { mantissa: 0n, exponent: 0, precision: work },
+  };
+  const oneC = cfromReal(fromInt(1n, work));
+  // b_0 = z + 1 − a
+  const b0 = csub(cadd(z, oneC, work), a, work);
+  let f = cisZero(b0) ? TINY : b0;
+  let C = f;
+  let D: BigComplex = {
+    re: { mantissa: 0n, exponent: 0, precision: work },
+    im: { mantissa: 0n, exponent: 0, precision: work },
+  };
+  const stopMagThreshold = -prec - 4;
+  const maxCycles = Math.max(128, work * 4);
+  for (let n = 1; n <= maxCycles; n++) {
+    const nC = cfromReal(fromInt(BigInt(n), work));
+    const nMinusA = csub(nC, a, work);
+    const aN = cneg(cmul(nC, nMinusA, work));
+    // b_n = z + (2n + 1) − a
+    const bN = csub(
+      cadd(z, cfromReal(fromInt(BigInt(2 * n + 1), work)), work),
+      a,
+      work,
+    );
+    // D_n = b_n + a_n · D_{n-1}
+    D = cadd(bN, cmul(aN, D, work), work);
+    if (cisZero(D)) D = TINY;
+    // C_n = b_n + a_n / C_{n-1}
+    if (cisZero(C)) C = TINY;
+    C = cadd(bN, cdiv(aN, C, work), work);
+    if (cisZero(C)) C = TINY;
+    // D = 1 / D
+    D = cdiv(oneC, D, work);
+    // delta = C · D
+    const delta = cmul(C, D, work);
+    f = cmul(f, delta, work);
+    // Convergence: |delta − 1| < 2^{-prec}.
+    const deltaMinusOne = csub(delta, oneC, work);
+    if (magBits(deltaMinusOne) < stopMagThreshold) break;
+  }
+  // CF = 1 / f.
+  const cfValue = cdiv(oneC, f, work);
+  // Γ(a, z) = e^{−z} · z^a · CF.
+  const expNegZ = cexp(cneg(z), work);
+  const zPowA = cpow(z, a, work);
+  const result = cmul(cmul(expNegZ, zPowA, work), cfValue, work);
+  return {
+    re: normalise(result.re.mantissa, result.re.exponent, prec),
+    im: normalise(result.im.mantissa, result.im.exponent, prec),
+  };
+}
+
+/** Cephes `big = 4.5e15` (= 2⁵²) at the given working precision. Verbatim-
+ *  port reference; not used directly in the modified-Lentz hot path
+ *  (which is self-rescaling) but constructed for parity with the real
+ *  substrate's `cephesBig`. */
+function cephesBigComplex(prec: number): BigComplex {
+  return cfromReal(fromInt(1n << 52n, prec));
+}
+
+/** Cephes `biginv = 2.22e-16` (= 2⁻⁵²) at the given working precision. */
+function cephesBigInvComplex(prec: number): BigComplex {
+  const num = fromInt(1n, prec + 32);
+  const den = fromInt(1n << 52n, prec + 32);
+  return cfromReal(div(num, den, prec));
+}
+
+/**
+ * `B(a, b)` (complex Beta function) via the lgamma identity:
+ *
+ *   B(a, b) = exp(log Γ(a) + log Γ(b) − log Γ(a + b))
+ *
+ * Computed via `clgamma` at extra working precision (`prec + 32`) and
+ * exponentiated. Unlike the real `bigBeta` (which decomposes Γ into
+ * `|Γ| · sign` and tracks the sign explicitly), no sign tracking is
+ * needed in the complex case: `clgamma` returns a complex logarithm
+ * directly, including the imaginary contribution that encodes the
+ * sign/branch of Γ on the negative real axis. `cexp(sum)` recovers the
+ * full signed/branched complex value byte-for-byte.
+ *
+ * Real-axis defer for both arguments positive real lands in `bigBeta`.
+ *
+ * Failure modes — all routed through `clgamma`'s loud rejections:
+ *
+ *   - a or b a non-positive integer ⇒ `clgamma` throws "argument is a
+ *     non-positive integer". B(0, b) is infinite; B(−1, 2) is infinite;
+ *     etc. We let the throw propagate.
+ *   - a + b a non-positive integer with a, b not separately at a pole ⇒
+ *     `clgamma(a + b)` throws; we recategorise: B(a, b) is a finite
+ *     limit in this case (e.g., B(1/2, 1/2) at a + b = 1, fine; the
+ *     interesting cases are a + b = 0, −1, −2 where the result is 0
+ *     by a limit). v0.1 throws with a clear "near-pole; v0.2 limit
+ *     handling followup" message — the limit value is well-defined
+ *     but its arb-prec computation requires the regularised form.
+ *
+ * Near-pole detection for `a + b`: we check both `a`, `b`, and `a + b`
+ * independently. The sum is checked AFTER `a` and `b` pass the
+ * near-pole test, so a benign `a = 1/2, b = 1/2, a + b = 1` (where 1 is
+ * positive, not a pole) is not refused.
+ */
+export function cBeta(
+  a: BigComplex,
+  b: BigComplex,
+  prec: number,
+): BigComplex {
+  if (prec < 1 || !Number.isInteger(prec)) {
+    throw new RangeError(
+      `cBeta: prec must be a positive integer; got ${prec}.`,
+    );
+  }
+  // Real-axis defer for both inputs positive real.
+  if (
+    isZero(a.im) &&
+    isZero(b.im) &&
+    sgn(a.re) > 0 &&
+    sgn(b.re) > 0
+  ) {
+    return cfromReal(bigBeta(a.re, b.re, prec));
+  }
+  // Near-pole checks: a, b, a+b. The `2^{-prec/4}` threshold matches the
+  // `cIncompleteGammaUpper` convention.
+  if (isNearNonPositiveIntegerPole(a, prec)) {
+    throw new RangeError(
+      `cBeta: a is within 2^{-prec/4} of a non-positive integer ` +
+        `(Γ(a) has a pole). suggestion: v0.2 followup will support limit ` +
+        `handling for the cBeta near-pole regime.`,
+    );
+  }
+  if (isNearNonPositiveIntegerPole(b, prec)) {
+    throw new RangeError(
+      `cBeta: b is within 2^{-prec/4} of a non-positive integer ` +
+        `(Γ(b) has a pole). suggestion: v0.2 followup will support limit ` +
+        `handling for the cBeta near-pole regime.`,
+    );
+  }
+  const work = prec + 32;
+  const aPlusB = cadd(a, b, work);
+  if (isNearNonPositiveIntegerPole(aPlusB, prec)) {
+    throw new RangeError(
+      `cBeta: a + b is within 2^{-prec/4} of a non-positive integer ` +
+        `(Γ(a+b) has a pole; B(a,b) → 0 as a limit but requires regularised ` +
+        `handling). suggestion: v0.2 followup will support limit handling.`,
+    );
+  }
+  const logBeta = csub(
+    cadd(clgamma(a, work), clgamma(b, work), work),
+    clgamma(aPlusB, work),
+    work,
+  );
+  return cexp(logBeta, prec);
+}
+

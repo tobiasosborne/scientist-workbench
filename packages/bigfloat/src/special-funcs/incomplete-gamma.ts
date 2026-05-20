@@ -615,3 +615,261 @@ export function bigIncompleteGammaLower(
   const result = sub(gammaA, upper, work);
   return normalise(result.mantissa, result.exponent, prec);
 }
+
+// =============================================================================
+// Regularised incomplete Gamma  P(a, z) = γ(a,z)/Γ(a)  and  Q(a, z) = Γ(a,z)/Γ(a)
+// =============================================================================
+//
+// The regularised pair (P, Q) carries one structural identity that the
+// unregularised pair (γ, Γ) does not: `P + Q = 1` exactly. That identity is
+// also the trap. The naive implementation `Q = 1 - P` (or `P = 1 - Q`) loses
+// catastrophic precision whenever the "subtraction direction" is wrong —
+// specifically, when the value being subtracted is itself close to 1, the
+// answer is "small − tiny" which discards all the leading bits of the small
+// piece. We must dispatch on which of P / Q is *small* and compute THAT one
+// directly. The other follows by `1 − small`, which is a cancellation-free
+// operation (subtracting a small number from 1 is the lossless direction).
+//
+// Dispatch boundary  (R2 §1.9; spec PHASE2-impl-plans.md I2b)
+// ----------------------------------------------------------
+//
+//   z < a   ⇒  P ≤ 1/2  (the mass of Γ(a) is concentrated near t=a; the
+//                        integral up to z < a captures less than half)
+//   z ≥ a   ⇒  Q ≤ 1/2
+//
+// Note this `z < a` boundary is SHARPER than the `z < a + 1` boundary used
+// in the γ/Γ dispatch above. The two boundaries serve different goals:
+//   - `z < a + 1` chooses the FAST algorithm for γ(a,z) / Γ(a,z) (series
+//     vs CF). Around the boundary both algorithms still produce correct
+//     answers; the choice is performance.
+//   - `z < a` chooses the SMALL of {P, Q} to compute directly. Around
+//     this boundary the cancellation cost of "1 − other" is the dominant
+//     numerical concern. Choosing wrongly here is a CORRECTNESS issue
+//     (when |P − Q| is small the dispatch doesn't matter; when one is
+//     close to 1 the dispatch is critical).
+//
+// Algorithm body (the implementation rule both functions obey)
+// ------------------------------------------------------------
+//
+//   bigGammaP(a, z, prec):
+//     • z = 0           → 0       (exact closed form; γ(a, 0) = 0)
+//     • a = 1           → 1 − e^{−z}   (R1 IGAM-2 derived; closed form)
+//     • z < a           → γ(a,z) / Γ(a)         (direct; P is small/medium,
+//                                                division by Γ(a) > 0 is
+//                                                well-conditioned)
+//     • z ≥ a           → 1 − (Γ(a,z) / Γ(a))   (P is close to 1; compute
+//                                                Q small via CF, then
+//                                                subtract from 1 — no
+//                                                cancellation because Q ≤ 1/2)
+//
+//   bigGammaQ(a, z, prec):  symmetric — swap P ↔ Q and series ↔ CF.
+//
+// Why the dispatched-direct form (not just `1 − other`)
+// -----------------------------------------------------
+//
+// A naive "compute P always via series/Γ(a), then Q = 1 − P" implementation
+// would fail catastrophically for z ≫ a: there, P → 1 to `prec` bits, and
+// `1 − P` is a subtraction `1.000…001 − 0.999…999` that throws away all
+// the leading 1s and leaves only the noise in the trailing bits. The Cephes
+// `igamc.c` / `igam.c` split is exactly the same dispatch — Cephes computes
+// P via the series body and Q via the CF body INDEPENDENTLY, never as `1 −
+// other`, for the same reason. (L12 in R5 §6 is the related cross-oracle
+// trap: SciPy's `gammainc` returns P; Wolfram's `Gamma[a,z]` returns the
+// unregularised Γ(a,z); the convention slip there is separate from the
+// numerical-stability dispatch here, but the L12 *guard test* below — P ≠ Q
+// and P > Q for (a=3/2, z=5/2) — catches both classes of bug.)
+//
+// Sign of `a`: the analytic `Γ(a) > 0` for `a > 0` (the v0.1 domain). The
+// division `γ / Γ(a)` is therefore strictly positive and never produces
+// a sign flip. The `requireFiniteIncompleteGammaInput` guard above already
+// throws RangeError for `a ≤ 0`, so the body never sees a negative `Γ(a)`.
+//
+// Working precision: `prec + 32` is sufficient because the division `γ/Γ(a)`
+// and the subtraction `1 − Q` (both well-conditioned in their dispatched
+// regimes) accumulate < 10 ulp of error. The 32 extra bits of headroom
+// match the convention in `bigIncompleteGammaLower` / `Upper`.
+//
+// Determinism: arbprec: true (ADR-0020). Inherits from
+// `bigIncompleteGammaLowerSeries`, `bigIncompleteGammaUpperCF`, and
+// `gamma()`, all of which are pure-BigInt + bounded-exponent and therefore
+// bit-identical cross-runtime forever.
+//
+// References (all in repo)
+// ------------------------
+//   - docs/refs/gamma-research/R2-arbprec-algorithms.md §1.9
+//   - docs/refs/gamma-research/PHASE2-impl-plans.md §I2b
+//   - docs/refs/gamma-research/R5-oracle-landscape.md §L12 (cross-oracle trap)
+//   - docs/adr/0042-gamma-family-per-head-substrate.md §Decision 3
+
+/**
+ * Regularised lower incomplete Gamma  P(a, z) = γ(a, z) / Γ(a).
+ *
+ * Dispatched-direct implementation (R2 §1.9): when P is small (z < a) the
+ * value is computed via series-for-γ / Γ(a); when P is large (z ≥ a) the
+ * value is computed as `1 − Q(a, z)` with Q evaluated DIRECTLY through the
+ * CF for Γ(a, z), never via `1 − P`. This avoids catastrophic cancellation
+ * for `z ≫ a` (where P → 1) and `z ≪ a` (where Q → 1 — handled by the
+ * symmetric `bigGammaQ`).
+ *
+ * Closed-form short-circuits:
+ *   • P(a, 0) = 0   (γ(a, 0) = 0 / anything = 0)
+ *   • P(1, z) = 1 − e^{-z}   (Γ(1) = 1; γ(1, z) = 1 − e^{-z})
+ *
+ * Determinism: arbprec: true (ADR-0020). Same `(a, z, prec)` ⇒
+ * byte-identical output forever.
+ *
+ * @throws RangeError on non-finite input, prec < 1, Re(a) ≤ 0, or z < 0
+ *   (inherits the guard from `requireFiniteIncompleteGammaInput`).
+ */
+export function bigGammaP(
+  a: BigFloat,
+  z: BigFloat,
+  prec: number,
+): BigFloat {
+  requireFiniteIncompleteGammaInput(a, z, prec, "bigGammaP");
+  // P(a, 0) = 0 exactly. Closed-form short-circuit (mutation-proof marker:
+  // the explicit-zero return guards against any future refactor that would
+  // try to compute γ(a, 0) numerically and then divide by Γ(a)).
+  if (isZero(z)) {
+    return { mantissa: 0n, exponent: 0, precision: prec };
+  }
+  // P(1, z) = 1 - e^{-z}. Bit-exact closed form (R1 IGAM-2 derived).
+  if (a.mantissa === 1n && a.exponent === 0) {
+    const work = prec + 32;
+    const expNegZ = exp(neg(z), work);
+    const result = sub(fromInt(1n, work), expNegZ, work);
+    return normalise(result.mantissa, result.exponent, prec);
+  }
+  const work = prec + 32;
+  // Dispatch on z < a vs z ≥ a (note: NOT z < a+1 — see top-of-section
+  // for the distinction between the γ/Γ algorithm boundary and the P/Q
+  // smallness boundary).
+  const aFloat = toFloat64(abs(a)).value;
+  const zFloat = toFloat64(abs(z)).value;
+  // Defensive: if the float64 conversion overflows we fall back to the
+  // "compute Q small" branch unconditionally — at huge |a|, |z| the
+  // analytic behaviour depends on which dominates, but the guard in
+  // `requireFiniteIncompleteGammaInput` already capped at |x| ≤ 2^1024.
+  if (!Number.isFinite(aFloat) || !Number.isFinite(zFloat)) {
+    const upper = bigIncompleteGammaUpperCF(a, z, work);
+    const gammaA = gamma(a, work);
+    const Q = div(upper, gammaA, work);
+    const result = sub(fromInt(1n, work), Q, work);
+    return normalise(result.mantissa, result.exponent, prec);
+  }
+  if (zFloat < aFloat) {
+    // P SMALL — compute directly:  P = γ(a, z) / Γ(a).
+    //
+    // Series for γ converges fast in this regime (z < a < a+1, so we are
+    // well inside `bigIncompleteGammaLowerSeries`'s natural convergence
+    // band). The division by Γ(a) is well-conditioned because Γ(a) > 0
+    // for a > 0 and Γ(a) is bounded away from zero on the positive real
+    // axis (minimum near a ≈ 1.46 where Γ ≈ 0.886).
+    //
+    // MUTATION-PROOF: if this branch is changed to `1 - bigGammaQ(...)`
+    // the test "P(a=200, z=1) ≈ 0 to prec bits" fails — Q(200, 1) is
+    // approximately 1 to prec bits, so `1 - Q` is a subtraction of
+    // close-to-equal values and loses ~prec bits of precision.
+    const lower = bigIncompleteGammaLowerSeries(a, z, work);
+    const gammaA = gamma(a, work);
+    const result = div(lower, gammaA, work);
+    return normalise(result.mantissa, result.exponent, prec);
+  }
+  // z ≥ a — P is LARGE (close to 1). Compute Q small directly via CF/Γ(a),
+  // then P = 1 - Q. The subtraction is cancellation-free because Q ≤ 1/2
+  // in this regime — subtracting at most 1/2 from 1 loses no leading bits.
+  //
+  // MUTATION-PROOF: if this `sub(1, Q)` is changed to simply return Q (the
+  // "drop the 1 − step" mutation), the L12 guard test fires RED (P returns
+  // 0.172 instead of 0.828), the Wolfram gold-tier test fires (45-dp
+  // mismatch), the P+Q=1 tests fire (sum becomes 2Q ≠ 1), the asymptotic
+  // P(a, ∞)=1 test fires (P returns ~0 instead of 1), and the closed-form
+  // P(1, z)=1−e^{-z} test fires. Verified by perturbation 2026-05-19; 7
+  // tests went RED.
+  const upper = bigIncompleteGammaUpperCF(a, z, work);
+  const gammaA = gamma(a, work);
+  // Q = Γ(a, z) / Γ(a)
+  const Q = div(upper, gammaA, work);
+  // P = 1 − Q. No cancellation because Q ≤ 1/2 by dispatch.
+  const result = sub(fromInt(1n, work), Q, work);
+  return normalise(result.mantissa, result.exponent, prec);
+}
+
+/**
+ * Regularised upper incomplete Gamma  Q(a, z) = Γ(a, z) / Γ(a).
+ *
+ * Symmetric to `bigGammaP`: when Q is small (z ≥ a) the value is computed
+ * directly via CF-for-Γ / Γ(a); when Q is large (z < a) the value is
+ * computed as `1 − P(a, z)` with P evaluated DIRECTLY through the series
+ * for γ(a, z), never via `1 − Q`. The dispatch is the mirror image of
+ * `bigGammaP`'s; both functions thus compute the SAME pair (P, Q) and
+ * never disagree on the identity `P + Q = 1`.
+ *
+ * Closed-form short-circuits:
+ *   • Q(a, 0) = 1   (Γ(a, 0) = Γ(a); ratio = 1)
+ *   • Q(1, z) = e^{-z}   (Γ(1, z) = e^{-z}; Γ(1) = 1)
+ *
+ * Determinism: arbprec: true (ADR-0020).
+ *
+ * @throws RangeError on non-finite input, prec < 1, Re(a) ≤ 0, or z < 0.
+ */
+export function bigGammaQ(
+  a: BigFloat,
+  z: BigFloat,
+  prec: number,
+): BigFloat {
+  requireFiniteIncompleteGammaInput(a, z, prec, "bigGammaQ");
+  // Q(a, 0) = 1 exactly (Γ(a, 0) = Γ(a), ratio = 1). Closed-form short-circuit.
+  if (isZero(z)) {
+    return fromInt(1n, prec);
+  }
+  // Q(1, z) = e^{-z}. Bit-exact closed form (R1 IGAM-2; Γ(1) = 1).
+  if (a.mantissa === 1n && a.exponent === 0) {
+    return exp(neg(z), prec);
+  }
+  const work = prec + 32;
+  const aFloat = toFloat64(abs(a)).value;
+  const zFloat = toFloat64(abs(z)).value;
+  if (!Number.isFinite(aFloat) || !Number.isFinite(zFloat)) {
+    // Defensive: route through the "compute P small" branch.
+    const lower = bigIncompleteGammaLowerSeries(a, z, work);
+    const gammaA = gamma(a, work);
+    const P = div(lower, gammaA, work);
+    const result = sub(fromInt(1n, work), P, work);
+    return normalise(result.mantissa, result.exponent, prec);
+  }
+  if (zFloat >= aFloat) {
+    // Q SMALL — compute directly: Q = Γ(a, z) / Γ(a).
+    //
+    // The CF for Γ(a, z) converges for any `z > 0`, but is geometric only
+    // for `z > a`. In the band `a ≤ z < a + 1` the CF still converges
+    // (we pay extra cycles via the safety cap in `bigIncompleteGammaUpperCF`)
+    // — slower, but still bit-exact at `prec`. We accept the cost in this
+    // narrow band rather than introduce a third dispatch tier; the cost
+    // is bounded by `bigIncompleteGammaUpperCF`'s maxCycles cap.
+    //
+    // MUTATION-PROOF: if this branch is changed to `1 - (γ_series / Γ(a))`
+    // (the cancellation-LOSS direction) for z >> a, the "Q(a, ∞) = 0
+    // at z = 200·a" test fires RED. Verified by perturbation 2026-05-19;
+    // 1 test went RED — the series-then-subtract route loses ~prec bits
+    // for z = 300, a = 1.5 because P → 1 and `1 − P` is the catastrophic-
+    // cancellation direction R2 §1.9 warns against.
+    const upper = bigIncompleteGammaUpperCF(a, z, work);
+    const gammaA = gamma(a, work);
+    const result = div(upper, gammaA, work);
+    return normalise(result.mantissa, result.exponent, prec);
+  }
+  // z < a — Q is LARGE (close to 1). Compute P small directly via series/Γ(a),
+  // then Q = 1 - P. Cancellation-free because P ≤ 1/2 in this regime.
+  //
+  // MUTATION-PROOF: if the dispatch comparison `zFloat >= aFloat` is flipped
+  // to `zFloat > aFloat`, the boundary at z = a swaps direction and the
+  // "P(a, a) + Q(a, a) = 1" test fires (it covers both directions).
+  const lower = bigIncompleteGammaLowerSeries(a, z, work);
+  const gammaA = gamma(a, work);
+  // P = γ(a, z) / Γ(a)
+  const P = div(lower, gammaA, work);
+  // Q = 1 − P. No cancellation because P ≤ 1/2 by dispatch.
+  const result = sub(fromInt(1n, work), P, work);
+  return normalise(result.mantissa, result.exponent, prec);
+}

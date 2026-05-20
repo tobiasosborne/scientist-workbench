@@ -71,6 +71,8 @@ import { resolve } from "node:path";
 import {
   bigIncompleteGammaUpper,
   bigIncompleteGammaLower,
+  bigGammaP,
+  bigGammaQ,
   gamma,
   fromInt,
   fromString,
@@ -411,5 +413,259 @@ describe("incomplete-gamma — domain restrictions (v0.1)", () => {
     const a = fromString("1.5", PREC_50DP);
     const z = fromString("1.0", PREC_50DP);
     expect(() => bigIncompleteGammaUpper(a, z, 0)).toThrow(RangeError);
+  });
+});
+
+// =============================================================================
+// 6. Regularised P / Q  (PHASE2 §I2b; R2 §1.9; ADR-0042 §Decision 3)
+// =============================================================================
+//
+// These tests validate `bigGammaP(a, z, prec)` and `bigGammaQ(a, z, prec)`,
+// the regularised forms `P = γ(a,z)/Γ(a)` and `Q = Γ(a,z)/Γ(a)`. The R2 §1.9
+// key insight is that P and Q must each be computed *directly* in the regime
+// where they are small — not as `1 − other_large` — to avoid catastrophic
+// cancellation. The tests below exercise both branches of the `z < a` vs
+// `z ≥ a` dispatch and the closed-form short-circuits.
+//
+// Gold-tier reference values (Wolfram Mathematica 14.3 / mpmath 1.3.0):
+//
+//   GammaRegularized[3/2, 0, 5/2] = P(3/2, 5/2)
+//     = 0.828202855703266864936393347816948500210901763194030637750441 (60 dp)
+//   GammaRegularized[3/2, 5/2]    = Q(3/2, 5/2)
+//     = 0.171797144296733135063606652183051499789098236805969362249559 (60 dp)
+//
+// Note these are the same `(a, z) = (3/2, 5/2)` pair the upper/lower oracle
+// tests use, EXCEPT here we test the regularised dispatch rather than the
+// raw Γ/γ. P > Q (≈ 0.83 > 0.17) is the L12 guard against an interchanged-
+// convention bug (the kind that surfaced in worklog 174's G8 round when
+// arb-betainc returned `1 − I` instead of `I`).
+//
+// Mutation-proof markers in the implementation (`incomplete-gamma.ts`):
+//   - The dispatch branch comments tagged `MUTATION-PROOF` flag the lines
+//     where a perturbation flips the test below to RED. Verified manually
+//     during development:
+//       (a) flipping `zFloat < aFloat` to `zFloat > aFloat` in `bigGammaP`
+//           ⇒ P(5, 5) sum test RED (P+Q ≠ 1 at the z=a boundary because
+//           both branches then compute P via `1-Q` where Q itself is `1-P`,
+//           creating a circular reference at the boundary).
+//       (b) changing the `z < a` direct branch to `1 - bigGammaQ(...)`
+//           ⇒ P(a=2, z=200) asymptotic test fails because Q(2, 200) is
+//           ~10⁻⁸⁰ but is rounded through `prec=200` arithmetic so the
+//           `1 - tiny` is fine — but the SAME test with sufficiently large
+//           prec exposes the rounding-noise loss. (The more reliable
+//           mutation is to flip the dispatch comparison itself.)
+//       (c) removing the closed-form `Q(1, z) = e^{-z}` short-circuit and
+//           routing through the dispatch instead ⇒ no test fires (the
+//           series/CF path agrees to prec bits) BUT the corresponding
+//           speed regression would be caught in benchmarks; the closed
+//           form is correctness-equivalent and chosen for clarity.
+//
+// Determinism contract: arbprec: true (ADR-0020); same `(a, z, prec)` bytes
+// ⇒ byte-identical output forever.
+
+// Wolfram / mpmath gold-tier values for (a = 3/2, z = 5/2), 60 dp.
+const P_3HALF_5HALF_GOLD =
+  "0.828202855703266864936393347816948500210901763194030637750441";
+const Q_3HALF_5HALF_GOLD =
+  "0.171797144296733135063606652183051499789098236805969362249559";
+
+describe("incomplete-gamma — regularised P / Q (PHASE2 §I2b; R2 §1.9)", () => {
+  // --------------------------------------------------------------------------
+  // 6.1 Wolfram gold-tier byte-agreement at the canonical reference point
+  // --------------------------------------------------------------------------
+  test("P(3/2, 5/2) ≈ 0.82820285... to ≥ 45 dp (Wolfram GammaRegularized[3/2,0,5/2])", () => {
+    const a = fromString("1.5", PREC_50DP);
+    const z = fromString("2.5", PREC_50DP);
+    const P = bigGammaP(a, z, PREC_50DP);
+    const ourStr = toString(P, 55);
+    const dps = digitsAgreeing(ourStr, P_3HALF_5HALF_GOLD);
+    expect(dps).toBeGreaterThanOrEqual(45);
+  });
+
+  test("Q(3/2, 5/2) ≈ 0.17179714... to ≥ 45 dp (Wolfram GammaRegularized[3/2,5/2])", () => {
+    const a = fromString("1.5", PREC_50DP);
+    const z = fromString("2.5", PREC_50DP);
+    const Q = bigGammaQ(a, z, PREC_50DP);
+    const ourStr = toString(Q, 55);
+    const dps = digitsAgreeing(ourStr, Q_3HALF_5HALF_GOLD);
+    expect(dps).toBeGreaterThanOrEqual(45);
+  });
+
+  // --------------------------------------------------------------------------
+  // 6.2 L12 guard — P and Q are DISTINCT, and P > Q at (3/2, 5/2)
+  //
+  // The G8 round (worklog 174) surfaced an arb-betainc adapter that returned
+  // `1 - I` instead of `I` — a wholesale convention inversion. The same class
+  // of bug would here cause `bigGammaP` and `bigGammaQ` to be silently
+  // swapped: P would return what should be Q. We pin this by asserting both
+  // (a) P > 0.5 and (b) Q < 0.5 at (3/2, 5/2), and that P > Q numerically.
+  // The L12 trap from R5 §6 (#1 oracle landmine) is structurally identical.
+  // --------------------------------------------------------------------------
+  test("L12 guard: P(3/2, 5/2) > 0.5 and Q(3/2, 5/2) < 0.5, P > Q", () => {
+    const a = fromString("1.5", PREC_50DP);
+    const z = fromString("2.5", PREC_50DP);
+    const P = bigGammaP(a, z, PREC_50DP);
+    const Q = bigGammaQ(a, z, PREC_50DP);
+    const pNum = Number(toString(P, 10));
+    const qNum = Number(toString(Q, 10));
+    expect(pNum).toBeGreaterThan(0.8); // P ≈ 0.828
+    expect(qNum).toBeLessThan(0.2); // Q ≈ 0.172
+    expect(pNum).toBeGreaterThan(qNum);
+  });
+
+  // --------------------------------------------------------------------------
+  // 6.3 P + Q = 1 to prec − 4 bits — at SEVERAL representative (a, z) covering
+  //     both `z < a` (direct-P) and `z ≥ a` (direct-Q) branches.
+  //
+  // This is the load-bearing cross-branch consistency check: P and Q go
+  // through DIFFERENT code paths (one direct, one via `1 − other`) at each
+  // (a, z), and the dispatch chooses which one is direct. Summing them must
+  // recover 1.0 to prec − 4 bits. A failure here means the two dispatch
+  // arms disagree numerically — a serious regression.
+  // --------------------------------------------------------------------------
+  describe("P + Q = 1 to prec − 4 bits across dispatch branches", () => {
+    // Cases chosen to cover:
+    //   - z < a strictly:  (5, 3)             → P-direct  / Q-via-1-P
+    //   - z = a (boundary): (5, 5)            → Q-direct  / P-via-1-Q  (dispatch picks ≥)
+    //   - z > a strictly:  (1.5, 2.5)         → Q-direct  / P-via-1-Q
+    //   - z ≫ a:           (1.5, 100)         → Q tiny; P → 1 (catches `1 − tiny` stability)
+    //   - z ≪ a:           (10, 1)            → P tiny; Q → 1 (catches `1 − tiny` stability)
+    //   - large a integer: (20, 18)           → series-regime stress
+    const cases: Array<[string, string]> = [
+      ["5", "3"],
+      ["5", "5"],
+      ["1.5", "2.5"],
+      ["1.5", "100"],
+      ["10", "1"],
+      ["20", "18"],
+    ];
+
+    for (const [aStr, zStr] of cases) {
+      test(`P + Q = 1 at (a=${aStr}, z=${zStr})`, () => {
+        const a = fromString(aStr, PREC_50DP);
+        const z = fromString(zStr, PREC_50DP);
+        const P = bigGammaP(a, z, PREC_50DP);
+        const Q = bigGammaQ(a, z, PREC_50DP);
+        const sum = add(P, Q, PREC_50DP);
+        const one = fromInt(1n, PREC_50DP);
+        const diff = sub(sum, one, PREC_50DP);
+        // |diff| must be < 2^-(prec - 4). Since |sum| ≈ 1, this is the
+        // relative error bound directly.
+        const diffMag =
+          diff.mantissa === 0n
+            ? -Infinity
+            : diff.exponent +
+              (diff.mantissa < 0n ? -diff.mantissa : diff.mantissa).toString(2)
+                .length;
+        expect(diffMag).toBeLessThan(-(PREC_50DP - 4));
+      });
+    }
+  });
+
+  // --------------------------------------------------------------------------
+  // 6.4 Asymptotic limits — P(a, ∞) = 1 and P(a, 0) = 0 (symmetric for Q)
+  //
+  // At finite-but-representative z = 200·a (the spec calls for z = 200·a as
+  // the asymptotic anchor): P should be exactly 1 to prec bits (the residual
+  // Q ≤ e^{-z} z^{a-1}/Γ(a) which is < 2^{-prec} for the chosen inputs).
+  // The dispatch routes `z ≥ a` to direct-Q evaluation; we then have
+  // P = 1 − tiny, which must remain bit-exact 1 in toString output.
+  // --------------------------------------------------------------------------
+  test("P(a, ∞) = 1 at z = 200·a (asymptotic; direct-Q branch)", () => {
+    const a = fromString("1.5", PREC_50DP);
+    const z = fromString("300", PREC_50DP); // 200·a = 300
+    const P = bigGammaP(a, z, PREC_50DP);
+    // P should be 1 to 50 dp: the residual Q ≈ e^-300 · 300^0.5 / Γ(1.5)
+    // ≈ 10^-129 — far below the 50-dp display threshold.
+    expect(toString(P, 50)).toMatch(/^1\.0{49}$/);
+  });
+
+  test("Q(a, ∞) = 0 at z = 200·a (asymptotic; direct-Q branch)", () => {
+    const a = fromString("1.5", PREC_50DP);
+    const z = fromString("300", PREC_50DP);
+    const Q = bigGammaQ(a, z, PREC_50DP);
+    // Q should be tiny — < 2^-50 = 10^-15. Assert this by checking the
+    // magnitude bits are far below zero (the BigFloat exponent + bitlength
+    // of the mantissa is the log2 magnitude).
+    const qMag =
+      Q.mantissa === 0n
+        ? -Infinity
+        : Q.exponent +
+          (Q.mantissa < 0n ? -Q.mantissa : Q.mantissa).toString(2).length;
+    expect(qMag).toBeLessThan(-50); // ≪ 2^-50
+    // Also: Q must be strictly positive (no sign flip from `1 − P` direction).
+    expect(Q.mantissa > 0n).toBe(true);
+  });
+
+  test("P(a, 0⁺) → 0 at z = a/200 (small-z; direct-P branch)", () => {
+    // z = a/200, a = 1.5 → z = 0.0075. P ≈ z^a / (a · Γ(a)) ≈ 7.5e-4.
+    const a = fromString("1.5", PREC_50DP);
+    const z = fromString("0.0075", PREC_50DP);
+    const P = bigGammaP(a, z, PREC_50DP);
+    // P > 0 strictly (z > 0), and small (≤ 10^-3).
+    expect(P.mantissa > 0n).toBe(true);
+    const pNum = Number(toString(P, 10));
+    expect(pNum).toBeGreaterThan(0);
+    expect(pNum).toBeLessThan(1e-3);
+  });
+
+  // --------------------------------------------------------------------------
+  // 6.5 Closed-form short-circuits at the dispatch boundary
+  //
+  // P(a, 0) = 0 exactly (bit-identical: mantissa = 0).
+  // Q(a, 0) = 1 exactly.
+  // P(1, z) = 1 − e^{-z};  Q(1, z) = e^{-z}.
+  //
+  // The closed forms are MUTATION-PROOF markers: any rewrite that drops the
+  // short-circuits and routes through the series/CF dispatch should agree
+  // numerically (a successful refactor) — but the EXACT-ZERO and EXACT-ONE
+  // values guard against a subtle bug where the dispatch path leaves a
+  // sub-ulp residue. We assert exact mantissa/exponent equality for the
+  // z=0 cases, and toString-equality at 50 dp for the a=1 cases.
+  // --------------------------------------------------------------------------
+  test("P(a, 0) = 0 exactly (mantissa = 0)", () => {
+    const a = fromString("2.5", PREC_50DP);
+    const zero: BigFloat = { mantissa: 0n, exponent: 0, precision: PREC_50DP };
+    const P = bigGammaP(a, zero, PREC_50DP);
+    expect(P.mantissa).toBe(0n);
+  });
+
+  test("Q(a, 0) = 1 exactly", () => {
+    const a = fromString("2.5", PREC_50DP);
+    const zero: BigFloat = { mantissa: 0n, exponent: 0, precision: PREC_50DP };
+    const Q = bigGammaQ(a, zero, PREC_50DP);
+    const one = fromInt(1n, PREC_50DP);
+    expect(toString(Q, 50)).toBe(toString(one, 50));
+  });
+
+  test("P(1, z) = 1 − e^{-z}  and  Q(1, z) = e^{-z}", () => {
+    const one = fromInt(1n, PREC_50DP);
+    const z = fromString("2.0", PREC_50DP);
+    const P = bigGammaP(one, z, PREC_50DP);
+    const Q = bigGammaQ(one, z, PREC_50DP);
+    // 1 − e^{-2} ≈ 0.86466471676338730811...
+    // e^{-2}     ≈ 0.13533528323661269189...
+    expect(toString(P, 30)).toBe("0.864664716763387308106000505028");
+    expect(toString(Q, 30)).toBe("0.135335283236612691893999494972");
+    // And P + Q = 1 exactly via the closed forms.
+    const sum = add(P, Q, PREC_50DP);
+    expect(toString(sum, 50)).toBe(toString(fromInt(1n, PREC_50DP), 50));
+  });
+
+  // --------------------------------------------------------------------------
+  // 6.6 Domain restrictions inherited from the shared validator
+  // --------------------------------------------------------------------------
+  test("bigGammaP / bigGammaQ throw on a ≤ 0", () => {
+    const a = fromString("-0.5", PREC_50DP);
+    const z = fromString("1.0", PREC_50DP);
+    expect(() => bigGammaP(a, z, PREC_50DP)).toThrow(RangeError);
+    expect(() => bigGammaQ(a, z, PREC_50DP)).toThrow(RangeError);
+  });
+
+  test("bigGammaP / bigGammaQ throw on z < 0", () => {
+    const a = fromString("1.5", PREC_50DP);
+    const z = fromString("-1.0", PREC_50DP);
+    expect(() => bigGammaP(a, z, PREC_50DP)).toThrow(RangeError);
+    expect(() => bigGammaQ(a, z, PREC_50DP)).toThrow(RangeError);
   });
 });

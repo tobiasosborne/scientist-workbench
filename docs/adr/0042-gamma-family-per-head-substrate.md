@@ -1,6 +1,7 @@
 # ADR-0042 — Per-head substrate applied to the canonical Gamma family
 
-**Status:** Proposed — 2026-05-18
+**Status:** Implemented — 2026-05-19 (epic `xqc7` closed; see worklog 175).
+Originally proposed 2026-05-18.
 **Beads:** `scientist-workbench-xqc7` (epic — World-class Gamma-family reference
 implementation, the third per-head substrate epic in the series Erf → Bessel →
 Gamma). Phase 0 research children: `1gir` (R1 symbolic identities), `vf19` (R2
