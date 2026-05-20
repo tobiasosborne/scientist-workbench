@@ -173,6 +173,7 @@ export {
   bigIncompleteGammaLower,
   bigGammaP,
   bigGammaQ,
+  temmeUniformAsymptoticQ,
 } from "./special-funcs/incomplete-gamma.js";
 
 export {
@@ -187,6 +188,13 @@ export {
 export {
   bigBarnesG,
 } from "./special-funcs/barnes-g.js";
+
+export {
+  bigHurwitzZeta,
+  bigRiemannZeta,
+  hurwitzShiftThreshold,
+  _hurwitzZetaCVZ,
+} from "./special-funcs/zeta.js";
 
 export {
   ln2,

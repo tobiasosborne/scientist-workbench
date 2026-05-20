@@ -1,14 +1,14 @@
-# PHASE 1 GATE: PASS (4 unexplained, threshold 50)
+# PHASE 1 GATE: PASS (0 unexplained, threshold 50)
 
 # bench/gamma-anchor — cross-oracle agreement matrix
 
-Generated: 2026-05-19T08:47:07.098Z
+Generated: 2026-05-20T06:56:32.213Z
 Bead: scientist-workbench-fab6 (Phase 1 GATE per ADR-0042 §"Decision 8" + R5 §6).
 Corpus: bench/gamma-anchor/corpus.json (377 inputs).
 
 ## Phase 1 Gate Verdict
 
-**PASS** — 4 unexplained findings (threshold 50). Phase 2 substrate beads unblocked.
+**PASS** — 0 unexplained findings (threshold 50). Phase 2 substrate beads unblocked.
 
 ## Oracles
 
@@ -33,21 +33,21 @@ Corpus: bench/gamma-anchor/corpus.json (377 inputs).
 Total pair-wise comparisons: **3770**
 - agreed (value within tier threshold): **3102**
 - agreed_refusal (both refused): **71**
-- explained (landmine downgrade): **593**
+- explained (landmine downgrade): **597**
 - disagreed_within_tier (warn but within wider band): **0**
-- unexplained (real findings): **4**
+- unexplained (real findings): **0**
 
 ### Per oracle pair
 
 | pair | total | agreed | explained | unexplained | agree-rate |
 |---|---|---|---|---|---|
-| arb-boost | 377 | 277 | 99 | 1 | 73.5% |
+| arb-boost | 377 | 277 | 100 | 0 | 73.5% |
 | arb-mpmath | 377 | 377 | 0 | 0 | 100.0% |
 | arb-scipy | 377 | 310 | 67 | 0 | 82.2% |
 | arb-wolfram | 377 | 357 | 20 | 0 | 94.7% |
-| boost-mpmath | 377 | 277 | 99 | 1 | 73.5% |
-| boost-scipy | 377 | 304 | 72 | 1 | 80.6% |
-| boost-wolfram | 377 | 281 | 95 | 1 | 74.5% |
+| boost-mpmath | 377 | 277 | 100 | 0 | 73.5% |
+| boost-scipy | 377 | 304 | 73 | 0 | 80.6% |
+| boost-wolfram | 377 | 281 | 96 | 0 | 74.5% |
 | mpmath-scipy | 377 | 310 | 67 | 0 | 82.2% |
 | mpmath-wolfram | 377 | 357 | 20 | 0 | 94.7% |
 | scipy-wolfram | 377 | 323 | 54 | 0 | 85.7% |
@@ -58,7 +58,7 @@ Total pair-wise comparisons: **3770**
 |---|---|---|---|---|
 | BarnesG | 110 | 44 | 66 | 0 |
 | Beta | 130 | 118 | 12 | 0 |
-| Digamma | 600 | 512 | 84 | 4 |
+| Digamma | 600 | 512 | 88 | 0 |
 | Gamma | 420 | 377 | 43 | 0 |
 | GammaDeltaRatio | 20 | 20 | 0 | 0 |
 | GammaPDerivative | 40 | 40 | 0 | 0 |
@@ -84,7 +84,7 @@ Total pair-wise comparisons: **3770**
 | T2 | 430 | 366 | 64 | 0 |
 | T3 | 540 | 457 | 83 | 0 |
 | T4 | 400 | 184 | 216 | 0 |
-| T5 | 400 | 368 | 28 | 4 |
+| T5 | 400 | 368 | 32 | 0 |
 | T6 | 280 | 268 | 12 | 0 |
 | T7 | 400 | 376 | 24 | 0 |
 | T8 | 400 | 372 | 28 | 0 |
@@ -101,6 +101,7 @@ Each entry is a pair-wise comparison that *would* be a warning under the tier th
 | L16-no-barnesg-bronze-or-silver | 66 | SciPy / Boost have no BarnesG primitive (R5 §6 L16) |
 | L17-pole-asymmetric-refusal | 48 | Pole cell: oracles refuse differently (R5 §6 L17). All honest. |
 | L17-pole-limit-vocabulary | 7 | Pole: oracles emit different limit tokens (ComplexInfinity / Infinity / NaN / −Infinity) per R5 §6 L17 |
+| L18-boost-digamma-negative-half-integer | 4 | Boost.Math 1.83 digamma is wrong at negative half-integers — reflects to ψ(1/2) instead of ψ(3/2) (DLMF §5.4.13). arb/mpmath/scipy/wolfram + workbench digamma all correct; upstream Boost bug. |
 | L_T3_cancellation_stress | 12 | T3 reflection-formula cancellation (ADR-0042 §Decision 3); SciPy float64 cannot bump precision |
 | L_T8_digamma_cancellation_stress | 12 | T8 digamma reflection cancellation (corpus-spec.md §T8) |
 | L_boost_loggamma_real_only | 52 | Boost lgamma returns log|Γ| (real part only) at negative-real z; gold tier returns analytic continuation (ADR-0042 §LogGamma-real-x<0) |
@@ -117,10 +118,6 @@ Per ADR-0042 §Decision 8 thresholds (gold-gold ≥ 48 digits, gold-silver ≥ 4
 
 | class | input_id | tier | head | a | b | kind | detail | category |
 |---|---|---|---|---|---|---|---|---|
-| unexplained | T5-digamma-003 | T5 | Digamma | arb | boost | decimal-agree | digits=0 (threshold 46) |  |
-| unexplained | T5-digamma-003 | T5 | Digamma | boost | mpmath | decimal-agree | digits=0 (threshold 46) |  |
-| unexplained | T5-digamma-003 | T5 | Digamma | boost | scipy | decimal-agree | digits=0 (threshold 13) |  |
-| unexplained | T5-digamma-003 | T5 | Digamma | boost | wolfram | decimal-agree | digits=0 (threshold 46) |  |
 | explained | T1-barnesg-001 | T1 | BarnesG | arb | boost | asymmetric-refusal | refused-by boost (boost-no-barnesg) | L16-no-barnesg-bronze-or-silver |
 | explained | T1-barnesg-001 | T1 | BarnesG | arb | scipy | asymmetric-refusal | refused-by scipy (L16: SciPy has no barnesg; bronze tier cannot cover this head. Use Wolfram (G2) or mpmath (G3) for gold values.) | L16-no-barnesg-bronze-or-silver |
 | explained | T1-barnesg-001 | T1 | BarnesG | boost | mpmath | asymmetric-refusal | refused-by boost (boost-no-barnesg) | L16-no-barnesg-bronze-or-silver |
@@ -517,4 +514,8 @@ Per ADR-0042 §Decision 8 thresholds (gold-gold ≥ 48 digits, gold-silver ≥ 4
 | explained | T4-incompletegammaupper-001 | T4 | IncompleteGammaUpper | mpmath | scipy | asymmetric-refusal | refused-by scipy (TypeError-complex-gammainc) | L14-scipy-complex-polygamma-known-refusal |
 | explained | T4-incompletegammaupper-001 | T4 | IncompleteGammaUpper | scipy | wolfram | asymmetric-refusal | refused-by scipy (TypeError-complex-gammainc) | L14-scipy-complex-polygamma-known-refusal |
 | explained | T4-incompletegammaupper-002 | T4 | IncompleteGammaUpper | arb | boost | asymmetric-refusal | refused-by boost (boost-no-complex) | boost-no-complex |
+| explained | T4-incompletegammaupper-002 | T4 | IncompleteGammaUpper | arb | scipy | asymmetric-refusal | refused-by scipy (TypeError-complex-gammainc) | L14-scipy-complex-polygamma-known-refusal |
+| explained | T4-incompletegammaupper-002 | T4 | IncompleteGammaUpper | boost | mpmath | asymmetric-refusal | refused-by boost (boost-no-complex) | boost-no-complex |
+| explained | T4-incompletegammaupper-002 | T4 | IncompleteGammaUpper | boost | wolfram | asymmetric-refusal | refused-by boost (boost-no-complex) | boost-no-complex |
+| explained | T4-incompletegammaupper-002 | T4 | IncompleteGammaUpper | mpmath | scipy | asymmetric-refusal | refused-by scipy (TypeError-complex-gammainc) | L14-scipy-complex-polygamma-known-refusal |
 | … | … | … | … | … | … | … | … | (197 more — see agreement-data.json) |

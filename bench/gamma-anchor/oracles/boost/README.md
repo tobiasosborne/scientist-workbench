@@ -155,6 +155,48 @@ R5 §6 L17 documents the four different oracle behaviors at poles
 and now Boost `std-exception`); the comparator on the consumer side
 special-cases pole inputs.
 
+## L18 — Boost `digamma` is wrong at negative half-integers
+
+`boost::math::digamma(z)` for `z ∈ {−1/2, −3/2, −5/2, …}` returns the
+value of `ψ` at the *positive* reflected argument instead of `ψ(z)`:
+
+```
+boost::math::digamma(-0.5)  →  -1.9635100260214234   (= ψ(1/2))
+correct ψ(-1/2)             →   0.03648997397857652  (= ψ(3/2))
+```
+
+DLMF §5.4.13 — the digamma reflection formula — is
+`ψ(1 − z) − ψ(z) = π·cot(π·z)`. At `z = −1/2` the cotangent term is
+`π·cot(−π/2) = 0`, so `ψ(−1/2)` collapses exactly to `ψ(1 − (−1/2)) =
+ψ(3/2)`. Boost reflects to `ψ(1/2)` instead of `ψ(3/2)` — an off-by-one
+in the reflection's `1 − z` argument that is masked everywhere *except*
+the half-integers, where `cot(π·z) = 0` makes the reflected value the
+whole answer and the error fully visible. The bug surfaces on corpus
+cell `T5-digamma-003` (`z = −1/2`).
+
+mpmath, SciPy, Arb and Wolfram all agree on the correct `ψ(3/2)` value
+to ≥ 48 decimal places, and the workbench's own digamma (the I5 float64
+port and the bigfloat arb-precision path) computes `ψ(−1/2)` correctly
+and carries an explicit guard test. **This is purely an upstream
+Boost.Math 1.83 bug, not a workbench bug.** The adapter reports what
+Boost actually computes, faithfully; the G8 cross-agreement comparator
+downgrades the resulting Boost-vs-other `decimal-agree` (`digits=0`)
+disagreement under landmine **L18**
+(`L18-boost-digamma-negative-half-integer` in `cross-agreement.ts`
+`landmineDowngrade`), so it is recorded as `explained` rather than as
+an unexplained finding. The courteous follow-up — out of scope here —
+would be a Boost.Math upstream ticket.
+
+### Landmine summary
+
+| ID | Landmine | Boost behaviour |
+|---|---|---|
+| L12 | Incomplete-gamma regularisation convention | Boost matches Wolfram/mpmath; six `// L12`-pinned call sites |
+| L15 | LogGamma analytic continuation for real `x < 0` | Boost returns `log|Γ|` (real part only); no `iπk` term |
+| L16 | BarnesG capability gap | Boost has no BarnesG primitive; refuses `boost-no-barnesg` |
+| L17 | Γ / ψ at non-positive integers (poles) | Boost throws `std-exception`; comparator special-cases poles |
+| L18 | `digamma` wrong at negative half-integers | Boost reflects to `ψ(1/2)` instead of `ψ(3/2)`; upstream bug |
+
 ## Number formatting
 
 Silver values emit in scientific notation with 50 significant decimal

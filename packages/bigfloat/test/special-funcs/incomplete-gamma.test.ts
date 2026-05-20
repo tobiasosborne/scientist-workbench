@@ -64,7 +64,7 @@
 // Determinism contract: arbprec: true (ADR-0020). Same input bytes at the
 // same `prec` produce byte-identical output across runtimes.
 
-import { describe, test, expect } from "bun:test";
+import { describe, test, expect, beforeAll } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -73,6 +73,7 @@ import {
   bigIncompleteGammaLower,
   bigGammaP,
   bigGammaQ,
+  temmeUniformAsymptoticQ,
   gamma,
   fromInt,
   fromString,
@@ -81,10 +82,11 @@ import {
   abs,
   add,
   sub,
+  mul,
   div,
   type BigFloat,
 } from "../../src/index.js";
-import { exp } from "../../src/transcendental.js";
+import { exp, pow } from "../../src/transcendental.js";
 import { normalise } from "../../src/types.js";
 
 // =============================================================================
@@ -394,12 +396,23 @@ describe("incomplete-gamma — L12: Upper and Lower are distinct heads", () => {
 // 5. Domain-restriction enforcement (loud throws per CLAUDE.md Rule 1)
 // =============================================================================
 
-describe("incomplete-gamma — domain restrictions (v0.1)", () => {
-  test("Re(a) ≤ 0 throws RangeError", () => {
+describe("incomplete-gamma — domain restrictions", () => {
+  test("Lower γ(a,z) throws RangeError for a ≤ 0 (t=0 singularity, out of scope)", () => {
+    // γ(a, z) integrates over [0, z], hitting the t=0 singularity of t^{a-1}
+    // for a ≤ 0. That continuation is genuinely harder and stays out of v0.2
+    // scope — the Lower head still refuses a ≤ 0 loudly.
     const a = fromString("-0.5", PREC_50DP);
     const z = fromString("1.0", PREC_50DP);
-    expect(() => bigIncompleteGammaUpper(a, z, PREC_50DP)).toThrow(RangeError);
     expect(() => bigIncompleteGammaLower(a, z, PREC_50DP)).toThrow(RangeError);
+  });
+
+  test("Upper Γ(a,z) NO LONGER throws for a ≤ 0 (v0.2 continuation, bead 7gq4)", () => {
+    // The v0.1 refusal of a ≤ 0 for the Upper head was a scope gap, not a
+    // mathematical limit: Γ(a, z) is well-defined for all real a when z > 0.
+    // This test pins the regression-direction: the throw must be GONE.
+    const a = fromString("-0.5", PREC_50DP);
+    const z = fromString("1.0", PREC_50DP);
+    expect(() => bigIncompleteGammaUpper(a, z, PREC_50DP)).not.toThrow();
   });
 
   test("z < 0 throws RangeError (v0.1 real-axis only)", () => {
@@ -667,5 +680,592 @@ describe("incomplete-gamma — regularised P / Q (PHASE2 §I2b; R2 §1.9)", () =
     const z = fromString("-1.0", PREC_50DP);
     expect(() => bigGammaP(a, z, PREC_50DP)).toThrow(RangeError);
     expect(() => bigGammaQ(a, z, PREC_50DP)).toThrow(RangeError);
+  });
+});
+
+// =============================================================================
+// 7. Temme uniform asymptotic — saddle / transition region (bead d2ha)
+// =============================================================================
+//
+// Validates the Temme uniform asymptotic expansion (DLMF §8.12.3-4; Temme
+// 1979) implemented in `incomplete-gamma.ts` as `temmeUniformAsymptoticQ`.
+// The Temme expansion covers the saddle / transition region `z ≈ a` for
+// large `a`, where the series and CF both converge slowly.
+//
+// PROBE FINDING (recorded in the bead and the source doc comment). The bead
+// premise "v0.1 loses ~log₂(|a|) bits in the saddle region" was FALSIFIED:
+// v0.1's CF answer at `z = a` is bit-exact (matches mpmath digit-for-digit
+// at 110+ dp; a 400-bit run is bit-identical to a 1200-bit cross-check).
+// Temme is therefore a *performance* candidate, not a correctness fix —
+// and the timing probe found the CF is in fact FASTER than Temme at every
+// matched saddle point where Temme's asymptotic series can reach `prec`
+// (the CF's per-cycle ratio at `z = a` is `a/(a+k) < 1`, not the ≈1
+// stagnation the v0.1 comment claimed; Temme carries a heavy fixed
+// per-call cost). The production dispatch therefore keeps the CF
+// (`temmeApplies` returns false). Temme remains implemented, verified, and
+// exercised here as a tested reference algorithm.
+//
+// `temmeUniformAsymptoticQ` returns the *regularised* upper function
+// `Q(a, z)`, or `null` when its self-measured optimal-truncation error
+// floor cannot honestly reach `prec` — the honest-dispatch contract
+// (CLAUDE.md Rule 1, Rule 8).
+//
+// Mutation-proof markers (verified by live perturbation 2026-05-20;
+// transcript in the bead report):
+//
+//   M5. η(λ) map sign — flip `sign(η) = sign(λ−1)` to the opposite sign in
+//       `temmeEta`. The erfc argument `η√(a/2)` then has the wrong sign,
+//       so `½erfc(η√(a/2))` returns ≈ Q's complement; the saddle-region
+//       cross-checks against mpmath fire RED at the first digit.
+//   M6. c_0(0) saddle limit — perturb the η⁰ coefficient of c_0 (the
+//       cached `TEMME_C[0][0]`, exact value −1/3). The `η→0` limit test
+//       `Q(a,a) → ½` plus the saddle cross-checks fire RED: S_a(0) shifts
+//       from −1/3 and R_a(0) is wrong by O(a^{−1/2}).
+//   M7. c_k recursion coefficient — change the `(j+2)` multiplier in the
+//       `(1/η) d/dη` step of the c_k recursion to `(j+1)`. Every c_k for
+//       k ≥ 1 is corrupted; the saddle cross-checks lose all but the
+//       leading few digits (the a^{−1} correction term is wrong).
+//   M8. erfc-argument scale — drop the `√(a/2)` factor from the erfc
+//       argument (use bare `η`). The leading term `½erfc(η)` no longer
+//       tracks Q; the cross-checks fire RED everywhere.
+//
+// Determinism: the Temme coefficients `TEMME_C` are exact `BigInt`
+// rationals built once at module load; evaluation is pure BigFloat.
+// arbprec: true (ADR-0020) — bit-identical cross-runtime at fixed prec.
+
+// Bits-agreeing helper: decimal digits agreeing × log₂(10) ≈ bits. The
+// Temme cross-checks below assert `prec − 8` bits ≈ (prec−8)/3.322 dp.
+function bitsFromDigits(dps: number): number {
+  return dps * Math.log2(10);
+}
+
+describe("incomplete-gamma — Temme uniform asymptotic (bead d2ha)", () => {
+  // mpmath 1.3.0 gold-tier reference values for the regularised upper
+  // function Q(a, z) = Γ(a,z)/Γ(a) in the saddle region, 52 dp.
+  // Generated via `mpmath.gammainc(a, z, inf, regularized=True)`.
+  const TEMME_PREC = 200;
+
+  // Warm the Temme coefficient table once, here, OUTSIDE any individual
+  // test's 5000 ms timeout. The table (`temmeC()` in `incomplete-gamma.ts`)
+  // is built lazily on first use — roughly 5 s of exact-rational series
+  // arithmetic — and memoised thereafter (bead `eoei`: the build was moved
+  // off module load so `import "@workbench/bigfloat"` stays sub-second).
+  // Paying that one-time cost in `beforeAll` keeps it from landing on
+  // whichever Temme test happens to run first and blowing its timeout.
+  beforeAll(() => {
+    const a = fromString("1000", TEMME_PREC + 64);
+    temmeUniformAsymptoticQ(a, a, TEMME_PREC + 32);
+  }, 30_000);
+
+  // --------------------------------------------------------------------------
+  // 7.1 Saddle-region correctness — Q(a,z) swept across z = a ± {0, …}.
+  //     `temmeUniformAsymptoticQ` cross-checked against mpmath gold.
+  // --------------------------------------------------------------------------
+  describe("7.1 saddle-region Q(a,z) vs mpmath gold (≥ prec−8 bits)", () => {
+    // [a, z, Q-gold-52dp, label]. z values are exact decimal expansions
+    // of a ± k·√a (k ∈ {0, 0.3, −1, 2}); a ∈ {1000, 5000}.
+    const goldCases: Array<[string, string, string, string]> = [
+      ["1000", "1000",
+        "0.4957947558197844914962221563978812008107588112951183", "z=a"],
+      ["1000", "1009.48683298050513799599668063329815560115866541797565048057",
+        "0.3784366076942984637312201538460329439788901850945125", "z=a+0.3√a"],
+      ["1000", "968.377223398316206680011064555672814662804448606747831731425",
+        "0.8413860032079989374194258016984459700059690352272846", "z=a−√a"],
+      ["1000", "1063.24555320336758663997787088865437067439110278650433653715",
+        "0.02442988730183465849178277668981548495302405178292346", "z=a+2√a"],
+      ["5000", "5000",
+        "0.498119365966182644651902985116159873945226448385851", "z=a"],
+      ["5000", "5021.21320343559642573202533086314547117854507813065422109765",
+        "0.3804537914383660841447138173013905292871665896678753", "z=a+0.3√a"],
+      ["5000", "4929.28932188134524755991556378951509607151640623115259634117",
+        "0.841352893733637593360055691144843562337610959421416", "z=a−√a"],
+      ["5000", "5141.42135623730950488016887242096980785696718753769480731767",
+        "0.02350822469603482410830913698738214282288134689295197", "z=a+2√a"],
+    ];
+
+    for (const [aStr, zStr, qGold, label] of goldCases) {
+      test(`Q(${aStr}, ${label}) vs mpmath gold`, () => {
+        const a = fromString(aStr, TEMME_PREC + 64);
+        const z = fromString(zStr, TEMME_PREC + 64);
+        const Q = temmeUniformAsymptoticQ(a, z, TEMME_PREC + 32);
+        // Temme MUST return a value for these (a, z) — a=1000/5000 are far
+        // above the optimal-truncation floor at prec=200.
+        expect(Q).not.toBeNull();
+        const ourStr = toString(Q as BigFloat, 50);
+        const dps = digitsAgreeing(ourStr, qGold);
+        // prec − 8 bits ≈ (200−8)/3.322 ≈ 57.8 dp; mpmath gold is 52 dp,
+        // so the achievable assertion is "agree to the full 50-dp emit".
+        expect(dps).toBeGreaterThanOrEqual(48);
+      });
+    }
+  });
+
+  // --------------------------------------------------------------------------
+  // 7.2 η → 0 limit — the saddle point itself (z = a exactly, λ = 1, η = 0).
+  //     This is the most singular point: the η(λ) map and every c_k(η) have
+  //     a removable singularity at η = 0. Q(a, a) → 1/2 as a → ∞ (the
+  //     erfc(0) = 1 leading term) with the R_a correction.
+  // --------------------------------------------------------------------------
+  describe("7.2 η → 0 limit at the saddle z = a (most singular point)", () => {
+    test("Q(1000, 1000): η = 0, Q ≈ 0.49579475... (mpmath gold)", () => {
+      const a = fromInt(1000n, TEMME_PREC + 64);
+      const z = fromInt(1000n, TEMME_PREC + 64);
+      const Q = temmeUniformAsymptoticQ(a, z, TEMME_PREC + 32);
+      expect(Q).not.toBeNull();
+      const ourStr = toString(Q as BigFloat, 50);
+      const dps = digitsAgreeing(
+        ourStr,
+        "0.4957947558197844914962221563978812008107588112951183",
+      );
+      expect(dps).toBeGreaterThanOrEqual(48);
+    });
+
+    test("Q(a, a) → 1/2 as a grows: Q(1000,1000) and Q(5000,5000) bracket ½", () => {
+      // The leading term ½erfc(0) = ½; the R_a(0) correction is O(a^{−1/2})
+      // and is NEGATIVE here, so Q(a,a) < ½ and → ½ from below as a → ∞.
+      const q1 = temmeUniformAsymptoticQ(
+        fromInt(1000n, TEMME_PREC + 64),
+        fromInt(1000n, TEMME_PREC + 64),
+        TEMME_PREC + 32,
+      );
+      const q5 = temmeUniformAsymptoticQ(
+        fromInt(5000n, TEMME_PREC + 64),
+        fromInt(5000n, TEMME_PREC + 64),
+        TEMME_PREC + 32,
+      );
+      expect(q1).not.toBeNull();
+      expect(q5).not.toBeNull();
+      const v1 = Number(toString(q1 as BigFloat, 15));
+      const v5 = Number(toString(q5 as BigFloat, 15));
+      // Both below ½, monotone toward ½, and within O(a^{−1/2}) of it.
+      expect(v1).toBeLessThan(0.5);
+      expect(v5).toBeLessThan(0.5);
+      expect(v5).toBeGreaterThan(v1); // larger a ⇒ closer to ½
+      expect(0.5 - v1).toBeLessThan(0.01); // |Q − ½| ≲ 1/√1000 ≈ 0.032
+      expect(0.5 - v5).toBeLessThan(0.005);
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  // 7.3 Complementarity P + Q = 1 in the saddle region (to prec − 4 bits).
+  //     Temme produces Q directly; P = 1 − Q. The identity is exact by
+  //     construction here, but the test pins that the BigFloat arithmetic
+  //     does not drift — and that Q is genuinely in (0, 1).
+  // --------------------------------------------------------------------------
+  describe("7.3 P + Q = 1 in the saddle region", () => {
+    const cases: Array<[string, string]> = [
+      ["1000", "1000"],
+      ["1000", "968.377223398316206680011064555672814662804448606747831731425"],
+      ["5000", "5021.21320343559642573202533086314547117854507813065422109765"],
+    ];
+    for (const [aStr, zStr] of cases) {
+      test(`P + Q = 1 at Temme (a=${aStr}, z≈${zStr.slice(0, 8)})`, () => {
+        const work = TEMME_PREC + 32;
+        const a = fromString(aStr, TEMME_PREC + 64);
+        const z = fromString(zStr, TEMME_PREC + 64);
+        const Q = temmeUniformAsymptoticQ(a, z, work);
+        expect(Q).not.toBeNull();
+        const Qb = Q as BigFloat;
+        const P = sub(fromInt(1n, work), Qb, work);
+        const sum = add(P, Qb, work);
+        const diff = sub(sum, fromInt(1n, work), work);
+        const diffMag =
+          diff.mantissa === 0n
+            ? -Infinity
+            : diff.exponent +
+              (diff.mantissa < 0n ? -diff.mantissa : diff.mantissa).toString(2)
+                .length;
+        expect(diffMag).toBeLessThan(-(TEMME_PREC - 4));
+        // Q strictly in (0, 1) — a genuine probability.
+        expect(Qb.mantissa > 0n).toBe(true);
+        const qNum = Number(toString(Qb, 12));
+        expect(qNum).toBeGreaterThan(0);
+        expect(qNum).toBeLessThan(1);
+      });
+    }
+  });
+
+  // --------------------------------------------------------------------------
+  // 7.4 Dispatch continuity — Temme agrees with the production CF path.
+  //     `bigIncompleteGammaUpper` keeps the CF in the saddle region (the
+  //     probe-driven decision); we cross-check that `temmeUniformAsymptoticQ`
+  //     (unregularised via ·Γ(a)) agrees with the CF dispatch to prec − 8
+  //     bits — i.e. the two independent algorithms compute the same answer,
+  //     proving Temme is a faithful (if unused-on-the-hot-path) alternative.
+  // --------------------------------------------------------------------------
+  describe("7.4 Temme agrees with the CF dispatch (no algorithm divergence)", () => {
+    const cases: Array<[string, string]> = [
+      ["1000", "1000"],
+      ["1000", "1063.24555320336758663997787088865437067439110278650433653715"],
+      ["5000", "4929.28932188134524755991556378951509607151640623115259634117"],
+    ];
+    for (const [aStr, zStr] of cases) {
+      test(`Temme·Γ(a) ≈ CF Γ(a,z) at (a=${aStr}, z≈${zStr.slice(0, 8)})`, () => {
+        const work = TEMME_PREC + 64;
+        const a = fromString(aStr, work);
+        const z = fromString(zStr, work);
+        // Production dispatch (CF in the saddle region).
+        const gammaCF = bigIncompleteGammaUpper(a, z, TEMME_PREC);
+        // Temme: Q · Γ(a) = Γ(a,z).
+        const Q = temmeUniformAsymptoticQ(a, z, work);
+        expect(Q).not.toBeNull();
+        const gammaA = gamma(a, work);
+        const gammaTemmeRaw = mul(Q as BigFloat, gammaA, work);
+        const gammaTemme = normalise(
+          gammaTemmeRaw.mantissa,
+          gammaTemmeRaw.exponent,
+          TEMME_PREC,
+        );
+        const dps = digitsAgreeing(
+          toString(gammaCF, 50),
+          toString(gammaTemme, 50),
+        );
+        // prec − 8 bits ≈ 57.8 dp; the 50-dp emit caps the achievable count.
+        expect(bitsFromDigits(dps)).toBeGreaterThanOrEqual(TEMME_PREC - 8);
+      });
+    }
+  });
+
+  // --------------------------------------------------------------------------
+  // 7.5 Honest-floor test — Temme returns `null` when `a` is too small for
+  //     its asymptotic series to reach `prec`. This proves the dispatch is
+  //     HONEST: Temme refuses rather than silently returning low precision.
+  //     The optimal-truncation floor is floor(bits) ≈ 30·log₂(a) − 24, so
+  //     for prec = 400 an `a` of 30 (floor ≈ 123 bits ≪ 400) must null out;
+  //     and the production dispatch then computes a full-precision answer
+  //     via the bit-exact CF.
+  // --------------------------------------------------------------------------
+  describe("7.5 honest floor — Temme nulls out when a is too small for prec", () => {
+    test("temmeUniformAsymptoticQ(30, 30, prec=400) returns null", () => {
+      const a = fromInt(30n, 432);
+      const z = fromInt(30n, 432);
+      // a = 30 ⇒ Temme floor ≈ 30·log₂(30) − 24 ≈ 123 bits, far below 400.
+      const Q = temmeUniformAsymptoticQ(a, z, 432);
+      expect(Q).toBeNull();
+    });
+
+    test("the CF fallback still delivers full precision where Temme nulls", () => {
+      // At (a=30, z=30), prec=400, Temme nulls — but the production
+      // dispatch (CF) is bit-exact. Cross-check Γ(30,30) against mpmath.
+      const a = fromInt(30n, 400);
+      const z = fromInt(30n, 400);
+      const g = bigIncompleteGammaUpper(a, z, 400);
+      // mpmath gold (52 sig digits): Γ(30,30) = 4.206176367531...e30.
+      const gold =
+        "4206176367531257407068889822003.632323443663673421709";
+      const dps = digitsAgreeing(toString(g, 50), gold);
+      // Full precision: ≥ 48 sig digits of the 50-dp emit (CF is bit-exact).
+      expect(dps).toBeGreaterThanOrEqual(48);
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  // 7.6 Performance observation — Temme vs the CF at a saddle point. The
+  //     probe found the CF FASTER (recorded in the source doc comment); this
+  //     test merely records a rough timing and pins the qualitative finding
+  //     so a future substrate change that flips the balance is noticed. It
+  //     asserts only that both paths terminate and agree — timing is logged,
+  //     not asserted (wall-time is machine-dependent, never a hard gate).
+  // --------------------------------------------------------------------------
+  test("7.6 performance observation — Temme vs CF at the saddle (logged)", () => {
+    const work = TEMME_PREC + 64;
+    const a = fromInt(1000n, work);
+    const z = fromInt(1000n, work);
+    const t0 = performance.now();
+    const Q = temmeUniformAsymptoticQ(a, z, work);
+    const t1 = performance.now();
+    const cf = bigIncompleteGammaUpper(a, z, TEMME_PREC);
+    const t2 = performance.now();
+    expect(Q).not.toBeNull();
+    // Both terminate; agreement already covered by 7.4. Log the timing.
+    const temmeMs = (t1 - t0).toFixed(2);
+    const cfMs = (t2 - t1).toFixed(2);
+    // eslint-disable-next-line no-console
+    console.log(
+      `[Temme perf] Γ(1000,1000)@prec200: Temme ${temmeMs}ms, CF ${cfMs}ms ` +
+        `— probe verdict: CF is the faster production path.`,
+    );
+    // Sanity: the CF result is a positive finite BigFloat.
+    expect(cf.mantissa > 0n).toBe(true);
+  });
+
+  // --------------------------------------------------------------------------
+  // 7.7 Saddle dispatch does not regress the non-saddle regimes — a guard
+  //     that wiring Temme in did not perturb the series / CF dispatch. The
+  //     §2 / §3 oracle tests above already cover the non-saddle regimes
+  //     fully; this is a focused spot-check at a point well outside the
+  //     geometric band, confirming the dispatch still routes to the CF.
+  // --------------------------------------------------------------------------
+  test("7.7 non-saddle dispatch unaffected — Γ(2, 10) still bit-exact", () => {
+    // z = 10 ≫ a = 2: deep in the CF regime, far outside any saddle band.
+    // mpmath: Γ(2, 10) = 11 · e^{−10} ≈ 4.99399...e−4.
+    const g = bigIncompleteGammaUpper(
+      fromInt(2n, PREC_50DP),
+      fromInt(10n, PREC_50DP),
+      PREC_50DP,
+    );
+    const gold = "0.000499399227387333366891506671166056712617098977532";
+    const dps = digitsAgreeing(toString(g, 45), gold);
+    expect(dps).toBeGreaterThanOrEqual(43);
+  });
+});
+
+// =============================================================================
+// 8. Negative-`a` continuation for Γ(a, z)  (beads z1tj + 7gq4)
+// =============================================================================
+//
+// v0.1 refused `bigIncompleteGammaUpper` for `a ≤ 0`; v0.2 closes that scope
+// gap via the recurrence-shift of DLMF §8.8.2 (the decision and cancellation
+// analysis are in the `bigIncompleteGammaUpperRecurrence` doc comment). These
+// tests cross-validate the new path against mpmath 1.3.0 gold
+// (`mp.gammainc(a, z, mp.inf)`, which supports negative `a` directly).
+//
+// THE DECISION (recorded here so the test file is self-documenting): algorithm
+// (b), recurrence-shift, was chosen over (a) Tricomi-`U` and (c) Mellin–Barnes.
+// (b) reuses the entire bit-exact v0.1 positive-`a` substrate (~110 LOC of new
+// code) where (a) would need a whole new arb-prec `U` evaluator. The crux —
+// the cancellation of the downward step `(Γ(a+1,z) − z^a e^{-z})/a` — was
+// measured across the 30-cell `a × z` sweep below and found small and
+// BOUNDED (worst-step subtraction loss ≤ 7 bits; the `1/(a+k)` division is
+// genuine growth, not cancellation). The implementation is additionally
+// self-validating: it measures the loss and re-runs at higher precision if
+// the +64-bit margin is inadequate, so the answer is honest to `prec`.
+//
+// Mutation-proof markers for this section (≥3; verified by live perturbation
+// 2026-05-20, transcript in the task report):
+//
+//   M9.  Shift-count off-by-one — change `N = floor(-aFloat) + 1` to
+//        `floor(-aFloat)` in `bigIncompleteGammaUpperRecurrence`. The seed
+//        `a* = a + N` then lands ≤ 0, so `bigIncompleteGammaUpper(a*, …)`
+//        either recurses forever or seeds from the wrong branch; the
+//        negative-`a` correctness tests (8.1) fire RED.
+//   M10. Recurrence sign — flip `Γ(a,z) = (cur − term)/apk` to
+//        `(cur + term)/apk`. Every descended value is wrong; all of 8.1's
+//        mpmath cross-checks fail at the first digit, and the recurrence-
+//        consistency invariant (8.3) fires RED.
+//   M11. Integer-detection inversion — make `isIntegerBigFloat` return its
+//        negation. Non-integer `a` (e.g. −1.5) is then wrongly refused and
+//        8.1 throws; the negative-integer `a = −2` is wrongly accepted and
+//        the recurrence divides by zero — 8.4's refusal test fires RED.
+//
+// Determinism: arbprec: true (ADR-0020). The shift count `N` is a
+// deterministic function of `a`; the precision-bump is driven by a
+// deterministic measured quantity. Byte-identical output at fixed `prec`.
+
+describe("incomplete-gamma — negative-a continuation Γ(a,z) (beads z1tj+7gq4)", () => {
+  // mpmath 1.3.0 gold, 60 dp: [a, z, Γ(a,z)]. The 15 cells span the bead's
+  // sweep a ∈ {−0.5,−1.5,−2.5,−3.5,−5.7,−0.001,−10.3,−1.999} × representative
+  // z ∈ {0.5,1,3,10,50}, including a = −1.999 (close to the negative integer
+  // −2, exercising the cancellation regime) and a = −0.001 (close to 0).
+  const NEG_GOLD: Array<[string, string, string]> = [
+    ["-0.5", "0.5", "0.590691306732599344401389367953458818188062085912124557457118"],
+    ["-0.5", "1", "0.178147711781560690192582318168043390714522097069186728698676"],
+    ["-0.5", "3", "0.00677613600177021229377514699942294840656536635691110578503547"],
+    ["-0.5", "10", "0.00000126090426132415706812885047458940380931298477424906419343194"],
+    ["-0.5", "50", "5.29932524282886750194649228641836831084141506157353070191646e-25"],
+    ["-1.5", "1", "0.126487819593254420935294301328944984487526022641720737206107"],
+    ["-1.5", "3", "0.00187025984867509165669422722226219580144222952171520677852625"],
+    ["-2.5", "3", "0.000529432830501009974497840822137287293920269609911772748966147"],
+    ["-3.5", "10", "0.00000000100986618424969669626982759748615481967721331527101221413379"],
+    ["-5.7", "3", "0.0000104870208863116858782230347437250356331196557521230526266981"],
+    ["-10.3", "0.5", "70.4715888561622930671863172835537002724431160031598607023752"],
+    ["-10.3", "10", "0.000000000000000109433449873174636489366796835861864229352403112583091988206"],
+    ["-1.999", "3", "0.000993546949850057740815074714900053153774652364334989334363734"],
+    ["-1.999", "10", "0.0000000355720575973947924900542525454485686951091585333665994008637"],
+    ["-0.001", "3", "0.0130311786745543766525437424447808109009205610122877923405466"],
+  ];
+
+  // --------------------------------------------------------------------------
+  // 8.1 Negative-a correctness vs mpmath gold (≥ prec − 8 bits ≈ 43 dp).
+  //
+  // PREC_50DP = 200 bits; prec − 8 = 192 bits ≈ 57.8 dp. The gold strings are
+  // 60 dp, so the achievable assertion against the 55-dp emit is ≥ 43 dp
+  // (mirrors §2's Wolfram-oracle threshold; the +12-dp headroom absorbs the
+  // recurrence's measured ≤ 7-bit subtraction loss plus toString rounding).
+  // --------------------------------------------------------------------------
+  describe("8.1 Γ(a,z) for a < 0 vs mpmath gold", () => {
+    for (const [aStr, zStr, gold] of NEG_GOLD) {
+      test(`Γ(${aStr}, ${zStr}) vs mpmath`, () => {
+        const a = fromString(aStr, PREC_50DP);
+        const z = fromString(zStr, PREC_50DP);
+        const result = bigIncompleteGammaUpper(a, z, PREC_50DP);
+        const ourStr = toString(abs(result), 55);
+        const dps = digitsAgreeing(ourStr, gold);
+        expect(dps).toBeGreaterThanOrEqual(43);
+      });
+    }
+  });
+
+  // --------------------------------------------------------------------------
+  // 8.2 Continuity across a = 0. Γ(a, z) is continuous in `a` for z > 0, so
+  //     Γ(0.001, z) (the v0.1 positive-a path) and Γ(−0.001, z) (the new
+  //     recurrence-shift path) must be CLOSE — the gap is O(0.002 · ∂Γ/∂a),
+  //     a small finite difference. This is the load-bearing cross-path
+  //     consistency check: it proves the new path joins the old path
+  //     smoothly rather than computing some unrelated quantity.
+  // --------------------------------------------------------------------------
+  describe("8.2 continuity of Γ(a,z) across a = 0", () => {
+    // mpmath: |Γ(0.001,z) − Γ(−0.001,z)| is ≈ 6e-5 (z=0.5), 3e-5 (z=3),
+    // 2e-8 (z=10) — small, and the two values agree to several leading dp.
+    // The leading-digit agreement is small by design — a = ±0.001 is a
+    // 2·10^-3 step in `a`, and ∂Γ/∂a is O(1), so the values diverge after
+    // 2-3 significant figures. The point of the test is that the new path
+    // joins the old one *at all* (no sign flip, no wrong branch), not that
+    // they are bit-equal — they are genuinely different function values.
+    const cases: Array<[string, number]> = [
+      ["0.5", 3],
+      ["3", 3],
+      ["10", 2],
+    ];
+    for (const [zStr, minAgree] of cases) {
+      test(`Γ(0.001, ${zStr}) ≈ Γ(−0.001, ${zStr})`, () => {
+        const z = fromString(zStr, PREC_50DP);
+        const gPos = bigIncompleteGammaUpper(
+          fromString("0.001", PREC_50DP),
+          z,
+          PREC_50DP,
+        );
+        const gNeg = bigIncompleteGammaUpper(
+          fromString("-0.001", PREC_50DP),
+          z,
+          PREC_50DP,
+        );
+        // The two are continuous in a: they must agree to at least the first
+        // few significant digits (the gap is O(2·10^-3 · ∂Γ/∂a)).
+        const dps = digitsAgreeing(toString(gPos, 20), toString(gNeg, 20));
+        expect(dps).toBeGreaterThanOrEqual(minAgree);
+        // And both must be strictly positive finite values — no sign flip.
+        expect(gPos.mantissa > 0n).toBe(true);
+        expect(gNeg.mantissa > 0n).toBe(true);
+      });
+    }
+  });
+
+  // --------------------------------------------------------------------------
+  // 8.3 Recurrence-consistency invariant — Γ(a+1, z) = a·Γ(a, z) + z^a e^{-z}
+  //     (DLMF §8.8.2). This identity is INDEPENDENT of the algorithm used to
+  //     compute either side: the left side `Γ(a+1, z)` is in the v0.1
+  //     positive-a regime for a ∈ (−1, 0), while the right side uses the new
+  //     recurrence-shift path for Γ(a, z). They must agree to prec − 8 bits.
+  //     This is the strongest algorithm-independent check we have on the new
+  //     path.
+  // --------------------------------------------------------------------------
+  describe("8.3 recurrence consistency Γ(a+1,z) = a·Γ(a,z) + z^a e^{-z}", () => {
+    const cases: Array<[string, string]> = [
+      ["-0.5", "2"],
+      ["-1.5", "3"],
+      ["-2.5", "1.5"],
+      ["-5.7", "4"],
+      ["-1.999", "3"],
+    ];
+    for (const [aStr, zStr] of cases) {
+      test(`recurrence holds at (a=${aStr}, z=${zStr})`, () => {
+        const work = PREC_50DP + 32;
+        const a = fromString(aStr, work);
+        const z = fromString(zStr, work);
+        const aPlus1 = add(a, fromInt(1n, work), work);
+        // LHS: Γ(a+1, z). For a ∈ (−1,0) this is the v0.1 positive-a path;
+        // for a ≤ −1 it is itself another recurrence-shift evaluation —
+        // either way, an independent computation from the RHS's Γ(a,z).
+        const lhs = bigIncompleteGammaUpper(aPlus1, z, work);
+        // RHS: a·Γ(a, z) + z^a · e^{-z}.
+        const gammaAZ = bigIncompleteGammaUpper(a, z, work);
+        const zPowA = pow(z, a, work);
+        const expNegZ = exp(neg(z), work);
+        const rhs = add(mul(a, gammaAZ, work), mul(zPowA, expNegZ, work), work);
+        const diff = sub(lhs, rhs, work);
+        const lhsMag =
+          lhs.mantissa === 0n
+            ? 0
+            : lhs.exponent +
+              (lhs.mantissa < 0n ? -lhs.mantissa : lhs.mantissa).toString(2)
+                .length;
+        const diffMag =
+          diff.mantissa === 0n
+            ? -Infinity
+            : diff.exponent +
+              (diff.mantissa < 0n ? -diff.mantissa : diff.mantissa).toString(2)
+                .length;
+        // |diff| / |lhs| < 2^-(prec - 8): relative error to prec − 8 bits.
+        expect(diffMag - lhsMag).toBeLessThan(-(PREC_50DP - 8));
+      });
+    }
+  });
+
+  // --------------------------------------------------------------------------
+  // 8.4 Negative-integer handling — decision option (ii): the measure-zero
+  //     non-positive-integer set is REFUSED with a clear tagged error pointing
+  //     at the E_n family, while every negative NON-integer a is supported.
+  //     (Γ(0,z) = E_1(z), Γ(−n,z) ∝ E_{n+1}(z); a faithful closed form needs
+  //     an arb-prec E_n evaluator, which is a separate follow-on bead.)
+  // --------------------------------------------------------------------------
+  describe("8.4 negative-integer a refused with an E_n pointer", () => {
+    test("Γ(0, z) throws RangeError mentioning E_1", () => {
+      const a: BigFloat = { mantissa: 0n, exponent: 0, precision: PREC_50DP };
+      // a = 0 with z > 0 is NOT the Γ(a,0)=Γ(a) short-circuit (that needs
+      // z = 0). It is the genuine pole-of-Γ case routed to the E_n refusal.
+      const z = fromString("3", PREC_50DP);
+      expect(() => bigIncompleteGammaUpper(a, z, PREC_50DP)).toThrow(
+        /E_1|exponential-integral/,
+      );
+    });
+
+    test("Γ(-2, z) throws RangeError mentioning E_{n+1}", () => {
+      const a = fromInt(-2n, PREC_50DP);
+      const z = fromString("3", PREC_50DP);
+      expect(() => bigIncompleteGammaUpper(a, z, PREC_50DP)).toThrow(RangeError);
+      expect(() => bigIncompleteGammaUpper(a, z, PREC_50DP)).toThrow(
+        /E_\{n\+1\}|exponential-integral/,
+      );
+    });
+
+    test("Γ(-2.5, z) — a NEAR an integer but NOT one — is SUPPORTED", () => {
+      // The refusal is for EXACT integers only; −2.5 is a genuine non-integer
+      // and must compute cleanly. Guards against an over-broad refusal.
+      const a = fromString("-2.5", PREC_50DP);
+      const z = fromString("3", PREC_50DP);
+      expect(() => bigIncompleteGammaUpper(a, z, PREC_50DP)).not.toThrow();
+      const r = bigIncompleteGammaUpper(a, z, PREC_50DP);
+      expect(r.mantissa > 0n).toBe(true);
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  // 8.5 Honest-precision floor — the recurrence-shift is self-validating. At
+  //     a `prec` far above what the +64-bit margin covers, the implementation
+  //     re-runs the descent at a margin sized to the MEASURED cancellation
+  //     loss. We verify that a high-prec request still lands on the mpmath
+  //     gold to the full requested precision (the self-validation actually
+  //     fires and recovers the bits, rather than silently returning a
+  //     low-precision answer — CLAUDE.md Rule 1).
+  // --------------------------------------------------------------------------
+  test("8.5 honest precision — Γ(−1.999, 3) at prec 400 still matches gold", () => {
+    // a = −1.999 is the hardest corpus cell (closest to a negative integer);
+    // mpmath gold to 90 dp (mp.gammainc(mpf('-1.999'), 3, inf)):
+    const gold90 =
+      "0.000993546949850057740815074714900053153774652364334989334363734" +
+      "05429876166343389426614852541445";
+    const a = fromString("-1.999", 480);
+    const z = fromString("3", 480);
+    const r = bigIncompleteGammaUpper(a, z, 400);
+    // 400 bits ≈ 120 dp; the 90-dp gold caps the achievable count. The
+    // self-validating precision-bump must deliver ≥ 80 dp of agreement.
+    const dps = digitsAgreeing(toString(abs(r), 90), gold90);
+    expect(dps).toBeGreaterThanOrEqual(80);
+  });
+
+  // --------------------------------------------------------------------------
+  // 8.6 Determinism — arbprec: true. Same (a, z, prec) bytes ⇒ byte-identical
+  //     output. The recurrence-shift adds a precision-bump branch driven by a
+  //     measured quantity; this test pins that the branch is deterministic.
+  // --------------------------------------------------------------------------
+  test("8.6 determinism — Γ(−3.5, 7) is byte-identical across repeated calls", () => {
+    const a = fromString("-3.5", PREC_50DP);
+    const z = fromString("7", PREC_50DP);
+    const r1 = bigIncompleteGammaUpper(a, z, PREC_50DP);
+    const r2 = bigIncompleteGammaUpper(a, z, PREC_50DP);
+    expect(r1.mantissa).toBe(r2.mantissa);
+    expect(r1.exponent).toBe(r2.exponent);
+    expect(toString(r1, 50)).toBe(toString(r2, 50));
   });
 });

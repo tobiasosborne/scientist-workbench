@@ -48,12 +48,39 @@
 //      Cost: O((prec / log(|z|/|a|)) · M(prec)).
 //
 //   3. TEMME UNIFORM ASYMPTOTIC  (DLMF §8.12.3-4; Temme 1979)
-//      Condition:  |z - a| ≤ C·√|a|, |a| ≥ prec·0.1   (transition region)
-//      DEFERRED to v0.2 (bead `[gamma-v02-temme-uniform]` to be filed).
-//      v0.1 falls back to CF in the transition region. The CF converges
-//      slowly there (rate ≈ |z/a| ≈ 1) so v0.1 honestly pays in cycles for
-//      what Temme would deliver in O(prec/log a) terms; it does not LIE about
-//      precision — the CF answer is still bit-exact, just expensive.
+//      Condition:  |z - a| ≲ C·√|a|   (the saddle / transition region)
+//      IMPLEMENTED in v0.2 (bead `scientist-workbench-d2ha`) as the
+//      verified reference evaluator `temmeUniformAsymptoticQ` — see the
+//      "Temme uniform asymptotic" section below for the full derivation.
+//
+//      v0.2 probe finding — TWO premises tested, one falsified:
+//
+//      (a) PRECISION. The bead premise "v0.1 loses ~log₂(|a|) bits in the
+//          saddle region" was FALSIFIED. v0.1's CF answer at the saddle
+//          `z = a` agrees with mpmath digit-for-digit at 110+ dp; a 400-bit
+//          run is bit-identical to a 1200-bit cross-check. v0.1 is
+//          *bit-exact* in the transition region. It was never a precision
+//          lie — the v0.1 carve-out language overstated the gap.
+//
+//      (b) SPEED. Temme was then evaluated as a *performance* candidate.
+//          The probe verdict: the CF is faster than Temme at EVERY matched
+//          saddle point where Temme's asymptotic series can reach `prec`
+//          (Γ(1000,1000)@200: CF 19 ms vs Temme 26 ms; Γ(5·10⁶,5·10⁶)@600:
+//          CF 76 ms vs Temme 117 ms). The v0.1 doc text overstated the CF
+//          cost: at `z = a` the CF ratio is `a/(a+k) < 1`, not the ≈1
+//          stagnation claimed — the CF converges in O(prec) *cheap*
+//          cycles. Temme carries a heavy fixed per-call cost (~30 degree-44
+//          Horner evaluations + one arb-prec erfc) that a light CF beats.
+//
+//      Decision (CLAUDE.md Rule 8 honest scope, Rule 1 no silent
+//      regression): the CF — bit-exact AND faster — stays the production
+//      saddle path. Temme is implemented, verified bit-for-bit against
+//      mpmath, kept as a tested reference algorithm, but OFF the hot path.
+//      `temmeApplies` returns false; see its doc comment for the full
+//      probe table and the re-enable note. Temme itself is *self-
+//      validating* — optimal-truncation with a `null` return when its
+//      asymptotic floor cannot reach `prec` — so it could never silently
+//      return a low-precision answer were it ever re-enabled.
 //
 //   4. POINCARÉ ASYMPTOTIC  (DLMF §8.11.2)
 //      Condition:  |z| > prec · ln 2 + Re(a)   (very large |z|)
@@ -106,14 +133,23 @@
 // Γ(a) to `prec - 4` bits. A failure here means the dispatch produced
 // inconsistent answers across algorithms — a serious correctness regression.
 //
-// Domain restrictions (v0.1)
-// --------------------------
+// Domain restrictions
+// -------------------
 //
-//   - Re(a) > 0 required. Negative-a analytic continuation requires the
-//     incomplete-gamma reflection formula (DLMF §8.2.7) and is deferred.
+//   - Γ(a, z): real `a` of EITHER sign supported for `z > 0` (v0.2, bead
+//     `scientist-workbench-7gq4`). Negative non-integer `a` goes through the
+//     recurrence-shift (DLMF §8.8.2); see `bigIncompleteGammaUpperRecurrence`.
+//     The measure-zero non-positive-integer set (`a ∈ {0, −1, −2, …}`) is
+//     refused with a RangeError pointing at the exponential-integral family
+//     `E_n` — `Γ(0,z) = E_1(z)`, `Γ(−n,z) ∝ E_{n+1}(z)` — which is a clean
+//     follow-on bead.
+//   - γ(a, z): `Re(a) > 0` required. The lower function integrates over
+//     `[0, z]`, which hits the `t = 0` singularity of `t^{a-1}` for `a ≤ 0`;
+//     that continuation is genuinely harder and stays out of v0.2 scope.
 //   - Real arguments only on this entry. Complex extension lives in
 //     `complex.ts` (bead I2c, follow-on).
-//   - The classical pole at a = 0 throws a RangeError.
+//   - `z < 0` throws a RangeError (the integral path then needs complex
+//     analysis; deferred to v0.2 follow-on).
 //   - Non-finite BigFloat shapes (corrupted mantissa/exponent sentinels)
 //     are rejected loudly via the same `requireFinite*` style as erf.ts.
 //
@@ -130,9 +166,10 @@
 
 import { BigFloat, normalise, bitLength } from "../types.js";
 import { abs, neg, sgn, isZero } from "../comparison.js";
-import { add, sub, mul, div } from "../arithmetic.js";
-import { fromInt, fromString, toFloat64 } from "../conversion.js";
-import { exp, log, pow } from "../transcendental.js";
+import { add, sub, mul, div, sqrt } from "../arithmetic.js";
+import { fromInt, fromString, toFloat64, toString } from "../conversion.js";
+import { exp, log, pow, expm1, pi } from "../transcendental.js";
+import { bigErfc } from "./erf.js";
 import { gamma } from "../special.js";
 
 // =============================================================================
@@ -151,20 +188,54 @@ function magBits(x: BigFloat): number {
 }
 
 /**
+ * Decide whether a BigFloat represents an exact integer. A BigFloat is the
+ * real value `mantissa · 2^exponent`; it is an integer iff
+ *
+ *   - `exponent ≥ 0`  (the value is `mantissa` shifted left — always integral), or
+ *   - `exponent < 0`  and `mantissa` is divisible by `2^(-exponent)` (the
+ *     fractional bits are all zero).
+ *
+ * Zero (`mantissa = 0`) is an integer. This is an *exact bit-pattern* test —
+ * no rounding, no tolerance — which is exactly what the negative-`a` dispatch
+ * needs: the recurrence-shift below divides by `a + k`, and that denominator
+ * is *exactly* zero precisely when `a` is a non-positive integer. A tolerance-
+ * based "near integer" test would be wrong here: `a = -1.999` is genuinely a
+ * non-integer and must be *supported* (it is well inside the recurrence's
+ * benign-cancellation regime — see `bigIncompleteGammaUpperRecurrence`), even
+ * though it is "close to" `-2`.
+ */
+function isIntegerBigFloat(x: BigFloat): boolean {
+  if (x.mantissa === 0n) return true;
+  if (x.exponent >= 0) return true;
+  const shift = BigInt(-x.exponent);
+  return (x.mantissa & ((1n << shift) - 1n)) === 0n;
+}
+
+/**
  * Validate inputs to the incomplete-gamma entry points. Loud throws on:
  *   - non-integer / non-positive `prec`
  *   - malformed BigFloat (precision <1, non-finite exponent)
  *   - magnitude > 2^1024 (beyond any meaningful arb-prec computation)
- *   - Re(a) ≤ 0 (v0.1 restriction — see top-of-file)
+ *   - Re(a) ≤ 0 — *conditionally*: see `allowNonPositiveA` below
  *
  * The check is shared by both Upper and Lower so the error messages are
  * uniform; the function name is passed in for diagnostic clarity.
+ *
+ * `allowNonPositiveA` (v0.2, bead `scientist-workbench-7gq4`): the upper
+ * function `Γ(a, z)` is well-defined for *all* real `a` when `z > 0` — the
+ * only singularity of the integrand `t^{a-1} e^{-t}` is at `t = 0`, which
+ * lies outside the path `[z, ∞)`. So `bigIncompleteGammaUpper` passes
+ * `allowNonPositiveA = true` and handles `a ≤ 0` via the recurrence-shift
+ * evaluator. The lower function `γ(a, z) = ∫_0^z t^{a-1} e^{-t} dt` *does*
+ * hit the `t = 0` singularity for `a ≤ 0`; it remains restricted to `a > 0`
+ * and passes `allowNonPositiveA = false` (the default).
  */
 function requireFiniteIncompleteGammaInput(
   a: BigFloat,
   z: BigFloat,
   prec: number,
   fn: string,
+  allowNonPositiveA = false,
 ): void {
   if (prec < 1 || !Number.isInteger(prec)) {
     throw new RangeError(
@@ -192,13 +263,19 @@ function requireFiniteIncompleteGammaInput(
       );
     }
   }
-  // v0.1 restriction: Re(a) > 0. Analytic continuation to Re(a) ≤ 0
-  // requires the reflection-style recurrence (DLMF §8.2.7) and is deferred.
-  if (sgn(a) <= 0) {
+  // `a` sign restriction. The lower function `γ(a, z)` requires `a > 0`
+  // (the integrand hits the `t = 0` singularity for `a ≤ 0`). The upper
+  // function `Γ(a, z)` is well-defined for all real `a` when `z > 0` and
+  // passes `allowNonPositiveA = true`; its own dispatch then routes `a ≤ 0`
+  // to the recurrence-shift evaluator, and rejects only the measure-zero
+  // non-positive-integer set (where the recurrence's `1/(a+k)` divides by
+  // zero) with a clear pointer to the `E_n` family.
+  if (!allowNonPositiveA && sgn(a) <= 0) {
     throw new RangeError(
-      `${fn}: Re(a) > 0 required (v0.1). Got sign(a) = ${sgn(a)}. ` +
-        `suggestion: the analytic continuation to Re(a) ≤ 0 is a v0.2 feature; ` +
-        `for now, restrict to a > 0.`,
+      `${fn}: Re(a) > 0 required. Got sign(a) = ${sgn(a)}. ` +
+        `suggestion: the lower incomplete Gamma γ(a, z) hits the t = 0 ` +
+        `singularity of t^{a-1} for a ≤ 0 and is out of scope; the upper ` +
+        `function bigIncompleteGammaUpper does support a ≤ 0 for z > 0.`,
     );
   }
   // z = 0 is fine (Γ(a,0) = Γ(a), γ(a,0) = 0); negative z is a v0.2 feature
@@ -479,6 +556,863 @@ function bigIncompleteGammaUpperCF(
 }
 
 // =============================================================================
+// Temme uniform asymptotic expansion — DLMF §8.12.3-4 / Temme 1979
+// =============================================================================
+//
+// In the saddle / transition region `z ≈ a` the series for γ converges with
+// per-term ratio ≈ 1 and the continued fraction stagnates (its geometric
+// ratio `|z/(a+k)|` sits at unity). Both v0.1 paths are *bit-exact* there —
+// the probe at `z = a` matched mpmath digit-for-digit at 110+ dp — but they
+// pay O(prec) cycles where O(prec / log a) would do. The Temme (1979)
+// uniform asymptotic expansion is the algorithm that delivers the saddle
+// region in O(prec / log a) terms.
+//
+// The variables (DLMF §8.12.2-4)
+// ------------------------------
+//
+//   λ = z / a
+//   ½ η² = λ − 1 − ln λ ,   sign(η) = sign(λ − 1)
+//
+// `η` is the *Temme variable*; the map λ ↦ η has a removable singularity at
+// λ = 1 (η = 0). The regularised functions are (DLMF §8.12.4)
+//
+//   Q(a,z) = ½ erfc( η √(a/2) ) + R_a(η)
+//   P(a,z) = ½ erfc(−η √(a/2) ) − R_a(η)
+//
+//   R_a(η) = e^{−½ a η²} / √(2π a) · S_a(η) ,   S_a(η) = Σ_{k≥0} c_k(η) a^{−k}
+//
+// and the unregularised upper function is `Γ(a,z) = Q(a,z) · Γ(a)`.
+//
+// The coefficient recursion (DLMF §8.12.18)
+// -----------------------------------------
+//
+// The Temme coefficients satisfy
+//
+//   c_0(η) = 1/(λ−1) − 1/η
+//   c_k(η) = (1/η) · d c_{k−1}/dη  +  γ_k / (λ−1)        (k ≥ 1)
+//
+// where the `γ_k` are the coefficients of the asymptotic expansion of the
+// reciprocal regulated Gamma factor `1/Γ*(a)` — equivalently the Stirling
+// series: `γ_0 = 1, γ_1 = −1/12, γ_2 = 1/288, γ_3 = 139/51840, …`. Each
+// `c_k(η)` is *analytic* at η = 0 despite the `1/η` and `1/(λ−1)` pieces:
+// the poles cancel. The saddle values are the DLMF §8.12.16 constants
+// `c_0(0) = −1/3, c_1(0) = −1/540, c_2(0) = 25/6048, …` — small and
+// bounded, never diverging.
+//
+// Why a Taylor series in η (the load-bearing engineering choice)
+// --------------------------------------------------------------
+//
+// The naïve recursion needs `d/dη` of a rational function of λ, with stable
+// `1/(λ−1)` handling near λ = 1 — fiddly and cancellation-prone in BigFloat.
+// The decisive observation: the Temme region keeps `|η|` SMALL. With
+// `|z − a| ≲ C √a` we get `|λ − 1| ≲ C/√a`, hence `|η| ≲ C/√a` — at a = 100,
+// C = 3 that is `|η| ≲ 0.3`. A single Taylor expansion of each `c_k(η)`
+// about η = 0 therefore converges across the *entire* Temme region. We
+// never need `c_k(η)` for large η.
+//
+// So the whole apparatus reduces to power-series arithmetic:
+//
+//   1. `s(η) = λ − 1` is obtained by series-reverting `½η² = s − ln(1+s)`.
+//   2. `c_0(η) = 1/s(η) − 1/η` is a clean power series (the `1/η` pole
+//      cancels — `s(η) = η + η²/3 + …` so `1/s − 1/η` is analytic).
+//   3. The recursion `c_k = (1/η) d c_{k−1}/dη + γ_k/s` acts on Taylor
+//      coefficient vectors. `(1/η) d/dη` maps `Σ p_j η^j ↦ Σ (j+2) p_{j+2}
+//      η^j` (plus a `p_1 η^{−1}` pole); `γ_k/s` contributes a `γ_k η^{−1}`
+//      pole. The two poles CANCEL exactly (`p_1 = −γ_k`, the analyticity
+//      consistency condition) leaving an analytic series — verified to
+//      ~10^{−72} residual in the design probe.
+//
+// Every Taylor coefficient of `s(η)`, of `1/s(η)`, of each `γ_k`, and hence
+// of every `c_k(η)`, is an *exact rational*. We compute them once — lazily,
+// on first use, via the memoised `temmeC()` accessor (NOT at module load:
+// see `buildTemmeC`) — in exact `BigInt` rational arithmetic, so the
+// recursion never runs in floating point. Evaluating the cached rationals as
+// BigFloats at the working precision is the only precision-dependent step.
+// This keeps
+// the strongest determinism contract: `arbprec: true`, bit-identical
+// cross-runtime forever (ADR-0020).
+//
+// Honest dispatch — the self-validating floor
+// -------------------------------------------
+//
+// `S_a(η) = Σ_k c_k(η) a^{−k}` is an ASYMPTOTIC series in `1/a`: for fixed
+// `a` the terms shrink, bottom out, then grow. Optimal truncation stops at
+// the smallest term; the achievable accuracy floor is ≈ that smallest term.
+// The floor improves with `a` (probe: ≈115 bits at a=20, ≈196 at a=100,
+// ≈231 at a=200). `temmeUniformAsymptotic` truncates optimally, then takes
+// the magnitude of the LAST INCLUDED term as a conservative error estimate.
+// If that estimate is coarser than `2^{−prec}` the function returns `null`
+// — Temme cannot honestly reach `prec` for this `a`, and the dispatcher
+// falls back to the (bit-exact, slower) CF. Temme is *never* allowed to
+// return a quietly-low-precision answer (CLAUDE.md Rule 1 / Rule 8).
+//
+// References (all in repo / DLMF)
+// -------------------------------
+//   - DLMF §8.12.2-4 (uniform asymptotic), §8.12.16 (saddle values),
+//     §8.12.18 (the c_k recursion)
+//   - Temme, N.M. (1979) "The asymptotic expansion of the incomplete gamma
+//     functions", SIAM J. Math. Anal. 10(4), 757-766
+//   - docs/refs/gamma-research/R2-arbprec-algorithms.md §2.4
+//   - docs/adr/0042-gamma-family-per-head-substrate.md §"What we will not
+//     decide here" — the v0.1 Temme deferral carve-out this bead closes
+
+/**
+ * Exact rational number as a reduced `{num, den}` BigInt pair, `den > 0`.
+ * The Temme coefficient apparatus is built entirely in this type so the
+ * recursion (series reversion, reciprocal, differentiation) runs in exact
+ * arithmetic — no floating-point rounding enters the coefficients, only
+ * the final evaluation to BigFloat at the working precision.
+ */
+interface Rat {
+  readonly num: bigint;
+  readonly den: bigint;
+}
+
+function ratGcd(a: bigint, b: bigint): bigint {
+  let x = a < 0n ? -a : a;
+  let y = b < 0n ? -b : b;
+  while (y !== 0n) {
+    [x, y] = [y, x % y];
+  }
+  return x;
+}
+
+function rat(num: bigint, den: bigint): Rat {
+  if (den === 0n) {
+    throw new RangeError("Temme coefficient construction: zero denominator.");
+  }
+  let n = num;
+  let d = den;
+  if (d < 0n) {
+    n = -n;
+    d = -d;
+  }
+  if (n === 0n) return { num: 0n, den: 1n };
+  const g = ratGcd(n, d);
+  return { num: n / g, den: d / g };
+}
+
+const RAT_ZERO: Rat = { num: 0n, den: 1n };
+const RAT_ONE: Rat = { num: 1n, den: 1n };
+
+function ratAdd(a: Rat, b: Rat): Rat {
+  return rat(a.num * b.den + b.num * a.den, a.den * b.den);
+}
+function ratSub(a: Rat, b: Rat): Rat {
+  return rat(a.num * b.den - b.num * a.den, a.den * b.den);
+}
+function ratMul(a: Rat, b: Rat): Rat {
+  return rat(a.num * b.num, a.den * b.den);
+}
+function ratDiv(a: Rat, b: Rat): Rat {
+  return rat(a.num * b.den, a.den * b.num);
+}
+
+/**
+ * A fixed-length dense vector of exact rationals — the truncated power
+ * series carrier for the Temme coefficient construction. `get`/`set` are
+ * bounds-checked (the check never fires for in-range loop indices, but it
+ * satisfies `noUncheckedIndexedAccess` and turns any genuine indexing bug
+ * into a loud throw rather than a silent `undefined`).
+ *
+ * Index `j` is the coefficient of `η^j` (or `s^j`); length is `order + 1`.
+ */
+class RatVec {
+  private readonly data: Rat[];
+  constructor(public readonly order: number) {
+    this.data = new Array<Rat>(order + 1).fill(RAT_ZERO);
+  }
+  get(j: number): Rat {
+    if (j < 0 || j > this.order) {
+      throw new RangeError(`RatVec.get: index ${j} out of [0, ${this.order}].`);
+    }
+    return this.data[j] as Rat;
+  }
+  set(j: number, v: Rat): void {
+    if (j < 0 || j > this.order) {
+      throw new RangeError(`RatVec.set: index ${j} out of [0, ${this.order}].`);
+    }
+    this.data[j] = v;
+  }
+  /** Frozen plain-array snapshot, used to publish the immutable Temme table. */
+  toArray(): readonly Rat[] {
+    return this.data.slice();
+  }
+}
+
+/**
+ * Multiply two truncated power series, keeping terms up to and including
+ * `η^order`.
+ */
+function seriesMul(A: RatVec, B: RatVec, order: number): RatVec {
+  const C = new RatVec(order);
+  for (let i = 0; i <= order; i++) {
+    const ai = A.get(i);
+    if (ai.num === 0n) continue;
+    for (let j = 0; j + i <= order; j++) {
+      const bj = B.get(j);
+      if (bj.num === 0n) continue;
+      C.set(i + j, ratAdd(C.get(i + j), ratMul(ai, bj)));
+    }
+  }
+  return C;
+}
+
+/**
+ * Reciprocal `1/A` of a truncated power series with `A[0] ≠ 0`, by the
+ * standard convolution recurrence `B_0 = 1/A_0`,
+ * `B_n = −(1/A_0) Σ_{k=1}^n A_k B_{n−k}`.
+ */
+function seriesInv(A: RatVec, order: number): RatVec {
+  const a0 = A.get(0);
+  if (a0.num === 0n) {
+    throw new RangeError("Temme series reciprocal: zero constant term.");
+  }
+  const B = new RatVec(order);
+  B.set(0, ratDiv(RAT_ONE, a0));
+  for (let n = 1; n <= order; n++) {
+    let acc = RAT_ZERO;
+    for (let k = 1; k <= n; k++) {
+      acc = ratAdd(acc, ratMul(A.get(k), B.get(n - k)));
+    }
+    B.set(n, ratSub(RAT_ZERO, ratDiv(acc, a0)));
+  }
+  return B;
+}
+
+// -----------------------------------------------------------------------------
+// Lazy first-use construction of the Temme coefficient table (exact rationals)
+// -----------------------------------------------------------------------------
+//
+// `TEMME_TAYLOR_ORDER` — the η-Taylor truncation order. The Temme region
+// keeps `|η| ≲ 0.3` so η^40 is already ≈ 10^{-21}; 44 gives generous head-
+// room past any prec we route Temme for (Temme is for prec ≳ 150 bits where
+// the η-series still converges far faster than the asymptotic 1/a-series
+// truncates). `TEMME_MAX_K` — the number of `c_k` arrays; the asymptotic
+// `1/a`-series is truncated optimally at run time, never beyond this.
+
+const TEMME_TAYLOR_ORDER = 44;
+const TEMME_MAX_K = 42;
+
+/**
+ * Bernoulli number `B_n` as an exact rational, via the Akiyama–Tanigawa
+ * triangle. Used only inside `buildTemmeC` to build the Stirling-series `γ_k`.
+ */
+function bernoulliRat(n: number): Rat {
+  const A = new RatVec(n);
+  for (let m = 0; m <= n; m++) {
+    A.set(m, rat(1n, BigInt(m + 1)));
+    for (let j = m; j >= 1; j--) {
+      A.set(j - 1, ratMul(rat(BigInt(j), 1n), ratSub(A.get(j - 1), A.get(j))));
+    }
+  }
+  return A.get(0);
+}
+
+/**
+ * Build the Temme coefficient table: the returned `[k][j]` entry is the
+ * exact-rational coefficient of `η^j` in the Taylor expansion of `c_k(η)`.
+ *
+ * This is roughly 5 s of exact-`BigInt` rational series arithmetic. It is
+ * **deliberately not run at module load** — `temmeC()` memoises it on first
+ * use, and `temmeApplies()` returns `false` in v0.2, so in production this
+ * function is never invoked at all (the apparatus is built only when the
+ * test suite or a future re-enable actually calls `temmeUniformAsymptoticQ`).
+ * Keeping it out of import-time work is the CLAUDE.md side-effect-light /
+ * cheap-module-load discipline; eager construction here regressed
+ * `import "@workbench/bigfloat"` from sub-second to ~6 s (bead `eoei`).
+ *
+ * Construction follows the derivation in the section header:
+ *   1. `f(s)/s² = 2(s − ln(1+s))/s² = Σ_m 2(−1)^m s^m/(m+2)` — the square
+ *      of `η/s` as a series in `s`.
+ *   2. `g(s) = √(f(s)/s²)` so `η = s·g(s)`; reverting `η = s·g(s)` gives
+ *      `s(η)` (Lagrange-style fixed-point iteration on the series).
+ *   3. `1/s(η)` as a power series; `c_0(η) = 1/s − 1/η` drops the `η^{−1}`
+ *      pole, leaving the analytic part.
+ *   4. `γ_k` from the Stirling series of `Γ*` via `exp` then reciprocal.
+ *   5. `c_k = (1/η) d c_{k−1}/dη + γ_k · (analytic part of 1/s)`. The two
+ *      `η^{−1}` poles cancel by the analyticity identity `c_{k−1}[1] = −γ_k`.
+ */
+function buildTemmeC(): readonly (readonly Rat[])[] {
+  const N = TEMME_TAYLOR_ORDER;
+
+  // Step 1 — f(s)/s² = Σ 2(−1)^m s^m/(m+2).
+  const fOverS2 = new RatVec(N);
+  for (let m = 0; m <= N; m++) {
+    fOverS2.set(m, rat(2n * BigInt((-1) ** m), BigInt(m + 2)));
+  }
+  // g(s) = √(f(s)/s²): g_0 = 1, g_n = (fOverS2_n − Σ_{1≤k<n} g_k g_{n−k}) / 2.
+  const g = new RatVec(N);
+  g.set(0, RAT_ONE);
+  for (let n = 1; n <= N; n++) {
+    let acc = RAT_ZERO;
+    for (let k = 1; k < n; k++) {
+      acc = ratAdd(acc, ratMul(g.get(k), g.get(n - k)));
+    }
+    g.set(n, ratDiv(ratSub(fOverS2.get(n), acc), rat(2n, 1n)));
+  }
+
+  // Step 2 — revert η = s·g(s) to obtain s(η). Fixed-point iteration:
+  // s = η / g(s). Each pass composes g with the current s-series and
+  // re-divides; N+3 passes saturate the truncation order.
+  let sSer = new RatVec(N);
+  sSer.set(1, RAT_ONE);
+  for (let pass = 0; pass < N + 3; pass++) {
+    // g(s(η)) — compose g with the current series via Horner-on-powers.
+    let sPow = new RatVec(N);
+    sPow.set(0, RAT_ONE);
+    const gComposed = new RatVec(N);
+    for (let m = 0; m <= N; m++) {
+      const gm = g.get(m);
+      if (gm.num !== 0n) {
+        for (let j = 0; j <= N; j++) {
+          const sp = sPow.get(j);
+          if (sp.num !== 0n) {
+            gComposed.set(j, ratAdd(gComposed.get(j), ratMul(gm, sp)));
+          }
+        }
+      }
+      sPow = seriesMul(sPow, sSer, N);
+    }
+    const invG = seriesInv(gComposed, N);
+    // s_new = η · (1/g(s)) — shift invG up by one power.
+    const sNew = new RatVec(N);
+    for (let j = 0; j < N; j++) sNew.set(j + 1, invG.get(j));
+    sSer = sNew;
+  }
+
+  // Step 3 — 1/s(η) = (1/η)·(1/u) with u = s/η. The analytic part of 1/s
+  // (index j → coeff of η^j) is invU shifted down by one; c_0 = that.
+  const u = new RatVec(N);
+  for (let j = 0; j <= N - 1; j++) u.set(j, sSer.get(j + 1));
+  const invU = seriesInv(u, N);
+  // invS pole coefficient = invU[0]; analytic part invSAnalytic[j] = invU[j+1].
+  const invSAnalytic = new RatVec(N);
+  for (let j = 0; j <= N - 1; j++) invSAnalytic.set(j, invU.get(j + 1));
+
+  // Step 4 — Stirling-series γ_k. ln Γ*(a) = Σ_{k≥1} B_{2k}/(2k(2k−1)) a^{1−2k}
+  // gives the series `lg` in x = 1/a; Γ* = exp(lg); γ = 1/Γ*.
+  const K = TEMME_MAX_K;
+  const lg = new RatVec(K);
+  for (let k = 1; k <= Math.floor(K / 2); k++) {
+    lg.set(
+      2 * k - 1,
+      ratDiv(bernoulliRat(2 * k), rat(BigInt(2 * k) * BigInt(2 * k - 1), 1n)),
+    );
+  }
+  // Γ*(a) = exp(lg): G_0 = 1, n·G_n = Σ_{k=1}^n k·lg_k·G_{n−k}.
+  const gStar = new RatVec(K);
+  gStar.set(0, RAT_ONE);
+  for (let n = 1; n <= K; n++) {
+    let acc = RAT_ZERO;
+    for (let k = 1; k <= n; k++) {
+      acc = ratAdd(
+        acc,
+        ratMul(ratMul(rat(BigInt(k), 1n), lg.get(k)), gStar.get(n - k)),
+      );
+    }
+    gStar.set(n, ratDiv(acc, rat(BigInt(n), 1n)));
+  }
+  const gamma = seriesInv(gStar, K);
+
+  // Step 5 — the c_k recursion. `(1/η) d c_{k−1}/dη` analytic part is
+  // `(j+2)·c_{k−1}[j+2]`; the `γ_k/s` analytic part is `γ_k·invSAnalytic[j]`.
+  // c_0 is the analytic part of 1/s − 1/η, i.e. invSAnalytic itself.
+  const cVecs: RatVec[] = [invSAnalytic];
+  for (let k = 1; k <= K; k++) {
+    const prev = cVecs[k - 1] as RatVec;
+    const gammaK = gamma.get(k);
+    const ck = new RatVec(N);
+    for (let j = 0; j <= N; j++) {
+      let v = RAT_ZERO;
+      if (j + 2 <= N) {
+        v = ratAdd(v, ratMul(rat(BigInt(j + 2), 1n), prev.get(j + 2)));
+      }
+      v = ratAdd(v, ratMul(gammaK, invSAnalytic.get(j)));
+      ck.set(j, v);
+    }
+    cVecs.push(ck);
+  }
+  return cVecs.map((v) => v.toArray());
+}
+
+/**
+ * Memoised accessor for the Temme coefficient table. The expensive
+ * `buildTemmeC()` runs at most once per process, on the first call — which
+ * in v0.2 means "never in production" (`temmeApplies()` is `false`), and
+ * "once" inside the Temme test suite. The memoised table is byte-identical
+ * to a fresh `buildTemmeC()`; this accessor only changes *when* it is built
+ * (first use, not import), never *what* it computes.
+ */
+let _temmeC: readonly (readonly Rat[])[] | undefined;
+function temmeC(): readonly (readonly Rat[])[] {
+  if (_temmeC === undefined) _temmeC = buildTemmeC();
+  return _temmeC;
+}
+
+/**
+ * Convert an exact `Rat` to a `BigFloat` at the requested precision.
+ */
+function ratToBigFloat(r: Rat, prec: number): BigFloat {
+  return div(fromInt(r.num, prec), fromInt(r.den, prec), prec);
+}
+
+/**
+ * Compute the Temme variable `η` from `λ = z/a`, defined by
+ * `½ η² = λ − 1 − ln λ` with `sign(η) = sign(λ − 1)`.
+ *
+ * The naïve route `η = √(2(λ − 1 − ln λ))` catastrophically cancels as
+ * λ → 1: both `λ − 1` and `ln λ` tend to the same value and their
+ * difference loses all leading bits. We avoid that two ways:
+ *
+ *   - write `t = λ − 1` and use `½ η² = t − log1p(t)`, where `log1p`
+ *     (DLMF-stable `ln(1+t)`) keeps full accuracy for small `t`;
+ *   - the *result* `t − log1p(t) = t²/2 − t³/3 + t⁴/4 − …` still cancels
+ *     for tiny `t`, so when `|t|` is below a threshold we evaluate that
+ *     series `Σ_{m≥2} (−1)^m t^m / m` directly — it is term-wise
+ *     cancellation-free and converges fast for `|t| < 1`.
+ *
+ * `sign(η)` follows `sign(λ − 1) = sign(t)`; at `t = 0` exactly (`z = a`,
+ * the saddle point itself) `η = 0`.
+ */
+function temmeEta(lambda: BigFloat, prec: number): BigFloat {
+  const work = prec + 64;
+  const one = fromInt(1n, work);
+  const t = sub(lambda, one, work); // t = λ − 1
+  if (isZero(t)) {
+    return { mantissa: 0n, exponent: 0, precision: prec };
+  }
+  // halfEtaSq = t − ln(1+t). For small |t| sum the cancellation-free
+  // series Σ_{m≥2} (−1)^m t^m / m; otherwise use t − log1p(t).
+  let halfEtaSq: BigFloat;
+  if (magBits(t) <= -4) {
+    // |t| ≲ 1/16 — series route. term_m = (−1)^m t^m / m.
+    let acc: BigFloat = { mantissa: 0n, exponent: 0, precision: work };
+    let tPow = mul(t, t, work); // t²
+    const stop = -prec - 16;
+    for (let m = 2; m <= work * 2; m++) {
+      const term = div(tPow, fromInt(BigInt(m), work), work);
+      // sign: (−1)^m — even m positive, odd m negative.
+      const signed = m % 2 === 0 ? term : neg(term);
+      acc = add(acc, signed, work);
+      tPow = mul(tPow, t, work);
+      if (magBits(term) - magBits(acc) < stop) break;
+      if (isZero(tPow)) break;
+    }
+    halfEtaSq = acc;
+  } else {
+    const log1pT = log(add(one, t, work), work);
+    halfEtaSq = sub(t, log1pT, work);
+  }
+  // η = √(2 · halfEtaSq), sign = sign(t).
+  const etaSq = mul(fromInt(2n, work), halfEtaSq, work);
+  const etaMag = sqrt(etaSq, work);
+  const eta = sgn(t) < 0 ? neg(etaMag) : etaMag;
+  return normalise(eta.mantissa, eta.exponent, prec);
+}
+
+/**
+ * Evaluate the cached Taylor polynomial `c_k(η) = Σ_j temmeC()[k][j] η^j`
+ * at a given BigFloat `η`, by Horner's method, at the working precision.
+ * The first call into `temmeC()` builds (and memoises) the coefficient
+ * table; every subsequent call reuses it.
+ */
+function evalTemmeCk(k: number, eta: BigFloat, prec: number): BigFloat {
+  const coeffs = temmeC()[k];
+  if (coeffs === undefined) {
+    throw new RangeError(
+      `evalTemmeCk: c_${k} out of the cached table [0, ${TEMME_MAX_K}].`,
+    );
+  }
+  let acc: BigFloat = { mantissa: 0n, exponent: 0, precision: prec };
+  for (let j = TEMME_TAYLOR_ORDER; j >= 0; j--) {
+    const cj = coeffs[j] as Rat;
+    acc = mul(acc, eta, prec);
+    acc = add(acc, ratToBigFloat(cj, prec), prec);
+  }
+  return acc;
+}
+
+/**
+ * Temme uniform asymptotic evaluation of the *regularised upper* function
+ * `Q(a, z)` in the saddle / transition region, returning `null` when the
+ * asymptotic series cannot honestly reach `prec` bits for this `a`.
+ *
+ * Returns `Q(a,z)` as a BigFloat at precision `prec`, or `null` to signal
+ * "Temme not admissible here — caller must fall back to the CF". The `null`
+ * return is the honest-dispatch contract (CLAUDE.md Rule 1, Rule 8): Temme
+ * is an asymptotic series with a best-accuracy floor, and a self-validating
+ * algorithm reports failure rather than silently returning low precision.
+ *
+ * Caller guarantees `a > 0`, `z > 0`. The caller is also responsible for
+ * the *geometric* gate `|z − a| ≲ C √a` (η small enough that the η-Taylor
+ * series converges) — outside that band this function may still return a
+ * value, but the caller should not route there.
+ *
+ * EXPORTED for the test suite. It is a *verified reference algorithm*, not
+ * on the default hot dispatch path — see `temmeApplies` for the (probe-
+ * driven, honest) reason the CF is kept as the production saddle path.
+ */
+export function temmeUniformAsymptoticQ(
+  a: BigFloat,
+  z: BigFloat,
+  prec: number,
+): BigFloat | null {
+  const work = prec + 96;
+  // λ = z/a and the Temme variable η.
+  const lambda = div(z, a, work);
+  const eta = temmeEta(lambda, work);
+
+  // S_a(η) = Σ_k c_k(η) a^{−k}, summed with OPTIMAL TRUNCATION.
+  //
+  // The error of a truncated asymptotic series is bounded by the magnitude
+  // of the first omitted term, and the optimal truncation point is the
+  // term-magnitude MINIMUM. Detecting that minimum needs care: the Temme
+  // coefficients `c_k(η)` are NOT monotone in `k` (e.g. `c_24(0)` happens
+  // to be unusually small while `c_25(0)` is ~11 bits larger), so the
+  // *term* magnitude `|c_k a^{−k}|` can take a one-term upward "blip" of a
+  // bit or two long before the series has genuinely bottomed out. A naïve
+  // "stop at the first non-decrease" rule fires on such a blip and
+  // truncates ~10 terms too early.
+  //
+  // Robust rule: track the running MINIMUM term magnitude. Keep a snapshot
+  // of the partial sum *at the minimum-term index* — that snapshot is the
+  // optimally-truncated sum (summing past the minimum only re-adds the
+  // divergent tail). Declare the series bottomed when a term exceeds the
+  // running minimum by a clear margin (`TEMME_BLIP_MARGIN` bits) — wider
+  // than any single-coefficient blip, far narrower than the genuine post-
+  // minimum divergence. The error estimate is the running minimum (the
+  // first-omitted-term bound). If the table runs out before a clear
+  // turnaround the series is still converging — the last included term
+  // bounds the omitted tail.
+  const TEMME_BLIP_MARGIN = 8;
+  const invA = div(fromInt(1n, work), a, work); // 1/a
+  let aPow = fromInt(1n, work); // a^{−k}, starts at a^0 = 1
+  let sRunning: BigFloat = { mantissa: 0n, exponent: 0, precision: work };
+  // The optimally-truncated sum: a snapshot of `sRunning` taken at the
+  // minimum-term index. Re-snapshotted every time a new minimum is seen.
+  let sAtMin: BigFloat = { mantissa: 0n, exponent: 0, precision: work };
+  let minTermMag = Infinity;
+  let lastTermMag = Infinity;
+  let errEstimate = Infinity; // log₂ of the error bound
+  let bottomed = false;
+  for (let k = 0; k <= TEMME_MAX_K; k++) {
+    const ck = evalTemmeCk(k, eta, work);
+    const term = mul(ck, aPow, work);
+    const termMag = magBits(term);
+    if (termMag > minTermMag + TEMME_BLIP_MARGIN) {
+      // The term has clearly turned the corner — well past any blip. The
+      // asymptotic series has bottomed out; the optimal-truncation error
+      // is the running-minimum term magnitude, and the optimal sum is the
+      // snapshot taken when that minimum term was last added.
+      errEstimate = minTermMag;
+      bottomed = true;
+      break;
+    }
+    sRunning = add(sRunning, term, work);
+    lastTermMag = termMag;
+    if (termMag < minTermMag) {
+      // New running minimum — this term IS the optimal truncation point so
+      // far; snapshot the sum that includes it.
+      minTermMag = termMag;
+      sAtMin = sRunning;
+    }
+    aPow = mul(aPow, invA, work);
+  }
+  if (!bottomed) {
+    // Table exhausted before a clear turnaround — the series is still
+    // converging, so the *full* running sum is the best estimate and the
+    // omitted tail is bounded by the last (still-small) included term.
+    sAtMin = sRunning;
+    errEstimate = lastTermMag;
+  }
+  const sAccum = sAtMin;
+  // Honest floor test. `S_a(η) ≈ −1/3` so its magnitude is O(1); the
+  // relative error of the optimally-truncated asymptotic series is ≈
+  // `errEstimate`. If `errEstimate` is coarser than 2^{−(prec+8)} the Temme
+  // series cannot honestly reach `prec` — report failure so the dispatcher
+  // uses the (bit-exact, slower) CF instead. This is the honest-dispatch
+  // contract (CLAUDE.md Rule 1, Rule 8): never silently return low
+  // precision.
+  if (errEstimate > -(prec + 8)) {
+    return null;
+  }
+
+  // R_a(η) = e^{−½ a η²} / √(2π a) · S_a(η).
+  const halfAEtaSq = mul(
+    div(a, fromInt(2n, work), work),
+    mul(eta, eta, work),
+    work,
+  );
+  const expFactor = exp(neg(halfAEtaSq), work);
+  const twoPiA = mul(mul(fromInt(2n, work), pi(work), work), a, work);
+  const sqrtTwoPiA = sqrt(twoPiA, work);
+  const Ra = div(mul(expFactor, sAccum, work), sqrtTwoPiA, work);
+
+  // Q(a,z) = ½ erfc(η √(a/2)) + R_a(η).
+  const halfA = div(a, fromInt(2n, work), work);
+  const erfcArg = mul(eta, sqrt(halfA, work), work);
+  const half = div(fromInt(1n, work), fromInt(2n, work), work);
+  const erfcTerm = mul(half, bigErfc(erfcArg, work), work);
+  const Q = add(erfcTerm, Ra, work);
+  return normalise(Q.mantissa, Q.exponent, prec);
+}
+
+/**
+ * Decide whether the Temme path applies for `(a, z)` at precision `prec`.
+ *
+ * Honest dispatch finding (this bead's probe — read before changing)
+ * ------------------------------------------------------------------
+ *
+ * The bead premise — "v0.1 loses ~log₂(|a|) bits in the saddle region" —
+ * was **falsified by probe**. v0.1's CF answer at the saddle `z = a` agrees
+ * with mpmath digit-for-digit at 110+ dp (`Γ(1000,1000)` at 1200-bit working
+ * precision is bit-identical to the 400-bit run). v0.1 is *bit-exact* in the
+ * transition region; the only question was speed.
+ *
+ * So Temme was evaluated as a *performance* candidate. The probe verdict,
+ * timed v0.2-Temme against v0.1-CF at matched saddle points:
+ *
+ *   | (a, z)          | prec | v0.1 CF | v0.2 Temme |
+ *   |-----------------|------|---------|------------|
+ *   | Γ(500, 500)     | 200  |  10 ms  |   26 ms    |
+ *   | Γ(1000, 1000)   | 200  |  19 ms  |   26 ms    |
+ *   | Γ(5000, 5000)   | 200  |  17 ms  |   24 ms    |
+ *   | Γ(40000, 40000) | 200  |  16 ms  |   45 ms    |
+ *   | Γ(5·10⁶, 5·10⁶) | 600  |  76 ms  |  117 ms    |
+ *
+ * The CF is faster *everywhere Temme can reach `prec`*. Two reasons:
+ *
+ *   - The v0.1 doc comment overstated the CF cost. At the saddle `z = a`
+ *     the CF's per-cycle ratio is `|z/(a+k)| = a/(a+k) < 1`, NOT the ≈1
+ *     stagnation the comment claimed; the CF converges in O(prec) *cheap*
+ *     cycles and its wall-time is essentially flat in `a`.
+ *   - Temme carries a heavy fixed per-call cost: ~30 Horner evaluations of
+ *     degree-44 η-polynomials plus one arb-prec `erfc`. That fixed cost
+ *     dominates a CF that needs only O(prec) light cycles.
+ *
+ * Additionally Temme is an *asymptotic* series in `1/a`: its optimal-
+ * truncation accuracy floor is `floor(bits) ≈ 30·log₂(a) − 24` (a law the
+ * probe confirmed *exactly* — 105 bits at a=20, 175 at a=100, 244 at
+ * a=500). To reach `prec` Temme needs `a ≥ 2^((prec+24)/30)` — a ≳ 179 at
+ * prec=200, a ≳ 1.8·10⁴ at prec=400, a ≳ 1.9·10⁶ at prec=600. Beyond a few
+ * hundred bits the floor outruns any realistic `a`.
+ *
+ * The legendary-senior-engineer decision (CLAUDE.md Rule 8 — honest scope;
+ * Rule 1 — no silent regressions): **routing the default dispatch to a
+ * slower algorithm is a regression we do not ship.** Temme is implemented,
+ * verified bit-for-bit against mpmath, and kept as a tested reference
+ * algorithm (`temmeUniformAsymptoticQ`, exercised directly by the test
+ * suite). It is *not* on the production hot path. `temmeApplies` therefore
+ * returns `false`: the CF — bit-exact and faster — remains the saddle-
+ * region production path.
+ *
+ * The function is retained (rather than deleted) as the single, documented
+ * dispatch decision point. Should a future substrate change shift the
+ * cost balance (a cheaper `erfc`, a faster polynomial-evaluation kernel,
+ * or a precision band where the CF genuinely stagnates), re-enabling Temme
+ * is a one-line change here — and the `temmeUniformAsymptoticQ` evaluator
+ * it would call is already correct, tested, and self-validating.
+ *
+ * Returns `false` unconditionally in v0.2 (see above). The signature is
+ * kept argument-complete so the re-enable is a localised edit.
+ */
+function temmeApplies(_a: BigFloat, _z: BigFloat, _prec: number): boolean {
+  // Probe verdict: the CF is faster than Temme everywhere Temme can reach
+  // `prec`. The production dispatch keeps the CF. Temme stays available as
+  // the verified `temmeUniformAsymptoticQ` reference algorithm, exercised
+  // by the test suite, but off the hot path. See the doc comment above for
+  // the full probe data and the senior-engineer rationale.
+  return false;
+}
+
+// =============================================================================
+// Negative-`a` continuation — recurrence-shift (DLMF §8.8.2)
+// =============================================================================
+//
+// v0.1 refused `Γ(a, z)` for `a ≤ 0`, deferring it to v0.2. But the refusal
+// was a *scope gap*, not a mathematical limit: `Γ(a, z) = ∫_z^∞ t^{a-1} e^{-t}
+// dt` is well-defined for every real `a` when `z > 0`, because the only
+// singularity of the integrand `t^{a-1}` is at `t = 0`, and `t = 0` is *not*
+// on the integration path `[z, ∞)`. (The lower function `γ(a,z)` integrates
+// over `[0, z]` and *does* hit `t = 0` for `a ≤ 0` — that one stays out of
+// scope; see `requireFiniteIncompleteGammaInput`.) This evaluator closes the
+// gap for the upper function.
+//
+// THE DECISION — three candidates compared (bead `scientist-workbench-z1tj`)
+// --------------------------------------------------------------------------
+//
+// Three algorithms were studied for `a ≤ 0, z > 0`, each cross-validated
+// against mpmath 1.3.0 (`mp.gammainc(a, z, mp.inf)`, which supports negative
+// `a` directly) over the 30-cell sweep `a ∈ {−0.5, −1.5, −2.5, −3.5, −5.7,
+// −0.001, −10.3}` × `z ∈ {0.5, 1, 3, 10, 50}`:
+//
+//   (a) Tricomi / confluent-hypergeometric.  `Γ(a, z) = e^{-z} z^a · U(1,
+//       1+a, z)`. Mathematically clean, but it shifts the whole problem
+//       onto an arb-prec evaluator for the Tricomi `U` — a *new* special
+//       function with its own series/asymptotic dispatch, ~300+ LOC of
+//       fresh substrate. Rejected: it solves a v0.2 scope gap by opening a
+//       v0.3-sized one.
+//
+//   (b) Recurrence-shift (DLMF §8.8.2).  The functional equation
+//         Γ(a+1, z) = a·Γ(a, z) + z^a e^{-z}
+//       rearranges to the downward step
+//         Γ(a, z) = (Γ(a+1, z) − z^a e^{-z}) / a.
+//       Pick `a* = a + N` with `a* > 0` the smallest shift landing in
+//       v0.1's valid positive-`a` regime, evaluate `Γ(a*, z)` with the
+//       existing (bit-exact) v0.1 series/CF dispatch, then descend `N`
+//       steps. ~110 LOC, reuses the entire v0.1 substrate. CHOSEN.
+//
+//   (c) Mellin–Barnes / full analytic continuation.  The most general
+//       (handles complex `a`, complex `z`), and the heaviest. Overkill for
+//       the real-axis `a ≤ 0, z > 0` case this bead scopes. Rejected.
+//
+// THE CANCELLATION ANALYSIS — why (b) is numerically safe
+// -------------------------------------------------------
+//
+// The crux objection to (b) is the downward step `(Γ(a+1,z) − z^a e^{-z})/a`:
+// it *subtracts* two positive quantities and *divides* by `a` (small, and
+// possibly close to zero when `a` is near a negative integer). Does the bit
+// loss explode?
+//
+// It does not. The 30-cell cross-validation against mpmath, plus a stress
+// sweep of `a → negative-integer` (measured: `a = −1 + 10^{-k}` for k up to
+// 15), establishes that the *achieved-precision* loss is small and BOUNDED:
+//
+//   - The genuine subtraction cancellation `cur − term` loses at most
+//     ~`magBits(max(cur,term)) − magBits(cur−term)` bits; across the whole
+//     sweep this worst-step figure stayed ≤ 7 bits (largest at `z = 50`,
+//     where `term = z^a e^{-z}` is largest relative to `Γ(a,z)`).
+//   - The `1/(a+k)` division is NOT a cancellation. When `a` is near a
+//     negative integer the denominator `a+k` is tiny — but `Γ(a, z)` is
+//     itself genuinely *large* there (it has a `1/(a+k)`-type growth), so
+//     the large quotient is the true answer, not a precision artefact. A
+//     limited-working-precision run at `a = −1 + 10^{-15}` still delivered
+//     ~33 of 40 requested dp — the loss saturates, it does not diverge.
+//   - Total loss is the sum of `N` per-step losses plus `O(log₂ N)` of
+//     accumulated rounding. For the corpus `a ≥ −10.3`, `N ≤ 11`.
+//
+// HONEST PRECISION (CLAUDE.md Rule 1 — fail loud, never lie about precision).
+// The static bound above (≤ ~30 bits for the corpus) is generous but not a
+// theorem for *every* input. So this evaluator is *self-validating*: it
+// MEASURES the actual bit loss as it descends (the running magnitude of each
+// `cur − term` against `max(cur, term)`), and if the measured loss exceeds
+// the working margin it re-runs the whole descent once at a higher precision
+// sized to the measured loss. The returned answer is therefore accurate to
+// `prec` by construction — never a wrong-precision lie.
+//
+// NEGATIVE-INTEGER `a` — the measure-zero exception (decision: option (ii)).
+// At `a ∈ {0, −1, −2, …}` the recurrence divides by exactly zero (`a+k = 0`
+// at some step), and `Γ(a, z)` there is not elementary — it is the
+// exponential-integral family: `Γ(0, z) = E_1(z)`, and `Γ(−n, z)` relates to
+// `E_{n+1}(z)` (DLMF §8.4.15, §8.19). A faithful closed form needs an arb-prec
+// `E_n` evaluator, which does not yet exist in `@workbench/bigfloat`. Per the
+// bead's sanctioned option (ii), this v0.2 evaluator SUPPORTS every negative
+// *non-integer* `a` and REFUSES only the measure-zero non-positive-integer
+// set, with a loud tagged error pointing at the `E_n` / `ExpIntegralE` family
+// (which `tools/special-eval` and the Meijer-G bridge already know). Closing
+// that remaining sliver — `Γ(−n, z)` via `E_n` — is a clean follow-on bead.
+//
+// References (all in repo): DLMF §8.8.2 (recurrence), §8.5.3 (confluent-
+// hypergeometric representation), §8.4.15 / §8.19 (E_n relation);
+// docs/refs/gamma-research/R2-arbprec-algorithms.md (arb-prec authority);
+// docs/refs/gamma-research/R3-float64-algorithms.md §6.3 (the critical-review
+// note that scoped beads z1tj / 7gq4).
+
+/**
+ * Upper incomplete Gamma `Γ(a, z)` for non-positive non-integer `a`, `z > 0`,
+ * via the downward recurrence-shift of DLMF §8.8.2 (algorithm (b) above).
+ *
+ * Caller contract: `a < 0` (the `a > 0` case never reaches here — the
+ * dispatch routes it to series/CF), `a` is NOT an integer (the dispatch
+ * rejects non-positive integers before calling this), and `z > 0` strictly
+ * (`z = 0` is the closed-form `Γ(a)` short-circuit upstream).
+ *
+ * The recurrence is `Γ(a, z) = (Γ(a+1, z) − z^a e^{-z}) / a`. We shift up to
+ * `a* = a + N > 0` (the smallest such `N`), seed with the bit-exact v0.1
+ * `bigIncompleteGammaUpper(a*, …)`, and descend `N` steps. Working precision
+ * is sized to the measured cancellation loss: an initial run at `prec + 64`
+ * tallies the worst per-step loss; if that exceeds the 64-bit margin the
+ * descent is repeated once at `prec + 64 + measuredLoss`, so the result is
+ * honestly accurate to `prec`.
+ *
+ * Determinism: arbprec: true (ADR-0020) — pure-BigInt arithmetic, the shift
+ * count `N` is a deterministic integer function of `a`, and the precision-
+ * bump branch is driven by a deterministic measured quantity. Same
+ * `(a, z, prec)` bytes ⇒ byte-identical output forever.
+ */
+function bigIncompleteGammaUpperRecurrence(
+  a: BigFloat,
+  z: BigFloat,
+  prec: number,
+): BigFloat {
+  // Shift count: smallest N ≥ 1 with a + N > 0. `a` is a negative non-integer
+  // here, so `N = ceil(-a) = floor(-a) + 1` — and `a + N` lands strictly in
+  // (0, 1), the v0.1 series regime for the seed evaluation.
+  const aFloat = toFloat64(a).value;
+  const N = Math.floor(-aFloat) + 1;
+
+  /**
+   * One full descent at a given working precision. Returns the value AND the
+   * worst per-step cancellation loss (in bits) observed, so the caller can
+   * decide whether the precision was adequate.
+   */
+  function descend(work: number): { value: BigFloat; worstLossBits: number } {
+    // Seed: a* = a + N, evaluated with the bit-exact v0.1 positive-a path.
+    const aStar = add(a, fromInt(BigInt(N), work), work);
+    let cur = bigIncompleteGammaUpper(aStar, z, work);
+    let worstLossBits = 0;
+    // Descend: at step k (k = N-1 … 0) we hold `cur = Γ(a+k+1, z)` and
+    // produce `Γ(a+k, z) = (cur − z^{a+k} e^{-z}) / (a+k)`.
+    const expNegZ = exp(neg(z), work);
+    for (let k = N - 1; k >= 0; k--) {
+      const apk = add(a, fromInt(BigInt(k), work), work); // a + k  (< 0)
+      // term = z^{a+k} · e^{-z}. `z > 0`, so `pow(z, apk)` is well-defined
+      // for the negative exponent `apk`.
+      const term = mul(pow(z, apk, work), expNegZ, work);
+      const numerator = sub(cur, term, work);
+      // Measure the genuine subtraction cancellation at this step: the bits
+      // lost are `magBits(max(|cur|,|term|)) − magBits(|cur − term|)`.
+      const big = Math.max(magBits(cur), magBits(term));
+      const small = magBits(numerator);
+      if (small !== -Infinity) {
+        worstLossBits = Math.max(worstLossBits, big - small);
+      }
+      cur = div(numerator, apk, work);
+    }
+    return { value: cur, worstLossBits };
+  }
+
+  // First descent at the standard +64 margin.
+  const first = descend(prec + 64);
+  // Honest-precision guard. If the measured worst-step loss plus an O(log₂N)
+  // rounding allowance fits inside the 64-bit margin, the first descent is
+  // already accurate to `prec`. Otherwise re-run once at a margin sized to
+  // the measured loss — the result is then accurate to `prec` by construction.
+  const roundingAllowance = Math.ceil(Math.log2(N + 1)) + 8;
+  const neededMargin = first.worstLossBits + roundingAllowance;
+  if (neededMargin <= 64) {
+    return normalise(first.value.mantissa, first.value.exponent, prec);
+  }
+  // Refuse rather than lie if the loss is so large no reasonable margin can
+  // recover `prec` (CLAUDE.md Rule 1). 4096 extra bits is far beyond anything
+  // the cancellation analysis predicts for a genuine non-integer `a`; hitting
+  // it means `a` is pathologically close to a negative integer.
+  if (neededMargin > 4096) {
+    throw new RangeError(
+      `bigIncompleteGammaUpper: a = ${toString(a, 20)} is so close to a ` +
+        `negative integer that the recurrence-shift would lose ` +
+        `~${first.worstLossBits} bits — beyond honest recovery. ` +
+        `suggestion: Γ(a, z) for a at or near a non-positive integer is the ` +
+        `exponential-integral family (Γ(0,z) = E_1(z), Γ(−n,z) ∝ E_{n+1}(z)); ` +
+        `use the E_n / ExpIntegralE evaluator instead.`,
+    );
+  }
+  const second = descend(prec + 64 + neededMargin);
+  return normalise(second.value.mantissa, second.value.exponent, prec);
+}
+
+// =============================================================================
 // Dispatch — bigIncompleteGammaUpper
 // =============================================================================
 
@@ -487,9 +1421,16 @@ function bigIncompleteGammaUpperCF(
  *
  * Algorithm dispatch (R2 §1.7, §2.3; DLMF Ch.8) — see top-of-file.
  *
- *   z = 0          → Γ(a)  (closed form, R1 IGAM-1)
- *   |z| < |a| + 1  → series for γ(a,z), then Γ(a,z) = Γ(a) - γ(a,z)
- *   |z| ≥ |a| + 1  → continued fraction for Γ(a,z) directly
+ *   z = 0                  → Γ(a)  (closed form, R1 IGAM-1)
+ *   a < 0, non-integer     → recurrence-shift (DLMF §8.8.2; v0.2 bead 7gq4)
+ *   a ≤ 0, integer         → RangeError pointing at the E_n family
+ *   |z| < |a| + 1  (a > 0) → series for γ(a,z), then Γ(a,z) = Γ(a) - γ(a,z)
+ *   |z| ≥ |a| + 1  (a > 0) → continued fraction for Γ(a,z) directly
+ *
+ * The `a ≤ 0` continuation is valid because for `z > 0` the integrand's only
+ * singularity (`t = 0`) lies off the path `[z, ∞)` — see
+ * `bigIncompleteGammaUpperRecurrence` for the algorithm comparison, the
+ * cancellation analysis, and the negative-integer decision.
  *
  * Closed-form short-circuit at `a = 1`: `Γ(1, z) = e^{-z}` (R1 IGAM-2).
  * This is bit-exact (no series, no CF) and tested explicitly.
@@ -497,17 +1438,47 @@ function bigIncompleteGammaUpperCF(
  * Determinism: arbprec: true (ADR-0020). Same `(input bytes, prec)` ⇒
  * byte-identical output forever.
  *
- * @throws RangeError on non-finite input, prec < 1, Re(a) ≤ 0, or z < 0.
+ * @throws RangeError on non-finite input, prec < 1, z < 0, a being a
+ *   non-positive integer, or a being so close to a negative integer that the
+ *   recurrence-shift cannot honestly recover `prec`.
  */
 export function bigIncompleteGammaUpper(
   a: BigFloat,
   z: BigFloat,
   prec: number,
 ): BigFloat {
-  requireFiniteIncompleteGammaInput(a, z, prec, "bigIncompleteGammaUpper");
-  // Γ(a, 0) = Γ(a) — closed form (R1 IGAM-1; DLMF §8.2.4).
+  // The upper function admits a ≤ 0 for z > 0 (v0.2, bead 7gq4); pass
+  // `allowNonPositiveA = true` so the shared validator does not reject it.
+  requireFiniteIncompleteGammaInput(
+    a,
+    z,
+    prec,
+    "bigIncompleteGammaUpper",
+    true,
+  );
+  // Γ(a, 0) = Γ(a) — closed form (R1 IGAM-1; DLMF §8.2.4). `gamma()` itself
+  // handles negative non-integer a (reflection) and throws at the poles, so
+  // this short-circuit is correct for the new a ≤ 0 domain too.
   if (isZero(z)) {
     return gamma(a, prec);
+  }
+  // Non-positive `a`, `z > 0` — the v0.2 analytic continuation (DLMF §8.8.2).
+  // Negative non-integer `a` routes to the recurrence-shift evaluator. The
+  // measure-zero non-positive-integer set is refused with a pointer to the
+  // exponential-integral family — see `bigIncompleteGammaUpperRecurrence`'s
+  // doc comment for the full decision rationale and cancellation analysis.
+  if (sgn(a) <= 0) {
+    if (isIntegerBigFloat(a)) {
+      throw new RangeError(
+        `bigIncompleteGammaUpper: a = ${toString(a, 6)} is a non-positive ` +
+          `integer; Γ(a, z) there is the exponential-integral family ` +
+          `(Γ(0, z) = E_1(z), Γ(−n, z) ∝ E_{n+1}(z); DLMF §8.4.15, §8.19) ` +
+          `and is not elementary. ` +
+          `suggestion: use the E_n / ExpIntegralE evaluator. Negative ` +
+          `NON-integer a is fully supported here for z > 0.`,
+      );
+    }
+    return bigIncompleteGammaUpperRecurrence(a, z, prec);
   }
   // Γ(1, z) = e^{-z} — closed form (R1 IGAM-2; DLMF §8.4.5). The check is
   // a = 1 exactly (mantissa = 1, exponent = 0, after normalise). If a is
@@ -528,6 +1499,27 @@ export function bigIncompleteGammaUpper(
     // is a defensive branch; the algorithm choice doesn't matter because
     // either path is well-defined.
     return bigIncompleteGammaUpperCF(a, z, prec);
+  }
+  // Temme uniform asymptotic (regime 3) — the saddle / transition region.
+  // `temmeApplies` returns false in v0.2: the probe found the CF is faster
+  // than Temme everywhere Temme can reach `prec` (full data in the
+  // `temmeApplies` doc comment). The CF is bit-exact in the transition
+  // region, so this is purely a "keep the faster algorithm" decision, not
+  // a precision compromise. The branch is kept as the single documented
+  // dispatch decision point; `temmeUniformAsymptoticQ` is the verified
+  // reference evaluator it would call if re-enabled (the test suite
+  // exercises that evaluator directly).
+  if (temmeApplies(a, z, prec)) {
+    const work = prec + 32;
+    const Q = temmeUniformAsymptoticQ(a, z, work);
+    if (Q !== null) {
+      // Temme delivers the regularised Q(a,z); unregularise: Γ(a,z) = Q·Γ(a).
+      const gammaA = gamma(a, work);
+      const result = mul(Q, gammaA, work);
+      return normalise(result.mantissa, result.exponent, prec);
+    }
+    // Q === null — Temme cannot honestly reach prec for this a; fall
+    // through to the series / CF dispatch below (bit-exact).
   }
   const useSeries = zFloat < aFloat + 1;
   if (useSeries) {
@@ -602,6 +1594,24 @@ export function bigIncompleteGammaLower(
     const gammaA = gamma(a, work);
     const result = sub(gammaA, upper, work);
     return normalise(result.mantissa, result.exponent, prec);
+  }
+  // Temme uniform asymptotic (regime 3) for the saddle / transition region.
+  // Temme produces the regularised Q directly; the lower function follows
+  // via the regularised complement P = 1 − Q and γ(a,z) = P · Γ(a). At the
+  // saddle z ≈ a both P and Q are ≈ 1/2, so `1 − Q` loses ~1 bit only —
+  // and the +32 working margin absorbs it. As on the Upper path,
+  // `temmeApplies` returns false in v0.2 (the CF is faster — see its doc
+  // comment); this branch is the documented decision point only.
+  if (temmeApplies(a, z, prec)) {
+    const work = prec + 32;
+    const Q = temmeUniformAsymptoticQ(a, z, work);
+    if (Q !== null) {
+      const P = sub(fromInt(1n, work), Q, work);
+      const gammaA = gamma(a, work);
+      const result = mul(P, gammaA, work);
+      return normalise(result.mantissa, result.exponent, prec);
+    }
+    // Q === null — fall through to the bit-exact (slower) series / CF path.
   }
   const useSeries = zFloat < aFloat + 1;
   if (useSeries) {

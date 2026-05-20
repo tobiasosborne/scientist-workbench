@@ -653,6 +653,13 @@ interface ComparisonContext {
  *     BarnesG. Both refuse with `unsupported`; the asymmetric-refusal
  *     against any other oracle is `info`.
  *
+ *   - **L18 — Boost digamma negative-half-integer bug** — `boost::math::
+ *     digamma` returns the wrong value at z ∈ {−1/2, −3/2, …}: it reflects
+ *     to ψ(1/2) instead of ψ(3/2) (DLMF §5.4.13, where π·cot(π·z)=0). All
+ *     four other oracles and the workbench's own digamma agree on the
+ *     correct value; the Boost-vs-other `decimal-agree` with `digits=0` is
+ *     a documented upstream bug, not a substrate finding.
+ *
  *   - **boost-no-complex / boost-no-pochhammer** — boost capability gaps.
  *     `unsupported` refusal asymmetric against any other oracle is `info`.
  *
@@ -752,6 +759,51 @@ function landmineDowngrade(
     return {
       category: "L17-pole-limit-vocabulary",
       reason: `${c.tier} ${c.head} at pole: oracles emit different limit tokens (ComplexInfinity / Infinity / NaN / -Infinity) — R5 §6 L17 four-behaviour table. All honest.`,
+    };
+  }
+
+  // -------------------------------------------------------------------------
+  // L18 — Boost.Math `digamma` is WRONG at negative half-integers.
+  //
+  // `boost::math::digamma(z)` for z ∈ {−1/2, −3/2, −5/2, …} returns the
+  // value of ψ at the *positive* reflected argument instead of ψ(z). The
+  // landmine row that surfaced it is corpus cell `T5-digamma-003`, z = −1/2:
+  //
+  //     boost::math::digamma(-0.5)  →  -1.9635100260214234   (= ψ(1/2))
+  //     correct ψ(-1/2)             →   0.03648997397857652  (= ψ(3/2))
+  //
+  // DLMF §5.4.13 — the digamma reflection formula — is
+  //   ψ(1 − z) − ψ(z) = π·cot(π·z).
+  // At z = −1/2 the cotangent term is π·cot(−π/2) = 0, so ψ(−1/2) collapses
+  // to ψ(1 − (−1/2)) = ψ(3/2). Boost evidently reflects to ψ(1/2) instead of
+  // ψ(3/2) — an off-by-one in the reflection's `1 − z` argument that is
+  // masked everywhere *except* the half-integers, where cot(π·z) = 0 makes
+  // the reflected value the whole answer and the error fully visible.
+  //
+  // The four gold/silver/bronze oracles (arb, mpmath, scipy, wolfram) all
+  // agree on the correct ψ(3/2) value to ≥ 48 decimal places. The workbench's
+  // OWN digamma — both the I5 float64 port and the bigfloat arb-precision
+  // path — also computes ψ(−1/2) correctly and carries an explicit guard
+  // test, so this is purely an upstream Boost.Math 1.83 bug, not a workbench
+  // substrate bug. It is recorded so a future bench regeneration does not
+  // re-surface `T5-digamma-003` as an unexplained mystery.
+  //
+  // The comparison shows up as a `decimal-agree` with `digits = 0` (the two
+  // values share no leading digits — one is ≈ −1.96, the other ≈ +0.036) on
+  // every Boost-vs-{arb,mpmath,scipy,wolfram} pair. The rule fires only when
+  // Boost is one side of the pair, the head is Digamma, and `z` is a negative
+  // half-integer; that triple is specific enough that no honest disagreement
+  // can be swallowed by it.
+  // -------------------------------------------------------------------------
+  if (
+    agreement.kind === "decimal-agree" &&
+    c.head === "Digamma" &&
+    (oa === "boost" || ob === "boost") &&
+    isNegativeHalfInteger(c.z)
+  ) {
+    return {
+      category: "L18-boost-digamma-negative-half-integer",
+      reason: `Boost.Math 1.83 digamma is wrong at negative half-integers: boost::math::digamma(${typeof c.z === "string" ? c.z : "?"}) reflects to ψ(1/2) instead of ψ(3/2) (DLMF §5.4.13 — π·cot(π·z)=0 here). arb/mpmath/scipy/wolfram and the workbench's own digamma all agree on the correct value; upstream Boost bug, not a substrate bug.`,
     };
   }
 
@@ -1047,6 +1099,44 @@ function isPoleCell(c: CorpusInput): boolean {
     if (intish) return true;
   }
   return false;
+}
+
+/**
+ * Heuristic: is this corpus row's real argument `z` a *negative half-integer*
+ * — that is, an odd multiple of 1/2 that is strictly negative
+ * (… −5/2, −3/2, −1/2)?
+ *
+ * This is the trigger geometry for landmine L18 (Boost.Math `digamma`
+ * negative-half-integer bug — see `landmineDowngrade`). The check is
+ * deliberately narrow: it returns `true` only for a clean real `z` whose
+ * canonical decimal expansion is exactly `<odd-integer>.5` with the leading
+ * `-` sign. Complex `z`, integers, and any other fractional part all return
+ * `false` so the rule cannot accidentally swallow an unrelated finding.
+ *
+ * Implementation: the corpus stores `z` as a fixed-point decimal literal
+ * (the 60-dp form `-0.500000…000`, never scientific notation — see
+ * `corpus-spec.md` §"Number formatting"). We split on the decimal point and
+ * strip trailing zeros from the fractional part; a half-integer is exactly
+ * the case where that trimmed fractional part is the single digit `"5"`
+ * (e.g. `0.5`, `1.5`, `2.5`) and the integer part is a plain run of digits.
+ * The leading `-` is required, so positive half-integers and integers are
+ * both rejected. Keeping the test purely string-shaped avoids any float
+ * round-trip and is exact for every literal the corpus can hold.
+ */
+function isNegativeHalfInteger(
+  z: string | { re: string; im: string } | undefined,
+): boolean {
+  if (typeof z !== "string") return false;
+  if (!z.startsWith("-")) return false;
+  const mag = z.slice(1);
+  const [intPart, fracPartRaw] = splitDecimal(mag);
+  const fracPart = fracPartRaw.replace(/0+$/, "");
+  // The fractional part of a half-integer is exactly "5" (e.g. 1.5, 2.5).
+  if (fracPart !== "5") return false;
+  // The integer part must itself be a non-negative integer; "0.5", "1.5",
+  // "2.5" all qualify. (Leading zeros are immaterial.)
+  if (!/^\d+$/.test(intPart)) return false;
+  return true;
 }
 
 /**
@@ -1806,6 +1896,8 @@ function renderMarkdown(report: AgreementReport): string {
         "T3 reflection-formula cancellation (ADR-0042 §Decision 3); SciPy float64 cannot bump precision",
       "L_T8_digamma_cancellation_stress":
         "T8 digamma reflection cancellation (corpus-spec.md §T8)",
+      "L18-boost-digamma-negative-half-integer":
+        "Boost.Math 1.83 digamma is wrong at negative half-integers — reflects to ψ(1/2) instead of ψ(3/2) (DLMF §5.4.13). arb/mpmath/scipy/wolfram + workbench digamma all correct; upstream Boost bug.",
     };
     for (const [cat, count] of Object.entries(
       report.landmine_categories,

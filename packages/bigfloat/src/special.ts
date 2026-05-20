@@ -44,6 +44,7 @@ import { add, sub, mul, div, sqrt, powInt } from "./arithmetic.js";
 import { fromInt, fromString, toFloat64 } from "./conversion.js";
 import { ln2, pi, exp, log, sin, cos } from "./transcendental.js";
 import { bernoulliRational } from "./bernoulli.js";
+import { bigHurwitzZeta } from "./special-funcs/zeta.js";
 
 /** B_{2k} as a BigFloat at the requested precision. */
 function bernoulli(n: number, prec: number): BigFloat {
@@ -588,149 +589,6 @@ function trigammaReflect(z: BigFloat, prec: number): BigFloat {
 }
 
 /**
- * Hurwitz zeta function `ζ(s, z) = Σ_{k≥0} (z+k)^{-s}` for integer `s ≥ 2`
- * at large real `z`, evaluated via the Euler-Maclaurin (Stirling-analogue)
- * asymptotic series. Internal helper for `polygamma` m ≥ 2; not exported.
- *
- * Algorithm (DLMF §25.11.4, also Appendix B of R2-arbprec-algorithms.md):
- *
- *     ζ(s, z) ≈ z^{1-s}/(s-1)  +  (1/2) z^{-s}
- *              + Σ_{k=1}^{K}  B_{2k} · (s)_{2k-1} / ((2k)! · z^{s+2k-1})
- *
- * where `(s)_{2k-1} = s · (s+1) · … · (s+2k-2)` is the rising-Pochhammer
- * factor — exactly `2k-1` integer factors. Specialising to `s = m + 1`
- * (the polygamma case), the Pochhammer becomes
- * `(m+1)(m+2)…(m+2k-1) = (m+2k-1)! / m!`.
- *
- * The series is Poincaré-asymptotic — it diverges in K but the optimal
- * truncation `k* ≈ π z / e` gives an error bounded by the smallest
- * (next-omitted) term. The `prevTermMag` idiom — used identically in
- * `lgammaStirling`, `digammaStirling`, `trigammaStirling` above —
- * catches that minimum automatically: when the term magnitude starts
- * growing, the series is diverging and we stop *before* adding the
- * offending term.
- *
- * Caller responsibility: the caller (`polygammaHurwitz` below) must
- * have shifted `z` up via the polygamma recurrence so that `z >
- * shiftThreshold(prec, m)` — see Appendix B for the explicit formula
- * `shiftThreshold ≈ max(8, ceil(0.17 · (prec + 2m + 96)))`. Calling
- * this helper at small `z` produces a wildly wrong answer because the
- * series is asymptotic, not convergent.
- *
- * Working precision is bumped by 32 bits internally; the caller bumps
- * the outer `prec` by another margin to absorb factorial growth in `m!`.
- *
- * MUTATION-PROOF MARKER: the Bernoulli index is `B_{2k}` (the even-index
- * Bernoulli numbers); using `B_{2k+2}` or `B_k` instead gives wrong
- * Stirling coefficients. The Pochhammer `(s)_{2k-1}` has `2k-1`
- * factors starting at `s`; using `2k` factors (or starting at `s-1`)
- * misaligns the series. Both are pinned by the `polygamma(2, 1) =
- * −2ζ(3)` and `polygamma(3, 1) = π⁴/15` golden tests.
- */
-function hurwitzZetaEulerMaclaurin(
-  s: number,
-  z: BigFloat,
-  prec: number,
-): BigFloat {
-  if (!Number.isInteger(s) || s < 2) {
-    throw new RangeError(
-      `hurwitzZetaEulerMaclaurin: s must be integer ≥ 2; got ${s}`,
-    );
-  }
-  const work = prec + 32;
-  // Leading two terms: z^{1-s}/(s-1) + (1/2) z^{-s}.
-  // s ≥ 2 so 1 − s ≤ −1; powInt accepts negative exponents.
-  const oneOverZ = div(fromInt(1n, work), z, work);
-  const oneOverZ2 = mul(oneOverZ, oneOverZ, work);
-  // z^{-(s-1)} = z^{1-s}.
-  const zPow1mS = powInt(z, 1 - s, work);
-  // z^{-s}.
-  const zPowMS = mul(zPow1mS, oneOverZ, work);
-  const half = div(fromInt(1n, work), fromInt(2n, work), work);
-  let result = add(
-    div(zPow1mS, fromInt(BigInt(s - 1), work), work),
-    mul(half, zPowMS, work),
-    work,
-  );
-  // Correction series. At k=1 the term is
-  //     B_2 · (s)_1 / (2! · z^{s+1})
-  //   = (1/6) · s / (2 · z^{s+1}).
-  // We track `zPow` = 1/z^{s+2k-1} starting at 1/z^{s+1} for k=1 and
-  // advance by *1/z² each iteration.
-  //
-  // We also track the Pochhammer numerator (s)_{2k-1} as a BigInt
-  // running product, and the (2k)! denominator likewise. Both are
-  // exact integers; we form the BigFloat ratio once per term.
-  let zPow = mul(zPowMS, oneOverZ, work); // 1/z^{s+1}.
-  // Pochhammer (s)_1 = s. After k=1, push to (s)_3 = s(s+1)(s+2), etc.
-  // We maintain `pochNum` so that at the top of iteration k it equals
-  // (s)_{2k-1}.
-  let pochNum = BigInt(s);
-  // (2k)! similarly.
-  let factDen = 2n; // 2! at k=1.
-  let prevTermMag = Infinity;
-  for (let k = 1; k <= 600; k++) {
-    const B2k = bernoulli(2 * k, work);
-    if (B2k.mantissa === 0n) {
-      // B_{2k} should be nonzero for all k ≥ 1; only happens at
-      // precision underflow, which means we've reached the noise floor.
-      break;
-    }
-    // Coefficient as a BigFloat: pochNum / factDen.
-    // Build via the same long-division pattern as `bernoulli` so we get a
-    // properly-normalised BigFloat without going through fromInt + div
-    // (which round-trips through normalised mantissas twice).
-    const coeff = ratioBigInt(pochNum, factDen, work);
-    const term = mul(mul(B2k, coeff, work), zPow, work);
-    const termAbsMan = term.mantissa < 0n ? -term.mantissa : term.mantissa;
-    const termBits = bitLength(termAbsMan);
-    const termMag = term.exponent + termBits;
-    if (termMag < -prec - 16) {
-      result = add(result, term, work);
-      break;
-    }
-    // Divergence guard — Poincaré-asymptotic series.
-    if (termMag > prevTermMag) {
-      break;
-    }
-    result = add(result, term, work);
-    prevTermMag = termMag;
-    // Advance Pochhammer: (s)_{2(k+1)-1} = (s)_{2k+1} =
-    //   (s)_{2k-1} · (s + 2k - 1) · (s + 2k).
-    pochNum = pochNum * BigInt(s + 2 * k - 1) * BigInt(s + 2 * k);
-    // Advance factorial: (2(k+1))! = (2k)! · (2k+1) · (2k+2).
-    factDen = factDen * BigInt(2 * k + 1) * BigInt(2 * k + 2);
-    // Advance zPow: 1/z^{s+2(k+1)-1} = 1/z^{s+2k+1} = current · 1/z².
-    zPow = mul(zPow, oneOverZ2, work);
-  }
-  return normalise(result.mantissa, result.exponent, prec);
-}
-
-/**
- * Exact rational `num / den` as a BigFloat at `prec` bits. Both inputs
- * are BigInts; the long-division pattern mirrors `bernoulli` above so
- * that the result is a properly-normalised BigFloat with a sticky bit.
- *
- * Internal to the Hurwitz path; used to form the Pochhammer / factorial
- * coefficient at each Euler-Maclaurin step. Keeping the integer
- * Pochhammer product *as a BigInt* (rather than accumulating as a
- * BigFloat) means every term carries the same exact numerator until the
- * very last division — no compounding rounding from the Pochhammer.
- */
-function ratioBigInt(num: bigint, den: bigint, prec: number): BigFloat {
-  if (num === 0n) return { mantissa: 0n, exponent: 0, precision: prec };
-  const safety = 32;
-  const workingBits = prec + safety;
-  const sign = num < 0n ? -1n : 1n;
-  const absNum = sign === -1n ? -num : num;
-  const numShifted = absNum << BigInt(workingBits);
-  const q = numShifted / den;
-  const remainder = numShifted - q * den;
-  const qWithSticky = remainder === 0n ? q : q | 1n;
-  return normalise(sign * qWithSticky, -workingBits, prec);
-}
-
-/**
  * `ψ^(m)(z)` for `m ≥ 2`, real `z > 0`, via the Hurwitz-zeta route.
  *
  * Algorithm (R2 §2.2, PHASE2-impl-plans §I1b, mirroring Boost.Math's
@@ -744,37 +602,39 @@ function ratioBigInt(num: bigint, den: bigint, prec: number): BigFloat {
  *      Choose N so `z + N > shiftThreshold ≈ 0.17·(prec + 2m + 96)`,
  *      large enough for the Euler-Maclaurin asymptotic at step 3.
  *
- *   3. Evaluate `ζ(m+1, z+N)` via the Euler-Maclaurin / Stirling-analogue
- *      asymptotic (see `hurwitzZetaEulerMaclaurin` above).
+ *   3. Evaluate `ζ(m+1, z)` via the standalone Hurwitz-zeta substrate
+ *      `bigHurwitzZeta` (`special-funcs/zeta.ts`). That function is itself
+ *      self-shifting — it owns the recurrence shift internally — so the
+ *      decomposition `ζ(m+1, z) = Σ_{k<N}(z+k)^{-(m+1)} + ζ(m+1, z+N)`
+ *      that v0.1 spelled out by hand here is now encapsulated. We hand it
+ *      the *already-margined* working precision `work` (see below) so its
+ *      internal precision schedule reproduces, to the bit, what the v0.1
+ *      inline helper produced — `bigHurwitzZeta` deliberately does not add
+ *      its own outer margin, which is what keeps this path byte-identical
+ *      across the ADR-0042 §Decision 12 extraction.
  *
- *   4. Multiply by `(-1)^(m+1) · m!` to recover `ψ^(m)(z+N)`, then add
- *      back the shift correction:
- *          ψ^(m)(z) = (-1)^(m+1) · m! · (ζEM + Σ_{k=0}^{N-1} (z+k)^{-(m+1)}).
- *      Equivalent, by factoring the (−1)^(m+1)·m! across both pieces.
+ *   4. Multiply by `(-1)^(m+1) · m!` to recover `ψ^(m)(z)`:
+ *          ψ^(m)(z) = (-1)^(m+1) · m! · ζ(m+1, z).
  *
- * Why the shift is non-optional: the Euler-Maclaurin series is
- * Poincaré-asymptotic in 1/z, and the (s)_{2k-1} Pochhammer factor
- * grows like (2k)! / m!, so at small `z` even the smallest term is
- * large and we cannot reach `2^-prec` accuracy. The shift trades
- * `N ≈ shiftThreshold − z` arithmetic operations (each a BigFloat
- * power and a subtract-from-running-sum) for an asymptotic series
- * that actually converges to the noise floor.
+ * Why the shift is non-optional: the Euler-Maclaurin series inside
+ * `bigHurwitzZeta` is Poincaré-asymptotic in 1/z, and the (s)_{2k-1}
+ * Pochhammer factor grows like (2k)! / m!, so at small `z` even the
+ * smallest term is large and we cannot reach `2^-prec` accuracy. The
+ * shift trades `N ≈ shiftThreshold − z` arithmetic operations for an
+ * asymptotic series that actually converges to the noise floor — and it
+ * now lives where it belongs, inside the zeta substrate.
  *
  * MUTATION-PROOF MARKERS this function pins:
  *   M1. The leading sign is `(-1)^(m+1)`. Flipping to `(-1)^m` changes
  *       the sign of every output; `polygamma(2, 1) = −2ζ(3)` flips
  *       sign and the golden test goes RED.
- *   M2. The recurrence shift is mandatory. Removing it (calling the
- *       Euler-Maclaurin helper at small `z`) produces precision
- *       collapse — `polygamma(2, 1)` would be off by orders of
- *       magnitude. Test pinned.
- *   M3. The shift-correction sum and the Hurwitz-zeta evaluation must
- *       be combined with consistent overall sign. The grouping above
- *       — `(-1)^(m+1) · m! · (ζEM + Σ (z+k)^{-(m+1)})` — comes
- *       directly from the ζ(m+1, z) = Σ + ζ(m+1, z+N) decomposition.
- *       Adding instead of subtracting the shift sum (or computing it
- *       at the wrong sign) breaks `polygamma(2, 2) = polygamma(2, 1) +
- *       2 = −0.4041…`. Pinned.
+ *   M2. The Hurwitz-zeta order is `m + 1`, not `m`. The identity
+ *       `ψ^(m)(z) = (-1)^(m+1) · m! · ζ(m+1, z)` (DLMF §5.15.2) is an
+ *       order-`m+1` zeta; passing `m` evaluates the wrong function and
+ *       `polygamma(2, 1)` mismatches `−2ζ(3)`.
+ *   M3. The factorial multiplier is `m!`, not `(m+1)!` or `(m-1)!`.
+ *       `polygamma(3, 1) = 3! · ζ(4) = π⁴/15`; a wrong factorial scales
+ *       the answer and the golden goes RED.
  *
  * Domain: real `z > 0`. The reflection branch (DLMF §5.15.6, involving
  * derivatives of `cot(π z)`) is deferred to v0.2; for `z ≤ 0` this
@@ -794,36 +654,18 @@ function polygammaHurwitz(m: number, z: BigFloat, prec: number): BigFloat {
   // about `m · log2(m)` bits of magnitude that can amplify rounding.
   // Appendix B prescription: `work = prec + 96 + 2 · ceil(log2(m + 1))`.
   const work = prec + 96 + 2 * Math.ceil(Math.log2(m + 1));
-  // Shift threshold (Appendix B): max(8, ceil(0.17 · (prec + 2m + 96))).
-  // The `2m` term absorbs the additional factorial growth in the
-  // Pochhammer `(m+1)_{2k-1}` — for large m the series is more
-  // asymptotic and needs larger z to be useful.
-  const shiftThreshold = Math.max(
-    8,
-    Math.ceil(0.17 * (prec + 2 * m + 96)),
-  );
   const zFloat = toFloat64(z).value;
   if (!Number.isFinite(zFloat)) {
     throw new RangeError(`polygamma: argument too large`);
   }
-  const N = Math.max(0, Math.ceil(shiftThreshold - zFloat));
-  // Shift sum: Σ_{k=0}^{N-1} (z+k)^{-(m+1)}.
-  // For each k, raise (z+k) to the power -(m+1). `powInt` accepts
-  // negative exponents and inverts at the end — a single division per
-  // term — which is the right cost shape here (m+1 is small, N is
-  // O(prec)).
-  let shiftSum: BigFloat = { mantissa: 0n, exponent: 0, precision: work };
-  for (let k = 0; k < N; k++) {
-    const zk = add(z, fromInt(BigInt(k), work), work);
-    const inv = powInt(zk, -(m + 1), work);
-    shiftSum = add(shiftSum, inv, work);
-  }
-  // Hurwitz zeta at the shifted argument.
-  const zShifted = N > 0 ? add(z, fromInt(BigInt(N), work), work) : z;
-  const zetaTail = hurwitzZetaEulerMaclaurin(m + 1, zShifted, work);
-  // Full ζ(m+1, z) = shiftSum + zetaTail (since ζ(m+1, z) = Σ_{k=0}^{N-1}
-  //   (z+k)^{-(m+1)} + Σ_{k≥N} (z+k)^{-(m+1)} = shiftSum + ζ(m+1, z+N)).
-  const zetaTotal = add(shiftSum, zetaTail, work);
+  // ζ(m+1, z) via the standalone self-shifting Hurwitz-zeta substrate.
+  // `bigHurwitzZeta` internally applies the recurrence shift past
+  // `hurwitzShiftThreshold(work, m+1)` — which is exactly the historical
+  // `max(8, ceil(0.17·(prec+2m+96)))` with `prec` replaced by `work` and
+  // `m = (m+1)-1` — then runs the Euler-Maclaurin core. Handing it `work`
+  // (rather than `prec`) means it reproduces the v0.1 inline computation
+  // bit-for-bit; see step 3 of the docstring above.
+  const zetaTotal = bigHurwitzZeta(m + 1, z, work);
   // m! as a BigInt; convert once to BigFloat. m is small (typical use
   // m ∈ [2, 20]), so the BigInt factorial is cheap and exact.
   let factM = 1n;

@@ -433,10 +433,44 @@ export const RULES: ReductionRule[] = [
 
   // Bateman §5.6 (3): G^{1,1}_{1,1}(a; b | z) = Γ(1+b−a) · z^b · (1+z)^{a−b−1}
   // (Generic — both free; mpmath verified at a=1/3, b=1/4)
+  //
+  // Canonical-form note (bd scientist-workbench-c5lo). The textbook
+  // closed form Bateman §5.6 (3) states is `Γ(1+b−a) · z^b · (1+z)^{a−b−1}`.
+  // That is what this rule's `rewrite` builds — `gamma(mkPlus([I(1),
+  // mkMinus(b!, a!)]))` is literally `Γ(1 + (b−a))`.
+  //
+  // The tool, however, does not emit the rule's raw `rewrite` output.
+  // `dispatch.ts:canonicaliseOutput` pipes every dispatched expression
+  // through `casSimplify`, and `casSimplify`'s `gamma-recurrence` rule
+  // (GA-C1, `gamma-identities.ts`, DLMF §5.5.1: `Γ(z+1) → z·Γ(z)`)
+  // fires on `Γ(1 + (b−a))` because `1 + (b−a)` is exactly the `(1+z)`
+  // shape `matchPlusOne` detects. So the *tool's* canonical emit is the
+  // recurrence-expanded `(b−a) · Γ(b−a) · z^b · (1+z)^{a−b−1}`.
+  //
+  // This is correct and deliberate, not drift. R1-symbolic-identities.md
+  // §"Recurrence" names `Γ(z+k) → Γ(z)·rational` "the primary
+  // simplification direction", and the GA-C1 rule is flagged
+  // LOAD-BEARING (gamma-identities.ts:911-923) — the nested-shape
+  // cascade `Γ((z+1)+1) → (z+1)·z·Γ(z)` depends on it. Crippling or
+  // gating GA-C1 to "numeric argument only" is the wrong fix; it would
+  // break that cascade for every symbolic caller.
+  //
+  // The `note` below therefore states the textbook form as the
+  // conventional-notation closed form (the tool's documented contract
+  // for the `note` field — see `tools/meijer-g-symbolic-only/tool.ts`),
+  // and explicitly records the workbench canonical emit so a reader of
+  // the dispatched `expr` is not surprised that it differs. The two are
+  // equal by `Γ(n+1) = n·Γ(n)`. golden #03's `expr` carries the
+  // canonical (post-`casSimplify`) form; its `note` carries this string
+  // verbatim — the three artefacts (rule, golden expr, golden note) are
+  // mutually consistent once the note is honest about both forms.
   {
     id: "bateman-5-6-3",
     source: "Bateman §5.6 (3)",
-    note: "G^{1,1}_{1,1}(a; b | z) = Γ(1+b−a) · z^b · (1+z)^{a−b−1}",
+    note:
+      "G^{1,1}_{1,1}(a; b | z) = Γ(1+b−a) · z^b · (1+z)^{a−b−1} " +
+      "[textbook form; the workbench canonical emit applies DLMF §5.5.1 " +
+      "Γ(z+1)→z·Γ(z), so the tool returns (b−a)·Γ(b−a)·z^b·(1+z)^{a−b−1}]",
     match: {
       mnpq: { m: 1, n: 1, p: 1, q: 1 },
       an: [{ kind: "free", name: "a" }],

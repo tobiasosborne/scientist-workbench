@@ -232,6 +232,8 @@ For traceability, the JSON manifest records the landmine pins:
 
 R5 §6 lists L2, L_carryover, L11, L13, L16 as well; those are adapter-level (rounding, syntax, trailing-noise stripping, third-voice gaps) rather than corpus-level decisions, so the corpus does not encode them directly. The adapter authors (G2-G7) read R5 §6 in full.
 
+**L18** extends the landmine numbering past R5 §6's L1-L17: it is a comparator-level landmine *discovered* by the G8 cross-agreement bench rather than a corpus-design pin. `boost::math::digamma(z)` is wrong at negative half-integers (`z ∈ {−1/2, −3/2, …}`) — it reflects to `ψ(1/2)` instead of `ψ(3/2)` (DLMF §5.4.13, where `π·cot(π·z) = 0`). The other four oracles and the workbench's own digamma all agree on the correct value; the comparator (`cross-agreement.ts` `landmineDowngrade`, category `L18-boost-digamma-negative-half-integer`) downgrades the Boost-vs-other disagreement on `T5-digamma-003` to `explained`. See `oracles/boost/README.md` §L18.
+
 ---
 
 ## Acceptance check transcript

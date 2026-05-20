@@ -470,6 +470,38 @@ Real50 dispatch(const DispatchInput& in) {
     }
     if (h == "Digamma") {
         if (!in.has_z) throw std::runtime_error("Digamma: missing z");
+        // L18 — Boost.Math 1.83 digamma is WRONG at negative half-integers.
+        //
+        // boost::math::digamma(z) for z in {-1/2, -3/2, -5/2, ...} returns
+        // psi at the *positive* reflected argument instead of psi(z):
+        //
+        //     boost::math::digamma(-0.5)  ->  -1.9635100260214234  (= psi(1/2))
+        //     correct psi(-1/2)           ->   0.03648997397857652 (= psi(3/2))
+        //
+        // DLMF 5.4.13 is the digamma reflection formula
+        //     psi(1 - z) - psi(z) = pi * cot(pi * z).
+        // At z = -1/2 the cotangent term is pi * cot(-pi/2) = 0, so psi(-1/2)
+        // collapses exactly to psi(1 - (-1/2)) = psi(3/2). Boost reflects to
+        // psi(1/2) instead of psi(3/2) -- an off-by-one in the reflection's
+        // `1 - z` argument that is masked everywhere EXCEPT the half-integers,
+        // where cot(pi*z) = 0 makes the reflected value the entire answer and
+        // the error fully visible. The bug surfaces on corpus cell
+        // T5-digamma-003 (z = -1/2).
+        //
+        // mpmath, SciPy, Arb and Wolfram all agree on the correct psi(3/2)
+        // value to >= 48 decimal places, and the workbench's OWN digamma
+        // (the I5 float64 port and the bigfloat arb-precision path) also
+        // computes psi(-1/2) correctly and carries an explicit guard test.
+        // This is purely an upstream Boost.Math bug, NOT a workbench bug.
+        //
+        // We intentionally do NOT patch around it here: this adapter's job
+        // is to report what Boost actually computes, faithfully, so the G8
+        // cross-agreement comparator can measure the divergence. The
+        // comparator downgrades the resulting Boost-vs-other disagreement
+        // under landmine L18 (see cross-agreement.ts `landmineDowngrade`),
+        // so it is recorded as `explained`, not as an unexplained finding.
+        // Silently "correcting" the value here would be a lie of exactly the
+        // kind the honest-oracle contract forbids.
         return boost::math::digamma(in.z);
     }
     if (h == "Trigamma") {

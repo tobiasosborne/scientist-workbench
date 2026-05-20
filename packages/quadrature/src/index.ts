@@ -143,6 +143,7 @@ export {
   pochhammerFloat64,
   gammaPFloat64,
   gammaQFloat64,
+  gammaQLentzFloat64,
   incGammaUpperFloat64,
   incGammaLowerFloat64,
   invGammaPFloat64,

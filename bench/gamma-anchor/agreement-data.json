@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-19T08:47:07.098Z",
+  "generated_at": "2026-05-20T06:56:32.213Z",
   "corpus": "bench/gamma-anchor/corpus.json",
   "corpus_total_inputs": 377,
   "bead": "scientist-workbench-fab6",
@@ -61,23 +61,23 @@
   },
   "phase_1_gate": {
     "status": "PASS",
-    "unexplained_count": 4,
+    "unexplained_count": 0,
     "threshold": 50,
-    "computed_at": "2026-05-19T08:47:07.098Z"
+    "computed_at": "2026-05-20T06:56:32.213Z"
   },
   "summary": {
     "total_comparisons": 3770,
     "agreed": 3102,
     "agreed_refusal": 71,
-    "explained": 593,
+    "explained": 597,
     "disagreed_within_tier": 0,
-    "unexplained": 4
+    "unexplained": 0
   },
   "pair_matrix": {
     "arb-boost": {
       "agreed": 277,
-      "explained": 99,
-      "unexplained": 1,
+      "explained": 100,
+      "unexplained": 0,
       "total": 377
     },
     "arb-mpmath": {
@@ -100,20 +100,20 @@
     },
     "boost-mpmath": {
       "agreed": 277,
-      "explained": 99,
-      "unexplained": 1,
+      "explained": 100,
+      "unexplained": 0,
       "total": 377
     },
     "boost-scipy": {
       "agreed": 304,
-      "explained": 72,
-      "unexplained": 1,
+      "explained": 73,
+      "unexplained": 0,
       "total": 377
     },
     "boost-wolfram": {
       "agreed": 281,
-      "explained": 95,
-      "unexplained": 1,
+      "explained": 96,
+      "unexplained": 0,
       "total": 377
     },
     "mpmath-scipy": {
@@ -150,8 +150,8 @@
     },
     "Digamma": {
       "agreed": 512,
-      "explained": 84,
-      "unexplained": 4,
+      "explained": 88,
+      "unexplained": 0,
       "total": 600
     },
     "Gamma": {
@@ -278,8 +278,8 @@
     },
     "T5": {
       "agreed": 368,
-      "explained": 28,
-      "unexplained": 4,
+      "explained": 32,
+      "unexplained": 0,
       "total": 400
     },
     "T6": {
@@ -313,6 +313,7 @@
     "L_T3_cancellation_stress": 12,
     "boost-no-complex": 136,
     "L14-scipy-complex-polygamma-known-refusal": 72,
+    "L18-boost-digamma-negative-half-integer": 4,
     "L_polynew_4_float64_overflow": 24,
     "L_T8_digamma_cancellation_stress": 12
   },
@@ -9336,66 +9337,74 @@
       "notes": "Q4 |z|=9.63 arg=-1.023"
     },
     {
-      "severity": "warn",
+      "severity": "info",
       "input_id": "T5-digamma-003",
       "head": "Digamma",
       "tier": "T5",
       "oracle_a": "arb",
       "oracle_b": "boost",
+      "category": "L18-boost-digamma-negative-half-integer",
       "detail": {
         "kind": "decimal-agree",
-        "severity": "warn",
+        "severity": "info",
         "tier_pair": "gold-silver",
         "digits": 0,
-        "threshold": 46
+        "threshold": 46,
+        "category": "L18-boost-digamma-negative-half-integer"
       },
       "notes": "half-integer closure Digamma(-1/2)"
     },
     {
-      "severity": "warn",
+      "severity": "info",
       "input_id": "T5-digamma-003",
       "head": "Digamma",
       "tier": "T5",
       "oracle_a": "boost",
       "oracle_b": "mpmath",
+      "category": "L18-boost-digamma-negative-half-integer",
       "detail": {
         "kind": "decimal-agree",
-        "severity": "warn",
+        "severity": "info",
         "tier_pair": "gold-silver",
         "digits": 0,
-        "threshold": 46
+        "threshold": 46,
+        "category": "L18-boost-digamma-negative-half-integer"
       },
       "notes": "half-integer closure Digamma(-1/2)"
     },
     {
-      "severity": "warn",
+      "severity": "info",
       "input_id": "T5-digamma-003",
       "head": "Digamma",
       "tier": "T5",
       "oracle_a": "boost",
       "oracle_b": "scipy",
+      "category": "L18-boost-digamma-negative-half-integer",
       "detail": {
         "kind": "decimal-agree",
-        "severity": "warn",
+        "severity": "info",
         "tier_pair": "silver-bronze",
         "digits": 0,
-        "threshold": 13
+        "threshold": 13,
+        "category": "L18-boost-digamma-negative-half-integer"
       },
       "notes": "half-integer closure Digamma(-1/2)"
     },
     {
-      "severity": "warn",
+      "severity": "info",
       "input_id": "T5-digamma-003",
       "head": "Digamma",
       "tier": "T5",
       "oracle_a": "boost",
       "oracle_b": "wolfram",
+      "category": "L18-boost-digamma-negative-half-integer",
       "detail": {
         "kind": "decimal-agree",
-        "severity": "warn",
+        "severity": "info",
         "tier_pair": "gold-silver",
         "digits": 0,
-        "threshold": 46
+        "threshold": 46,
+        "category": "L18-boost-digamma-negative-half-integer"
       },
       "notes": "half-integer closure Digamma(-1/2)"
     },
@@ -39184,10 +39193,11 @@
           "b": "boost",
           "agreement": {
             "kind": "decimal-agree",
-            "severity": "warn",
+            "severity": "info",
             "tier_pair": "gold-silver",
             "digits": 0,
-            "threshold": 46
+            "threshold": 46,
+            "category": "L18-boost-digamma-negative-half-integer"
           }
         },
         {
@@ -39228,10 +39238,11 @@
           "b": "mpmath",
           "agreement": {
             "kind": "decimal-agree",
-            "severity": "warn",
+            "severity": "info",
             "tier_pair": "gold-silver",
             "digits": 0,
-            "threshold": 46
+            "threshold": 46,
+            "category": "L18-boost-digamma-negative-half-integer"
           }
         },
         {
@@ -39239,10 +39250,11 @@
           "b": "scipy",
           "agreement": {
             "kind": "decimal-agree",
-            "severity": "warn",
+            "severity": "info",
             "tier_pair": "silver-bronze",
             "digits": 0,
-            "threshold": 13
+            "threshold": 13,
+            "category": "L18-boost-digamma-negative-half-integer"
           }
         },
         {
@@ -39250,10 +39262,11 @@
           "b": "wolfram",
           "agreement": {
             "kind": "decimal-agree",
-            "severity": "warn",
+            "severity": "info",
             "tier_pair": "gold-silver",
             "digits": 0,
-            "threshold": 46
+            "threshold": 46,
+            "category": "L18-boost-digamma-negative-half-integer"
           }
         },
         {
