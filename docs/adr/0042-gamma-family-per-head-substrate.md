@@ -1,6 +1,7 @@
 # ADR-0042 — Per-head substrate applied to the canonical Gamma family
 
-**Status:** Proposed — 2026-05-18
+**Status:** Implemented — 2026-05-19 (epic `xqc7` closed; see worklog 175).
+Originally proposed 2026-05-18.
 **Beads:** `scientist-workbench-xqc7` (epic — World-class Gamma-family reference
 implementation, the third per-head substrate epic in the series Erf → Bessel →
 Gamma). Phase 0 research children: `1gir` (R1 symbolic identities), `vf19` (R2
@@ -650,10 +651,34 @@ is purely additive — no existing Erf or Bessel simplify path is touched.
   that requires it as a primitive. The float64 dispatcher admits `rgamma` as an
   evaluation shortcut without a vocabulary head.
 
-* **Olver-uniform asymptotic for IncompleteGamma**. R2 §4 recommends Temme's
-  uniform asymptotic for the `|z-a| ≤ C·√a` transition region. v0.1 ships with
-  the series + CF dispatch which covers all 34 corpus cells; Temme's path is a
-  v0.2 refinement.
+* **Temme uniform asymptotic for IncompleteGamma**. R2 §2.4 recommends Temme
+  (1979) for the saddle region `|z - a| ≤ C·√a` with large `a` (roughly
+  `a ≥ prec · 0.1 ≈ 20` at prec=200 bits). v0.1 ships with series + CF
+  dispatch only.
+
+  **v0.1 accuracy carve-out for the saddle region (must be reflected in
+  Phase 4 V1 tolerance bands and the Phase 1 G8 cross-agreement comparator):**
+  - For `|z - a| ≤ C·√|a|` with `|a| ≥ 20` (the Temme region), the v0.1
+    series + CF dispatch may lose up to `log₂(|a|)` bits relative to the
+    requested precision due to slow series convergence and CF near-stagnation.
+    At prec = 200 bits, `a = 100`, `z = 100`, the dispatch may achieve only
+    ~190 bits of actual agreement against Wolfram/Arb gold-tier — a 10-bit
+    (3-digit) shortfall.
+  - The Phase 1 corpus design (G1) MUST include explicit saddle-region cells
+    so this gap is measured, not hidden. Tier 7 in the standard corpus
+    pattern (per R5 §4 + the gamma-anchor design) is the "near a=z (Temme
+    transition)" tier.
+  - The cross-agreement comparator (G8) MUST tolerate the carve-out:
+    saddle-region cells pass at `precision - log₂(|a|)` bits instead of the
+    standard `precision - 4` bits.
+  - The V1 verification gate (Phase 4) MUST not block on saddle-region
+    cells achieving full precision — Temme is explicitly deferred.
+
+  The Temme implementation is a P2 v0.2 bead (filed); achieving ≤ 3 ULP in
+  the saddle region requires the `c_k(η)` coefficient recursion with stable
+  evaluation near `η = 0` (the saddle point itself). v0.2 closes this gap
+  to byte-identical agreement with Wolfram. The v0.1 corpus must measure the
+  gap explicitly so v0.2 can prove the closure.
 
 * **Complex incomplete gamma and complex Beta with Boost.Math**. Boost has no
   `std::complex<cpp_bin_float<N>>` support (same limitation as in Erf/Bessel R5).

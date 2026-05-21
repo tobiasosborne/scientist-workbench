@@ -363,4 +363,206 @@ export const goldens: GoldenSpec[] = [
     input: realInput2("BesselJ", 0, 2.0),
     flags: { precision: "10" },
   },
+
+  // ===========================================================================
+  // Gamma family goldens (ADR-0042 §"Decision 7-9"; T2 / bead 6g09)
+  // ===========================================================================
+  //
+  // ≥16 goldens spanning the 16 admitted Gamma-family heads × precision tiers
+  // (float64 lane at p=10; arb-prec lane at p=50 and p=100/200 for deep)
+  // and the complex-axis lane (≥4 complex; ≥2 honest-refusal).  Reference
+  // values for arb-prec heads pin the bigfloat-substrate's output bytes
+  // verbatim per ADR-0020's cross-platform-bit-determinism contract.
+
+  // ---- Arity-1 spine (Gamma, LogGamma, Digamma, Trigamma, BarnesG, Hyperfactorial) ----
+  // The √π Gamma anchor — the most-cited closed-form Gamma identity (Γ(1/2)=√π).
+  {
+    description: "Gamma(0.5) at precision 50 — arb-prec Stirling+recurrence+reflection (=√π)",
+    input: realInput("Gamma", 0.5),
+    flags: { precision: "50" },
+  },
+  // Integer Gamma — anchors Γ(4)=6=3! at deep arb-prec.
+  {
+    description: "Gamma(4) at precision 100 — arb-prec integer Γ(4)=6 (=3!)",
+    input: realInput("Gamma", 4),
+    flags: { precision: "100" },
+  },
+  // LogGamma — the FreeBSD SunPro lineage on a small positive arg.
+  {
+    description: "LogGamma(2.5) at precision 50 — arb-prec Stirling lane",
+    input: realInput("LogGamma", 2.5),
+    flags: { precision: "50" },
+  },
+  // Digamma — the foundational ψ(z) at z=1 anchoring -γ_Euler.
+  {
+    description: "Digamma(1) at precision 50 — arb-prec (= -γ_Euler)",
+    input: realInput("Digamma", 1),
+    flags: { precision: "50" },
+  },
+  // Trigamma — the Basel-problem anchor ψ'(1) = π²/6.
+  {
+    description: "Trigamma(1) at precision 50 — arb-prec (= π²/6, Basel)",
+    input: realInput("Trigamma", 1),
+    flags: { precision: "50" },
+  },
+  // BarnesG — the DLMF §5.17.6 integer table at the most-recognisable entry.
+  {
+    description: "BarnesG(5) at precision 50 — arb-prec (= 12, DLMF §5.17.6)",
+    input: realInput("BarnesG", 5),
+    flags: { precision: "50" },
+  },
+  // Hyperfactorial — the Bendersky-Adamchik identity anchor H(3)=108.
+  {
+    description: "Hyperfactorial(3) at precision 50 — arb-prec via Bendersky-Adamchik (= 108)",
+    input: realInput("Hyperfactorial", 3),
+    flags: { precision: "50" },
+  },
+  // Float64 lane spot-check — Cephes lineage at p=10.
+  {
+    description: "Gamma(2.5) at precision 10 — float64 Cephes lane",
+    input: realInput("Gamma", 2.5),
+    flags: { precision: "10" },
+  },
+
+  // ---- Arity-2 (Polygamma, Pochhammer, IncompleteGamma{Upper,Lower,P,Q}, Beta, LogBeta, GammaRatio, GammaDeltaRatio) ----
+  // Polygamma(2,1) = -2ζ(3) — anchors the polygamma-Hurwitz-zeta lane.
+  {
+    description: "Polygamma(2, 1) at precision 50 — arb-prec polygamma-Hurwitz-zeta (= -2ζ(3))",
+    input: realInput2("Polygamma", 2, 1),
+    flags: { precision: "50" },
+  },
+  // Pochhammer(1.5, 3) = 13.125 — anchors the direct-recurrence lane.
+  {
+    description: "Pochhammer(1.5, 3) at precision 50 — arb-prec direct-recurrence (= 13.125)",
+    input: realInput2("Pochhammer", 1.5, 3),
+    flags: { precision: "50" },
+  },
+  // IncompleteGammaUpper(1.5, 2) — mpmath gold 0.231716552.
+  {
+    description: "IncompleteGammaUpper(1.5, 2) at precision 50 — arb-prec series-or-CF",
+    input: realInput2("IncompleteGammaUpper", 1.5, 2),
+    flags: { precision: "50" },
+  },
+  // IncompleteGammaLower(1.5, 2) — mpmath gold 0.654510373.
+  {
+    description: "IncompleteGammaLower(1.5, 2) at precision 50 — arb-prec series-or-CF",
+    input: realInput2("IncompleteGammaLower", 1.5, 2),
+    flags: { precision: "50" },
+  },
+  // IncompleteGammaP — the regularised P; complement to Q at the same args.
+  {
+    description: "IncompleteGammaP(1.5, 2.5) at precision 50 — arb-prec (Wolfram gold)",
+    input: realInput2("IncompleteGammaP", 1.5, 2.5),
+    flags: { precision: "50" },
+  },
+  // IncompleteGammaQ — the regularised Q; P + Q = 1 invariant pinned in tests.
+  {
+    description: "IncompleteGammaQ(1.5, 2.5) at precision 50 — arb-prec",
+    input: realInput2("IncompleteGammaQ", 1.5, 2.5),
+    flags: { precision: "50" },
+  },
+  // Beta(1/2, 1/2) = π — anchors B(a,b) = Γ(a)Γ(b)/Γ(a+b).
+  {
+    description: "Beta(0.5, 0.5) at precision 50 — arb-prec via Gamma (= π)",
+    input: realInput2("Beta", 0.5, 0.5),
+    flags: { precision: "50" },
+  },
+  // LogBeta — symmetric integer case.
+  {
+    description: "LogBeta(2, 3) at precision 50 — arb-prec via LogGamma",
+    input: realInput2("LogBeta", 2, 3),
+    flags: { precision: "50" },
+  },
+  // GammaRatio(5, 3) = 12 — Γ(5)/Γ(3) = 24/2.
+  {
+    description: "GammaRatio(5, 3) at precision 50 — arb-prec (= 12)",
+    input: realInput2("GammaRatio", 5, 3),
+    flags: { precision: "50" },
+  },
+  // GammaDeltaRatio(3, 1) = 1/3 — Γ(3)/Γ(4) = 2/6.
+  {
+    description: "GammaDeltaRatio(3, 1) at precision 50 — arb-prec (= 1/3)",
+    input: realInput2("GammaDeltaRatio", 3, 1),
+    flags: { precision: "50" },
+  },
+
+  // ---- Complex axis (≥4) ----
+  // Gamma(1+i) — anchors the cgamma complex Stirling lane.
+  {
+    description: "Gamma(1+i) at precision 50 — complex arb-prec cgamma-Stirling",
+    input: complexInput("Gamma", 1, 1),
+    flags: { precision: "50" },
+  },
+  // LogGamma(1+i) — anchors the clgamma complex Stirling lane.
+  {
+    description: "LogGamma(1+i) at precision 50 — complex arb-prec clgamma-Stirling",
+    input: complexInput("LogGamma", 1, 1),
+    flags: { precision: "50" },
+  },
+  // Trigamma(3+2i) — anchors the cpolygamma-Hurwitz-zeta complex lane.
+  {
+    description: "Trigamma(3+2i) at precision 50 — complex arb-prec cpolygamma-Hurwitz",
+    input: complexInput("Trigamma", 3, 2),
+    flags: { precision: "50" },
+  },
+  // Beta(1+i, 2+i) — anchors the cBeta-via-cgamma complex lane (the I3 gold from cross-cutting tests).
+  // Both args carry non-zero imaginary parts — exercises the arity-2 complex shape end-to-end.
+  {
+    description: "Beta(1+i, 2+i) at precision 50 — complex arb-prec cBeta-via-cgamma",
+    input: record({
+      head: str("Beta"),
+      args: record({
+        re: list([float64FromNumber(1), float64FromNumber(2)]),
+        im: list([float64FromNumber(1), float64FromNumber(1)]),
+      }),
+    }),
+    flags: { precision: "50" },
+  },
+  // IncompleteGammaUpper(1+0.5i, 2+0.1i) — anchors the cIncompleteGammaUpper complex lane.
+  {
+    description: "IncompleteGammaUpper(1+0.5i, 2+0.1i) at precision 50 — complex arb-prec",
+    input: record({
+      head: str("IncompleteGammaUpper"),
+      args: record({
+        re: list([float64FromNumber(1), float64FromNumber(2)]),
+        im: list([float64FromNumber(0.5), float64FromNumber(0.1)]),
+      }),
+    }),
+    flags: { precision: "50" },
+  },
+
+  // ---- Honest refusals (≥2) ----
+  // Complex Pochhammer → no-known-representation (no cBigPochhammer substrate in v0.2).
+  {
+    description: "Pochhammer(1.5+0i, 3+0i) → no-known-representation (no complex substrate)",
+    input: record({
+      head: str("Pochhammer"),
+      args: record({
+        re: list([float64FromNumber(1.5), float64FromNumber(3)]),
+        im: list([float64FromNumber(0), float64FromNumber(0)]),
+      }),
+    }),
+    flags: { precision: "50" },
+  },
+  // Complex BarnesG → no-known-representation (no cBarnesG substrate in v0.2).
+  {
+    description: "BarnesG(2.5+0i) → no-known-representation (no complex substrate)",
+    input: complexInput("BarnesG", 2.5, 0),
+    flags: { precision: "50" },
+  },
+  // Polygamma(1.5, 2) → degenerate-shape (m must be a non-negative integer).
+  {
+    description: "Polygamma(1.5, 2) → degenerate-shape (non-integer m)",
+    input: realInput2("Polygamma", 1.5, 2),
+    flags: { precision: "50" },
+  },
+  // Pochhammer with 1 arg → degenerate-shape (head requires arity 2).
+  {
+    description: "Pochhammer(1.5) → degenerate-shape (arity violation)",
+    input: record({
+      head: str("Pochhammer"),
+      args: list([float64FromNumber(1.5)]),
+    }),
+    flags: { precision: "50" },
+  },
 ];

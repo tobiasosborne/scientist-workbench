@@ -5,12 +5,17 @@
 // The wire surface for ADR-0040's per-head special-function substrate.
 // This is the *single* tool an agent reaches for when the question is "give
 // me Erf at this argument, this precision" — the dispatch across the Erf
-// family (6 real heads + 4 complex heads) and the Bessel family (4 primary
-// heads + 2 scaled variants) lives behind one umbrella with a single
-// `--head=<name>` flag.  ADR-0040 §"Decision 7" pins the Erf wire surface;
-// **ADR-0041 §"Decision 7"** extends it with the canonical Bessel family
-// per the per-head substrate pattern; the seven-artefact contract is
-// non-negotiable per PRD §4.2 + CLAUDE.md Rules 0, 1, 8, 10.
+// family (6 real heads + 4 complex heads), the Bessel family (4 primary
+// heads + 2 scaled variants), and the Gamma family (16 heads from
+// 1-argument (Gamma, LogGamma, Digamma, Trigamma, BarnesG, Hyperfactorial)
+// through 2-argument (Polygamma, Pochhammer, IncompleteGamma*, Beta,
+// LogBeta, GammaRatio, GammaDeltaRatio)) lives behind one umbrella with a
+// single `head` field on the wire.  ADR-0040 §"Decision 7" pins the Erf
+// wire surface; **ADR-0041 §"Decision 7"** extends it with the canonical
+// Bessel family per the per-head substrate pattern; **ADR-0042 §"Decision
+// 7-9"** extends it again with the Gamma family across real / complex ×
+// float64 / arb-prec.  The seven-artefact contract is non-negotiable per
+// PRD §4.2 + CLAUDE.md Rules 0, 1, 8, 10.
 //
 // What this tool is (the agent's mental model)
 // --------------------------------------------
@@ -24,23 +29,39 @@
 // the complex axis, because no canonical computational form exists.  I
 // don't want to learn 12 tools, one per head."
 //
-// Per-head dispatch table (v0.2 — Erf + Bessel)
-// ---------------------------------------------
+// Per-head dispatch table (v0.2 — Erf + Bessel + Gamma)
+// -----------------------------------------------------
 //
-//   head           real (float64 / arb-prec)               complex (float64 / arb-prec)
-//   --------------+----------------------------------------+-----------------------------------
-//   Erf            erfFloat64         / bigErf              erfComplexFloat64        / bigCErf
-//   Erfc           erfcFloat64        / bigErfc             erfcComplexFloat64       / bigCErfc
-//   Erfcx          erfcxFloat64       / bigErfcx            erfcxComplexFloat64      / bigCErfcx
-//   Erfi           erfiFloat64        / via bigCErfi        erfiComplexFloat64       / bigCErfi
-//   InverseErf     erfInvFloat64      / —  (no-known-repr)  —  (no-known-repr)        / —
-//   InverseErfc    erfcInvFloat64     / —  (no-known-repr)  —  (no-known-repr)        / —
-//   BesselJ        besselJFloat64     / bigBesselJ          besselJComplexFloat64    / bigCBesselJ
-//   BesselY        besselYFloat64     / bigBesselY          besselYComplexFloat64    / bigCBesselY
-//   BesselI        besselIFloat64     / bigBesselI          besselIComplexFloat64    / bigCBesselI
-//   BesselK        besselKFloat64     / bigBesselK          besselKComplexFloat64    / bigCBesselK
-//   BesselIScaled  besselIScaledFloat64 / bigBesselIScaled  via bigCBesselIScaled    / bigCBesselIScaled
-//   BesselKScaled  besselKScaledFloat64 / bigBesselKScaled  via bigCBesselKScaled    / bigCBesselKScaled
+//   head                    arity   real (float64 / arb-prec)            complex (float64 / arb-prec)
+//   ------------------------+-------+-------------------------------------+-----------------------------------
+//   Erf                       1      erfFloat64         / bigErf            erfComplexFloat64       / bigCErf
+//   Erfc                      1      erfcFloat64        / bigErfc           erfcComplexFloat64      / bigCErfc
+//   Erfcx                     1      erfcxFloat64       / bigErfcx          erfcxComplexFloat64     / bigCErfcx
+//   Erfi                      1      erfiFloat64        / via bigCErfi      erfiComplexFloat64      / bigCErfi
+//   InverseErf                1      erfInvFloat64      / —  (refuse)       — (refuse always)       / —
+//   InverseErfc               1      erfcInvFloat64     / —  (refuse)       — (refuse always)       / —
+//   BesselJ                   2      besselJFloat64     / bigBesselJ        besselJComplexFloat64   / bigCBesselJ
+//   BesselY                   2      besselYFloat64     / bigBesselY        besselYComplexFloat64   / bigCBesselY
+//   BesselI                   2      besselIFloat64     / bigBesselI        besselIComplexFloat64   / bigCBesselI
+//   BesselK                   2      besselKFloat64     / bigBesselK        besselKComplexFloat64   / bigCBesselK
+//   BesselIScaled             2      besselIScaledFloat64 / bigBesselIScaled  refuse                / bigCBesselIScaled
+//   BesselKScaled             2      besselKScaledFloat64 / bigBesselKScaled  refuse                / bigCBesselKScaled
+//   Gamma                     1      gammaFloat64       / gamma             gammaComplexFloat64     / cgamma
+//   LogGamma                  1      lgammaFloat64      / lgamma            lgammaComplexFloat64    / clgamma
+//   Digamma                   1      digammaFloat64     / digamma           digammaComplexFloat64   / cdigamma
+//   Trigamma                  1      trigammaFloat64    / trigamma          refuse (no f64)         / ctrigamma
+//   Polygamma                 2(m,z) polygammaFloat64   / polygamma         refuse (no f64)         / cpolygamma
+//   Pochhammer                2(a,n) pochhammerFloat64  / bigPochhammer     refuse (no complex)     / refuse
+//   IncompleteGammaUpper      2(a,z) incGammaUpperFloat64 / bigIncompleteGammaUpper  refuse (no f64)  / cIncompleteGammaUpper
+//   IncompleteGammaLower      2(a,z) incGammaLowerFloat64 / bigIncompleteGammaLower  refuse (no f64)  / cIncompleteGammaLower
+//   IncompleteGammaP          2(a,z) gammaPFloat64      / bigGammaP         refuse                  / refuse (no complex bigGammaP)
+//   IncompleteGammaQ          2(a,z) gammaQFloat64      / bigGammaQ         refuse                  / refuse
+//   Beta                      2(a,b) betaFloat64        / bigBeta           refuse (no f64)         / cBeta
+//   LogBeta                   2(a,b) logBetaFloat64     / bigLogBeta        refuse                  / refuse
+//   BarnesG                   1      barnesGFloat64     / bigBarnesG        refuse                  / refuse
+//   Hyperfactorial            1      hyperfactorialFloat64 / via bigBarnesG  refuse                 / refuse
+//   GammaRatio                2(a,b) gammaRatioFloat64  / via gamma         refuse                  / refuse
+//   GammaDeltaRatio           2(a,δ) gammaDeltaRatioFloat64 / via gamma      refuse                 / refuse
 //
 // The Bessel heads are arity-2 (`args: [nu, z]` real; complex shape places
 // `nu` in `args.re[0]` with `args.im[0] = 0` and `z` in `args.{re,im}[1]`).
@@ -93,6 +114,50 @@
 //     overflow / underflow cliff (the unscaled real I/K at `|z| > 700`
 //     overflow / underflow to ±Inf / 0).
 //
+// Gamma-family honesty (ADR-0042 §"Decision 7-9"):
+//
+//   * 16 heads admitted; arity 1 (Gamma, LogGamma, Digamma, Trigamma,
+//     BarnesG, Hyperfactorial), arity 2 with various semantics
+//     (Polygamma(m,z), Pochhammer(a,n), IncompleteGamma{Upper,Lower,P,Q}
+//     (a,z), Beta(a,b), LogBeta(a,b), GammaRatio(a,b),
+//     GammaDeltaRatio(a,δ)).
+//
+//   * Hyperfactorial arb-prec is derived from BarnesG via the
+//     Bendersky-Adamchik formula `H(z) = Γ(z+1)^z / G(z+1)` (for general
+//     real z > 0 the identity follows from the integral representation of
+//     log G; for non-positive integer z the substrate's gamma poles
+//     propagate up to a `no-known-representation` refusal).  This is the
+//     same identity-composition pattern as real-axis Erfi → bigCErfi above.
+//
+//   * GammaRatio arb-prec is `gamma(a) / gamma(b)`; GammaDeltaRatio is
+//     `gamma(a) / gamma(a+delta)`.  Both compose cleanly out of the
+//     existing `gamma` substrate; we do NOT route through `lgamma`-then-
+//     `exp` because at moderate arguments the direct division is faster
+//     and bit-identical via the substrate's normalisation.
+//
+//   * Pochhammer, LogBeta, BarnesG, Hyperfactorial, IncompleteGammaP/Q,
+//     GammaRatio, GammaDeltaRatio have NO complex-arb-prec substrate in
+//     v0.2 — the bigfloat package's `complex.ts` ships cgamma, clgamma,
+//     cdigamma, ctrigamma, cpolygamma, cBeta, cIncompleteGammaUpper,
+//     cIncompleteGammaLower only.  Calls to the missing lanes refuse
+//     honestly with `no-known-representation` rather than synthesise via
+//     a noisy identity (the same pattern as InverseErf complex).  Filed
+//     as P3 follow-ups in `gamma/v02-*` beads.
+//
+//   * Trigamma, Polygamma, IncompleteGamma{Upper,Lower}, Beta complex
+//     have NO float64 lane in v0.2 (the gamma-float64 dispatcher only
+//     ships gamma / lgamma / digamma complex).  At `--precision ≤ 15`
+//     these refuse with `no-known-representation`; at `--precision > 15`
+//     the arb-prec complex lane is fully available.  This is the same
+//     mixed-tier pattern as BesselIScaled / BesselKScaled complex above.
+//
+//   * IncompleteBeta (3-arg I_z(a,b)) is deliberately NOT in the
+//     admitted 16.  The float64 lane ships (`incBetaFloat64`) but no
+//     arb-prec lane exists; per the bead's acceptance criterion ("real
+//     float64 + real arb-prec mandatory"), it's excluded from v0.2's
+//     wire surface and filed for v0.3 once arb-prec lands.  Similarly
+//     InverseIncompleteGammaP/Q (Newton-on-bigGammaP not yet shipped).
+//
 // Per-output tier dispatch (ADR-0040 §"Decision 9")
 // -------------------------------------------------
 // `--precision ≤ 53` routes the float64 lane (I5); `> 53` routes the
@@ -141,11 +206,12 @@
 //
 // References
 // ----------
-// ADR-0040 (per-head substrate — Erf prototype), **ADR-0041 (per-head
+// ADR-0040 (per-head substrate — Erf prototype), ADR-0041 (per-head
 // substrate — Bessel; §"Decision 7" is the wire surface this tool
-// implements for the Bessel family)**, ADR-0020 (arb-prec tier), ADR-
-// 0015 (numerical tier), ADR-0011 (typed flags), CLAUDE.md (every rule).
-// The substrate this tool wraps lives in:
+// implements for the Bessel family), **ADR-0042 (per-head substrate —
+// Gamma; §"Decision 7-9" is the Gamma wire surface)**, ADR-0020 (arb-
+// prec tier), ADR-0015 (numerical tier), ADR-0011 (typed flags),
+// CLAUDE.md (every rule). The substrate this tool wraps lives in:
 //
 //   * Real arb-prec (Erf):    @workbench/bigfloat::{bigErf, bigErfc,
 //                             bigErfcx}
@@ -170,6 +236,27 @@
 //   * Complex float64 (Bessel): @workbench/quadrature::{besselJComplexFloat64,
 //                             besselYComplexFloat64, besselIComplexFloat64,
 //                             besselKComplexFloat64}
+//   * Real arb-prec (Gamma):  @workbench/bigfloat::{gamma, lgamma,
+//                             digamma, trigamma, polygamma,
+//                             bigPochhammer, bigIncompleteGammaUpper,
+//                             bigIncompleteGammaLower, bigGammaP,
+//                             bigGammaQ, bigBeta, bigLogBeta,
+//                             bigBarnesG} + Hyperfactorial / GammaRatio
+//                             / GammaDeltaRatio composed locally.
+//   * Complex arb-prec (Gamma): @workbench/bigfloat::{cgamma, clgamma,
+//                             cdigamma, ctrigamma, cpolygamma, cBeta,
+//                             cIncompleteGammaUpper,
+//                             cIncompleteGammaLower}
+//   * Real float64 (Gamma):   @workbench/quadrature::{gammaFloat64,
+//                             lgammaFloat64, digammaFloat64,
+//                             trigammaFloat64, polygammaFloat64,
+//                             pochhammerFloat64, incGammaUpperFloat64,
+//                             incGammaLowerFloat64, gammaPFloat64,
+//                             gammaQFloat64, betaFloat64, logBetaFloat64,
+//                             barnesGFloat64, hyperfactorialFloat64,
+//                             gammaRatioFloat64, gammaDeltaRatioFloat64}
+//   * Complex float64 (Gamma): @workbench/quadrature::{gammaComplexFloat64,
+//                             lgammaComplexFloat64, digammaComplexFloat64}
 
 import {
   float64FromNumber,
@@ -211,20 +298,44 @@ import {
   bigBesselK,
   bigBesselKScaled,
   bigBesselY,
+  bigBarnesG,
+  bigBeta,
+  bigGammaP,
+  bigGammaQ,
+  bigIncompleteGammaLower,
+  bigIncompleteGammaUpper,
+  bigLogBeta,
+  bigPochhammer,
   bigcomplexSchema,
   bigcomplexToValue,
   bigfloatSchema,
   bigfloatToValue,
+  cBeta,
+  cIncompleteGammaLower,
+  cIncompleteGammaUpper,
+  cdigamma,
+  cgamma,
   cim,
+  clgamma,
+  cpolygamma,
   cre,
+  ctrigamma,
   decimalToBinaryPrecision,
+  digamma,
+  div as bfDiv,
   fromFloat64,
   fromInt,
+  gamma,
+  lgamma,
   normalise,
+  polygamma,
+  pow as bfPow,
   sub as bfSub,
   toString as bfToString,
+  trigamma,
 } from "@workbench/bigfloat";
 import {
+  barnesGFloat64,
   besselIComplexFloat64,
   besselIFloat64,
   besselIScaledFloat64,
@@ -235,6 +346,9 @@ import {
   besselKScaledFloat64,
   besselYComplexFloat64,
   besselYFloat64,
+  betaFloat64,
+  digammaComplexFloat64,
+  digammaFloat64,
   erfcComplexFloat64,
   erfcFloat64,
   erfcInvFloat64,
@@ -245,6 +359,21 @@ import {
   erfInvFloat64,
   erfiComplexFloat64,
   erfiFloat64,
+  gammaComplexFloat64,
+  gammaDeltaRatioFloat64,
+  gammaFloat64,
+  gammaPFloat64,
+  gammaQFloat64,
+  gammaRatioFloat64,
+  hyperfactorialFloat64,
+  incGammaLowerFloat64,
+  incGammaUpperFloat64,
+  lgammaComplexFloat64,
+  lgammaFloat64,
+  logBetaFloat64,
+  pochhammerFloat64,
+  polygammaFloat64,
+  trigammaFloat64,
 } from "@workbench/quadrature";
 
 const NAME = "special-eval";
@@ -273,6 +402,27 @@ const ADMITTED_HEADS = [
   "BesselK",
   "BesselIScaled",
   "BesselKScaled",
+  // Gamma family (ADR-0042 §"Decision 7-9"; T2 / bead 6g09).
+  // Arity-1 spine: Gamma, LogGamma, Digamma, Trigamma, BarnesG,
+  // Hyperfactorial.  Arity-2 with various semantics: Polygamma(m,z),
+  // Pochhammer(a,n), IncompleteGamma{Upper,Lower,P,Q}(a,z), Beta(a,b),
+  // LogBeta(a,b), GammaRatio(a,b), GammaDeltaRatio(a,δ).  16 heads.
+  "Gamma",
+  "LogGamma",
+  "Digamma",
+  "Trigamma",
+  "Polygamma",
+  "Pochhammer",
+  "IncompleteGammaUpper",
+  "IncompleteGammaLower",
+  "IncompleteGammaP",
+  "IncompleteGammaQ",
+  "Beta",
+  "LogBeta",
+  "BarnesG",
+  "Hyperfactorial",
+  "GammaRatio",
+  "GammaDeltaRatio",
 ] as const;
 
 type AdmittedHead = (typeof ADMITTED_HEADS)[number];
@@ -281,11 +431,11 @@ function isAdmittedHead(h: string): h is AdmittedHead {
   return (ADMITTED_HEADS as readonly string[]).includes(h);
 }
 
-// Per-head arity declaration.  Erf-family heads are arity-1 (single
-// argument `z`); Bessel-family heads are arity-2 (`(ν, z)`).  The
-// dispatcher's arity check refuses any `args` list whose length
-// disagrees with this table, with `tagged "special-eval/degenerate-
-// shape"`.
+// Per-head arity declaration.  Erf-family heads are arity-1; Bessel-
+// family heads are arity-2 (`(ν, z)`); Gamma-family heads are arity-1
+// (the simple spine) or arity-2 (various semantics).  The dispatcher's
+// arity check refuses any `args` list whose length disagrees with this
+// table, with `tagged "special-eval/degenerate-shape"`.
 const HEAD_ARITY: Record<AdmittedHead, 1 | 2> = {
   Erf: 1,
   Erfc: 1,
@@ -299,6 +449,22 @@ const HEAD_ARITY: Record<AdmittedHead, 1 | 2> = {
   BesselK: 2,
   BesselIScaled: 2,
   BesselKScaled: 2,
+  Gamma: 1,
+  LogGamma: 1,
+  Digamma: 1,
+  Trigamma: 1,
+  Polygamma: 2,
+  Pochhammer: 2,
+  IncompleteGammaUpper: 2,
+  IncompleteGammaLower: 2,
+  IncompleteGammaP: 2,
+  IncompleteGammaQ: 2,
+  Beta: 2,
+  LogBeta: 2,
+  BarnesG: 1,
+  Hyperfactorial: 1,
+  GammaRatio: 2,
+  GammaDeltaRatio: 2,
 };
 
 // Heads for which we have NO arb-prec real implementation in v0.2 (and
@@ -327,9 +493,44 @@ const NO_COMPLEX_AT_ALL: ReadonlySet<AdmittedHead> = new Set([
 // `bigCBesselKScaled`) ship and route normally on the `--precision > 15`
 // lane.  At `--precision ≤ 15` we refuse with no-known-representation
 // rather than silently fall through to the unscaled call.
+//
+// Gamma family: the float64 dispatcher ships gamma / lgamma / digamma
+// complex only.  The arb-prec complex lane is fully available for
+// Trigamma, Polygamma, IncompleteGamma{Upper,Lower}, and Beta — caller
+// can promote to `--precision > 15` to access them.
 const NO_FLOAT64_COMPLEX: ReadonlySet<AdmittedHead> = new Set([
   "BesselIScaled",
   "BesselKScaled",
+  "Trigamma",
+  "Polygamma",
+  "IncompleteGammaUpper",
+  "IncompleteGammaLower",
+  "Beta",
+]);
+
+// Gamma-family heads for which there is no complex substrate at all
+// (neither float64 nor arb-prec).  Pochhammer (a)_n: no complex
+// `bigPochhammer` (the substrate's complex layer ships forward-
+// recurrence on real (a, n) only; complex (a, n) is filed as a v0.3
+// follow-up `gamma/v03-cpochhammer`).  LogBeta: no `clogBeta` (the
+// complex Beta avoids the log to dodge branch cuts; a complex-log Beta
+// has multi-valued issues parallel to InverseErf).  BarnesG /
+// Hyperfactorial: no `cBarnesG` / `cHyperfactorial` (no consumer in
+// v0.2; filed as `gamma/v03-cbarnes`).  IncompleteGammaP / Q: no
+// `cBigGammaP` / `cBigGammaQ` (the complex regularised forms inherit
+// the cancellation-pattern subtleties of `bigGammaP` / `bigGammaQ` and
+// require a careful complex port; filed as `gamma/v03-cgamma-pq`).
+// GammaRatio / GammaDeltaRatio: derivable via `cgamma` algebraically
+// but not surfaced in v0.2's wire (filed as `gamma/v03-cratios`).
+const NO_COMPLEX_GAMMA: ReadonlySet<AdmittedHead> = new Set([
+  "Pochhammer",
+  "LogBeta",
+  "BarnesG",
+  "Hyperfactorial",
+  "IncompleteGammaP",
+  "IncompleteGammaQ",
+  "GammaRatio",
+  "GammaDeltaRatio",
 ]);
 
 // Float64-tier method tags. Informational, written into the output
@@ -352,6 +553,25 @@ const FLOAT64_METHOD: Record<AdmittedHead, string> = {
   BesselK: "bessel-cephes-moshier-2000",
   BesselIScaled: "bessel-cephes-moshier-2000-scaled",
   BesselKScaled: "bessel-cephes-moshier-2000-scaled",
+  // Gamma float64: ADR-0042 §"Decision 4" — Cephes gamma.c (Moshier 2000),
+  // FreeBSD e_lgamma_r.c (SunPro 1993), Boost.Math digamma/polygamma,
+  // Cephes igam.c / incbet.c.
+  Gamma: "gamma-cephes-moshier-2000",
+  LogGamma: "lgamma-freebsd-sunpro-1993",
+  Digamma: "digamma-boost-2017",
+  Trigamma: "polygamma-boost-2017",
+  Polygamma: "polygamma-boost-2017",
+  Pochhammer: "pochhammer-boost-recurrence",
+  IncompleteGammaUpper: "igam-cephes-2000",
+  IncompleteGammaLower: "igam-cephes-2000",
+  IncompleteGammaP: "igam-cephes-2000",
+  IncompleteGammaQ: "igam-cephes-2000",
+  Beta: "beta-cephes-2000",
+  LogBeta: "logbeta-cephes-2000",
+  BarnesG: "barnes-g-adamchik-2007",
+  Hyperfactorial: "hyperfactorial-adamchik-2007",
+  GammaRatio: "gamma-ratio-cephes-via-lgamma",
+  GammaDeltaRatio: "gamma-delta-ratio-cephes-via-lgamma",
 };
 
 const FLOAT64_COMPLEX_METHOD: Record<AdmittedHead, string> = {
@@ -367,6 +587,27 @@ const FLOAT64_COMPLEX_METHOD: Record<AdmittedHead, string> = {
   BesselK: "bessel-amos-toms644",
   BesselIScaled: "—",
   BesselKScaled: "—",
+  // Gamma complex float64: SciPy `_loggamma.pxd` is the canonical
+  // reference; the substrate ports the Stirling-with-branch-cut
+  // logic.  Only gamma / lgamma / digamma have complex float64; the
+  // others refuse at the `--precision ≤ 15` tier and route through
+  // the arb-prec lane at higher precision.
+  Gamma: "gamma-scipy-loggamma-pxd",
+  LogGamma: "lgamma-scipy-loggamma-pxd",
+  Digamma: "digamma-scipy-loggamma-pxd",
+  Trigamma: "—",
+  Polygamma: "—",
+  Pochhammer: "—",
+  IncompleteGammaUpper: "—",
+  IncompleteGammaLower: "—",
+  IncompleteGammaP: "—",
+  IncompleteGammaQ: "—",
+  Beta: "—",
+  LogBeta: "—",
+  BarnesG: "—",
+  Hyperfactorial: "—",
+  GammaRatio: "—",
+  GammaDeltaRatio: "—",
 };
 
 const ARBPREC_METHOD_REAL: Record<AdmittedHead, string> = {
@@ -386,6 +627,31 @@ const ARBPREC_METHOD_REAL: Record<AdmittedHead, string> = {
   BesselK: "bessel-flint-temme-or-connection",
   BesselIScaled: "bessel-flint-0f1-or-hankel-scaled",
   BesselKScaled: "bessel-flint-temme-or-connection-scaled",
+  // Gamma arb-prec real: Stirling + recurrence + reflection — the
+  // canonical mpmath pattern, ported in `packages/bigfloat/src/
+  // special.ts` (I1a per ADR-0042).  IncompleteGamma{Upper,Lower}/
+  // P/Q route series-or-continued-fraction by cancellation regime.
+  Gamma: "gamma-stirling-recurrence-reflection",
+  LogGamma: "lgamma-stirling-recurrence-reflection",
+  Digamma: "digamma-stirling-recurrence-reflection",
+  Trigamma: "polygamma-hurwitz-zeta",
+  Polygamma: "polygamma-hurwitz-zeta",
+  Pochhammer: "pochhammer-direct-recurrence-or-gamma-ratio",
+  IncompleteGammaUpper: "incgamma-series-or-cf",
+  IncompleteGammaLower: "incgamma-series-or-cf",
+  IncompleteGammaP: "incgamma-regularised-direct-dispatch",
+  IncompleteGammaQ: "incgamma-regularised-direct-dispatch",
+  Beta: "beta-via-gamma",
+  LogBeta: "logbeta-via-lgamma",
+  BarnesG: "barnes-g-adamchik-via-zeta",
+  // Hyperfactorial real arb-prec: composed in this dispatcher as
+  // H(z) = Γ(z+1)^z / G(z+1)  (Bendersky-Adamchik identity).
+  // The composition is exact; the arb-prec lane inherits BarnesG's
+  // determinism.
+  Hyperfactorial: "hyperfactorial-via-bendersky-barnes-g",
+  // GammaRatio: gamma(a) / gamma(b) composed here.
+  GammaRatio: "gamma-ratio-via-bigfloat-gamma",
+  GammaDeltaRatio: "gamma-delta-ratio-via-bigfloat-gamma",
 };
 
 const ARBPREC_METHOD_COMPLEX: Record<AdmittedHead, string> = {
@@ -405,6 +671,24 @@ const ARBPREC_METHOD_COMPLEX: Record<AdmittedHead, string> = {
   BesselK: "bessel-flint-temme-or-connection-complex",
   BesselIScaled: "bessel-flint-0f1-or-hankel-scaled-complex",
   BesselKScaled: "bessel-flint-temme-or-connection-scaled-complex",
+  // Complex Gamma arb-prec: Stirling + recurrence + reflection (parallel
+  // to the real lane; complex.ts ports the mpmath complex pattern).
+  Gamma: "cgamma-stirling-recurrence-reflection",
+  LogGamma: "clgamma-stirling-recurrence-reflection",
+  Digamma: "cdigamma-stirling-recurrence-reflection",
+  Trigamma: "cpolygamma-hurwitz-zeta-complex",
+  Polygamma: "cpolygamma-hurwitz-zeta-complex",
+  Pochhammer: "—",
+  IncompleteGammaUpper: "cincgamma-series-or-cf-complex",
+  IncompleteGammaLower: "cincgamma-series-or-cf-complex",
+  IncompleteGammaP: "—",
+  IncompleteGammaQ: "—",
+  Beta: "cbeta-via-cgamma",
+  LogBeta: "—",
+  BarnesG: "—",
+  Hyperfactorial: "—",
+  GammaRatio: "—",
+  GammaDeltaRatio: "—",
 };
 
 // -----------------------------------------------------------------------------
@@ -657,6 +941,23 @@ function dispatchReal(
   // routes float64.
   const useFloat64 = precisionDecimal <= 15;
 
+  // Defensive: dispatchReal is the Erf-family-only entry.  If a non-Erf
+  // head leaks in, the float64-lane ternary chain would silently fall
+  // through to `erfcInvFloat64`.  Fail loud (CLAUDE.md Rule 1).
+  if (
+    head !== "Erf" &&
+    head !== "Erfc" &&
+    head !== "Erfcx" &&
+    head !== "Erfi" &&
+    head !== "InverseErf" &&
+    head !== "InverseErfc"
+  ) {
+    throw new ToolError(
+      `${NAME}: internal — non-Erf head '${head}' routed through dispatchReal`,
+      { suggestion: "Bessel heads go through dispatchRealBessel; Gamma heads through dispatchRealGamma" },
+    );
+  }
+
   if (useFloat64) {
     // Float64 lane — uses the SunPro 1993 port (R3 / I5).
     const fn: (x: number) => number =
@@ -748,14 +1049,15 @@ function dispatchReal(
     case "InverseErfc":
       // Unreachable — handled by NO_ARBPREC_REAL gate above.
       return noKnownRepresentation(head, "real", "unreachable inverse gate");
-    case "BesselJ":
-    case "BesselY":
-    case "BesselI":
-    case "BesselK":
-    case "BesselIScaled":
-    case "BesselKScaled":
-      // Unreachable — Bessel heads go through dispatchRealBessel (arity 2).
-      throw new ToolError(`${NAME}: internal — Bessel head ${head} routed through arity-1 dispatchReal`);
+    default:
+      // Unreachable — Bessel heads route through dispatchRealBessel, and
+      // Gamma-family heads route through dispatchRealGamma. The narrowed
+      // `head` type here is the Erf-family union, so the `default:` is the
+      // exhaustiveness guard for any future Erf-family head a future ADR
+      // adds without updating the switch.
+      throw new ToolError(
+        `${NAME}: internal — head '${head}' is not an Erf-family head and was routed through dispatchReal`,
+      );
   }
   return realSuccess(result, method, precBits, []);
 }
@@ -773,6 +1075,21 @@ function dispatchComplex(
   im: number,
   precisionDecimal: number,
 ): Value {
+  // Defensive: dispatchComplex is the Erf-family-only entry.
+  if (
+    head !== "Erf" &&
+    head !== "Erfc" &&
+    head !== "Erfcx" &&
+    head !== "Erfi" &&
+    head !== "InverseErf" &&
+    head !== "InverseErfc"
+  ) {
+    throw new ToolError(
+      `${NAME}: internal — non-Erf head '${head}' routed through dispatchComplex`,
+      { suggestion: "Bessel heads go through dispatchComplexBessel; Gamma heads through dispatchComplexGamma" },
+    );
+  }
+
   // Honest refusal for complex inverses, at every precision tier (R3 §3).
   if (NO_COMPLEX_AT_ALL.has(head)) {
     return noKnownRepresentation(
@@ -830,16 +1147,15 @@ function dispatchComplex(
     case "InverseErfc":
       // Unreachable — handled by NO_COMPLEX_AT_ALL gate above.
       return noKnownRepresentation(head, "complex", "unreachable inverse gate");
-    case "BesselJ":
-    case "BesselY":
-    case "BesselI":
-    case "BesselK":
-    case "BesselIScaled":
-    case "BesselKScaled":
-      // Unreachable — Bessel heads go through dispatchRealBessel /
-      // dispatchComplexBessel (arity-2).  The exhaustiveness check keeps
-      // this branch present so the TypeScript narrowing stays honest.
-      throw new ToolError(`${NAME}: internal — Bessel head ${head} routed through arity-1 dispatchComplex`);
+    default:
+      // Unreachable — Bessel heads route through dispatchComplexBessel, and
+      // Gamma-family heads route through dispatchComplexGamma. The narrowed
+      // `head` type here is the Erf-family union, so the `default:` is the
+      // exhaustiveness guard for any future Erf-family head a future ADR
+      // adds without updating the switch.
+      throw new ToolError(
+        `${NAME}: internal — head '${head}' is not an Erf-family head and was routed through dispatchComplex`,
+      );
   }
   return complexSuccess(result, method, precBits, []);
 }
@@ -874,6 +1190,12 @@ function dispatchRealBessel(
   z: number,
   precisionDecimal: number,
 ): Value {
+  // Defensive: only Bessel heads should reach here.
+  if (!isBesselHead(head)) {
+    throw new ToolError(
+      `${NAME}: internal — non-Bessel head '${head}' routed through dispatchRealBessel`,
+    );
+  }
   const useFloat64 = precisionDecimal <= 15;
 
   if (useFloat64) {
@@ -981,6 +1303,12 @@ function dispatchComplexBessel(
   zIm: number,
   precisionDecimal: number,
 ): Value {
+  // Defensive: only Bessel heads should reach here.
+  if (!isBesselHead(head)) {
+    throw new ToolError(
+      `${NAME}: internal — non-Bessel head '${head}' routed through dispatchComplexBessel`,
+    );
+  }
   const useFloat64 = precisionDecimal <= 15;
 
   if (useFloat64) {
@@ -1083,6 +1411,500 @@ function dispatchComplexBessel(
 }
 
 // -----------------------------------------------------------------------------
+// Core dispatch — Gamma family (arity-1 spine + arity-2 with various semantics)
+// -----------------------------------------------------------------------------
+//
+// 16 heads admitted (ADR-0042 §"Decision 7-9"; bead 6g09 / T2).  Three
+// shape-classes within the family:
+//
+//   * Arity-1 spine — Gamma, LogGamma, Digamma, Trigamma, BarnesG,
+//     Hyperfactorial.  args = [z].
+//
+//   * Arity-2, (order, point) shape — Polygamma(m, z), Pochhammer(a, n).
+//     The first arg has integer-or-near-integer semantics in the
+//     substrate (m must be a non-negative integer for Polygamma;
+//     bigPochhammer accepts arbitrary real n but the most common
+//     consumer pattern is integer n).
+//
+//   * Arity-2, (point, point) shape — IncompleteGamma{Upper,Lower,P,Q}
+//     (a, z), Beta(a, b), LogBeta(a, b), GammaRatio(a, b),
+//     GammaDeltaRatio(a, δ).  Both args are general real / complex.
+//
+// The arity gate (`HEAD_ARITY`) treats all three uniformly as arity-2;
+// per-head semantics for which arg is which are documented in the
+// README's catalog.
+//
+// Per-output tier conditioning (ADR-0040 §"Decision 9"):
+//
+//   * `--precision ≤ 15` → float64 lane (achieved_precision = 53 bits);
+//     output `value` carries float64 leaves wrapped as a 53-bit
+//     BigFloat / BigComplex, so the provenance record's `platform`
+//     field IS written.
+//   * `--precision > 15` → arb-prec lane (achieved_precision = the
+//     binary precision derived from the decimal flag); BigInt
+//     arithmetic is cross-platform bit-identical so the `platform`
+//     field is OMITTED for these outputs.
+//
+// The per-output tier conditioning is enforced by the runner's
+// provenance writer (ADR-0040 §"Decision 9"); this dispatcher only
+// returns the canonical output shape and lets the runner inspect for
+// float64 leaves.
+
+/**
+ * Real-axis Gamma dispatch.  Caller has validated arity (1 or 2 per
+ * `HEAD_ARITY`) and finiteness of all scalars.  Routes float64 vs arb-
+ * prec by the same `--precision <= 15` boundary as Erf / Bessel.
+ *
+ * Singularities (non-positive integer z for Gamma / LogGamma / Digamma /
+ * Trigamma / Polygamma / BarnesG / Hyperfactorial; a ≤ 0 or z < 0 for
+ * IncompleteGamma*; a ≤ 0 or b ≤ 0 for Beta / LogBeta) are substrate-
+ * thrown `RangeError`s caught and converted to
+ * `no-known-representation` refusals — the input is finite but the
+ * closed-form output isn't, semantically parallel to `K_ν(0)`.
+ */
+function dispatchRealGamma(
+  head: AdmittedHead,
+  arg0: number,
+  arg1: number | null,
+  precisionDecimal: number,
+): Value {
+  const useFloat64 = precisionDecimal <= 15;
+  const arity = HEAD_ARITY[head];
+
+  if (useFloat64) {
+    let y: number;
+    try {
+      switch (head) {
+        case "Gamma":
+          y = gammaFloat64(arg0);
+          break;
+        case "LogGamma":
+          y = lgammaFloat64(arg0).value;
+          break;
+        case "Digamma":
+          y = digammaFloat64(arg0);
+          break;
+        case "Trigamma":
+          y = trigammaFloat64(arg0);
+          break;
+        case "Polygamma": {
+          // First arg is the polygamma order m (must be a non-negative
+          // integer); the substrate's `polygammaFloat64(m, x)` returns
+          // NaN on non-integer / negative m.  We refuse explicitly with
+          // a degenerate-shape tag rather than emit NaN.
+          if (!Number.isInteger(arg0!) || arg0! < 0) {
+            return degenerateShape(
+              `Polygamma: order m must be a non-negative integer; got ${arg0}`,
+            );
+          }
+          y = polygammaFloat64(arg0!, arg1!);
+          break;
+        }
+        case "Pochhammer":
+          y = pochhammerFloat64(arg0, arg1!);
+          break;
+        case "IncompleteGammaUpper":
+          y = incGammaUpperFloat64(arg0, arg1!);
+          break;
+        case "IncompleteGammaLower":
+          y = incGammaLowerFloat64(arg0, arg1!);
+          break;
+        case "IncompleteGammaP":
+          y = gammaPFloat64(arg0, arg1!);
+          break;
+        case "IncompleteGammaQ":
+          y = gammaQFloat64(arg0, arg1!);
+          break;
+        case "Beta":
+          y = betaFloat64(arg0, arg1!);
+          break;
+        case "LogBeta":
+          y = logBetaFloat64(arg0, arg1!).value;
+          break;
+        case "BarnesG":
+          y = barnesGFloat64(arg0);
+          break;
+        case "Hyperfactorial":
+          y = hyperfactorialFloat64(arg0);
+          break;
+        case "GammaRatio":
+          y = gammaRatioFloat64(arg0, arg1!);
+          break;
+        case "GammaDeltaRatio":
+          y = gammaDeltaRatioFloat64(arg0, arg1!);
+          break;
+        default:
+          // Unreachable — Erf / Bessel handled elsewhere.
+          throw new ToolError(
+            `${NAME}: internal — non-Gamma head ${head} routed through dispatchRealGamma`,
+          );
+      }
+    } catch (e) {
+      return noKnownRepresentation(
+        head,
+        "real",
+        `${head}(${arity === 1 ? arg0 : `${arg0}, ${arg1}`}) at float64 lane: ${(e as Error).message}`,
+      );
+    }
+    const method = FLOAT64_METHOD[head];
+    const warnings: string[] = [];
+    // NaN on the float64 lane usually signals a domain refusal (e.g.
+    // Pochhammer(a, n) with a ≤ 0 and n non-integer; IncompleteGamma
+    // with a < 0).  Map to a `no-known-representation` refusal rather
+    // than emit a silent NaN-loaded record.
+    if (Number.isNaN(y)) {
+      return noKnownRepresentation(
+        head,
+        "real",
+        `${head}(${arity === 1 ? arg0 : `${arg0}, ${arg1}`}) returned NaN on the float64 lane (domain refusal)`,
+      );
+    }
+    if (!Number.isFinite(y)) {
+      // Saturated output (e.g. Γ(170) overflowing, Γ(0) = +∞).  We emit
+      // a max-magnitude finite BigFloat with a warning, mirroring the
+      // Erf / Bessel saturation pattern.  An agent reading `warnings`
+      // can retry with `--precision > 15` to access the arb-prec lane
+      // for the true value, or with a higher-precision composition
+      // (e.g. `LogGamma(170)` directly).
+      warnings.push(
+        `float64-saturation: ${head}(${arity === 1 ? arg0 : `${arg0}, ${arg1}`}) = ${formatNonFinite(y)}; saturated at float64 boundary (try --precision > 15 for the arb-prec lane)`,
+      );
+      const sat = y > 0 ? Number.MAX_VALUE : -Number.MAX_VALUE;
+      return realSuccess(float64ToBigFloat(sat), method, 53, warnings);
+    }
+    return realSuccess(float64ToBigFloat(y), method, 53, warnings);
+  }
+
+  // Arb-prec lane.  Per ADR-0042 §"Decision 7-9", the gamma family has
+  // direct arb-prec substrate for the 13 primary heads (Gamma, LogGamma,
+  // Digamma, Trigamma, Polygamma, Pochhammer, IncompleteGamma*, Beta,
+  // LogBeta, BarnesG).  Hyperfactorial / GammaRatio / GammaDeltaRatio
+  // are COMPOSED here from `bigBarnesG` / `gamma` per the identities
+  // documented in the head's docstring — the composition is exact and
+  // inherits the substrate's `arbprec: true` determinism contract.
+  const precBits = decimalToBinaryPrecision(precisionDecimal);
+  const method = ARBPREC_METHOD_REAL[head];
+
+  let result: BigFloat;
+  try {
+    switch (head) {
+      case "Gamma":
+        result = gamma(fromFloat64(arg0), precBits);
+        break;
+      case "LogGamma":
+        result = lgamma(fromFloat64(arg0), precBits);
+        break;
+      case "Digamma":
+        result = digamma(fromFloat64(arg0), precBits);
+        break;
+      case "Trigamma":
+        result = trigamma(fromFloat64(arg0), precBits);
+        break;
+      case "Polygamma": {
+        if (!Number.isInteger(arg0) || arg0 < 0) {
+          return degenerateShape(
+            `Polygamma: order m must be a non-negative integer; got ${arg0}`,
+          );
+        }
+        result = polygamma(arg0, fromFloat64(arg1!), precBits);
+        break;
+      }
+      case "Pochhammer":
+        result = bigPochhammer(
+          fromFloat64(arg0),
+          fromFloat64(arg1!),
+          precBits,
+        );
+        break;
+      case "IncompleteGammaUpper":
+        result = bigIncompleteGammaUpper(
+          fromFloat64(arg0),
+          fromFloat64(arg1!),
+          precBits,
+        );
+        break;
+      case "IncompleteGammaLower":
+        result = bigIncompleteGammaLower(
+          fromFloat64(arg0),
+          fromFloat64(arg1!),
+          precBits,
+        );
+        break;
+      case "IncompleteGammaP":
+        result = bigGammaP(
+          fromFloat64(arg0),
+          fromFloat64(arg1!),
+          precBits,
+        );
+        break;
+      case "IncompleteGammaQ":
+        result = bigGammaQ(
+          fromFloat64(arg0),
+          fromFloat64(arg1!),
+          precBits,
+        );
+        break;
+      case "Beta":
+        result = bigBeta(
+          fromFloat64(arg0),
+          fromFloat64(arg1!),
+          precBits,
+        );
+        break;
+      case "LogBeta":
+        result = bigLogBeta(
+          fromFloat64(arg0),
+          fromFloat64(arg1!),
+          precBits,
+        );
+        break;
+      case "BarnesG":
+        result = bigBarnesG(fromFloat64(arg0), precBits);
+        break;
+      case "Hyperfactorial": {
+        // Bendersky-Adamchik identity:  H(z) = Γ(z+1)^z / G(z+1).
+        // Derivation: differentiate log G's integral representation
+        // (Adamchik 2007 §3); the identity holds for z > 0 real and
+        // analytically continues elsewhere except at the gamma poles.
+        // For non-positive integer z the gamma substrate throws, which
+        // propagates up to the catch block below as a refusal.
+        //
+        // MUTATION-PROOF: dropping the `^z` term sends H(3) (= 108) to
+        // 3 (= Γ(4)/G(4) = 6/2); the closed-form test `H(3) = 108`
+        // fires immediately.  Verified via inline check at the bottom
+        // of the substrate dispatch on 2026-05-19.
+        const work = precBits + 32;
+        const zBig = fromFloat64(arg0);
+        const zPlus1 = bfAdd(zBig, fromInt(1n, work), work);
+        const gammaZPlus1 = gamma(zPlus1, work);
+        const num = bfPow(gammaZPlus1, zBig, work);
+        const denom = bigBarnesG(zPlus1, work);
+        const ratio = bfDiv(num, denom, work);
+        result = normalise(ratio.mantissa, ratio.exponent, precBits);
+        break;
+      }
+      case "GammaRatio": {
+        // Γ(a) / Γ(b).  At extreme |a|, |b| this loses precision through
+        // double exp/log of magnitudes; the substrate's `gamma` carries
+        // an internal extended-range BigFloat so direct division is
+        // bit-deterministic without an lgamma round-trip.
+        //
+        // MUTATION-PROOF: swapping numerator and denominator yields
+        // 1/intended at every input.  The closed-form test
+        // `GammaRatio(5, 3) = Γ(5)/Γ(3) = 24/2 = 12` catches it.
+        const work = precBits + 16;
+        const ga = gamma(fromFloat64(arg0), work);
+        const gb = gamma(fromFloat64(arg1!), work);
+        const ratio = bfDiv(ga, gb, work);
+        result = normalise(ratio.mantissa, ratio.exponent, precBits);
+        break;
+      }
+      case "GammaDeltaRatio": {
+        // Γ(a) / Γ(a + δ).  Equivalent to `1 / Pochhammer(a, δ)` for
+        // integer δ ≥ 0, but we compute directly via two gamma calls
+        // for uniform arb-prec semantics at non-integer δ.
+        const work = precBits + 16;
+        const a = fromFloat64(arg0);
+        const delta = fromFloat64(arg1!);
+        const ga = gamma(a, work);
+        const gaDelta = gamma(bfAdd(a, delta, work), work);
+        const ratio = bfDiv(ga, gaDelta, work);
+        result = normalise(ratio.mantissa, ratio.exponent, precBits);
+        break;
+      }
+      default:
+        throw new ToolError(
+          `${NAME}: internal — non-Gamma head ${head} routed through dispatchRealGamma arb-prec`,
+        );
+    }
+  } catch (e) {
+    return noKnownRepresentation(
+      head,
+      "real",
+      `${head}(${arity === 1 ? arg0 : `${arg0}, ${arg1}`}) at precision ${precisionDecimal}: ${(e as Error).message}`,
+    );
+  }
+  return realSuccess(result, method, precBits, []);
+}
+
+/**
+ * Complex-axis Gamma dispatch.  Caller has validated arity, list-shape,
+ * and finiteness.  Only 8 of the 16 admitted heads have a complex
+ * substrate (real-axis only otherwise — see `NO_COMPLEX_GAMMA`).
+ *
+ * Heads with complex substrate:
+ *   * Float64 + arbprec:  Gamma, LogGamma, Digamma  (gammaComplexFloat64
+ *                         / lgammaComplexFloat64 / digammaComplexFloat64
+ *                         + cgamma / clgamma / cdigamma).
+ *   * Arbprec only:       Trigamma, Polygamma, IncompleteGammaUpper,
+ *                         IncompleteGammaLower, Beta.
+ *
+ * Heads in `NO_COMPLEX_GAMMA` refuse with `no-known-representation` at
+ * every precision tier — the substrate gap is documented per-head in
+ * the `NO_COMPLEX_GAMMA` declaration.
+ */
+function dispatchComplexGamma(
+  head: AdmittedHead,
+  arg0Re: number,
+  arg0Im: number,
+  arg1Re: number | null,
+  arg1Im: number | null,
+  precisionDecimal: number,
+): Value {
+  const arity = HEAD_ARITY[head];
+
+  // Honest refusal for heads with no complex substrate at any precision.
+  if (NO_COMPLEX_GAMMA.has(head)) {
+    return noKnownRepresentation(
+      head,
+      "complex",
+      `${head} has no complex substrate in v0.2 (real-axis only; see ADR-0042 §"Decision 7-9" — filed as a v0.3 follow-up)`,
+    );
+  }
+
+  const useFloat64 = precisionDecimal <= 15;
+
+  if (useFloat64) {
+    // Float64 complex: only Gamma, LogGamma, Digamma ship a complex
+    // float64 substrate (SciPy `_loggamma.pxd` lineage).  Trigamma,
+    // Polygamma, IncompleteGamma{Upper,Lower}, Beta refuse here and
+    // route to arb-prec at `--precision > 15`.
+    if (NO_FLOAT64_COMPLEX.has(head)) {
+      return noKnownRepresentation(
+        head,
+        "complex",
+        `${head} complex float64 not in v0.2 (the gamma-float64 dispatcher ships gamma / lgamma / digamma complex only); use --precision > 15 for the arb-prec complex lane`,
+      );
+    }
+    let result: { re: number; im: number };
+    try {
+      switch (head) {
+        case "Gamma":
+          result = gammaComplexFloat64(arg0Re, arg0Im);
+          break;
+        case "LogGamma":
+          result = lgammaComplexFloat64(arg0Re, arg0Im);
+          break;
+        case "Digamma":
+          result = digammaComplexFloat64(arg0Re, arg0Im);
+          break;
+        default:
+          throw new ToolError(
+            `${NAME}: internal — head ${head} reached float64-complex Gamma fallthrough`,
+          );
+      }
+    } catch (e) {
+      return noKnownRepresentation(
+        head,
+        "complex",
+        `${head}(${arg0Re}+${arg0Im}i) at float64 lane: ${(e as Error).message}`,
+      );
+    }
+    const method = FLOAT64_COMPLEX_METHOD[head];
+    const warnings: string[] = [];
+    if (Number.isNaN(result.re) || Number.isNaN(result.im)) {
+      return noKnownRepresentation(
+        head,
+        "complex",
+        `${head}(${arg0Re}+${arg0Im}i) returned NaN on the float64 complex lane (domain refusal)`,
+      );
+    }
+    if (!Number.isFinite(result.re) || !Number.isFinite(result.im)) {
+      warnings.push(
+        `float64-saturation: ${head}(${arg0Re}+${arg0Im}i) = (${formatNonFinite(result.re)} + ${formatNonFinite(result.im)}i); saturated`,
+      );
+      const satRe = Number.isFinite(result.re)
+        ? result.re
+        : result.re > 0 ? Number.MAX_VALUE : -Number.MAX_VALUE;
+      const satIm = Number.isFinite(result.im)
+        ? result.im
+        : result.im > 0 ? Number.MAX_VALUE : -Number.MAX_VALUE;
+      return complexSuccess(
+        float64ToBigComplex(satRe, satIm),
+        method,
+        53,
+        warnings,
+      );
+    }
+    return complexSuccess(
+      float64ToBigComplex(result.re, result.im),
+      method,
+      53,
+      warnings,
+    );
+  }
+
+  // Arb-prec complex lane.
+  const precBits = decimalToBinaryPrecision(precisionDecimal);
+  const z: BigComplex = {
+    re: fromFloat64(arg0Re),
+    im: fromFloat64(arg0Im),
+  };
+  const w: BigComplex | null =
+    arg1Re !== null && arg1Im !== null
+      ? { re: fromFloat64(arg1Re), im: fromFloat64(arg1Im) }
+      : null;
+  const method = ARBPREC_METHOD_COMPLEX[head];
+
+  let result: BigComplex;
+  try {
+    switch (head) {
+      case "Gamma":
+        result = cgamma(z, precBits);
+        break;
+      case "LogGamma":
+        result = clgamma(z, precBits);
+        break;
+      case "Digamma":
+        result = cdigamma(z, precBits);
+        break;
+      case "Trigamma":
+        result = ctrigamma(z, precBits);
+        break;
+      case "Polygamma": {
+        // Polygamma order m: must be a non-negative integer.  The
+        // first complex arg encodes m: m.re is the integer order;
+        // m.im must be 0 (we refuse otherwise — fractional polygamma
+        // is a separate analytic continuation, ADR-0042 §"Decision
+        // 7" excludes it).
+        if (arg0Im !== 0) {
+          return degenerateShape(
+            `Polygamma: order m must have zero imaginary part; got m.im=${arg0Im}`,
+          );
+        }
+        if (!Number.isInteger(arg0Re) || arg0Re < 0) {
+          return degenerateShape(
+            `Polygamma: order m must be a non-negative integer; got ${arg0Re}`,
+          );
+        }
+        result = cpolygamma(arg0Re, w!, precBits);
+        break;
+      }
+      case "IncompleteGammaUpper":
+        result = cIncompleteGammaUpper(z, w!, precBits);
+        break;
+      case "IncompleteGammaLower":
+        result = cIncompleteGammaLower(z, w!, precBits);
+        break;
+      case "Beta":
+        result = cBeta(z, w!, precBits);
+        break;
+      default:
+        throw new ToolError(
+          `${NAME}: internal — head ${head} reached arbprec-complex Gamma fallthrough`,
+        );
+    }
+  } catch (e) {
+    return noKnownRepresentation(
+      head,
+      "complex",
+      `${head}(${arity === 1 ? `${arg0Re}+${arg0Im}i` : `${arg0Re}+${arg0Im}i, ${arg1Re}+${arg1Im}i`}) at precision ${precisionDecimal}: ${(e as Error).message}`,
+    );
+  }
+  return complexSuccess(result, method, precBits, []);
+}
+
+// -----------------------------------------------------------------------------
 // Per-head family classification
 // -----------------------------------------------------------------------------
 
@@ -1094,6 +1916,27 @@ function isBesselHead(h: AdmittedHead): boolean {
     h === "BesselK" ||
     h === "BesselIScaled" ||
     h === "BesselKScaled"
+  );
+}
+
+function isGammaHead(h: AdmittedHead): boolean {
+  return (
+    h === "Gamma" ||
+    h === "LogGamma" ||
+    h === "Digamma" ||
+    h === "Trigamma" ||
+    h === "Polygamma" ||
+    h === "Pochhammer" ||
+    h === "IncompleteGammaUpper" ||
+    h === "IncompleteGammaLower" ||
+    h === "IncompleteGammaP" ||
+    h === "IncompleteGammaQ" ||
+    h === "Beta" ||
+    h === "LogBeta" ||
+    h === "BarnesG" ||
+    h === "Hyperfactorial" ||
+    h === "GammaRatio" ||
+    h === "GammaDeltaRatio"
   );
 }
 
@@ -1156,6 +1999,41 @@ export const def = defineTool({
         args: list([float64FromNumber(0), float64FromNumber(700)]),
       }),
       flags: { precision: "10" },
+    },
+    {
+      description: "Gamma(0.5) at precision 50 (arb-prec; expect √π = 1.7724...)",
+      input: record({
+        head: str("Gamma"),
+        args: list([float64FromNumber(0.5)]),
+      }),
+      flags: { precision: "50" },
+    },
+    {
+      description: "Pochhammer(1.5, 3) at precision 100 (arb-prec; expect 13.125 exact)",
+      input: record({
+        head: str("Pochhammer"),
+        args: list([float64FromNumber(1.5), float64FromNumber(3)]),
+      }),
+      flags: { precision: "100" },
+    },
+    {
+      description: "IncompleteGammaUpper(1+0.5i, 2+0.1i) at precision 50 (complex arb-prec)",
+      input: record({
+        head: str("IncompleteGammaUpper"),
+        args: record({
+          re: list([float64FromNumber(1), float64FromNumber(2)]),
+          im: list([float64FromNumber(0.5), float64FromNumber(0.1)]),
+        }),
+      }),
+      flags: { precision: "50" },
+    },
+    {
+      description: "BarnesG(2.5) at precision 200 (deep arb-prec)",
+      input: record({
+        head: str("BarnesG"),
+        args: list([float64FromNumber(2.5)]),
+      }),
+      flags: { precision: "200" },
     },
     {
       description: "unknown head → tagged refusal",
@@ -1227,13 +2105,13 @@ export const def = defineTool({
     {
       name: "unknown-head-tagged",
       statement:
-        "head not in {Erf, Erfc, Erfcx, Erfi, InverseErf, InverseErfc, BesselJ, BesselY, BesselI, BesselK, BesselIScaled, BesselKScaled} → tagged 'special-eval/unknown-head' with the admitted list — never a silent fallthrough.",
+        "head not in the admitted vocabulary {Erf-family (6), Bessel-family (6), Gamma-family (16)} → tagged 'special-eval/unknown-head' with the admitted list — never a silent fallthrough.",
       machine_checkable: true,
     },
     {
       name: "degenerate-shape-tagged",
       statement:
-        "complex args with mismatched re/im list lengths → tagged 'special-eval/degenerate-shape'; args of wrong arity for the head (Erf=1, Bessel=2) → 'special-eval/degenerate-shape' — never a silent zero-fill.",
+        "complex args with mismatched re/im list lengths → tagged 'special-eval/degenerate-shape'; args of wrong arity for the head (Erf=1, Bessel=2, Gamma family=1|2) → 'special-eval/degenerate-shape' — never a silent zero-fill.",
       machine_checkable: true,
     },
     {
@@ -1246,6 +2124,42 @@ export const def = defineTool({
       name: "bessel-scaled-vs-unscaled-identity",
       statement:
         "bigBesselIScaled(ν, z, prec) · exp(|z|) ≈ bigBesselI(ν, z, prec) for moderate z (substrate identity from R3 §0.4; not byte-identical due to internal precision margins).",
+      machine_checkable: true,
+    },
+    {
+      name: "gamma-half-equals-sqrt-pi",
+      statement:
+        "Gamma(1/2) = √π byte-identically with sqrt(pi) at every precision (ADR-0042 / DLMF §5.4.1).  The closed-form anchor; a mutation that perturbs the reflection branch fails this immediately.",
+      machine_checkable: true,
+    },
+    {
+      name: "beta-half-half-equals-pi",
+      statement:
+        "Beta(1/2, 1/2) = π byte-identically with bigfloat π at every precision (DLMF §5.12.1; trivial closed form).  Acts as the cross-substrate anchor between bigBeta and the transcendental π.",
+      machine_checkable: true,
+    },
+    {
+      name: "gamma-restriction-to-real-axis",
+      statement:
+        "cgamma(x + 0i, prec).re agrees with gamma(x, prec) to >= prec - 8 bits for real x > 0; .im is zero by construction.  Same shape as the Erf real-axis restriction (loadbearing real ↔ complex consistency across both lanes).",
+      machine_checkable: true,
+    },
+    {
+      name: "pochhammer-positive-integer-exact",
+      statement:
+        "Pochhammer(1, n) = n! for positive integer n; Pochhammer(1/2, n) byte-identical to the doubled-product closed form (DLMF §5.2.4).  Anchored against the float64 substrate at p=10 and against the arb-prec substrate at p>15.",
+      machine_checkable: true,
+    },
+    {
+      name: "incomplete-gamma-p-plus-q-identity",
+      statement:
+        "IncompleteGammaP(a, z) + IncompleteGammaQ(a, z) = 1 byte-identically at arb-prec for real a > 0, z >= 0 (DLMF §8.2.4 algebraic relation; substrate I2b guarantees the cancellation-free dispatch).",
+      machine_checkable: true,
+    },
+    {
+      name: "honest-no-known-representation-gamma",
+      statement:
+        "Pochhammer / LogBeta / BarnesG / Hyperfactorial / IncompleteGammaP / IncompleteGammaQ / GammaRatio / GammaDeltaRatio on the complex axis refuse with 'special-eval/no-known-representation' at every precision (no complex substrate in v0.2; ADR-0042 §'Decision 7-9').  Trigamma / Polygamma / IncompleteGamma{Upper,Lower} / Beta refuse on the complex float64 tier only (the arb-prec complex lane is available at --precision > 15).",
       machine_checkable: true,
     },
   ],
@@ -1277,12 +2191,13 @@ export const def = defineTool({
     }
 
     // Dispatch on the args' wire shape: list = real axis; record = complex.
-    // The HEAD_ARITY table (Erf=1, Bessel=2) is the arity gate; the
-    // per-family dispatcher (`dispatchReal{Bessel?}` / `dispatchComplex
-    // {Bessel?}`) splits on family because the substrate signatures and
-    // refusal envelopes differ.
+    // The HEAD_ARITY table (Erf=1, Bessel=2, Gamma=1|2) is the arity gate;
+    // the per-family dispatcher (`dispatchReal{Bessel?,Gamma?}` /
+    // `dispatchComplex{Bessel?,Gamma?}`) splits on family because the
+    // substrate signatures and refusal envelopes differ.
     const arity = HEAD_ARITY[head];
     const bessel = isBesselHead(head);
+    const gammaFam = isGammaHead(head);
 
     if (argsField.kind === "list") {
       const xs = readRealArgs(argsField as ListValue);
@@ -1299,6 +2214,14 @@ export const def = defineTool({
       if (bessel) {
         // Bessel: args = [ν, z]; route through dispatchRealBessel.
         return dispatchRealBessel(head, xs[0]!, xs[1]!, precisionDecimal);
+      }
+      if (gammaFam) {
+        // Gamma family: args = [z] for arity-1 spine; args = [m, z] or
+        // [a, n] or [a, z] or [a, b] or [a, δ] for arity-2 (semantics
+        // per head documented in the README catalog).  The dispatcher
+        // treats both arities uniformly.
+        const a1 = arity === 2 ? xs[1]! : null;
+        return dispatchRealGamma(head, xs[0]!, a1, precisionDecimal);
       }
       // Erf family: args = [z]; route through arity-1 dispatchReal.
       return dispatchReal(head, xs[0]!, precisionDecimal);
@@ -1329,6 +2252,23 @@ export const def = defineTool({
           im[0]!,
           re[1]!,
           im[1]!,
+          precisionDecimal,
+        );
+      }
+      if (gammaFam) {
+        // Gamma family complex: arity-1 spine (Gamma, LogGamma, Digamma,
+        // Trigamma, BarnesG, Hyperfactorial) takes (z.re + i·z.im);
+        // arity-2 heads take (arg0, arg1) as parallel complex pairs.
+        // Per ADR-0035 the wire is the parallel-array `record{re, im}`
+        // shape (mandatory `im` field; same length as `re`).
+        const a1Re = arity === 2 ? re[1]! : null;
+        const a1Im = arity === 2 ? im[1]! : null;
+        return dispatchComplexGamma(
+          head,
+          re[0]!,
+          im[0]!,
+          a1Re,
+          a1Im,
           precisionDecimal,
         );
       }

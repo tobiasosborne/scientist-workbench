@@ -127,3 +127,36 @@ export {
   besselIComplexFloat64,
   besselKComplexFloat64,
 } from "./special-funcs/bessel-float64.js";
+
+// Float64 Gamma family substrate (ADR-0042 §Decision 4). Inherits
+// `numerical: true` (ADR-0015). Nineteen ADMITTED_HEADS entries per
+// R3 §1 verbatim-port table: Cephes gamma.c (Moshier 2000), FreeBSD
+// e_lgamma_r.c (SunPro 1993), Boost.Math digamma/polygamma, Cephes
+// igam.c / incbet.c, SciPy _loggamma.pxd (complex paths).
+export {
+  type LGammaResult,
+  gammaFloat64,
+  lgammaFloat64,
+  digammaFloat64,
+  trigammaFloat64,
+  polygammaFloat64,
+  pochhammerFloat64,
+  gammaPFloat64,
+  gammaQFloat64,
+  gammaQLentzFloat64,
+  incGammaUpperFloat64,
+  incGammaLowerFloat64,
+  invGammaPFloat64,
+  invGammaQFloat64,
+  betaFloat64,
+  logBetaFloat64,
+  gammaRatioFloat64,
+  gammaDeltaRatioFloat64,
+  gammaPDerivativeFloat64,
+  incBetaFloat64,
+  barnesGFloat64,
+  hyperfactorialFloat64,
+  lgammaComplexFloat64,
+  gammaComplexFloat64,
+  digammaComplexFloat64,
+} from "./special-funcs/gamma-float64.js";

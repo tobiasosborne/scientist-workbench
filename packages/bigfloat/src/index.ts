@@ -107,6 +107,11 @@ export {
   clgamma,
   cgamma,
   cdigamma,
+  ctrigamma,
+  cpolygamma,
+  cIncompleteGammaUpper,
+  cIncompleteGammaLower,
+  cBeta,
   bigW,
   bigCErf,
   bigCErfc,
@@ -162,6 +167,34 @@ export {
   bigBesselKFromConnection,
   bigBesselKIntegerNu,
 } from "./special-funcs/besselk.js";
+
+export {
+  bigIncompleteGammaUpper,
+  bigIncompleteGammaLower,
+  bigGammaP,
+  bigGammaQ,
+  temmeUniformAsymptoticQ,
+} from "./special-funcs/incomplete-gamma.js";
+
+export {
+  bigBeta,
+  bigLogBeta,
+} from "./special-funcs/beta.js";
+
+export {
+  bigPochhammer,
+} from "./special-funcs/pochhammer.js";
+
+export {
+  bigBarnesG,
+} from "./special-funcs/barnes-g.js";
+
+export {
+  bigHurwitzZeta,
+  bigRiemannZeta,
+  hurwitzShiftThreshold,
+  _hurwitzZetaCVZ,
+} from "./special-funcs/zeta.js";
 
 export {
   ln2,

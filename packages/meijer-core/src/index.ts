@@ -196,6 +196,24 @@ export {
   meijerGToHead as meijerGToHeadBessel,
 } from "./bridges/bessel.js";
 
+// Gamma-family bridge (ADR-0042 §"Decision 5" + Gamma R4 §A.3–A.4):
+// per-head sister module to `bridges/erf.ts` and `bridges/bessel.ts`,
+// the third bridge to land. Of the nine gamma-family heads,
+// **only two have closed Meijer-G representations**:
+// `IncompleteGammaLower(a, z)` and `IncompleteGammaUpper(a, z)` (both
+// 2-arg). The remaining seven — `Gamma`, `LogGamma`, `Digamma`,
+// `Trigamma`, `Polygamma`, `Beta`, `Pochhammer`, `BarnesG` — are
+// honestly refused with `null` for documented structural reasons
+// (see `bridges/gamma.ts` file-top "Honest refusals"). The `(2,0,1,2)`
+// shape that `IncompleteGammaUpper` produces is shared with `Erfc`
+// and `ExpIntegralE(1, z)`; the gamma bridge's backward matcher
+// defers to those existing rules (returns `null`) so a top-level
+// dispatcher iterating over registered bridges routes correctly.
+export {
+  headToMeijerG as headToMeijerGGamma,
+  meijerGToHead as meijerGToHeadGamma,
+} from "./bridges/gamma.js";
+
 // -----------------------------------------------------------------------------
 // Layer 7 — top-level dispatcher (ADR-0027)
 // -----------------------------------------------------------------------------

@@ -237,7 +237,7 @@ bd create --title="[gamma] I4 — cas-core gamma-identities.ts (38 rules per R1 
 
 ```bash
 bd create --title="[gamma] I1a — digamma/trigamma negative-argument lift (~30 LOC unblock)" \
-  --description="Phase 2 Round 2. Per PHASE2-impl-plans.md §I1a + A1 §1.1 gap + R2 §1.4 algorithm. Currently digamma(z, prec) for z<0 throws dead code. Mirror cdigammaReflect pattern (worklog 117 bead oj5j) on real axis: lossBits accounting + ψ(z) = ψ(1-z) + π·cot(πz) [DLMF 5.5.4]. Same for trigamma per DLMF 5.15.6. ~60-80 LOC in special.ts + ~30 LOC tests." \
+  --description="Phase 2 Round 2. Per PHASE2-impl-plans.md §I1a + A1 §1.1 gap + R2 §1.4 algorithm. Currently digamma(z, prec) for z<0 throws dead code. Mirror cdigammaReflect pattern (worklog 117 bead oj5j) on real axis: lossBits accounting + ψ(z) = ψ(1-z) - π·cot(πz) [DLMF 5.5.4 rearranged; **MINUS, not PLUS** — verified at z=-0.3: ψ(1.3)=-0.169, π·cot(-0.3π)=-2.282, so ψ(-0.3)=-0.169-(-2.282)=2.113 ✓]. Same for trigamma per DLMF 5.15.6. ~60-80 LOC in special.ts + ~30 LOC tests." \
   --type=task --priority=2 --labels=gamma-anchor
 
 bd create --title="[gamma] I1b — polygamma m≥2 via Hurwitz zeta (~200 LOC unstub)" \

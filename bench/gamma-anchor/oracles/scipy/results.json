@@ -1,0 +1,4675 @@
+{
+  "oracle_id": "scipy",
+  "oracle_version": "SciPy 1.17.0 / Python 3.12.3 / NumPy 1.26.4",
+  "scipy_version": "1.17.0",
+  "numpy_version": "1.26.4",
+  "python_version": "3.12.3",
+  "generated_at": "2026-05-19T08:24:17.394Z",
+  "bead": "scientist-workbench-tqwc",
+  "corpus_bead": "scientist-workbench-0kq3",
+  "corpus_manifest_version": 1,
+  "corpus_generated_at": "2026-05-19T00:00:00Z",
+  "corpus_seed": 20260519,
+  "tier": "bronze",
+  "precision_emit": "float64 (f\"{x:.17g}\"; 17-sig-digit round-trip)",
+  "platform": {
+    "arch": "x64",
+    "os": "linux",
+    "runtime": "bun-1.3.13"
+  },
+  "totals": {
+    "records": 377,
+    "success": 342,
+    "refused": 24,
+    "unsupported": 11,
+    "error": 0,
+    "real_inputs": 333,
+    "complex_inputs": 44,
+    "by_landmine": {
+      "L17": 42,
+      "L12": 104,
+      "L13": 12,
+      "L15": 13,
+      "L14": 8,
+      "L14-cousin": 16
+    },
+    "by_refuse_token": {
+      "TypeError-complex-polygamma": 8,
+      "TypeError-complex-gammainc": 16
+    }
+  },
+  "results": [
+    {
+      "input_id": "T1-gamma-001",
+      "head": "Gamma",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.063754,
+      "value": "1"
+    },
+    {
+      "input_id": "T1-gamma-002",
+      "head": "Gamma",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.011488,
+      "value": "1"
+    },
+    {
+      "input_id": "T1-gamma-003",
+      "head": "Gamma",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004942,
+      "value": "24"
+    },
+    {
+      "input_id": "T1-gamma-004",
+      "head": "Gamma",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003194,
+      "value": "39916800"
+    },
+    {
+      "input_id": "T1-gamma-005",
+      "head": "Gamma",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.006304,
+      "value": "10319.753109127643"
+    },
+    {
+      "input_id": "T1-loggamma-001",
+      "head": "LogGamma",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.loggamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.010156,
+      "value": "0"
+    },
+    {
+      "input_id": "T1-loggamma-002",
+      "head": "LogGamma",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.loggamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.004451,
+      "value": "0"
+    },
+    {
+      "input_id": "T1-loggamma-003",
+      "head": "LogGamma",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.loggamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003389,
+      "value": "3.1780538303479458"
+    },
+    {
+      "input_id": "T1-loggamma-004",
+      "head": "LogGamma",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.loggamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002981,
+      "value": "17.502307845873887"
+    },
+    {
+      "input_id": "T1-loggamma-005",
+      "head": "LogGamma",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.loggamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.004063,
+      "value": "15.280152170252171"
+    },
+    {
+      "input_id": "T1-digamma-001",
+      "head": "Digamma",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.014448,
+      "value": "-0.57721566490153287"
+    },
+    {
+      "input_id": "T1-digamma-002",
+      "head": "Digamma",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003723,
+      "value": "0.42278433509846713"
+    },
+    {
+      "input_id": "T1-digamma-003",
+      "head": "Digamma",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002829,
+      "value": "1.5061176684318003"
+    },
+    {
+      "input_id": "T1-digamma-004",
+      "head": "Digamma",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002757,
+      "value": "2.4426616799758123"
+    },
+    {
+      "input_id": "T1-digamma-005",
+      "head": "Digamma",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003224,
+      "value": "2.8465652879962891"
+    },
+    {
+      "input_id": "T1-trigamma-001",
+      "head": "Trigamma",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.12262,
+      "value": "1.6449340668482266"
+    },
+    {
+      "input_id": "T1-trigamma-002",
+      "head": "Trigamma",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.025353,
+      "value": "0.64493406684822663"
+    },
+    {
+      "input_id": "T1-trigamma-003",
+      "head": "Trigamma",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.017922,
+      "value": "0.22132295573711533"
+    },
+    {
+      "input_id": "T1-trigamma-004",
+      "head": "Trigamma",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.024211,
+      "value": "0.086901872871768399"
+    },
+    {
+      "input_id": "T1-trigamma-005",
+      "head": "Trigamma",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.018234,
+      "value": "0.25033657310250779"
+    },
+    {
+      "input_id": "T1-barnesg-001",
+      "head": "BarnesG",
+      "tier": "T1",
+      "status": "unsupported",
+      "method": "BarnesG-not-in-scipy",
+      "landmines": [],
+      "notes": "L16: SciPy has no barnesg; bronze tier cannot cover this head. Use Wolfram (G2) or mpmath (G3) for gold values.",
+      "elapsed_ms": 0.006855,
+      "value": null
+    },
+    {
+      "input_id": "T1-barnesg-002",
+      "head": "BarnesG",
+      "tier": "T1",
+      "status": "unsupported",
+      "method": "BarnesG-not-in-scipy",
+      "landmines": [],
+      "notes": "L16: SciPy has no barnesg; bronze tier cannot cover this head. Use Wolfram (G2) or mpmath (G3) for gold values.",
+      "elapsed_ms": 0.001824,
+      "value": null
+    },
+    {
+      "input_id": "T1-barnesg-003",
+      "head": "BarnesG",
+      "tier": "T1",
+      "status": "unsupported",
+      "method": "BarnesG-not-in-scipy",
+      "landmines": [],
+      "notes": "L16: SciPy has no barnesg; bronze tier cannot cover this head. Use Wolfram (G2) or mpmath (G3) for gold values.",
+      "elapsed_ms": 0.001274,
+      "value": null
+    },
+    {
+      "input_id": "T1-barnesg-004",
+      "head": "BarnesG",
+      "tier": "T1",
+      "status": "unsupported",
+      "method": "BarnesG-not-in-scipy",
+      "landmines": [],
+      "notes": "L16: SciPy has no barnesg; bronze tier cannot cover this head. Use Wolfram (G2) or mpmath (G3) for gold values.",
+      "elapsed_ms": 0.000887,
+      "value": null
+    },
+    {
+      "input_id": "T1-barnesg-005",
+      "head": "BarnesG",
+      "tier": "T1",
+      "status": "unsupported",
+      "method": "BarnesG-not-in-scipy",
+      "landmines": [],
+      "notes": "L16: SciPy has no barnesg; bronze tier cannot cover this head. Use Wolfram (G2) or mpmath (G3) for gold values.",
+      "elapsed_ms": 0.000873,
+      "value": null
+    },
+    {
+      "input_id": "T1-polygamma-001",
+      "head": "Polygamma",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.polygamma(2,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.028249,
+      "value": "-2.404113806319188"
+    },
+    {
+      "input_id": "T1-polygamma-002",
+      "head": "Polygamma",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.polygamma(2,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.019828,
+      "value": "-0.048789732245114487"
+    },
+    {
+      "input_id": "T1-polygamma-003",
+      "head": "Polygamma",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.polygamma(3,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.018288,
+      "value": "6.4939394022668289"
+    },
+    {
+      "input_id": "T1-polygamma-004",
+      "head": "Polygamma",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.polygamma(3,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.016244,
+      "value": "0.021427828192755079"
+    },
+    {
+      "input_id": "T1-pochhammer-001",
+      "head": "Pochhammer",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.poch",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.025954,
+      "value": "0.5"
+    },
+    {
+      "input_id": "T1-pochhammer-002",
+      "head": "Pochhammer",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.poch",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.013551,
+      "value": "639383.8623046875"
+    },
+    {
+      "input_id": "T1-pochhammer-003",
+      "head": "Pochhammer",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.poch",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.005332,
+      "value": "1.7415237857683685e+24"
+    },
+    {
+      "input_id": "T1-pochhammer-004",
+      "head": "Pochhammer",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.poch",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.008552,
+      "value": "2"
+    },
+    {
+      "input_id": "T1-pochhammer-005",
+      "head": "Pochhammer",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.poch",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003096,
+      "value": "39916800"
+    },
+    {
+      "input_id": "T1-pochhammer-006",
+      "head": "Pochhammer",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.poch",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002973,
+      "value": "4.0329146112660572e+26"
+    },
+    {
+      "input_id": "T1-pochhammer-007",
+      "head": "Pochhammer",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.poch",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.005025,
+      "value": "1.7"
+    },
+    {
+      "input_id": "T1-pochhammer-008",
+      "head": "Pochhammer",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.poch",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.004238,
+      "value": "21194706.926141113"
+    },
+    {
+      "input_id": "T1-pochhammer-009",
+      "head": "Pochhammer",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.poch",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003774,
+      "value": "1.6633608751386253e+26"
+    },
+    {
+      "input_id": "T1-incompletegammaupper-001",
+      "head": "IncompleteGammaUpper",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.012276,
+      "value": "0.080647117960317954"
+    },
+    {
+      "input_id": "T1-incompletegammaupper-002",
+      "head": "IncompleteGammaUpper",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.008831,
+      "value": "0.50728223381177329"
+    },
+    {
+      "input_id": "T1-incompletegammaupper-003",
+      "head": "IncompleteGammaUpper",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.005249,
+      "value": "0.19914827347145581"
+    },
+    {
+      "input_id": "T1-incompletegammaupper-004",
+      "head": "IncompleteGammaUpper",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004637,
+      "value": "10.571838841565102"
+    },
+    {
+      "input_id": "T1-incompletegammaupper-005",
+      "head": "IncompleteGammaUpper",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.00576,
+      "value": "0.036524406235393048"
+    },
+    {
+      "input_id": "T1-incompletegammalower-001",
+      "head": "IncompleteGammaLower",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammainc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.00751,
+      "value": "1.691806732945198"
+    },
+    {
+      "input_id": "T1-incompletegammalower-002",
+      "head": "IncompleteGammaLower",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammainc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.005739,
+      "value": "0.37894469164098471"
+    },
+    {
+      "input_id": "T1-incompletegammalower-003",
+      "head": "IncompleteGammaLower",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammainc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.00427,
+      "value": "0.80085172652854419"
+    },
+    {
+      "input_id": "T1-incompletegammalower-004",
+      "head": "IncompleteGammaLower",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammainc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004309,
+      "value": "13.428161158434909"
+    },
+    {
+      "input_id": "T1-incompletegammalower-005",
+      "head": "IncompleteGammaLower",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammainc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.00515,
+      "value": "0.87211432661789767"
+    },
+    {
+      "input_id": "T1-incompletegammap-001",
+      "head": "IncompleteGammaP",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammainc(=P)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004456,
+      "value": "0.95449973610364147"
+    },
+    {
+      "input_id": "T1-incompletegammap-002",
+      "head": "IncompleteGammaP",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammainc(=P)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004264,
+      "value": "0.42759329552912023"
+    },
+    {
+      "input_id": "T1-incompletegammap-003",
+      "head": "IncompleteGammaP",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammainc(=P)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003407,
+      "value": "0.80085172652854419"
+    },
+    {
+      "input_id": "T1-incompletegammap-004",
+      "head": "IncompleteGammaP",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammainc(=P)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003346,
+      "value": "0.55950671493478787"
+    },
+    {
+      "input_id": "T1-incompletegammap-005",
+      "head": "IncompleteGammaP",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammainc(=P)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004132,
+      "value": "0.9598031594793458"
+    },
+    {
+      "input_id": "T1-incompletegammaq-001",
+      "head": "IncompleteGammaQ",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammaincc(=Q)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004525,
+      "value": "0.04550026389635857"
+    },
+    {
+      "input_id": "T1-incompletegammaq-002",
+      "head": "IncompleteGammaQ",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammaincc(=Q)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004025,
+      "value": "0.57240670447087982"
+    },
+    {
+      "input_id": "T1-incompletegammaq-003",
+      "head": "IncompleteGammaQ",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammaincc(=Q)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003279,
+      "value": "0.19914827347145581"
+    },
+    {
+      "input_id": "T1-incompletegammaq-004",
+      "head": "IncompleteGammaQ",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammaincc(=Q)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003027,
+      "value": "0.44049328506521257"
+    },
+    {
+      "input_id": "T1-incompletegammaq-005",
+      "head": "IncompleteGammaQ",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammaincc(=Q)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.00455,
+      "value": "0.040196840520654205"
+    },
+    {
+      "input_id": "T1-inverseincompletegammap-001",
+      "head": "InverseIncompleteGammaP",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammaincinv(inverts P)",
+      "landmines": [
+        "L13"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.008233,
+      "value": "0.0078953870467156108"
+    },
+    {
+      "input_id": "T1-inverseincompletegammap-002",
+      "head": "InverseIncompleteGammaP",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammaincinv(inverts P)",
+      "landmines": [
+        "L13"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004815,
+      "value": "0.227468211559786"
+    },
+    {
+      "input_id": "T1-inverseincompletegammap-003",
+      "head": "InverseIncompleteGammaP",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammaincinv(inverts P)",
+      "landmines": [
+        "L13"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.00652,
+      "value": "1.352771727047702"
+    },
+    {
+      "input_id": "T1-inverseincompletegammap-004",
+      "head": "InverseIncompleteGammaP",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammaincinv(inverts P)",
+      "landmines": [
+        "L13"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.010548,
+      "value": "2.432591025962664"
+    },
+    {
+      "input_id": "T1-inverseincompletegammap-005",
+      "head": "InverseIncompleteGammaP",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammaincinv(inverts P)",
+      "landmines": [
+        "L13"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.006573,
+      "value": "4.6709088827959846"
+    },
+    {
+      "input_id": "T1-inverseincompletegammap-006",
+      "head": "InverseIncompleteGammaP",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammaincinv(inverts P)",
+      "landmines": [
+        "L13"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004633,
+      "value": "7.9935895860526323"
+    },
+    {
+      "input_id": "T1-inverseincompletegammaq-001",
+      "head": "InverseIncompleteGammaQ",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammainccinv(inverts Q)",
+      "landmines": [
+        "L13"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.007117,
+      "value": "1.35277172704771"
+    },
+    {
+      "input_id": "T1-inverseincompletegammaq-002",
+      "head": "InverseIncompleteGammaQ",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammainccinv(inverts Q)",
+      "landmines": [
+        "L13"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004879,
+      "value": "0.22746821155978619"
+    },
+    {
+      "input_id": "T1-inverseincompletegammaq-003",
+      "head": "InverseIncompleteGammaQ",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammainccinv(inverts Q)",
+      "landmines": [
+        "L13"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004331,
+      "value": "0.0078953870467156125"
+    },
+    {
+      "input_id": "T1-inverseincompletegammaq-004",
+      "head": "InverseIncompleteGammaQ",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammainccinv(inverts Q)",
+      "landmines": [
+        "L13"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004069,
+      "value": "7.9935895860526305"
+    },
+    {
+      "input_id": "T1-inverseincompletegammaq-005",
+      "head": "InverseIncompleteGammaQ",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammainccinv(inverts Q)",
+      "landmines": [
+        "L13"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.00401,
+      "value": "4.6709088827959846"
+    },
+    {
+      "input_id": "T1-inverseincompletegammaq-006",
+      "head": "InverseIncompleteGammaQ",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gammainccinv(inverts Q)",
+      "landmines": [
+        "L13"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004733,
+      "value": "2.4325910259626649"
+    },
+    {
+      "input_id": "T1-beta-001",
+      "head": "Beta",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.beta",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.007078,
+      "value": "3.1415926535897927"
+    },
+    {
+      "input_id": "T1-beta-002",
+      "head": "Beta",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.beta",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.004034,
+      "value": "0.083333333333333329"
+    },
+    {
+      "input_id": "T1-beta-003",
+      "head": "Beta",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.beta",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.00538,
+      "value": "0.17668660452401747"
+    },
+    {
+      "input_id": "T1-beta-004",
+      "head": "Beta",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.beta",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003161,
+      "value": "0.0090909090909090922"
+    },
+    {
+      "input_id": "T1-logbeta-001",
+      "head": "LogBeta",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.betaln(log|B|)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.006618,
+      "value": "1.1447298858493999"
+    },
+    {
+      "input_id": "T1-logbeta-002",
+      "head": "LogBeta",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.betaln(log|B|)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.00428,
+      "value": "-2.4849066497880004"
+    },
+    {
+      "input_id": "T1-logbeta-003",
+      "head": "LogBeta",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.betaln(log|B|)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.004835,
+      "value": "-1.7333777116754903"
+    },
+    {
+      "input_id": "T1-logbeta-004",
+      "head": "LogBeta",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.betaln(log|B|)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003084,
+      "value": "-4.7004803657924157"
+    },
+    {
+      "input_id": "T1-gammaratio-001",
+      "head": "GammaRatio",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.poch(b,a-b)=Γ(a)/Γ(b)",
+      "landmines": [],
+      "notes": "composed via Pochhammer",
+      "elapsed_ms": 0.018505,
+      "value": "504"
+    },
+    {
+      "input_id": "T1-gammaratio-002",
+      "head": "GammaRatio",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.gamma(a)/gamma(b)",
+      "landmines": [],
+      "notes": "direct ratio (may overflow at a,b>170)",
+      "elapsed_ms": 0.009181,
+      "value": "27.027884089235823"
+    },
+    {
+      "input_id": "T1-gammadeltaratio-001",
+      "head": "GammaDeltaRatio",
+      "tier": "T1",
+      "status": "success",
+      "method": "1/scipy.special.poch(a,b)=Γ(a)/Γ(a+b)",
+      "landmines": [],
+      "notes": "composed via reciprocal Pochhammer",
+      "elapsed_ms": 0.012053,
+      "value": "0.45851597901023994"
+    },
+    {
+      "input_id": "T1-gammadeltaratio-002",
+      "head": "GammaDeltaRatio",
+      "tier": "T1",
+      "status": "success",
+      "method": "1/scipy.special.poch(a,b)=Γ(a)/Γ(a+b)",
+      "landmines": [],
+      "notes": "composed via reciprocal Pochhammer",
+      "elapsed_ms": 0.006682,
+      "value": "0.03153332424761679"
+    },
+    {
+      "input_id": "T1-gammapderivative-001",
+      "head": "GammaPDerivative",
+      "tier": "T1",
+      "status": "success",
+      "method": "DLMF §8.8.2 closed form (exp(-z)·z^(a-1)/Γ(a))",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.007011,
+      "value": "0.48394144903828679"
+    },
+    {
+      "input_id": "T1-gammapderivative-002",
+      "head": "GammaPDerivative",
+      "tier": "T1",
+      "status": "success",
+      "method": "DLMF §8.8.2 closed form (exp(-z)·z^(a-1)/Γ(a))",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.005242,
+      "value": "0.0017000733205040685"
+    },
+    {
+      "input_id": "T1-gammapderivative-003",
+      "head": "GammaPDerivative",
+      "tier": "T1",
+      "status": "success",
+      "method": "DLMF §8.8.2 closed form (exp(-z)·z^(a-1)/Γ(a))",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.006366,
+      "value": "0.0015795069263349829"
+    },
+    {
+      "input_id": "T1-gammapderivative-004",
+      "head": "GammaPDerivative",
+      "tier": "T1",
+      "status": "success",
+      "method": "DLMF §8.8.2 closed form (exp(-z)·z^(a-1)/Γ(a))",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003448,
+      "value": "0.17546736976785071"
+    },
+    {
+      "input_id": "T1-incompletebeta-001",
+      "head": "IncompleteBeta",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.betainc(=I_z regularised)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.033804,
+      "value": "0.34829999999999994"
+    },
+    {
+      "input_id": "T1-incompletebeta-002",
+      "head": "IncompleteBeta",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.betainc(=I_z regularised)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.016908,
+      "value": "0.66074594914354567"
+    },
+    {
+      "input_id": "T1-incompletebeta-003",
+      "head": "IncompleteBeta",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.betainc(=I_z regularised)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.00491,
+      "value": "0.6875"
+    },
+    {
+      "input_id": "T1-incompletebeta-004",
+      "head": "IncompleteBeta",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.betainc(=I_z regularised)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.005273,
+      "value": "0.81830988618379108"
+    },
+    {
+      "input_id": "T1-incompletebeta-005",
+      "head": "IncompleteBeta",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.betainc(=I_z regularised)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.004509,
+      "value": "0.99629999999999996"
+    },
+    {
+      "input_id": "T1-incompletebeta-006",
+      "head": "IncompleteBeta",
+      "tier": "T1",
+      "status": "success",
+      "method": "scipy.special.betainc(=I_z regularised)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.00518,
+      "value": "0.98615316701114109"
+    },
+    {
+      "input_id": "T2-gamma-001",
+      "head": "Gamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003859,
+      "value": "-4.3268511088251946"
+    },
+    {
+      "input_id": "T2-gamma-002",
+      "head": "Gamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003128,
+      "value": "-4.2736699824108424"
+    },
+    {
+      "input_id": "T2-gamma-003",
+      "head": "Gamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.002947,
+      "value": "3.3283470067886101"
+    },
+    {
+      "input_id": "T2-gamma-004",
+      "head": "Gamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.00285,
+      "value": "-0.93108278483896401"
+    },
+    {
+      "input_id": "T2-gamma-005",
+      "head": "Gamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.002725,
+      "value": "0.27008820585226906"
+    },
+    {
+      "input_id": "T2-gamma-006",
+      "head": "Gamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.00258,
+      "value": "0.009393206267354336"
+    },
+    {
+      "input_id": "T2-gamma-007",
+      "head": "Gamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.002728,
+      "value": "-5.0408177471511597e-05"
+    },
+    {
+      "input_id": "T2-gamma-008",
+      "head": "Gamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003214,
+      "value": "1.8101197373768893e-08"
+    },
+    {
+      "input_id": "T2-loggamma-001",
+      "head": "LogGamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.loggamma-via-complex+0j",
+      "landmines": [
+        "L15"
+      ],
+      "notes": "L15: real negative z routed through complex(x, 0)",
+      "elapsed_ms": 0.018516,
+      "value": {
+        "re": "1.4648400508576018",
+        "im": "-3.1415926535897931"
+      }
+    },
+    {
+      "input_id": "T2-loggamma-002",
+      "head": "LogGamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.loggamma-via-complex+0j",
+      "landmines": [
+        "L15"
+      ],
+      "notes": "L15: real negative z routed through complex(x, 0)",
+      "elapsed_ms": 0.006576,
+      "value": {
+        "re": "1.4524729387568072",
+        "im": "-3.1415926535897931"
+      }
+    },
+    {
+      "input_id": "T2-loggamma-003",
+      "head": "LogGamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.loggamma-via-complex+0j",
+      "landmines": [
+        "L15"
+      ],
+      "notes": "L15: real negative z routed through complex(x, 0)",
+      "elapsed_ms": 0.004256,
+      "value": {
+        "re": "1.2024757863901105",
+        "im": "-6.2831853071795862"
+      }
+    },
+    {
+      "input_id": "T2-loggamma-004",
+      "head": "LogGamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.loggamma-via-complex+0j",
+      "landmines": [
+        "L15"
+      ],
+      "notes": "L15: real negative z routed through complex(x, 0)",
+      "elapsed_ms": 0.006406,
+      "value": {
+        "re": "-0.07140708531564588",
+        "im": "-9.4247779607693793"
+      }
+    },
+    {
+      "input_id": "T2-loggamma-005",
+      "head": "LogGamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.loggamma-via-complex+0j",
+      "landmines": [
+        "L15"
+      ],
+      "notes": "L15: real negative z routed through complex(x, 0)",
+      "elapsed_ms": 0.004014,
+      "value": {
+        "re": "-1.3090066849930408",
+        "im": "-12.566370614359172"
+      }
+    },
+    {
+      "input_id": "T2-loggamma-006",
+      "head": "LogGamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.loggamma-via-complex+0j",
+      "landmines": [
+        "L15"
+      ],
+      "notes": "L15: real negative z routed through complex(x, 0)",
+      "elapsed_ms": 0.003862,
+      "value": {
+        "re": "-4.6677685885223417",
+        "im": "-18.849555921538759"
+      }
+    },
+    {
+      "input_id": "T2-loggamma-007",
+      "head": "LogGamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.loggamma-via-complex+0j",
+      "landmines": [
+        "L15"
+      ],
+      "notes": "L15: real negative z routed through complex(x, 0)",
+      "elapsed_ms": 0.003536,
+      "value": {
+        "re": "-9.895357144629406",
+        "im": "-28.274333882308138"
+      }
+    },
+    {
+      "input_id": "T2-loggamma-008",
+      "head": "LogGamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.loggamma-via-complex+0j",
+      "landmines": [
+        "L15"
+      ],
+      "notes": "L15: real negative z routed through complex(x, 0)",
+      "elapsed_ms": 0.004034,
+      "value": {
+        "re": "-8.1021137459984303",
+        "im": "-25.132741228718345"
+      }
+    },
+    {
+      "input_id": "T2-digamma-001",
+      "head": "Digamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.012976,
+      "value": "2.1133097796353972"
+    },
+    {
+      "input_id": "T2-digamma-002",
+      "head": "Digamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.011265,
+      "value": "-2.073952793628703"
+    },
+    {
+      "input_id": "T2-digamma-003",
+      "head": "Digamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.01227,
+      "value": "2.8825405488661677"
+    },
+    {
+      "input_id": "T2-digamma-004",
+      "head": "Digamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002887,
+      "value": "-1.1153471291406887"
+    },
+    {
+      "input_id": "T2-digamma-005",
+      "head": "Digamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002522,
+      "value": "1.3888709263595289"
+    },
+    {
+      "input_id": "T2-digamma-006",
+      "head": "Digamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003102,
+      "value": "-0.45687230493238173"
+    },
+    {
+      "input_id": "T2-digamma-007",
+      "head": "Digamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002732,
+      "value": "4.4577892332208799"
+    },
+    {
+      "input_id": "T2-digamma-008",
+      "head": "Digamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.00307,
+      "value": "0.94259800386429049"
+    },
+    {
+      "input_id": "T2-trigamma-001",
+      "head": "Trigamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.036557,
+      "value": "13.945160267805724"
+    },
+    {
+      "input_id": "T2-trigamma-002",
+      "head": "Trigamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.024536,
+      "value": "14.28618087263834"
+    },
+    {
+      "input_id": "T2-trigamma-003",
+      "head": "Trigamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.016786,
+      "value": "14.53687624413708"
+    },
+    {
+      "input_id": "T2-trigamma-004",
+      "head": "Trigamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.015874,
+      "value": "14.769375845132316"
+    },
+    {
+      "input_id": "T2-trigamma-005",
+      "head": "Trigamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.015625,
+      "value": "9.6208792980503475"
+    },
+    {
+      "input_id": "T2-trigamma-006",
+      "head": "Trigamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.018671,
+      "value": "14.918469917911349"
+    },
+    {
+      "input_id": "T2-trigamma-007",
+      "head": "Trigamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.01559,
+      "value": "14.965899076338781"
+    },
+    {
+      "input_id": "T2-trigamma-008",
+      "head": "Trigamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.016371,
+      "value": "19.77759856844466"
+    },
+    {
+      "input_id": "T2-polygamma-001",
+      "head": "Polygamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.polygamma(2,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.025191,
+      "value": "67.639081199883137"
+    },
+    {
+      "input_id": "T2-polygamma-002",
+      "head": "Polygamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.polygamma(2,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.016536,
+      "value": "68.549413471162126"
+    },
+    {
+      "input_id": "T2-polygamma-003",
+      "head": "Polygamma",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.polygamma(2,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.016081,
+      "value": "-68.932939023263771"
+    },
+    {
+      "input_id": "T2-pochhammer-001",
+      "head": "Pochhammer",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.poch",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.005141,
+      "value": "-0.27300000000000002"
+    },
+    {
+      "input_id": "T2-pochhammer-002",
+      "head": "Pochhammer",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.poch",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003639,
+      "value": "0.39000000000000007"
+    },
+    {
+      "input_id": "T2-pochhammer-003",
+      "head": "Pochhammer",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.poch",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.004235,
+      "value": "0"
+    },
+    {
+      "input_id": "T2-pochhammer-004",
+      "head": "Pochhammer",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.poch",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003023,
+      "value": "-60"
+    },
+    {
+      "input_id": "T2-pochhammer-005",
+      "head": "Pochhammer",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.poch",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.004181,
+      "value": "0.5625"
+    },
+    {
+      "input_id": "T2-beta-001",
+      "head": "Beta",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.beta",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.004654,
+      "value": "-4.7619047619047601"
+    },
+    {
+      "input_id": "T2-beta-002",
+      "head": "Beta",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.beta",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.004518,
+      "value": "-3.1415926535897927"
+    },
+    {
+      "input_id": "T2-beta-003",
+      "head": "Beta",
+      "tier": "T2",
+      "status": "success",
+      "method": "scipy.special.beta",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.004058,
+      "value": "5.7945003617232906"
+    },
+    {
+      "input_id": "T3-gamma-001",
+      "head": "Gamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.002975,
+      "value": "Infinity"
+    },
+    {
+      "input_id": "T3-digamma-001",
+      "head": "Digamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.010145,
+      "value": "-Infinity"
+    },
+    {
+      "input_id": "T3-gamma-002",
+      "head": "Gamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004028,
+      "value": "99.432585119150588"
+    },
+    {
+      "input_id": "T3-digamma-002",
+      "head": "Digamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002821,
+      "value": "-100.56088545786868"
+    },
+    {
+      "input_id": "T3-gamma-003",
+      "head": "Gamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003914,
+      "value": "9999.4228832316221"
+    },
+    {
+      "input_id": "T3-digamma-003",
+      "head": "Digamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002976,
+      "value": "-10000.577051183514"
+    },
+    {
+      "input_id": "T3-gamma-004",
+      "head": "Gamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.002805,
+      "value": "-100.58719796441081"
+    },
+    {
+      "input_id": "T3-digamma-004",
+      "head": "Digamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002645,
+      "value": "99.406213695944388"
+    },
+    {
+      "input_id": "T3-gamma-005",
+      "head": "Gamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.002977,
+      "value": "-10000.577314579577"
+    },
+    {
+      "input_id": "T3-digamma-005",
+      "head": "Digamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.004976,
+      "value": "9999.4226198296692"
+    },
+    {
+      "input_id": "T3-gamma-006",
+      "head": "Gamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.002786,
+      "value": "NaN"
+    },
+    {
+      "input_id": "T3-digamma-006",
+      "head": "Digamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002647,
+      "value": "NaN"
+    },
+    {
+      "input_id": "T3-gamma-007",
+      "head": "Gamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.002995,
+      "value": "-100.43695466580859"
+    },
+    {
+      "input_id": "T3-digamma-007",
+      "head": "Digamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.00275,
+      "value": "-99.550784447767853"
+    },
+    {
+      "input_id": "T3-gamma-008",
+      "head": "Gamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.002492,
+      "value": "-10000.422925525276"
+    },
+    {
+      "input_id": "T3-digamma-008",
+      "head": "Digamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002531,
+      "value": "-9999.5769511674098"
+    },
+    {
+      "input_id": "T3-gamma-009",
+      "head": "Gamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003151,
+      "value": "99.591285113277962"
+    },
+    {
+      "input_id": "T3-digamma-009",
+      "head": "Digamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002771,
+      "value": "100.39631270584529"
+    },
+    {
+      "input_id": "T3-gamma-010",
+      "head": "Gamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003095,
+      "value": "9999.5773568449949"
+    },
+    {
+      "input_id": "T3-digamma-010",
+      "head": "Digamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002918,
+      "value": "10000.422519840769"
+    },
+    {
+      "input_id": "T3-gamma-011",
+      "head": "Gamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.002639,
+      "value": "NaN"
+    },
+    {
+      "input_id": "T3-digamma-011",
+      "head": "Digamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.00244,
+      "value": "NaN"
+    },
+    {
+      "input_id": "T3-gamma-012",
+      "head": "Gamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003006,
+      "value": "50.470831490356076"
+    },
+    {
+      "input_id": "T3-digamma-012",
+      "head": "Digamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002859,
+      "value": "-99.048271884953778"
+    },
+    {
+      "input_id": "T3-gamma-013",
+      "head": "Gamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.002618,
+      "value": "5000.4614858369305"
+    },
+    {
+      "input_id": "T3-digamma-013",
+      "head": "Digamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002516,
+      "value": "-9999.076926166159"
+    },
+    {
+      "input_id": "T3-gamma-014",
+      "head": "Gamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.002855,
+      "value": "-49.547903041432917"
+    },
+    {
+      "input_id": "T3-digamma-014",
+      "head": "Digamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002832,
+      "value": "100.89382514365846"
+    },
+    {
+      "input_id": "T3-gamma-015",
+      "head": "Gamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.002678,
+      "value": "-4999.538701476321"
+    },
+    {
+      "input_id": "T3-digamma-015",
+      "head": "Digamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002581,
+      "value": "10000.922494819815"
+    },
+    {
+      "input_id": "T3-gamma-016",
+      "head": "Gamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.002456,
+      "value": "NaN"
+    },
+    {
+      "input_id": "T3-digamma-016",
+      "head": "Digamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002634,
+      "value": "NaN"
+    },
+    {
+      "input_id": "T3-gamma-017",
+      "head": "Gamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.005233,
+      "value": "-16.879876752627819"
+    },
+    {
+      "input_id": "T3-digamma-017",
+      "head": "Digamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003081,
+      "value": "-98.713823724420067"
+    },
+    {
+      "input_id": "T3-gamma-018",
+      "head": "Gamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.002915,
+      "value": "-1666.8760578105364"
+    },
+    {
+      "input_id": "T3-digamma-018",
+      "head": "Digamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.00317,
+      "value": "-9998.7435817072092"
+    },
+    {
+      "input_id": "T3-gamma-019",
+      "head": "Gamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.002855,
+      "value": "16.461097355957783"
+    },
+    {
+      "input_id": "T3-digamma-019",
+      "head": "Digamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002811,
+      "value": "101.22605105727972"
+    },
+    {
+      "input_id": "T3-gamma-020",
+      "head": "Gamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.002732,
+      "value": "1666.4573519137093"
+    },
+    {
+      "input_id": "T3-digamma-020",
+      "head": "Digamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.00259,
+      "value": "10001.255817042407"
+    },
+    {
+      "input_id": "T3-loggamma-001",
+      "head": "LogGamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.loggamma-via-complex+0j",
+      "landmines": [
+        "L15"
+      ],
+      "notes": "L15: real negative z routed through complex(x, 0)",
+      "elapsed_ms": 0.006325,
+      "value": {
+        "re": "6.9081793857174363",
+        "im": "-3.1415926535897931"
+      }
+    },
+    {
+      "input_id": "T3-trigamma-001",
+      "head": "Trigamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.018244,
+      "value": "1000002.6445361981"
+    },
+    {
+      "input_id": "T3-loggamma-002",
+      "head": "LogGamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.loggamma-via-complex+0j",
+      "landmines": [
+        "L15"
+      ],
+      "notes": "L15: real negative z routed through complex(x, 0)",
+      "elapsed_ms": 0.005167,
+      "value": {
+        "re": "6.9073338171820549",
+        "im": "-6.2831853071795862"
+      }
+    },
+    {
+      "input_id": "T3-trigamma-002",
+      "head": "Trigamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.016141,
+      "value": "1000002.6453446478"
+    },
+    {
+      "input_id": "T3-loggamma-003",
+      "head": "LogGamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.loggamma-via-complex+0j",
+      "landmines": [
+        "L15"
+      ],
+      "notes": "L15: real negative z routed through complex(x, 0)",
+      "elapsed_ms": 0.003679,
+      "value": {
+        "re": "6.2155323301992835",
+        "im": "-6.2831853071795862"
+      }
+    },
+    {
+      "input_id": "T3-trigamma-003",
+      "head": "Trigamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.015891,
+      "value": "1000002.8947866078"
+    },
+    {
+      "input_id": "T3-loggamma-004",
+      "head": "LogGamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.loggamma-via-complex+0j",
+      "landmines": [
+        "L15"
+      ],
+      "notes": "L15: real negative z routed through complex(x, 0)",
+      "elapsed_ms": 0.00425,
+      "value": {
+        "re": "6.2136867615804592",
+        "im": "-9.4247779607693793"
+      }
+    },
+    {
+      "input_id": "T3-trigamma-004",
+      "head": "Trigamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.015713,
+      "value": "1000002.8950948352"
+    },
+    {
+      "input_id": "T3-polygamma-001",
+      "head": "Polygamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.polygamma(2,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.017093,
+      "value": "-2000000002.3976321"
+    },
+    {
+      "input_id": "T3-polygamma-002",
+      "head": "Polygamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.polygamma(2,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.0164,
+      "value": "1999999997.58938"
+    },
+    {
+      "input_id": "T3-polygamma-003",
+      "head": "Polygamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.polygamma(2,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.016958,
+      "value": "-2000000000.3916152"
+    },
+    {
+      "input_id": "T3-polygamma-004",
+      "head": "Polygamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.polygamma(2,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.018901,
+      "value": "1999999999.584053"
+    },
+    {
+      "input_id": "T3-polygamma-005",
+      "head": "Polygamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.polygamma(2,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.015703,
+      "value": "-2000000000.1419058"
+    },
+    {
+      "input_id": "T3-polygamma-006",
+      "head": "Polygamma",
+      "tier": "T3",
+      "status": "success",
+      "method": "scipy.special.polygamma(2,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.016123,
+      "value": "1999999999.8336785"
+    },
+    {
+      "input_id": "T4-gamma-001",
+      "head": "Gamma",
+      "tier": "T4",
+      "status": "success",
+      "method": "scipy.special.gamma-complex",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.010392,
+      "value": {
+        "re": "-0.021542732790643875",
+        "im": "0.02390961626114067"
+      }
+    },
+    {
+      "input_id": "T4-gamma-002",
+      "head": "Gamma",
+      "tier": "T4",
+      "status": "success",
+      "method": "scipy.special.gamma-complex",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.007948,
+      "value": {
+        "re": "6.1212619255354407e-12",
+        "im": "3.0523028948857037e-11"
+      }
+    },
+    {
+      "input_id": "T4-gamma-003",
+      "head": "Gamma",
+      "tier": "T4",
+      "status": "success",
+      "method": "scipy.special.gamma-complex",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.005677,
+      "value": {
+        "re": "9.7984564372482811e-10",
+        "im": "-9.2799328061390248e-10"
+      }
+    },
+    {
+      "input_id": "T4-gamma-004",
+      "head": "Gamma",
+      "tier": "T4",
+      "status": "success",
+      "method": "scipy.special.gamma-complex",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.005182,
+      "value": {
+        "re": "-0.94485286220873643",
+        "im": "-0.080778033537750912"
+      }
+    },
+    {
+      "input_id": "T4-loggamma-001",
+      "head": "LogGamma",
+      "tier": "T4",
+      "status": "success",
+      "method": "scipy.special.loggamma-complex",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.005464,
+      "value": {
+        "re": "-7.9181049284314291",
+        "im": "9.8840702761822499"
+      }
+    },
+    {
+      "input_id": "T4-loggamma-002",
+      "head": "LogGamma",
+      "tier": "T4",
+      "status": "success",
+      "method": "scipy.special.loggamma-complex",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.006492,
+      "value": {
+        "re": "-1.4029051207469783",
+        "im": "-8.7639430797749576"
+      }
+    },
+    {
+      "input_id": "T4-loggamma-003",
+      "head": "LogGamma",
+      "tier": "T4",
+      "status": "success",
+      "method": "scipy.special.loggamma-complex",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.007632,
+      "value": {
+        "re": "1.3604938975118981",
+        "im": "4.3196270876016003"
+      }
+    },
+    {
+      "input_id": "T4-loggamma-004",
+      "head": "LogGamma",
+      "tier": "T4",
+      "status": "success",
+      "method": "scipy.special.loggamma-complex",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.004193,
+      "value": {
+        "re": "4.889906081408073",
+        "im": "-3.9202703736320608"
+      }
+    },
+    {
+      "input_id": "T4-digamma-001",
+      "head": "Digamma",
+      "tier": "T4",
+      "status": "success",
+      "method": "scipy.special.digamma-complex",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.011841,
+      "value": {
+        "re": "1.8182752481430995",
+        "im": "1.250503352770135"
+      }
+    },
+    {
+      "input_id": "T4-digamma-002",
+      "head": "Digamma",
+      "tier": "T4",
+      "status": "success",
+      "method": "scipy.special.digamma-complex",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.006238,
+      "value": {
+        "re": "1.9661044867864401",
+        "im": "2.2501132415396832"
+      }
+    },
+    {
+      "input_id": "T4-digamma-003",
+      "head": "Digamma",
+      "tier": "T4",
+      "status": "success",
+      "method": "scipy.special.digamma-complex",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.005397,
+      "value": {
+        "re": "1.0796615905484339",
+        "im": "-2.6432632455300267"
+      }
+    },
+    {
+      "input_id": "T4-digamma-004",
+      "head": "Digamma",
+      "tier": "T4",
+      "status": "success",
+      "method": "scipy.special.digamma-complex",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.007297,
+      "value": {
+        "re": "1.7209972980048063",
+        "im": "-0.86197681880847954"
+      }
+    },
+    {
+      "input_id": "T4-trigamma-001",
+      "head": "Trigamma",
+      "tier": "T4",
+      "status": "refused",
+      "method": "scipy.special.polygamma-complex-refused",
+      "landmines": [
+        "L14"
+      ],
+      "notes": "L14: scipy.special.polygamma(m, complex) raises TypeError; Trigamma = polygamma(1, z) inherits the refusal",
+      "elapsed_ms": 0.005279,
+      "value": null,
+      "refuse_token": "TypeError-complex-polygamma"
+    },
+    {
+      "input_id": "T4-trigamma-002",
+      "head": "Trigamma",
+      "tier": "T4",
+      "status": "refused",
+      "method": "scipy.special.polygamma-complex-refused",
+      "landmines": [
+        "L14"
+      ],
+      "notes": "L14: scipy.special.polygamma(m, complex) raises TypeError; Trigamma = polygamma(1, z) inherits the refusal",
+      "elapsed_ms": 0.003925,
+      "value": null,
+      "refuse_token": "TypeError-complex-polygamma"
+    },
+    {
+      "input_id": "T4-trigamma-003",
+      "head": "Trigamma",
+      "tier": "T4",
+      "status": "refused",
+      "method": "scipy.special.polygamma-complex-refused",
+      "landmines": [
+        "L14"
+      ],
+      "notes": "L14: scipy.special.polygamma(m, complex) raises TypeError; Trigamma = polygamma(1, z) inherits the refusal",
+      "elapsed_ms": 0.00314,
+      "value": null,
+      "refuse_token": "TypeError-complex-polygamma"
+    },
+    {
+      "input_id": "T4-trigamma-004",
+      "head": "Trigamma",
+      "tier": "T4",
+      "status": "refused",
+      "method": "scipy.special.polygamma-complex-refused",
+      "landmines": [
+        "L14"
+      ],
+      "notes": "L14: scipy.special.polygamma(m, complex) raises TypeError; Trigamma = polygamma(1, z) inherits the refusal",
+      "elapsed_ms": 0.004761,
+      "value": null,
+      "refuse_token": "TypeError-complex-polygamma"
+    },
+    {
+      "input_id": "T4-barnesg-001",
+      "head": "BarnesG",
+      "tier": "T4",
+      "status": "unsupported",
+      "method": "BarnesG-not-in-scipy",
+      "landmines": [],
+      "notes": "L16: SciPy has no barnesg; bronze tier cannot cover this head. Use Wolfram (G2) or mpmath (G3) for gold values.",
+      "elapsed_ms": 0.001712,
+      "value": null
+    },
+    {
+      "input_id": "T4-barnesg-002",
+      "head": "BarnesG",
+      "tier": "T4",
+      "status": "unsupported",
+      "method": "BarnesG-not-in-scipy",
+      "landmines": [],
+      "notes": "L16: SciPy has no barnesg; bronze tier cannot cover this head. Use Wolfram (G2) or mpmath (G3) for gold values.",
+      "elapsed_ms": 0.001282,
+      "value": null
+    },
+    {
+      "input_id": "T4-barnesg-003",
+      "head": "BarnesG",
+      "tier": "T4",
+      "status": "unsupported",
+      "method": "BarnesG-not-in-scipy",
+      "landmines": [],
+      "notes": "L16: SciPy has no barnesg; bronze tier cannot cover this head. Use Wolfram (G2) or mpmath (G3) for gold values.",
+      "elapsed_ms": 0.000853,
+      "value": null
+    },
+    {
+      "input_id": "T4-barnesg-004",
+      "head": "BarnesG",
+      "tier": "T4",
+      "status": "unsupported",
+      "method": "BarnesG-not-in-scipy",
+      "landmines": [],
+      "notes": "L16: SciPy has no barnesg; bronze tier cannot cover this head. Use Wolfram (G2) or mpmath (G3) for gold values.",
+      "elapsed_ms": 0.000874,
+      "value": null
+    },
+    {
+      "input_id": "T4-polygamma-001",
+      "head": "Polygamma",
+      "tier": "T4",
+      "status": "refused",
+      "method": "scipy.special.polygamma-complex-refused",
+      "landmines": [
+        "L14"
+      ],
+      "notes": "L14: scipy.special.polygamma(2, complex) raises TypeError",
+      "elapsed_ms": 0.005807,
+      "value": null,
+      "refuse_token": "TypeError-complex-polygamma"
+    },
+    {
+      "input_id": "T4-polygamma-002",
+      "head": "Polygamma",
+      "tier": "T4",
+      "status": "refused",
+      "method": "scipy.special.polygamma-complex-refused",
+      "landmines": [
+        "L14"
+      ],
+      "notes": "L14: scipy.special.polygamma(2, complex) raises TypeError",
+      "elapsed_ms": 0.003819,
+      "value": null,
+      "refuse_token": "TypeError-complex-polygamma"
+    },
+    {
+      "input_id": "T4-polygamma-003",
+      "head": "Polygamma",
+      "tier": "T4",
+      "status": "refused",
+      "method": "scipy.special.polygamma-complex-refused",
+      "landmines": [
+        "L14"
+      ],
+      "notes": "L14: scipy.special.polygamma(2, complex) raises TypeError",
+      "elapsed_ms": 0.003508,
+      "value": null,
+      "refuse_token": "TypeError-complex-polygamma"
+    },
+    {
+      "input_id": "T4-polygamma-004",
+      "head": "Polygamma",
+      "tier": "T4",
+      "status": "refused",
+      "method": "scipy.special.polygamma-complex-refused",
+      "landmines": [
+        "L14"
+      ],
+      "notes": "L14: scipy.special.polygamma(2, complex) raises TypeError",
+      "elapsed_ms": 0.003172,
+      "value": null,
+      "refuse_token": "TypeError-complex-polygamma"
+    },
+    {
+      "input_id": "T4-incompletegammaupper-001",
+      "head": "IncompleteGammaUpper",
+      "tier": "T4",
+      "status": "refused",
+      "method": "scipy.special.gammaincc-complex-refused",
+      "landmines": [
+        "L12",
+        "L14-cousin"
+      ],
+      "notes": "scipy.special.gammainc/gammaincc raise TypeError on complex inputs",
+      "elapsed_ms": 0.004954,
+      "value": null,
+      "refuse_token": "TypeError-complex-gammainc"
+    },
+    {
+      "input_id": "T4-incompletegammaupper-002",
+      "head": "IncompleteGammaUpper",
+      "tier": "T4",
+      "status": "refused",
+      "method": "scipy.special.gammaincc-complex-refused",
+      "landmines": [
+        "L12",
+        "L14-cousin"
+      ],
+      "notes": "scipy.special.gammainc/gammaincc raise TypeError on complex inputs",
+      "elapsed_ms": 0.003787,
+      "value": null,
+      "refuse_token": "TypeError-complex-gammainc"
+    },
+    {
+      "input_id": "T4-incompletegammaupper-003",
+      "head": "IncompleteGammaUpper",
+      "tier": "T4",
+      "status": "refused",
+      "method": "scipy.special.gammaincc-complex-refused",
+      "landmines": [
+        "L12",
+        "L14-cousin"
+      ],
+      "notes": "scipy.special.gammainc/gammaincc raise TypeError on complex inputs",
+      "elapsed_ms": 0.003453,
+      "value": null,
+      "refuse_token": "TypeError-complex-gammainc"
+    },
+    {
+      "input_id": "T4-incompletegammaupper-004",
+      "head": "IncompleteGammaUpper",
+      "tier": "T4",
+      "status": "refused",
+      "method": "scipy.special.gammaincc-complex-refused",
+      "landmines": [
+        "L12",
+        "L14-cousin"
+      ],
+      "notes": "scipy.special.gammainc/gammaincc raise TypeError on complex inputs",
+      "elapsed_ms": 0.003425,
+      "value": null,
+      "refuse_token": "TypeError-complex-gammainc"
+    },
+    {
+      "input_id": "T4-incompletegammaupper-005",
+      "head": "IncompleteGammaUpper",
+      "tier": "T4",
+      "status": "refused",
+      "method": "scipy.special.gammaincc-complex-refused",
+      "landmines": [
+        "L12",
+        "L14-cousin"
+      ],
+      "notes": "scipy.special.gammainc/gammaincc raise TypeError on complex inputs",
+      "elapsed_ms": 0.003546,
+      "value": null,
+      "refuse_token": "TypeError-complex-gammainc"
+    },
+    {
+      "input_id": "T4-incompletegammaupper-006",
+      "head": "IncompleteGammaUpper",
+      "tier": "T4",
+      "status": "refused",
+      "method": "scipy.special.gammaincc-complex-refused",
+      "landmines": [
+        "L12",
+        "L14-cousin"
+      ],
+      "notes": "scipy.special.gammainc/gammaincc raise TypeError on complex inputs",
+      "elapsed_ms": 0.002945,
+      "value": null,
+      "refuse_token": "TypeError-complex-gammainc"
+    },
+    {
+      "input_id": "T4-incompletegammaupper-007",
+      "head": "IncompleteGammaUpper",
+      "tier": "T4",
+      "status": "refused",
+      "method": "scipy.special.gammaincc-complex-refused",
+      "landmines": [
+        "L12",
+        "L14-cousin"
+      ],
+      "notes": "scipy.special.gammainc/gammaincc raise TypeError on complex inputs",
+      "elapsed_ms": 0.003188,
+      "value": null,
+      "refuse_token": "TypeError-complex-gammainc"
+    },
+    {
+      "input_id": "T4-incompletegammaupper-008",
+      "head": "IncompleteGammaUpper",
+      "tier": "T4",
+      "status": "refused",
+      "method": "scipy.special.gammaincc-complex-refused",
+      "landmines": [
+        "L12",
+        "L14-cousin"
+      ],
+      "notes": "scipy.special.gammainc/gammaincc raise TypeError on complex inputs",
+      "elapsed_ms": 0.002993,
+      "value": null,
+      "refuse_token": "TypeError-complex-gammainc"
+    },
+    {
+      "input_id": "T4-incompletegammalower-001",
+      "head": "IncompleteGammaLower",
+      "tier": "T4",
+      "status": "refused",
+      "method": "scipy.special.gammainc-complex-refused",
+      "landmines": [
+        "L12",
+        "L14-cousin"
+      ],
+      "notes": "scipy.special.gammainc raises TypeError on complex inputs",
+      "elapsed_ms": 0.003652,
+      "value": null,
+      "refuse_token": "TypeError-complex-gammainc"
+    },
+    {
+      "input_id": "T4-incompletegammalower-002",
+      "head": "IncompleteGammaLower",
+      "tier": "T4",
+      "status": "refused",
+      "method": "scipy.special.gammainc-complex-refused",
+      "landmines": [
+        "L12",
+        "L14-cousin"
+      ],
+      "notes": "scipy.special.gammainc raises TypeError on complex inputs",
+      "elapsed_ms": 0.00345,
+      "value": null,
+      "refuse_token": "TypeError-complex-gammainc"
+    },
+    {
+      "input_id": "T4-incompletegammalower-003",
+      "head": "IncompleteGammaLower",
+      "tier": "T4",
+      "status": "refused",
+      "method": "scipy.special.gammainc-complex-refused",
+      "landmines": [
+        "L12",
+        "L14-cousin"
+      ],
+      "notes": "scipy.special.gammainc raises TypeError on complex inputs",
+      "elapsed_ms": 0.003452,
+      "value": null,
+      "refuse_token": "TypeError-complex-gammainc"
+    },
+    {
+      "input_id": "T4-incompletegammalower-004",
+      "head": "IncompleteGammaLower",
+      "tier": "T4",
+      "status": "refused",
+      "method": "scipy.special.gammainc-complex-refused",
+      "landmines": [
+        "L12",
+        "L14-cousin"
+      ],
+      "notes": "scipy.special.gammainc raises TypeError on complex inputs",
+      "elapsed_ms": 0.005858,
+      "value": null,
+      "refuse_token": "TypeError-complex-gammainc"
+    },
+    {
+      "input_id": "T4-incompletegammalower-005",
+      "head": "IncompleteGammaLower",
+      "tier": "T4",
+      "status": "refused",
+      "method": "scipy.special.gammainc-complex-refused",
+      "landmines": [
+        "L12",
+        "L14-cousin"
+      ],
+      "notes": "scipy.special.gammainc raises TypeError on complex inputs",
+      "elapsed_ms": 0.003495,
+      "value": null,
+      "refuse_token": "TypeError-complex-gammainc"
+    },
+    {
+      "input_id": "T4-incompletegammalower-006",
+      "head": "IncompleteGammaLower",
+      "tier": "T4",
+      "status": "refused",
+      "method": "scipy.special.gammainc-complex-refused",
+      "landmines": [
+        "L12",
+        "L14-cousin"
+      ],
+      "notes": "scipy.special.gammainc raises TypeError on complex inputs",
+      "elapsed_ms": 0.003153,
+      "value": null,
+      "refuse_token": "TypeError-complex-gammainc"
+    },
+    {
+      "input_id": "T4-incompletegammalower-007",
+      "head": "IncompleteGammaLower",
+      "tier": "T4",
+      "status": "refused",
+      "method": "scipy.special.gammainc-complex-refused",
+      "landmines": [
+        "L12",
+        "L14-cousin"
+      ],
+      "notes": "scipy.special.gammainc raises TypeError on complex inputs",
+      "elapsed_ms": 0.003291,
+      "value": null,
+      "refuse_token": "TypeError-complex-gammainc"
+    },
+    {
+      "input_id": "T4-incompletegammalower-008",
+      "head": "IncompleteGammaLower",
+      "tier": "T4",
+      "status": "refused",
+      "method": "scipy.special.gammainc-complex-refused",
+      "landmines": [
+        "L12",
+        "L14-cousin"
+      ],
+      "notes": "scipy.special.gammainc raises TypeError on complex inputs",
+      "elapsed_ms": 0.003207,
+      "value": null,
+      "refuse_token": "TypeError-complex-gammainc"
+    },
+    {
+      "input_id": "T5-gamma-001",
+      "head": "Gamma",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003646,
+      "value": "1.7724538509055159"
+    },
+    {
+      "input_id": "T5-gamma-002",
+      "head": "Gamma",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.006045,
+      "value": "0.88622692545275794"
+    },
+    {
+      "input_id": "T5-gamma-003",
+      "head": "Gamma",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.002766,
+      "value": "-3.5449077018110318"
+    },
+    {
+      "input_id": "T5-loggamma-001",
+      "head": "LogGamma",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.loggamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003006,
+      "value": "0.57236494292469997"
+    },
+    {
+      "input_id": "T5-loggamma-002",
+      "head": "LogGamma",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.loggamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002909,
+      "value": "-0.12078223763524526"
+    },
+    {
+      "input_id": "T5-loggamma-003",
+      "head": "LogGamma",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.loggamma-via-complex+0j",
+      "landmines": [
+        "L15"
+      ],
+      "notes": "L15: real negative z routed through complex(x, 0)",
+      "elapsed_ms": 0.004545,
+      "value": {
+        "re": "1.2655121234846469",
+        "im": "-3.1415926535897931"
+      }
+    },
+    {
+      "input_id": "T5-digamma-001",
+      "head": "Digamma",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002891,
+      "value": "-1.9635100260214235"
+    },
+    {
+      "input_id": "T5-digamma-002",
+      "head": "Digamma",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002634,
+      "value": "0.03648997397857652"
+    },
+    {
+      "input_id": "T5-digamma-003",
+      "head": "Digamma",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.005427,
+      "value": "0.036489973978576513"
+    },
+    {
+      "input_id": "T5-trigamma-001",
+      "head": "Trigamma",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.01984,
+      "value": "4.9348022005446799"
+    },
+    {
+      "input_id": "T5-trigamma-002",
+      "head": "Trigamma",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.016204,
+      "value": "0.93480220054467933"
+    },
+    {
+      "input_id": "T5-trigamma-003",
+      "head": "Trigamma",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.018232,
+      "value": "8.934802200544679"
+    },
+    {
+      "input_id": "T5-pochhammer-001",
+      "head": "Pochhammer",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.poch",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.004705,
+      "value": "0.75"
+    },
+    {
+      "input_id": "T5-pochhammer-002",
+      "head": "Pochhammer",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.poch",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003702,
+      "value": "29.53125"
+    },
+    {
+      "input_id": "T5-pochhammer-003",
+      "head": "Pochhammer",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.poch",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003543,
+      "value": "639383.8623046875"
+    },
+    {
+      "input_id": "T5-pochhammer-004",
+      "head": "Pochhammer",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.poch",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003146,
+      "value": "3.75"
+    },
+    {
+      "input_id": "T5-pochhammer-005",
+      "head": "Pochhammer",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.poch",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003296,
+      "value": "324.84375"
+    },
+    {
+      "input_id": "T5-pochhammer-006",
+      "head": "Pochhammer",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.poch",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003492,
+      "value": "13427061.108398438"
+    },
+    {
+      "input_id": "T5-incompletegammaupper-001",
+      "head": "IncompleteGammaUpper",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.014295,
+      "value": "0.27880558528065474"
+    },
+    {
+      "input_id": "T5-incompletegammalower-001",
+      "head": "IncompleteGammaLower",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.gammainc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.005426,
+      "value": "1.4936482656248544"
+    },
+    {
+      "input_id": "T5-incompletegammap-001",
+      "head": "IncompleteGammaP",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.gammainc(=P)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003982,
+      "value": "0.84270079294971512"
+    },
+    {
+      "input_id": "T5-incompletegammaq-001",
+      "head": "IncompleteGammaQ",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.gammaincc(=Q)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.01153,
+      "value": "0.15729920705028105"
+    },
+    {
+      "input_id": "T5-incompletegammaupper-002",
+      "head": "IncompleteGammaUpper",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.007044,
+      "value": "0.0027746032604128081"
+    },
+    {
+      "input_id": "T5-incompletegammalower-002",
+      "head": "IncompleteGammaLower",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.gammainc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004811,
+      "value": "1.7696792476451031"
+    },
+    {
+      "input_id": "T5-incompletegammap-002",
+      "head": "IncompleteGammaP",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.gammainc(=P)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003492,
+      "value": "0.9984345977419975"
+    },
+    {
+      "input_id": "T5-incompletegammaq-002",
+      "head": "IncompleteGammaQ",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.gammaincc(=Q)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003451,
+      "value": "0.001565402258002549"
+    },
+    {
+      "input_id": "T5-incompletegammaupper-003",
+      "head": "IncompleteGammaUpper",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.00472,
+      "value": "0.50728223381177329"
+    },
+    {
+      "input_id": "T5-incompletegammalower-003",
+      "head": "IncompleteGammaLower",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.gammainc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004503,
+      "value": "0.37894469164098471"
+    },
+    {
+      "input_id": "T5-incompletegammap-003",
+      "head": "IncompleteGammaP",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.gammainc(=P)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003491,
+      "value": "0.42759329552912023"
+    },
+    {
+      "input_id": "T5-incompletegammaq-003",
+      "head": "IncompleteGammaQ",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.gammaincc(=Q)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003495,
+      "value": "0.57240670447087982"
+    },
+    {
+      "input_id": "T5-incompletegammaupper-004",
+      "head": "IncompleteGammaUpper",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004662,
+      "value": "0.016453809148952236"
+    },
+    {
+      "input_id": "T5-incompletegammalower-004",
+      "head": "IncompleteGammaLower",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.gammainc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.00452,
+      "value": "0.86977311630380572"
+    },
+    {
+      "input_id": "T5-incompletegammap-004",
+      "head": "IncompleteGammaP",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.gammainc(=P)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.006471,
+      "value": "0.9814338645369568"
+    },
+    {
+      "input_id": "T5-incompletegammaq-004",
+      "head": "IncompleteGammaQ",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.gammaincc(=Q)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003337,
+      "value": "0.018566135463043251"
+    },
+    {
+      "input_id": "T5-beta-001",
+      "head": "Beta",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.beta",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.004149,
+      "value": "3.1415926535897927"
+    },
+    {
+      "input_id": "T5-beta-002",
+      "head": "Beta",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.beta",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.004344,
+      "value": "1.5707963267948963"
+    },
+    {
+      "input_id": "T5-beta-003",
+      "head": "Beta",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.beta",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003651,
+      "value": "1.1780972450961724"
+    },
+    {
+      "input_id": "T5-beta-004",
+      "head": "Beta",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.beta",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003465,
+      "value": "0.39269908169872408"
+    },
+    {
+      "input_id": "T5-beta-005",
+      "head": "Beta",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.beta",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003646,
+      "value": "0.19634954084936204"
+    },
+    {
+      "input_id": "T5-beta-006",
+      "head": "Beta",
+      "tier": "T5",
+      "status": "success",
+      "method": "scipy.special.beta",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003657,
+      "value": "0.073631077818510776"
+    },
+    {
+      "input_id": "T6-loggamma-001",
+      "head": "LogGamma",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.loggamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003138,
+      "value": "359.1342053695754"
+    },
+    {
+      "input_id": "T6-loggamma-002",
+      "head": "LogGamma",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.loggamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002489,
+      "value": "1409.2020674704117"
+    },
+    {
+      "input_id": "T6-loggamma-003",
+      "head": "LogGamma",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.loggamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002591,
+      "value": "5905.2204232091808"
+    },
+    {
+      "input_id": "T6-loggamma-004",
+      "head": "LogGamma",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.loggamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.005442,
+      "value": "2298.1010944204327"
+    },
+    {
+      "input_id": "T6-digamma-001",
+      "head": "Digamma",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002769,
+      "value": "4.6001618527380881"
+    },
+    {
+      "input_id": "T6-digamma-002",
+      "head": "Digamma",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002473,
+      "value": "5.7021148820646372"
+    },
+    {
+      "input_id": "T6-digamma-003",
+      "head": "Digamma",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.00248,
+      "value": "6.907255195648812"
+    },
+    {
+      "input_id": "T6-digamma-004",
+      "head": "Digamma",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003829,
+      "value": "6.3028232782289564"
+    },
+    {
+      "input_id": "T6-trigamma-001",
+      "head": "Trigamma",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.017004,
+      "value": "0.010050166663333573"
+    },
+    {
+      "input_id": "T6-trigamma-002",
+      "head": "Trigamma",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.015305,
+      "value": "0.0033388950617146773"
+    },
+    {
+      "input_id": "T6-trigamma-003",
+      "head": "Trigamma",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.015156,
+      "value": "0.0010005001666666331"
+    },
+    {
+      "input_id": "T6-trigamma-004",
+      "head": "Trigamma",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.01518,
+      "value": "0.0012780261887542399"
+    },
+    {
+      "input_id": "T6-gamma-001",
+      "head": "Gamma",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003456,
+      "value": "5.5745857612076058e+196"
+    },
+    {
+      "input_id": "T6-gamma-002",
+      "head": "Gamma",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.gamma",
+      "landmines": [
+        "L17"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.002725,
+      "value": "4.2690680090047061e+304"
+    },
+    {
+      "input_id": "T6-incompletegammaupper-001",
+      "head": "IncompleteGammaUpper",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.00503,
+      "value": "3.7572767357810602e-42"
+    },
+    {
+      "input_id": "T6-incompletegammaq-001",
+      "head": "IncompleteGammaQ",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.gammaincc(=Q)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003492,
+      "value": "3.7572767357810602e-42"
+    },
+    {
+      "input_id": "T6-incompletegammaupper-002",
+      "head": "IncompleteGammaUpper",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004381,
+      "value": "1.5496082669460377e-128"
+    },
+    {
+      "input_id": "T6-incompletegammaq-002",
+      "head": "IncompleteGammaQ",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.gammaincc(=Q)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003104,
+      "value": "1.5496082669460377e-128"
+    },
+    {
+      "input_id": "T6-incompletegammaupper-003",
+      "head": "IncompleteGammaUpper",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004532,
+      "value": "0"
+    },
+    {
+      "input_id": "T6-incompletegammaq-003",
+      "head": "IncompleteGammaQ",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.gammaincc(=Q)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.00318,
+      "value": "0"
+    },
+    {
+      "input_id": "T6-incompletegammaupper-004",
+      "head": "IncompleteGammaUpper",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004478,
+      "value": "4.0836606309106381e-26"
+    },
+    {
+      "input_id": "T6-incompletegammaq-004",
+      "head": "IncompleteGammaQ",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.gammaincc(=Q)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003241,
+      "value": "1.1253473960842808e-31"
+    },
+    {
+      "input_id": "T6-incompletegammaupper-005",
+      "head": "IncompleteGammaUpper",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004159,
+      "value": "1.0445498134780851e-108"
+    },
+    {
+      "input_id": "T6-incompletegammaq-005",
+      "head": "IncompleteGammaQ",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.gammaincc(=Q)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003054,
+      "value": "2.8784992655370512e-114"
+    },
+    {
+      "input_id": "T6-incompletegammaupper-006",
+      "head": "IncompleteGammaUpper",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004084,
+      "value": "0"
+    },
+    {
+      "input_id": "T6-incompletegammaq-006",
+      "head": "IncompleteGammaQ",
+      "tier": "T6",
+      "status": "success",
+      "method": "scipy.special.gammaincc(=Q)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003328,
+      "value": "0"
+    },
+    {
+      "input_id": "T6-barnesg-001",
+      "head": "BarnesG",
+      "tier": "T6",
+      "status": "unsupported",
+      "method": "BarnesG-not-in-scipy",
+      "landmines": [],
+      "notes": "L16: SciPy has no barnesg; bronze tier cannot cover this head. Use Wolfram (G2) or mpmath (G3) for gold values.",
+      "elapsed_ms": 0.003706,
+      "value": null
+    },
+    {
+      "input_id": "T6-barnesg-002",
+      "head": "BarnesG",
+      "tier": "T6",
+      "status": "unsupported",
+      "method": "BarnesG-not-in-scipy",
+      "landmines": [],
+      "notes": "L16: SciPy has no barnesg; bronze tier cannot cover this head. Use Wolfram (G2) or mpmath (G3) for gold values.",
+      "elapsed_ms": 0.000997,
+      "value": null
+    },
+    {
+      "input_id": "T7-incompletegammaupper-001",
+      "head": "IncompleteGammaUpper",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.005102,
+      "value": "1.026375334059169e+17"
+    },
+    {
+      "input_id": "T7-incompletegammalower-001",
+      "head": "IncompleteGammaLower",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammainc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004459,
+      "value": "19007567002915112"
+    },
+    {
+      "input_id": "T7-incompletegammap-001",
+      "head": "IncompleteGammaP",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammainc(=P)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003694,
+      "value": "0.15625427525673755"
+    },
+    {
+      "input_id": "T7-incompletegammaq-001",
+      "head": "IncompleteGammaQ",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammaincc(=Q)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003189,
+      "value": "0.84374572474326248"
+    },
+    {
+      "input_id": "T7-incompletegammaupper-002",
+      "head": "IncompleteGammaUpper",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004467,
+      "value": "57204492442642264"
+    },
+    {
+      "input_id": "T7-incompletegammalower-002",
+      "head": "IncompleteGammaLower",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammainc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004193,
+      "value": "64440607966189832"
+    },
+    {
+      "input_id": "T7-incompletegammap-002",
+      "head": "IncompleteGammaP",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammainc(=P)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003536,
+      "value": "0.5297427331607607"
+    },
+    {
+      "input_id": "T7-incompletegammaq-002",
+      "head": "IncompleteGammaQ",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammaincc(=Q)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003493,
+      "value": "0.47025726683924007"
+    },
+    {
+      "input_id": "T7-incompletegammaupper-003",
+      "head": "IncompleteGammaUpper",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.005069,
+      "value": "19087828303247056"
+    },
+    {
+      "input_id": "T7-incompletegammalower-003",
+      "head": "IncompleteGammaLower",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammainc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004663,
+      "value": "1.0255727210558494e+17"
+    },
+    {
+      "input_id": "T7-incompletegammap-003",
+      "head": "IncompleteGammaP",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammainc(=P)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003622,
+      "value": "0.84308592586881381"
+    },
+    {
+      "input_id": "T7-incompletegammaq-003",
+      "head": "IncompleteGammaQ",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammaincc(=Q)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003478,
+      "value": "0.15691407413118622"
+    },
+    {
+      "input_id": "T7-incompletegammaupper-004",
+      "head": "IncompleteGammaUpper",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.006771,
+      "value": "7.8560049319377443e+155"
+    },
+    {
+      "input_id": "T7-incompletegammalower-004",
+      "head": "IncompleteGammaLower",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammainc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.00486,
+      "value": "1.4766166124566734e+155"
+    },
+    {
+      "input_id": "T7-incompletegammap-004",
+      "head": "IncompleteGammaP",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammainc(=P)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003512,
+      "value": "0.15822098918643007"
+    },
+    {
+      "input_id": "T7-incompletegammaq-004",
+      "head": "IncompleteGammaQ",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammaincc(=Q)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.00345,
+      "value": "0.84177901081356998"
+    },
+    {
+      "input_id": "T7-incompletegammaupper-005",
+      "head": "IncompleteGammaUpper",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004393,
+      "value": "4.5421981208626706e+155"
+    },
+    {
+      "input_id": "T7-incompletegammalower-005",
+      "head": "IncompleteGammaLower",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammainc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004282,
+      "value": "4.7904234235317476e+155"
+    },
+    {
+      "input_id": "T7-incompletegammap-005",
+      "head": "IncompleteGammaP",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammainc(=P)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003261,
+      "value": "0.5132987982791487"
+    },
+    {
+      "input_id": "T7-incompletegammaq-005",
+      "head": "IncompleteGammaQ",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammaincc(=Q)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.002988,
+      "value": "0.48670120172085135"
+    },
+    {
+      "input_id": "T7-incompletegammaupper-006",
+      "head": "IncompleteGammaUpper",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.007152,
+      "value": "1.477154926220864e+155"
+    },
+    {
+      "input_id": "T7-incompletegammalower-006",
+      "head": "IncompleteGammaLower",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammainc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004863,
+      "value": "7.855466618173553e+155"
+    },
+    {
+      "input_id": "T7-incompletegammap-006",
+      "head": "IncompleteGammaP",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammainc(=P)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003512,
+      "value": "0.84172132993991289"
+    },
+    {
+      "input_id": "T7-incompletegammaq-006",
+      "head": "IncompleteGammaQ",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammaincc(=Q)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003667,
+      "value": "0.15827867006008706"
+    },
+    {
+      "input_id": "T7-incompletegammaupper-007",
+      "head": "IncompleteGammaUpper",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.005945,
+      "value": "Infinity"
+    },
+    {
+      "input_id": "T7-incompletegammalower-007",
+      "head": "IncompleteGammaLower",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammainc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.005586,
+      "value": "Infinity"
+    },
+    {
+      "input_id": "T7-incompletegammap-007",
+      "head": "IncompleteGammaP",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammainc(=P)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004045,
+      "value": "0.15844291029000881"
+    },
+    {
+      "input_id": "T7-incompletegammaq-007",
+      "head": "IncompleteGammaQ",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammaincc(=Q)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003875,
+      "value": "0.84155708970999121"
+    },
+    {
+      "input_id": "T7-incompletegammaupper-008",
+      "head": "IncompleteGammaUpper",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004791,
+      "value": "Infinity"
+    },
+    {
+      "input_id": "T7-incompletegammalower-008",
+      "head": "IncompleteGammaLower",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammainc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004376,
+      "value": "Infinity"
+    },
+    {
+      "input_id": "T7-incompletegammap-008",
+      "head": "IncompleteGammaP",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammainc(=P)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003413,
+      "value": "0.50940341800723665"
+    },
+    {
+      "input_id": "T7-incompletegammaq-008",
+      "head": "IncompleteGammaQ",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammaincc(=Q)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003539,
+      "value": "0.49059658199276363"
+    },
+    {
+      "input_id": "T7-incompletegammaupper-009",
+      "head": "IncompleteGammaUpper",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.004966,
+      "value": "Infinity"
+    },
+    {
+      "input_id": "T7-incompletegammalower-009",
+      "head": "IncompleteGammaLower",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammainc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.005007,
+      "value": "Infinity"
+    },
+    {
+      "input_id": "T7-incompletegammap-009",
+      "head": "IncompleteGammaP",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammainc(=P)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003608,
+      "value": "0.84153675401397288"
+    },
+    {
+      "input_id": "T7-incompletegammaq-009",
+      "head": "IncompleteGammaQ",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammaincc(=Q)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.003561,
+      "value": "0.15846324598602707"
+    },
+    {
+      "input_id": "T7-incompletegammaupper-010",
+      "head": "IncompleteGammaUpper",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.005668,
+      "value": "520111.5536714319"
+    },
+    {
+      "input_id": "T7-incompletegammaupper-011",
+      "head": "IncompleteGammaUpper",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.005108,
+      "value": "176226.57208393022"
+    },
+    {
+      "input_id": "T7-incompletegammaupper-012",
+      "head": "IncompleteGammaUpper",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.005068,
+      "value": "2.0649356374262661e+63"
+    },
+    {
+      "input_id": "T7-incompletegammaupper-013",
+      "head": "IncompleteGammaUpper",
+      "tier": "T7",
+      "status": "success",
+      "method": "scipy.special.gammaincc(a,z)·gamma(a)",
+      "landmines": [
+        "L12"
+      ],
+      "notes": null,
+      "elapsed_ms": 0.005897,
+      "value": "6.7758872771782918e+62"
+    },
+    {
+      "input_id": "T8-digamma-001",
+      "head": "Digamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003502,
+      "value": "-99.550784447767853"
+    },
+    {
+      "input_id": "T8-trigamma-001",
+      "head": "Trigamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.018022,
+      "value": "10002.641517578901"
+    },
+    {
+      "input_id": "T8-polygamma-001",
+      "head": "Polygamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.polygamma(2,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.017721,
+      "value": "-2000000.2791783677"
+    },
+    {
+      "input_id": "T8-digamma-002",
+      "head": "Digamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.00545,
+      "value": "-999999.57717805856"
+    },
+    {
+      "input_id": "T8-trigamma-002",
+      "head": "Trigamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.016028,
+      "value": "999999999945.13354"
+    },
+    {
+      "input_id": "T8-polygamma-002",
+      "head": "Polygamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.polygamma(2,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.016927,
+      "value": "-1.999999999827466e+18"
+    },
+    {
+      "input_id": "T8-digamma-003",
+      "head": "Digamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003392,
+      "value": "100.39631270584529"
+    },
+    {
+      "input_id": "T8-trigamma-003",
+      "head": "Trigamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.016323,
+      "value": "10002.649600150462"
+    },
+    {
+      "input_id": "T8-polygamma-003",
+      "head": "Polygamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.polygamma(2,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.016674,
+      "value": "1999999.4708621232"
+    },
+    {
+      "input_id": "T8-digamma-004",
+      "head": "Digamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003457,
+      "value": "1000000.4228639568"
+    },
+    {
+      "input_id": "T8-trigamma-004",
+      "head": "Trigamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.015474,
+      "value": "1000000000167.1782"
+    },
+    {
+      "input_id": "T8-polygamma-004",
+      "head": "Polygamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.polygamma(2,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.015941,
+      "value": "2.0000000004935997e+18"
+    },
+    {
+      "input_id": "T8-digamma-005",
+      "head": "Digamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002876,
+      "value": "-99.048271884953778"
+    },
+    {
+      "input_id": "T8-trigamma-005",
+      "head": "Trigamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.016079,
+      "value": "10002.894036454687"
+    },
+    {
+      "input_id": "T8-polygamma-005",
+      "head": "Polygamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.polygamma(2,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.016856,
+      "value": "-2000000.0253905528"
+    },
+    {
+      "input_id": "T8-digamma-006",
+      "head": "Digamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003005,
+      "value": "-999999.07731916662"
+    },
+    {
+      "input_id": "T8-trigamma-006",
+      "head": "Trigamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.015555,
+      "value": "1000000000167.4282"
+    },
+    {
+      "input_id": "T8-polygamma-006",
+      "head": "Polygamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.polygamma(2,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.015714,
+      "value": "-2.0000000004935997e+18"
+    },
+    {
+      "input_id": "T8-digamma-007",
+      "head": "Digamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003114,
+      "value": "100.89382514365846"
+    },
+    {
+      "input_id": "T8-trigamma-007",
+      "head": "Trigamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.016154,
+      "value": "10002.897118776682"
+    },
+    {
+      "input_id": "T8-polygamma-007",
+      "head": "Polygamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.polygamma(2,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.016506,
+      "value": "1999999.7171494463"
+    },
+    {
+      "input_id": "T8-digamma-008",
+      "head": "Digamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.002953,
+      "value": "1000000.9226416623"
+    },
+    {
+      "input_id": "T8-trigamma-008",
+      "head": "Trigamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.015292,
+      "value": "999999999723.33899"
+    },
+    {
+      "input_id": "T8-polygamma-008",
+      "head": "Polygamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.polygamma(2,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.016004,
+      "value": "1.9999999991613322e+18"
+    },
+    {
+      "input_id": "T8-digamma-009",
+      "head": "Digamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.005031,
+      "value": "-98.713823724420067"
+    },
+    {
+      "input_id": "T8-trigamma-009",
+      "head": "Trigamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.015778,
+      "value": "10003.005892027215"
+    },
+    {
+      "input_id": "T8-polygamma-009",
+      "head": "Polygamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.polygamma(2,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.016328,
+      "value": "-1999999.9505709053"
+    },
+    {
+      "input_id": "T8-digamma-010",
+      "head": "Digamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003166,
+      "value": "-999998.74370300618"
+    },
+    {
+      "input_id": "T8-trigamma-010",
+      "head": "Trigamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.068767,
+      "value": "999999999723.45007"
+    },
+    {
+      "input_id": "T8-polygamma-010",
+      "head": "Polygamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.polygamma(2,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.017519,
+      "value": "-1.9999999991613322e+18"
+    },
+    {
+      "input_id": "T8-digamma-011",
+      "head": "Digamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003004,
+      "value": "101.22605105727972"
+    },
+    {
+      "input_id": "T8-trigamma-011",
+      "head": "Trigamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.017838,
+      "value": "10003.007492834364"
+    },
+    {
+      "input_id": "T8-polygamma-011",
+      "head": "Polygamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.polygamma(2,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.016955,
+      "value": "1999999.7904876906"
+    },
+    {
+      "input_id": "T8-digamma-012",
+      "head": "Digamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.digamma",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.003153,
+      "value": "1000001.2559748845"
+    },
+    {
+      "input_id": "T8-trigamma-012",
+      "head": "Trigamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.polygamma(1,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.019536,
+      "value": "999999999723.45007"
+    },
+    {
+      "input_id": "T8-polygamma-012",
+      "head": "Polygamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.polygamma(2,·)",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.016877,
+      "value": "1.9999999991613322e+18"
+    },
+    {
+      "input_id": "T8-digamma-013",
+      "head": "Digamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.digamma-complex",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.008425,
+      "value": {
+        "re": "-877.15745651626344",
+        "im": "479.4268064851625"
+      }
+    },
+    {
+      "input_id": "T8-digamma-014",
+      "head": "Digamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.digamma-complex",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.006843,
+      "value": {
+        "re": "416.56852033535097",
+        "im": "909.29983200977836"
+      }
+    },
+    {
+      "input_id": "T8-digamma-015",
+      "head": "Digamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.digamma-complex",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.005237,
+      "value": {
+        "re": "-876.65723705314088",
+        "im": "479.42692644688697"
+      }
+    },
+    {
+      "input_id": "T8-digamma-016",
+      "head": "Digamma",
+      "tier": "T8",
+      "status": "success",
+      "method": "scipy.special.digamma-complex",
+      "landmines": [],
+      "notes": null,
+      "elapsed_ms": 0.005229,
+      "value": {
+        "re": "417.06841621714148",
+        "im": "909.30005923934925"
+      }
+    }
+  ]
+}

@@ -29,13 +29,18 @@ import {
   pi, e, ln2,
 
   // special functions (real)
-  gamma, lgamma, digamma, polygamma,
+  gamma, lgamma, digamma, trigamma, polygamma,
   bigErf,                              // real-axis error function (ADR-0040)
+  bigIncompleteGammaUpper, bigIncompleteGammaLower,   // Gamma family (ADR-0042)
+  bigGammaP, bigGammaQ, bigBeta, bigLogBeta,
+  bigPochhammer, bigBarnesG,
 
   // BigComplex API
   cfromReal, cfromInts, cfromStrings, cre, cim, cconj, cisZero,
   cadd, csub, cmul, cdiv, cneg, cabs, carg, csqrt,
   cexp, clog, cpow, cgamma, clgamma, cdigamma,
+  ctrigamma, cpolygamma,               // Gamma family complex (ADR-0042)
+  cIncompleteGammaUpper, cIncompleteGammaLower, cBeta,
 
   // value-protocol encoding
   BIGFLOAT_TAG, BIGCOMPLEX_TAG,
@@ -252,6 +257,45 @@ of.
 Source: `packages/bigfloat/src/special-funcs/erf.ts`. Tests:
 `packages/bigfloat/test/erf.test.ts` (golden masters vs Wolfram + mpmath
 at 50, 100, 200 dp on the full T1/T2 real-Erf corpus subset).
+
+## Gamma family substrate (ADR-0042)
+
+ADR-0042 instantiates the per-head substrate for the canonical Gamma
+family — the third prototype after Erf and Bessel. The Gamma substrate
+is *part audit-and-uplift, part new-heads*: `lgamma`, `gamma`,
+`digamma`, `trigamma`, `polygamma` already shipped in `src/special.ts`
+and are exempt from relocation (ADR-0042 §"Decision 12" — the 12
+`cgamma` import sites in `meijer-core` make a move a zero-benefit
+bandaid). The Gamma epic lifted the existing functions
+(`digamma`/`trigamma` negative-argument reflection per DLMF §5.5.4;
+`polygamma` for m ≥ 2 via the Hurwitz-zeta route
+`ψ^(m)(z) = (-1)^(m+1)·m!·ζ(m+1, z)`, DLMF §5.15.2) and added five
+new per-head modules under `src/special-funcs/`:
+
+- `incomplete-gamma.ts` — `bigIncompleteGammaUpper` / `Lower` (4-regime
+  dispatch: DLMF §8.7.3 series, Lentz CF, Temme-stub→CF fallback,
+  Poincaré asymptotic; verbatim Cephes `igam.c` rescaling guards) plus
+  `bigGammaP` / `bigGammaQ` (regularised, computed cancellation-free by
+  evaluating the smaller of P/Q directly).
+- `beta.ts` — `bigBeta` / `bigLogBeta` via lgamma sum/difference with
+  algebraic sign tracking; `B(½,½) = π` is a golden.
+- `pochhammer.ts` — `bigPochhammer`, three-way pole dispatch (direct
+  product below n ≈ 20, lgamma-ratio above; integer-pole truncation;
+  non-integer-negative cancellation absorption).
+- `barnes-g.ts` — `bigBarnesG`, three-regime dispatch (integer fast
+  path; asymptotic for large z per DLMF §5.17.5 with a cached
+  Glaisher-Kinkelin constant; functional-equation back-shift for small
+  z).
+
+Complex extensions land in-place in `src/complex.ts` per ADR-0042
+§"Decision 2": `ctrigamma`, `cpolygamma` (m ≥ 2 Hurwitz),
+`cIncompleteGammaUpper` / `Lower`, and `cBeta`, mirroring the
+real-axis dispatch on `BigComplex`.
+
+Sources: `packages/bigfloat/src/special-funcs/{incomplete-gamma,beta,pochhammer,barnes-g}.ts`
+and `src/complex.ts`. Tests: `test/special-funcs/{incomplete-gamma,beta,pochhammer,barnes-g}.test.ts`
+and `test/complex-gamma-extensions.test.ts` (golden masters vs Wolfram /
+mpmath / Arb at 50 dp). See `docs/worklog/175-gamma-epic-close.md`.
 
 ## See also
 

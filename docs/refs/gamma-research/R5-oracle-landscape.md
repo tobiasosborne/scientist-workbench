@@ -65,6 +65,11 @@ $ julia --version
 julia version 1.12.5
 $ julia -e 'using SpecialFunctions'
 ERROR: ArgumentError: Package SpecialFunctions not found in current path
+
+$ which gp
+(no output — Pari/GP NOT installed)
+$ apt-cache show pari-gp | grep Version
+Version: 2.15.4-2.1build1   ← installable via `sudo apt install pari-gp`
 ```
 
 **IMPORTANT VERSION CHANGE vs Bessel R5:** SciPy is now **1.11.4** (Bessel R5
@@ -91,6 +96,7 @@ installable from apt universe; it is not yet installed. See §7.
 | libm (`<math.h>`)         | glibc    | YES        | no           | no               | tgamma+lgamma only | no       | Bronze — only 2 heads real         |
 | python-flint / Arb        | —        | NO         | (would: yes) | (would: yes)     | n/a          | n/a             | Installable; see §7                |
 | Julia + SpecialFunctions.jl | 1.12.5 | BINARY ONLY | (deferred)  | (deferred)       | n/a          | n/a             | Not installed; deferred            |
+| Pari/GP                   | 2.15.4   | NO          | (would: yes)| (would: yes)     | n/a          | n/a             | Installable via apt; see §7.4      |
 
 ---
 
@@ -1044,6 +1050,60 @@ julia -e 'using Pkg; Pkg.add("SpecialFunctions")'
 
 **P3 recommendation:** defer to Phase 2. The Wolfram + mpmath gold pair +
 Arb (once installed) is sufficient for gold cross-validation.
+
+### 7.4 Pari/GP (OPTIONAL — independent open-source voice, P3 recommendation)
+
+**Status:** NOT installed; available via apt as `pari-gp 2.15.4-2.1build1`.
+
+Install:
+```sh
+sudo apt install pari-gp
+# ~30 MB; one binary `/usr/bin/gp`
+```
+
+Pari/GP is an independent open-source CAS with high-quality gamma family
+routines that do NOT derive from Cephes / mpmath / Boost. The relevant
+built-ins (verified from Pari documentation; **[UNVERIFIED] until install**):
+```
+gamma(x)         — Γ(x) at any precision (default 38 dec; \p N to raise)
+lngamma(x)       — log Γ(x), principal branch
+psi(x)           — digamma ψ(x)
+polylog(s, x)    — polylog (not directly gamma but related)
+incgam(a, x)     — Γ(a, x) upper incomplete
+incgamc(a, x)    — γ(a, x) lower incomplete  (NB: name 'c' = "complement" in
+                   Pari convention is the OPPOSITE of SciPy's `gammaincc`!)
+incgam(a, x, y)  — Pari has a 3-arg variant; check semantics
+zetahurwitz(s, x) — Hurwitz zeta (would be useful for cross-validating
+                   polygamma m≥2 path)
+hyperu(a, b, x)  — Tricomi confluent hypergeometric (Γ(a,z) bridge target)
+```
+
+**Value over existing oracles:**
+- **Direct InverseGammaRegularized**: Pari likely has `solve()` or similar
+  for finding z s.t. Q(a,z) = q. mpmath uses `findroot`; Pari may be cleaner.
+- **Independent implementation**: Pari uses its own arbitrary-precision
+  arithmetic (the t_REAL type) and does NOT call out to MPFR/mpmath/Arb.
+  This makes it a genuinely independent voice for cross-validation —
+  catches errors that would otherwise be silent in MPFR-derived oracles
+  (mpmath uses MPFR via gmpy2; Arb uses MPFR for non-ball ops).
+- **Landmine warning (`incgamc` semantics)**: Pari's `incgamc` is the
+  LOWER incomplete gamma (the "complement" of `incgam`). DO NOT confuse
+  with SciPy's `gammaincc` (which is the UPPER regularised Q). Tag with
+  `// L_pari_incgamc` in the adapter.
+
+**Adapter shape** (when installed, P3):
+```bash
+gp -q -p 200 <<EOF
+\p 60
+print(gamma(3/2))
+EOF
+# Output: 0.88622692545275801364908374167057259139877472806119356410690...
+```
+
+Pari can be driven via `gp -q -p <precision>` for batch mode or via stdin
+EOF blocks. **Recommend adding a `gamma-anchor/oracles/pari/` adapter as
+P3 (after Wolfram + mpmath + Arb are wired)** if any complex / negative-a
+cell has only single-engine-pair coverage from the gold tier.
 
 ---
 

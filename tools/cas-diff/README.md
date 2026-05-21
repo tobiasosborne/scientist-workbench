@@ -4,9 +4,11 @@ Compute `∂f/∂var` for an expression `f` over the closed numerical
 vocabulary `{+ − * / ^ neg exp sin cos tan log sqrt abs asin acos atan
 sinh cosh tanh asinh acosh atanh log2 log10}` plus constants `pi`, `e`,
 *and* the special-function vocabulary admitted by ADR-0023 (`Gamma`,
-`Digamma`, `Polygamma`, `Erf`, `Erfc`, `Erfi`, `ExpIntegralEi`,
+`Digamma`, `Polygamma`, `LogGamma`, `IncompleteGammaUpper`,
+`IncompleteGammaLower`, `Beta`, `Erf`, `Erfc`, `Erfi`, `ExpIntegralEi`,
 `ExpIntegralE`, `FresnelC`, `FresnelS`, `BesselJ`, `BesselY`,
-`BesselI`, `BesselK`, `HermiteH`, `Polylog` — each with its DLMF-cited
+`BesselI`, `BesselK`, `HankelH1`, `HankelH2`, `SphericalBesselJ`,
+`SphericalBesselY`, `HermiteH`, `Polylog` — each with its DLMF-cited
 closed-form rule). The elementary output composes directly with
 `integrate-1d` (Leibniz-rule parametric integrals) and with
 `optimize-lbfgs-projected` (which takes `grad` as a list of
@@ -119,6 +121,10 @@ Rule table:
 | `Gamma(z)` | `Digamma(z) · Gamma(z) · dz` (DLMF §5.4.2) |
 | `Digamma(z)` | `Polygamma(1, z) · dz` (DLMF §5.7.1) |
 | `Polygamma(n, z)` | `Polygamma(n+1, z) · dz` (DLMF §5.15.3; var = z; refuses on var = n) |
+| `LogGamma(z)` | `Digamma(z) · dz` (DLMF §5.2.2; admitted 2026-05-19 per ADR-0042) |
+| `IncompleteGammaUpper(a, z)` | `−z^{a−1} · exp(−z) · dz` (DLMF §8.8.2; var = z; refuses on var = a) |
+| `IncompleteGammaLower(a, z)` | `+z^{a−1} · exp(−z) · dz` (DLMF §8.8.1; var = z; refuses on var = a) |
+| `Beta(a, b)` | `B(a, b) · [Digamma(a) − Digamma(a+b)] · da`  (DLMF §5.12.2; symmetric for ∂/∂b; refuses if both args depend on var) |
 | `Erf(z)` | `(2/√π) · exp(−z²) · dz` (DLMF §7.7.1) |
 | `Erfc(z)` | `−(2/√π) · exp(−z²) · dz` |
 | `Erfi(z)` | `(2/√π) · exp(z²) · dz` (DLMF §7.10.2; admitted 2026-05-16 per ADR-0040) |
@@ -137,8 +143,13 @@ Special-function vocabulary (PascalCase) is recognised in the AST per
 ADR-0023. Heads admitted but not yet differentiable in v0.1
 (`HypergeometricPFQ`, `MeijerG`, `WhittakerM`, `WhittakerW`,
 `ParabolicCylinderD`, `LegendreP`, `LegendreQ`, `LaguerreL`,
-`ChebyshevT`, `ChebyshevU`, `GegenbauerC`, `LerchPhi`) refuse via the
-same boundary tag — honest scope, additive future expansion.
+`ChebyshevT`, `ChebyshevU`, `GegenbauerC`, `LerchPhi`, `Pochhammer`,
+`BarnesG`) refuse via the same boundary tag — honest scope, additive
+future expansion. The `Pochhammer` and `BarnesG` refusals are the
+2026-05-19 Gamma-family additions per ADR-0042 §"Decision 6"; both
+have shippable rules whose canonicalisation (continuous-`a` extension
+for Pochhammer; additive `(1/2)·log(2π)` constant for BarnesG) belongs
+to the v0.2 `applyGammaRewrites` simplify pre-pass (ADR-0042 §"Decision 13").
 
 Smart constructors absorb the chain rule's pure book-keeping:
 `0 + x → x`, `1·x → x`, `x·0 → 0`, `x⁰ → 1`, `x¹ → x`,

@@ -99,6 +99,35 @@
 // the cas-core AST cannot represent "this is one of two distinct
 // spherical-modified-Bessel functions" without a tag-disambiguator the
 // substrate doesn't yet support).
+//
+// 2026-05-19 (ADR-0042 §"Decision 6"; bead `scientist-workbench-mozz`):
+// vocabulary table grew 32 → 38 by admitting six Gamma-family heads —
+// `LogGamma`, `Pochhammer`, `IncompleteGammaUpper`,
+// `IncompleteGammaLower`, `Beta`, `BarnesG` — as the substrate
+// prototype #3 (Gamma family). Each passes the Erfi-precedent test of
+// R1 §1 (per the gamma-research artefact at
+// `docs/refs/gamma-research/R1-symbolic-identities.md`): `LogGamma`
+// carries principal-value semantics that `log(Gamma(z))` does not
+// (multi-valued for `z ∉ ℝ₊`); `Pochhammer` is a first-class argument
+// in `HypergeometricPFQ` and every hypergeometric identity;
+// `IncompleteGammaUpper` / `Lower` are the primary DLMF Chapter 8
+// objects with independent diff rules and Meijer-G forms (DLMF
+// §8.6.10-11; ADR-0042 §"Decision 5"); `Beta` is canonical in DLMF
+// §5.12 with direct diff rules; `BarnesG` is an entire function of
+// order 2 with `G(z+1) = Γ(z)·G(z)` (DLMF §5.17.1) load-bearing for
+// random-matrix-theory determinant formulae. Diff rules per DLMF
+// §5.2.2 (`LogGamma`), §8.8.1 / §8.8.2 (incomplete-gamma w.r.t. z),
+// §5.12.2 (`Beta` w.r.t. either argument). `BarnesG` and `Pochhammer`
+// diff rules and the `Beta` partial w.r.t. the *other* argument (chain-
+// rule case) are honest refusals in v0.1 — see `ruleBarnesG`,
+// `rulePochhammer`, and `ruleBeta` below for the deferred-rule
+// rationale. `IncompleteGammaP` and `IncompleteGammaQ` are
+// deliberately NOT admitted as vocabulary heads (ADR-0042 §"Tension
+// Resolution A"; §"Decision 4"): they are derivable from
+// Upper / Lower divided by `Gamma`, and any v0.1 symbolic rule for
+// them follows by dividing existing Upper / Lower rules. The float64
+// evaluator admits P / Q as dispatcher entries for numerical
+// stability, but the cas-core vocabulary carries only the primitives.
 
 import {
   expr,
@@ -137,6 +166,19 @@ export const SPECIAL_FUNCTION_HEADS: readonly string[] = [
   "Gamma",
   "Digamma",
   "Polygamma",
+  // Gamma family extensions — admitted 2026-05-19 per ADR-0042 §"Decision 6"
+  // (R1 §1 / §2.2-§2.8). `LogGamma` carries principal-value semantics;
+  // `Pochhammer` is a first-class argument in hypergeometric identities;
+  // `IncompleteGammaUpper / Lower` have canonical Meijer-G forms (the only
+  // Gamma-family heads that do — see ADR-0042 §"Decision 5"); `Beta` is the
+  // canonical DLMF §5.12 object; `BarnesG` is the load-bearing RMT
+  // determinant-formula function with `G(z+1) = Γ(z)·G(z)`.
+  "LogGamma",
+  "Pochhammer",
+  "IncompleteGammaUpper",
+  "IncompleteGammaLower",
+  "Beta",
+  "BarnesG",
   // Bessel family.
   "BesselJ",
   "BesselY",
@@ -191,6 +233,17 @@ export const SPECIAL_FUNCTION_DIFFERENTIABLE_HEADS: readonly string[] = [
   "Gamma",
   "Digamma",
   "Polygamma",
+  // Gamma extensions (ADR-0042 §"Decision 6"): four of the six new heads
+  // ship a v0.1 closed-form diff rule. `Pochhammer` (discrete order n;
+  // derivative w.r.t. `a` deferred to v0.2) and `BarnesG` (rule
+  // `(z-1)·Digamma(z) - LogGamma(z) + const` from R1 §2.8, deferred
+  // to v0.2 — composite of two Gamma-family heads with a non-trivial
+  // additive constant) are absent here and refuse honestly via the
+  // existing boundary tag.
+  "LogGamma",
+  "IncompleteGammaUpper",
+  "IncompleteGammaLower",
+  "Beta",
   "Erf",
   "Erfc",
   "Erfi",
@@ -238,6 +291,15 @@ const ARITY_TABLE: Readonly<Record<string, SpecialFunctionArity>> = {
   Gamma: { shape: "fixed", count: 1 },
   Digamma: { shape: "fixed", count: 1 },
   Polygamma: { shape: "fixed", count: 2 },
+  // Gamma extensions (ADR-0042 §"Decision 6"; bead `mozz`). Three fixed-1
+  // (`LogGamma`, `BarnesG`) and three fixed-2 (`Pochhammer(a, n)`,
+  // `IncompleteGammaUpper(a, z)`, `IncompleteGammaLower(a, z)`, `Beta(a, b)`).
+  LogGamma: { shape: "fixed", count: 1 },
+  Pochhammer: { shape: "fixed", count: 2 },
+  IncompleteGammaUpper: { shape: "fixed", count: 2 },
+  IncompleteGammaLower: { shape: "fixed", count: 2 },
+  Beta: { shape: "fixed", count: 2 },
+  BarnesG: { shape: "fixed", count: 1 },
   BesselJ: { shape: "fixed", count: 2 },
   BesselY: { shape: "fixed", count: 2 },
   BesselI: { shape: "fixed", count: 2 },
@@ -349,6 +411,18 @@ export function differentiateSpecialFunction(
       return ruleDigamma(args, wrt, recurDiff);
     case "Polygamma":
       return rulePolygamma(args, wrt, recurDiff);
+    case "LogGamma":
+      return ruleLogGamma(args, wrt, recurDiff);
+    case "Pochhammer":
+      return rulePochhammer(args, wrt, recurDiff);
+    case "IncompleteGammaUpper":
+      return ruleIncompleteGamma(args, wrt, recurDiff, /*sign=*/ -1);
+    case "IncompleteGammaLower":
+      return ruleIncompleteGamma(args, wrt, recurDiff, /*sign=*/ 1);
+    case "Beta":
+      return ruleBeta(args, wrt, recurDiff);
+    case "BarnesG":
+      return ruleBarnesG(args, wrt, recurDiff);
     case "Erf":
       return ruleErf(args, wrt, recurDiff, /*sign=*/ 1);
     case "Erfc":
@@ -760,4 +834,223 @@ function rulePolylog(
     mkDiv(expr("Polylog", [intShift(s, -1n), z]), z),
     dz,
   );
+}
+
+// -----------------------------------------------------------------------------
+// Gamma family extensions (ADR-0042 §"Decision 6") — bead `mozz`
+// -----------------------------------------------------------------------------
+//
+// Six diff rules (four shipped, two deferred) for the heads admitted by the
+// 2026-05-19 amendment. The shipped four are LogGamma, IncompleteGammaUpper,
+// IncompleteGammaLower, and Beta (partial w.r.t. its first argument).
+// Pochhammer and BarnesG land as honest refusals — see their per-rule
+// narratives below for the deferred-rule rationale.
+
+// d/dz LogGamma(z) = ψ(z) = Digamma(z)   — DLMF §5.2.2
+//
+// The principal-value `LogGamma(z)` is the load-bearing analytic
+// continuation of `log Γ(z)` along the principal branch (DLMF §5.11.1).
+// Its derivative is Digamma — the same Digamma that `d/dz log Gamma(z)`
+// would produce via the chain rule on `Gamma` (DLMF §5.4.2 plus the
+// elementary `log` rule), but with the multi-valued branch-cut
+// bookkeeping shed: `LogGamma` is single-valued on `ℂ \ {0, −1, −2, …}`,
+// so the diff rule sees no branch-cut machinery. The result composes
+// recursively — `Digamma` is itself in the differentiable subset (DLMF
+// §5.7.1), and its derivative chains to `Polygamma(1, z)`.
+function ruleLogGamma(
+  args: readonly Value[],
+  wrt: SymbolValue,
+  recurDiff: RecurDiff,
+): Value | null {
+  arityCheck(args, 1, "LogGamma");
+  const z = args[0]!;
+  const dz = recurDiff(z, wrt);
+  if (isZero(dz)) return ZERO;
+  return mkTimes(expr("Digamma", [z]), dz);
+}
+
+// d/dz γ(a, z) = +z^{a-1} · e^{-z}   — DLMF §8.8.1
+// d/dz Γ(a, z) = -z^{a-1} · e^{-z}   — DLMF §8.8.2
+//
+// The two incomplete-gamma functions are complementary on the
+// integration interval — `γ(a, z) + Γ(a, z) = Γ(a)` — so their
+// derivatives w.r.t. `z` are exact opposites: differentiating both sides
+// of the partition w.r.t. `z` gives `γ' + Γ' = 0` (the right-hand side
+// is independent of `z`), and the integrand `z^{a-1}·e^{-z}` is what
+// each derivative recovers on its own (positive for the lower-bound-
+// fixed γ, negative for the upper-bound-fixed Γ). One rule body, two
+// heads, parameterised by `sign ∈ {+1, -1}` — the same fan-through
+// pattern used by `ruleErf` for `Erf` / `Erfc`.
+//
+// Discrete-parameter discipline: differentiation w.r.t. the order `a`
+// is genuinely non-elementary (the answer involves Meijer-G or the
+// derivative of the regularised incomplete gamma `P/Q` w.r.t. `a` —
+// see DLMF §8.8.16 for the closed form, which is itself a Meijer-G).
+// v0.1 refuses with the standard discrete-parameter null return when
+// `a` depends on `wrt`.
+//
+// `z^{a-1}` encoding: we lift `a-1` through `intShift(a, -1n)`. The
+// helper folds integer / rational parameters to canonical numeric
+// shapes (e.g. `a = int(3n)` → `int(2n)`) and emits a symbolic
+// `expr("-", [a, int(1n)])` for everything else (sym, float64, complex
+// expression). This matches the discipline used by `ruleBesselFirstKind`,
+// `rulePolygamma`, and every other v0.1 recurrence rule that touches a
+// parameter — the result reads canonically (`d/dz γ(3, z) = z² · e^{-z}`,
+// not `z^{3-1} · e^{-z}`) before any cas-simplify pass, while preserving
+// the symbolic `a-1` shape for continuous parameters.
+function ruleIncompleteGamma(
+  args: readonly Value[],
+  wrt: SymbolValue,
+  recurDiff: RecurDiff,
+  sign: 1 | -1,
+): Value | null {
+  const head = sign === 1 ? "IncompleteGammaLower" : "IncompleteGammaUpper";
+  arityCheck(args, 2, head);
+  const a = args[0]!;
+  const z = args[1]!;
+  if (dependsOnWrt(a, wrt, recurDiff)) return null;
+  const dz = recurDiff(z, wrt);
+  if (isZero(dz)) return ZERO;
+  const aMinusOne = intShift(a, -1n);
+  const zPow = mkPower(z, aMinusOne);
+  const expNegZ = expr("exp", [mkNeg(z)]);
+  const integrand = mkTimes(zPow, expNegZ);
+  const body = sign === 1 ? integrand : mkNeg(integrand);
+  return mkTimes(body, dz);
+}
+
+// ∂/∂a B(a, b) = B(a, b) · [ψ(a) - ψ(a+b)]   — DLMF §5.12.2 (SymPy `beta.fdiff`)
+// ∂/∂b B(a, b) = B(a, b) · [ψ(b) - ψ(a+b)]   — DLMF §5.12.2 (symmetric)
+//
+// The Beta function `B(a, b) = Γ(a)Γ(b)/Γ(a+b)` has a clean diff rule
+// in either of its two parameters: factor the Beta out and pair the
+// Digamma of the differentiated argument against the Digamma of the
+// sum. Both partials sit in the v0.1 differentiable subset — the rule
+// fans through one body with `which ∈ {"a", "b"}` selecting the
+// argument that depends on `wrt`. If neither argument depends on `wrt`
+// (constants-in-wrt), the result is `0` per the chain-rule
+// short-circuit. If *both* depend — the genuine multivariable case —
+// the answer is the sum of the two partials each multiplied by its
+// chain factor; this is consistent with the elementary product rule
+// but neither DLMF nor SymPy emits a single-rule encoding for it. v0.1
+// refuses the both-depend case (null) and lets the future bead emit
+// the additive composition; the alternative would be silently
+// fabricating a rule shape that no canonical source endorses.
+function ruleBeta(
+  args: readonly Value[],
+  wrt: SymbolValue,
+  recurDiff: RecurDiff,
+): Value | null {
+  arityCheck(args, 2, "Beta");
+  const a = args[0]!;
+  const b = args[1]!;
+  const da = recurDiff(a, wrt);
+  const db = recurDiff(b, wrt);
+  const aDep = !isZero(da);
+  const bDep = !isZero(db);
+  if (!aDep && !bDep) return ZERO;
+  // Both arguments depend on `wrt`: refuse honestly. The multivariable
+  // chain-rule additive composition is doable in principle, but no
+  // canonical DLMF / SymPy source emits it as a single rule and a
+  // separate v0.2 bead is the right granularity to land it.
+  if (aDep && bDep) return null;
+  const which = aDep ? a : b;
+  const dwhich = aDep ? da : db;
+  const betaTerm = expr("Beta", [a, b]);
+  const digammaDiff = mkMinus(
+    expr("Digamma", [which]),
+    expr("Digamma", [mkPlus([a, b])]),
+  );
+  return mkTimes(mkTimes(betaTerm, digammaDiff), dwhich);
+}
+
+// d/dn Pochhammer(a, n) — refused (discrete-order parameter).
+// d/da Pochhammer(a, n) — deferred to v0.2.
+//
+// The Pochhammer symbol `(a)_n = Γ(a+n)/Γ(a)` has a derivative w.r.t.
+// `a` that is the natural multivariable Gamma-ratio rule —
+// `(a)_n · [ψ(a+n) - ψ(a)]` (R1 §2.3 / SymPy `RisingFactorial.fdiff`).
+// We defer it to v0.2 for symmetry with `BarnesG`'s deferred rule
+// (both involve Gamma-quotient simplification that cas-simplify
+// doesn't yet expose) and because v0.1 has no consumer that surfaces
+// the parameter derivative — the only Pochhammer use site is as a
+// first-class argument in `HypergeometricPFQ`, which itself defers its
+// list-parameter diff rule (ADR-0023 v0.1).
+//
+// Differentiation w.r.t. `n` is genuinely non-elementary: `n` is the
+// discrete order, and v0.1's discrete-parameter discipline (see
+// `rulePolygamma`, `ruleExpIntegralE`, `ruleBesselFirstKind`) refuses
+// uniformly. The continuous-extension form `(a)_n = Γ(a+n)/Γ(a)`
+// does admit a derivative w.r.t. `n`, but lifting `n` from discrete to
+// continuous semantics is a vocabulary-level decision a separate ADR
+// should pin, not a diff-rule decision.
+function rulePochhammer(
+  args: readonly Value[],
+  wrt: SymbolValue,
+  recurDiff: RecurDiff,
+): Value | null {
+  arityCheck(args, 2, "Pochhammer");
+  const a = args[0]!;
+  const n = args[1]!;
+  if (dependsOnWrt(n, wrt, recurDiff)) return null;
+  // a-derivative deferred to v0.2 per the narrative above. If `a`
+  // depends on `wrt`, surface the deferral as a null return; the
+  // diff.ts caller will raise the standard `CasDiffOutOfScopeError`,
+  // and the tool layer wraps it in `tagged "cas-diff/out-of-scope"`.
+  if (dependsOnWrt(a, wrt, recurDiff)) return null;
+  // Neither argument depends on `wrt`: the Pochhammer value is constant
+  // in `wrt`, so its derivative is zero.
+  return ZERO;
+}
+
+// d/dz BarnesG(z) — deferred to v0.2.
+//
+// The Barnes G-function (DLMF §5.17.1, `G(z+1) = Γ(z)·G(z)`, `G(1) = 1`)
+// has a closed-form derivative via the logarithmic derivative
+// (DLMF §5.17.4):
+//
+//     d/dz log G(z+1) = (z/2)·log(2π) + z·ψ(z+1) - z²/2 - z·(ψ(z+1) - 1)
+//                                        ... simplified ...
+//     d/dz log G(z)   = (z - 1)·Digamma(z) - LogGamma(z) + (1/2)·log(2π)
+//
+// chaining via `d/dz G(z) = G(z) · d/dz log G(z)` to:
+//
+//     d/dz G(z) = G(z) · [(z - 1)·Digamma(z) - LogGamma(z) + (1/2)·log(2π)]
+//
+// The rule is shippable in principle — every head in the right-hand
+// side is in the v0.1 differentiable subset (Digamma, LogGamma) — but
+// the additive constant `(1/2)·log(2π)` introduces a literal-of-record
+// shape (`mkTimes(mkDiv(int(1n), int(2n)), expr("log", [mkTimes(int(2n),
+// sym("pi"))]))`) that has no precedent in the existing v0.1 diff
+// rules. The closest precedent is `ruleErfi`'s `mkPower(sym("pi"),
+// rat(1n, 2n))` for `√π`, but that is a multiplicative prefactor (not
+// an additive constant) and is wrapped inside a `mkDiv`, not exposed
+// directly. R1 §2.8 recommends deferring to v0.2 alongside the
+// `applyGammaRewrites` simplify pre-pass (ADR-0042 §"Decision 13"),
+// which will canonicalise the additive-constant encoding consistently
+// across the family.
+//
+// v0.1 refuses honestly via a null return when `BarnesG(z)`'s argument
+// `z` depends on `wrt` (the rule itself is what's deferred). When the
+// argument is constant in `wrt` — the chain-rule short-circuit shared
+// with every other rule body — we return `0` directly. This preserves
+// the free-symbol-independence discipline (a `BarnesG(c)` term where
+// `c` is constant in `wrt` contributes zero to the derivative without
+// requiring the deferred rule to fire), exactly mirroring how
+// `rulePolygamma` and `ruleBesselFirstKind` short-circuit on constant
+// arguments while their main rule body refuses for the
+// discrete-parameter case.
+function ruleBarnesG(
+  args: readonly Value[],
+  wrt: SymbolValue,
+  recurDiff: RecurDiff,
+): Value | null {
+  arityCheck(args, 1, "BarnesG");
+  const z = args[0]!;
+  const dz = recurDiff(z, wrt);
+  // Free-symbol-independence: `BarnesG(c)` with `c` constant in `wrt`
+  // contributes zero to the derivative. The rule itself is deferred,
+  // so any other call refuses with the standard null return.
+  if (isZero(dz)) return ZERO;
+  return null;
 }

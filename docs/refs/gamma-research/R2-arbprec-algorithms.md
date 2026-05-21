@@ -494,9 +494,33 @@ which cover prec > 128 bits. The local code's Stirling approach is validated.
 
 **Spouge's approximation** (Spouge 1994): an explicit construction of a
 Lanczos-like rational approximant with simpler error bounds. For N terms at
-prec decimal digits, `N ≈ prec · ln(10) / (2 − ln(4π) + 1)`. Same limitation
-as Lanczos: the coefficients are precision-specific and require offline
-generation. Not preferred for arb-prec.
+prec decimal digits, `N ≈ prec · ln(10) / (2 − ln(4π) + 1)`.
+
+**CORRECTION to a commonly-stated reason for rejecting Spouge at arb-prec.**
+Unlike Lanczos (whose coefficients require solving a Pugh-style optimisation
+problem), **Spouge's coefficients have an explicit closed form**:
+```
+c_k(a) = (-1)^(k-1) / (k-1)! · (a - k)^(k - 1/2) · e^(a - k),   k = 1, …, N-1
+```
+These are computable at any precision online; no offline coefficient
+generation is required (this is the standard mischaracterisation in
+practitioner discussion).
+
+**The actual reason Spouge loses to Stirling at arb-prec is catastrophic
+cancellation in the alternating coefficient sum at high N.** The `c_k(a)`
+alternate in sign and grow rapidly with `k` (`(a-k)^(k-1/2)` dominates for
+small `k`, then `e^(a-k)` ≪ 1 only damps for `k > a`). Summing them at
+working precision requires roughly `O(N)` extra bits to retain the cancelling
+digits — at prec = 1000 bits, N ≈ 1000, and the bookkeeping is more expensive
+than Stirling's purely additive Bernoulli expansion which has no internal
+cancellation. Stirling also benefits from adaptive smallest-term truncation,
+whereas Spouge's N is fixed by the precision target.
+
+**Verdict:** the existing Stirling implementation remains the correct choice
+for arb-prec, but the reason is cancellation control, not coefficient
+availability. Spouge is fine at fixed precision (and is used in some
+mid-precision libraries) precisely because at fixed N the cancellation cost
+is bounded.
 
 **Binary splitting (Brent 1976; Karatsuba 1991):** for Γ(p/q) with p/q a
 rational, binary splitting on the product formula `Γ(p/q) = (p/q−1)! =

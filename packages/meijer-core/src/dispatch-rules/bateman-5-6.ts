@@ -433,10 +433,44 @@ export const RULES: ReductionRule[] = [
 
   // Bateman §5.6 (3): G^{1,1}_{1,1}(a; b | z) = Γ(1+b−a) · z^b · (1+z)^{a−b−1}
   // (Generic — both free; mpmath verified at a=1/3, b=1/4)
+  //
+  // Canonical-form note (bd scientist-workbench-c5lo). The textbook
+  // closed form Bateman §5.6 (3) states is `Γ(1+b−a) · z^b · (1+z)^{a−b−1}`.
+  // That is what this rule's `rewrite` builds — `gamma(mkPlus([I(1),
+  // mkMinus(b!, a!)]))` is literally `Γ(1 + (b−a))`.
+  //
+  // The tool, however, does not emit the rule's raw `rewrite` output.
+  // `dispatch.ts:canonicaliseOutput` pipes every dispatched expression
+  // through `casSimplify`, and `casSimplify`'s `gamma-recurrence` rule
+  // (GA-C1, `gamma-identities.ts`, DLMF §5.5.1: `Γ(z+1) → z·Γ(z)`)
+  // fires on `Γ(1 + (b−a))` because `1 + (b−a)` is exactly the `(1+z)`
+  // shape `matchPlusOne` detects. So the *tool's* canonical emit is the
+  // recurrence-expanded `(b−a) · Γ(b−a) · z^b · (1+z)^{a−b−1}`.
+  //
+  // This is correct and deliberate, not drift. R1-symbolic-identities.md
+  // §"Recurrence" names `Γ(z+k) → Γ(z)·rational` "the primary
+  // simplification direction", and the GA-C1 rule is flagged
+  // LOAD-BEARING (gamma-identities.ts:911-923) — the nested-shape
+  // cascade `Γ((z+1)+1) → (z+1)·z·Γ(z)` depends on it. Crippling or
+  // gating GA-C1 to "numeric argument only" is the wrong fix; it would
+  // break that cascade for every symbolic caller.
+  //
+  // The `note` below therefore states the textbook form as the
+  // conventional-notation closed form (the tool's documented contract
+  // for the `note` field — see `tools/meijer-g-symbolic-only/tool.ts`),
+  // and explicitly records the workbench canonical emit so a reader of
+  // the dispatched `expr` is not surprised that it differs. The two are
+  // equal by `Γ(n+1) = n·Γ(n)`. golden #03's `expr` carries the
+  // canonical (post-`casSimplify`) form; its `note` carries this string
+  // verbatim — the three artefacts (rule, golden expr, golden note) are
+  // mutually consistent once the note is honest about both forms.
   {
     id: "bateman-5-6-3",
     source: "Bateman §5.6 (3)",
-    note: "G^{1,1}_{1,1}(a; b | z) = Γ(1+b−a) · z^b · (1+z)^{a−b−1}",
+    note:
+      "G^{1,1}_{1,1}(a; b | z) = Γ(1+b−a) · z^b · (1+z)^{a−b−1} " +
+      "[textbook form; the workbench canonical emit applies DLMF §5.5.1 " +
+      "Γ(z+1)→z·Γ(z), so the tool returns (b−a)·Γ(b−a)·z^b·(1+z)^{a−b−1}]",
     match: {
       mnpq: { m: 1, n: 1, p: 1, q: 1 },
       an: [{ kind: "free", name: "a" }],
@@ -656,7 +690,193 @@ export const RULES: ReductionRule[] = [
   },
 
   // ===========================================================================
-  // Shape (m=1, n=1, p=1, q=2)
+  // Shape (m=2, n=0, p=1, q=2) — UpperIncompleteGamma family (Bateman 5.6 (38))
+  // ===========================================================================
+  //
+  // **Source:** Bateman §5.6 (38); DLMF §8.6.11; Wikipedia Meijer-G
+  // §"Representation of other functions" (HTTP 200, direct table entry).
+  // Cross-validated against mpmath: `meijerg([[],[1]], [[1.5, 0],[]], 2)
+  // = 0.23171655...` which equals `gammainc(1.5, 2, inf) = Γ(1.5, 2)`
+  // — the upper incomplete gamma function evaluated at (a=1.5, z=2.0)
+  // to 30 dps.
+  //
+  // **Canonical form (R4 §A.4):**
+  //   Γ(a, z) = G^{2,0}_{1,2}(_; 1; a, 0 | z)
+  //     (m, n, p, q) = (2, 0, 1, 2)
+  //     an = [], ap = [1], bm = [a, 0], bq = []
+  //     z-sub: identity, prefactor: 1
+  // i.e. the head's value IS the G-form directly — no scaling, no
+  // multi-valued root surface. This matches the forward bridge in
+  // `bridges/gamma.ts::headToMeijerG("IncompleteGammaUpper", [a, z])`
+  // byte-identically, so a round-trip head → G → head recovers the
+  // original `[a, z]` exactly.
+  //
+  // **Shape collision lattice.** The `(2,0,1,2)` shape is shared with
+  // **Erfc** (`bm = {0, 1/2}` multiset) and **ExpIntegralE(1, z)**
+  // (`bm = {0, 0}`). Both Erfc and E_1 are handled by rules registered
+  // BEFORE this file in `dispatch.ts::ALL_RULES` (`ERFC_FORWARD` and
+  // `DLMF_16_18` precede `BATEMAN_5_6`). So when a caller submits the
+  // Erfc shape `bm = [int(0), rat(1,2)]` or the E_1 shape `bm =
+  // [int(0), int(0)]`, the more-specific Erfc / E_1 literal-only
+  // patterns fire first and our `free`-bearing rule below is never
+  // reached for those inputs. The first-match-wins discipline of the
+  // registry IS the discrimination guard; there is no `PatternSpec`
+  // primitive for "free except not these literals" today, and the
+  // ordering convention obviates the need for one. MUTATION-PROOF:
+  // re-ordering the rules in `dispatch.ts::ALL_RULES` (placing
+  // `BATEMAN_5_6` before `ERFC_FORWARD` and `DLMF_16_18`) breaks the
+  // discrimination — the test `Erfc-discrimination` would FAIL with
+  // `IncompleteGammaUpper(1/2, z)` instead of the expected
+  // `√π · Erfc(√z)`. The cross-file ordering is load-bearing.
+  //
+  // **Canonical-sort multiplicity.** The `bm` parameter list is
+  // semantically a multiset (the G-function's Γ-product `∏ Γ(b_j - s)`
+  // is symmetric in `b_j`); the dispatcher canonicalises the input
+  // tuple by `canonicalize`-byte order before matching. The position
+  // of the literal `0` versus the free `a` slot depends on `a`'s
+  // Value kind:
+  //   * `a` rational (e.g. `rat(2,3)`): bytes start `{"d...` (because
+  //     `den` precedes `kind` alphabetically) — sorts BEFORE
+  //     `int(0)` (bytes start `{"k...`). So canonical order is
+  //     `[rat(2/3), int(0)]` — free at index 0, literal `0` at
+  //     index 1.
+  //   * `a` integer with positive value (e.g. `int(3)`): both bytes
+  //     start `{"k...`; `int(0)` value `"0"` sorts before
+  //     `int(3)` value `"3"`. So canonical order is
+  //     `[int(0), int(3)]` — literal `0` at index 0, free at index 1.
+  //   * `a` integer with negative value (e.g. `int(-1)`):
+  //     `"-1"` sorts before `"0"`. Canonical order
+  //     `[int(-1), int(0)]` — free at index 0, literal `0` at
+  //     index 1.
+  //   * `a` symbol (e.g. `sym("a")`): symbol bytes start `{"k...`
+  //     with name field; an integer with value `"0"` typically
+  //     sorts before. Canonical order `[int(0), sym("a")]` —
+  //     literal `0` at index 0, free at index 1.
+  // Because the canonical position of the free slot varies, we ship
+  // TWO mirror-pattern rules (38a, 38b) that bind identically and
+  // emit the same closed-form Value. The dispatcher's first-match-
+  // wins discipline picks whichever positional layout the caller's
+  // canonical sort produced. This mirrors how `erf.ts`'s Erfc matcher
+  // accepts both orderings of `{0, 1/2}` (though Erfc gets to fix
+  // both literals to specific positions; we cannot because one slot
+  // is free).
+
+  // Bateman §5.6 (38) [Pattern A — free `a` at index 0, literal `0` at index 1]
+  // G^{2,0}_{1,2}(_; 1; a, 0 | z) = Γ(a, z)
+  // Verified mpmath at (a, z) = (1.5, 2.0):
+  //   meijerg([[],[1]], [[1.5, 0],[]], 2) = 0.231716552... = Γ(1.5, 2.0) ✓
+  // Pattern A fires when canonical sort puts the free slot first —
+  // typically when `a` is rational or a negative integer (see
+  // file-section header for the sort-byte enumeration).
+  {
+    id: "bateman-5-6-38a",
+    source: "Bateman §5.6 (38); DLMF §8.6.11; Wikipedia Meijer-G",
+    note: "G^{2,0}_{1,2}(_; 1; a, 0 | z) = IncompleteGammaUpper(a, z) [canonical: free·a, lit·0]",
+    match: {
+      mnpq: { m: 2, n: 0, p: 1, q: 2 },
+      an: [],
+      ap: [{ kind: "lit-int", value: 1 }],
+      // MUTATION-PROOF: swapping `bm` to `[lit-int 0, free a]` would
+      // misbind on rational-`a` inputs (e.g. `bm = [rat(2/3), int(0)]`
+      // after canonical sort), failing the test "rational a → Upper".
+      bm: [
+        { kind: "free", name: "a" },
+        { kind: "lit-int", value: 0 },
+      ],
+      bq: [],
+    },
+    rewrite: ({ a }, z) => expr("IncompleteGammaUpper", [a!, z]),
+  },
+
+  // Bateman §5.6 (38) [Pattern B — literal `0` at index 0, free `a` at index 1]
+  // Same closed form as Pattern A; the mirror canonical-position case.
+  // Pattern B fires when canonical sort puts the literal `0` first —
+  // typically when `a` is symbolic or a positive non-zero integer.
+  {
+    id: "bateman-5-6-38b",
+    source: "Bateman §5.6 (38); DLMF §8.6.11; Wikipedia Meijer-G",
+    note: "G^{2,0}_{1,2}(_; 1; 0, a | z) = IncompleteGammaUpper(a, z) [canonical: lit·0, free·a]",
+    match: {
+      mnpq: { m: 2, n: 0, p: 1, q: 2 },
+      an: [],
+      ap: [{ kind: "lit-int", value: 1 }],
+      // MUTATION-PROOF: changing `lit-int 0` to `lit-int 1` (or any
+      // other literal) would miss every symbolic-`a` input — the
+      // closed form is `Γ(a, z)` only when the second `bm` slot is
+      // exactly the literal `0` (per DLMF §8.6.11 Mellin-Barnes
+      // kernel matching).
+      bm: [
+        { kind: "lit-int", value: 0 },
+        { kind: "free", name: "a" },
+      ],
+      bq: [],
+    },
+    rewrite: ({ a }, z) => expr("IncompleteGammaUpper", [a!, z]),
+  },
+
+  // ===========================================================================
+  // Shape (m=1, n=1, p=1, q=2) — LowerIncompleteGamma family (Bateman 5.6 (40))
+  // ===========================================================================
+  //
+  // **Source:** Bateman §5.6 (40); DLMF §8.6.10; Wikipedia Meijer-G
+  // §"Representation of other functions". Cross-validated against
+  // mpmath: `meijerg([[1],[]], [[1.5],[0]], 2) = 0.65451037...` which
+  // equals `gammainc(1.5, 0, 2) = γ(1.5, 2)` — the lower incomplete
+  // gamma function at (a=1.5, z=2.0) to 30 dps.
+  //
+  // **Canonical form (R4 §A.3):**
+  //   γ(a, z) = G^{1,1}_{1,2}(1; a, 0 | z)
+  //     (m, n, p, q) = (1, 1, 1, 2)
+  //     an = [1], ap = [], bm = [a], bq = [0]
+  //     z-sub: identity, prefactor: 1
+  // Mirrors `bridges/gamma.ts::headToMeijerG("IncompleteGammaLower",
+  // [a, z])` byte-identically.
+  //
+  // **Shape collision lattice.** The `(1,1,1,2)` shape is shared with
+  // **Erf** (Form B: `an=[1], bm=[1/2], bq=[0]`) and the Erf / Erfi
+  // Form-A pair (`an=[1/2], bm=[0], bq=[-1/2]`). Erf-Form-A and Erfi
+  // have a different slot pattern (`an=[1/2]` not `an=[1]`) and never
+  // collide. Erf-Form-B (`dlmf-16-18-erf`) is the actual collision:
+  // it has the same `(an, bm, bq) = ([1], [...], [0])` shape but with
+  // `bm[0] = lit-rat 1/2` rather than a free slot. Per
+  // `dispatch.ts::ALL_RULES` order, `DLMF_16_18` precedes
+  // `BATEMAN_5_6`, so the literal-only `dlmf-16-18-erf` rule fires
+  // first when `a = 1/2` and our free-bearing rule below never sees
+  // those inputs. MUTATION-PROOF: re-ordering `BATEMAN_5_6` before
+  // `DLMF_16_18` would break the test "Erf-discrimination at a=1/2"
+  // — the dispatcher would emit `IncompleteGammaLower(1/2, z)`
+  // instead of `√π · Erf(√z)`.
+  //
+  // **Single-slot canonical position.** Unlike the `(2,0,1,2)` case
+  // above, here `bm` and `bq` each carry exactly one slot, so there
+  // is no within-list canonical-sort permutation: the free `a` slot
+  // is unambiguously at `bm[0]`, the literal `0` is at `bq[0]`. Only
+  // one rule entry is needed.
+
+  // Bateman §5.6 (40): G^{1,1}_{1,2}(1; a, 0 | z) = IncompleteGammaLower(a, z)
+  // Verified mpmath at (a, z) = (1.5, 2.0):
+  //   meijerg([[1],[]], [[1.5],[0]], 2) = 0.654510373... = γ(1.5, 2.0) ✓
+  {
+    id: "bateman-5-6-40",
+    source: "Bateman §5.6 (40); DLMF §8.6.10; Wikipedia Meijer-G",
+    note: "G^{1,1}_{1,2}(1; a, 0 | z) = IncompleteGammaLower(a, z)",
+    match: {
+      mnpq: { m: 1, n: 1, p: 1, q: 2 },
+      an: [{ kind: "lit-int", value: 1 }],
+      ap: [],
+      // MUTATION-PROOF: changing `bq` to `[{ kind: "lit-int", value:
+      // 1 }]` (i.e., `bq[0] = 1` instead of `0`) would fail every
+      // IncompleteGammaLower test — the closed form is `γ(a, z)`
+      // only when `bq[0] = 0` exactly (per DLMF §8.6.10
+      // Mellin-Barnes matching).
+      bm: [{ kind: "free", name: "a" }],
+      bq: [{ kind: "lit-int", value: 0 }],
+    },
+    rewrite: ({ a }, z) => expr("IncompleteGammaLower", [a!, z]),
+  },
+
+  // ===========================================================================
+  // Shape (m=1, n=1, p=1, q=2) — historical aside
   // ===========================================================================
   //
   // Bateman §5.6 (39) in some editions reads `G^{1,1}_{1,2}(1; 1, 0 | z)
@@ -675,8 +895,6 @@ export const RULES: ReductionRule[] = [
   // Future follow-up bead:
   //   * Bateman §5.6 (12)–(15): argument-transformation rules
   //     (z → z²/4) for the trigonometric / Fresnel families.
-  //   * Bateman §5.6 (38), (40): incomplete-gamma family — needs
-  //     `IncompleteGamma` head added to ADR-0023's vocabulary.
   //   * Bateman §5.6 (50): Legendre, Whittaker family — needs
   //     ADR-0023 deferred-subset vocabulary lifted to differentiable.
   //   * Argument-transformations on the input `z`.

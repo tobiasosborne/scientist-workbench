@@ -52,6 +52,23 @@ import {
   erfcFloat64,
   erfiFloat64,
 } from "@workbench/quadrature";
+// Gamma-family float64 substrate (ADR-0042 §"Decision 4", I5 / bead
+// `yyyb`, worklog 174). Used by the Phase 3 / T1 corpus entries below
+// (`g05-loggamma-on-1-2` … `g08-beta-x-x-on-2-5`) so the JS-side
+// `f` and the wire-form `fExpr` evaluate to bit-identical values
+// at every quadrature node — the same `--test` cross-check contract
+// the Erf-family entries (g01-g04) rely on.
+//
+// The gamma-family entries are NOT in `manifest.json` (the Python
+// orchestrator's SciPy/QUADPACK manifest predates Phase 3); their
+// correctness anchors are the DLMF / Raabe / mpmath references cited
+// inline in each entry's prose, locked in via the goldens.
+import {
+  lgammaFloat64,
+  digammaFloat64,
+  pochhammerFloat64,
+  betaFloat64,
+} from "@workbench/quadrature";
 
 // -----------------------------------------------------------------------------
 // Helpers — keep the table below dense and readable
@@ -519,5 +536,74 @@ export const caseCorpus: readonly CorpusCase[] = [
     ),
     a: 0,
     b: 1,
+  },
+  // --- Category 9: Gamma-family integrands (Phase 3 / bead on05 / I5 wiring) ---
+  //
+  // Mirrors the Category-8 (Erf) pattern: exercises four distinct
+  // gamma-family heads through the I5 (`yyyb`) dispatcher in
+  // `packages/quadrature/src/eval-numeric-expr.ts` (the same
+  // `evalNumericExprWithSpecial` two-pass fold that landed for Erf
+  // composition). Each entry has a clean DLMF/Raabe/mpmath-cited
+  // closed form so that the goldens lock the tool's bytes *and* the
+  // closed-form anchor is recoverable from the prose alone.
+  //
+  // Heads covered: LogGamma (g05), Digamma (g06), Pochhammer (g07),
+  // Beta (g08). All arity-1 except Pochhammer (arity-2, `(x, n)`) and
+  // Beta (arity-2, `(a, b)`) — the latter two also probe the multi-arg
+  // dispatch path the Bessel family introduced.
+  //
+  // Numeric anchors:
+  //   ∫_1^2 LogGamma(x) dx     = a·log(a) - a + ½·log(2π) at a=1
+  //                            = -1 + ½·log(2π) ≈ -0.081061   (Raabe's formula)
+  //   ∫_2^3 Digamma(x) dx      = log Γ(3) - log Γ(2) = log(2) ≈ 0.693147
+  //                                                            (FTC: ∫ψ = logΓ)
+  //   ∫_2^5 Pochhammer(x, 2) dx = ∫_2^5 x·(x+1) dx
+  //                            = [x³/3 + x²/2]_2^5 = 49.5 (exact rational)
+  //   ∫_2^5 Beta(x, x) dx      ≈ 0.10280491145866412  (mpmath 50dp quad)
+  //
+  // The g08 Beta integrand has no clean closed form; we use mpmath
+  // `quad(lambda x: beta(x, x), [2, 5])` as the gold reference
+  // (cross-checked against a trapezoidal estimate on N=1000 to ~6
+  // significant digits). The tool's float64 output agrees with the
+  // mpmath truth to ≤ 1 ULP, which the goldens then lock in place.
+  {
+    id: "g05-loggamma-on-1-2",
+    description: "∫ LogGamma(x) on [1,2] = -1 + ½·log(2π) (Raabe's formula)",
+    category: "gamma-family",
+    kind: "value",
+    f: (x) => lgammaFloat64(x).value,
+    fExpr: call("LogGamma", x),
+    a: 1,
+    b: 2,
+  },
+  {
+    id: "g06-digamma-on-2-3",
+    description: "∫ Digamma(x) on [2,3] = log(2) (FTC: ∫ψ(x) dx = log Γ(x))",
+    category: "gamma-family",
+    kind: "value",
+    f: (x) => digammaFloat64(x),
+    fExpr: call("Digamma", x),
+    a: 2,
+    b: 3,
+  },
+  {
+    id: "g07-pochhammer-x-2-on-2-5",
+    description: "∫ Pochhammer(x,2) on [2,5] = 49.5 (polynomial: x(x+1) integrated exactly)",
+    category: "gamma-family",
+    kind: "value",
+    f: (x) => pochhammerFloat64(x, 2),
+    fExpr: call("Pochhammer", x, int(2n)),
+    a: 2,
+    b: 5,
+  },
+  {
+    id: "g08-beta-x-x-on-2-5",
+    description: "∫ Beta(x,x) on [2,5] ≈ 0.10280491145866412 (mpmath 50dp cross-check)",
+    category: "gamma-family",
+    kind: "value",
+    f: (x) => betaFloat64(x, x),
+    fExpr: call("Beta", x, x),
+    a: 2,
+    b: 5,
   },
 ];

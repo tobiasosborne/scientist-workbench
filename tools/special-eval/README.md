@@ -1,12 +1,14 @@
 # special-eval
 
 The umbrella per-head arb-prec / float64 evaluator for the Erf family
-(ADR-0040 §"Decision 7") plus the canonical Bessel family (ADR-0041
-§"Decision 7"). One tool dispatches across twelve closed-vocabulary
-heads behind a single `--head=<name>` flag and across two determinism
+(ADR-0040 §"Decision 7"), the canonical Bessel family (ADR-0041
+§"Decision 7"), and the canonical Gamma family (ADR-0042 §"Decision
+7-9"). One tool dispatches across twenty-eight closed-vocabulary heads
+behind a single `head` field on the wire and across two determinism
 tiers (float64 / arb-prec). The agent's mental model is "give me Erf
-(or BesselJ) at this argument, this precision"; the cross-tier dispatch
-and the per-head substrate dispatch live behind the same wire schema.
+(or BesselJ, or Gamma) at this argument, this precision"; the cross-tier
+dispatch and the per-head substrate dispatch live behind the same wire
+schema.
 
 Heads (v0.2):
 
@@ -15,6 +17,29 @@ Heads (v0.2):
 - **Bessel family** (arity 2, `args = [ν, z]`): `BesselJ`, `BesselY`,
   `BesselI`, `BesselK`, `BesselIScaled` (`= e^{-|z|}·I_ν(z)`),
   `BesselKScaled` (`= e^{z}·K_ν(z)`).
+- **Gamma family** (arity 1 or 2 — see "Gamma-family per-head wire
+  catalog" below for argument semantics): `Gamma`, `LogGamma`,
+  `Digamma`, `Trigamma`, `Polygamma`, `Pochhammer`,
+  `IncompleteGammaUpper`, `IncompleteGammaLower`, `IncompleteGammaP`,
+  `IncompleteGammaQ`, `Beta`, `LogBeta`, `BarnesG`, `Hyperfactorial`,
+  `GammaRatio`, `GammaDeltaRatio` — 16 heads spanning the
+  factorial / digamma / Polygamma / Beta / Incomplete-Gamma /
+  Barnes-G subspecies of the Γ-family algebra. The arity-1 spine
+  (`Gamma`, `LogGamma`, `Digamma`, `Trigamma`, `BarnesG`,
+  `Hyperfactorial`) takes `args = [z]`; the arity-2 heads carry
+  per-head semantics — `Polygamma(m, z)` (m a non-negative integer),
+  `Pochhammer(a, n)` (rising factorial `Γ(a+n)/Γ(a)`),
+  `IncompleteGamma{Upper,Lower,P,Q}(a, z)`, `Beta(a, b)`,
+  `LogBeta(a, b)`, `GammaRatio(a, b) = Γ(a)/Γ(b)`, and
+  `GammaDeltaRatio(a, δ) = Γ(a)/Γ(a+δ)`. The complex-axis lane
+  carries `cgamma`, `clgamma`, `cdigamma`, `ctrigamma`, `cpolygamma`,
+  `cBeta`, and `cIncompleteGamma{Upper,Lower}`; the remaining 8
+  Gamma heads refuse honestly on the complex axis with
+  `tagged "special-eval/no-known-representation"` (no complex
+  substrate in v0.2 — filed as `gamma/v03-*` follow-ups). Inputs
+  with `Polygamma(m, z)` requiring non-integer or negative m refuse
+  with `tagged "special-eval/degenerate-shape"` rather than emit a
+  silent NaN.
 
 Future heads (Whittaker, ParabolicCylinder, Legendre family, LerchPhi)
 plug into the same umbrella additively per the per-head substrate

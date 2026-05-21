@@ -53,6 +53,17 @@ the Bessel additivity extension shipped with the Bessel epic, ADR-0041
   `BesselK(rational(1,3), exp(x))` are all valid). `BesselIScaled` /
   `BesselKScaled` are *not* admitted as primary heads — compose them
   via `Exp(-Abs(z)) · BesselI(ν, z)` etc.
+- **Gamma-family heads** (ADR-0042 §"Decision 4"; substrate
+  `packages/quadrature/src/special-funcs/gamma-float64.ts`): `Gamma`,
+  `LogGamma`, `Digamma`, `Trigamma`, `Polygamma`, `Pochhammer`,
+  `IncompleteGammaUpper`, `IncompleteGammaLower`, `IncompleteGammaP`,
+  `IncompleteGammaQ`, `Beta`, `BarnesG`, `GammaRatio`,
+  `GammaDeltaRatio`, `GammaPDerivative`. The two-pass `foldSpecialHeads`
+  dispatcher is arity-agnostic — arity-2 heads (`Pochhammer(a, n)`,
+  `Beta(a, b)`, `Polygamma(m, z)`, `GammaRatio(a, b)`) compose in the
+  integrand exactly as the arity-1 spine does (so `Beta(x, x)`,
+  `Pochhammer(x, 2)`, and `LogGamma(x)·exp(-x)` are all valid
+  integrands).
 - **Constants:** `pi`, `e`.
 - **Numeric leaves:** `integer`, `rational`, `float64`.
 - **Variable:** any `symbol` matching the `var` field; other symbols
@@ -151,9 +162,9 @@ Ch. 5).
 - Higher-dimensional integration (cubature).
 - Symbolic anti-derivatives.
 - Integrand vocabulary beyond the elementary heads ∪ Erf-family
-  ∪ constants — extension is additive when motivated (per ADR-0040
-  §"Decision 4", future per-head ADRs extend the dispatcher's
-  `SPECIAL_HEADS` list).
+  ∪ Bessel-family ∪ Gamma-family ∪ constants — extension is additive
+  when motivated (per ADR-0040 §"Decision 4", future per-head ADRs
+  extend the dispatcher's `SPECIAL_HEADS` list).
 - Cross-platform bit-identity guarantee. ADR-0015's `numerical: true`
   applies: the tool's output bytes are bit-identical *given the
   platform fingerprint* `{arch, os, runtime}`. The fingerprint is
