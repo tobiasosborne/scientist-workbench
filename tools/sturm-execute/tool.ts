@@ -899,6 +899,8 @@ function dist(refs: readonly string[], outcomes: readonly Value[]): Value {
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Pure-analytic state-vector simulation of a Sturm circuit; `tagged \"sturm-execute/out-of-scope\"` for oracle / discard / qubit-cap > 12 / free-symbolic angles",
   schema: { input: inputSchema, output: outputSchema },
   examples: [
     {
@@ -921,16 +923,14 @@ export const def = defineTool({
       output: dist(["r"], [outcomeF64([pair("r", 1)], 1.0)]),
     },
     {
+      // prepare(1/2) yields the uniform distribution over {0, 1}.
+      // `output` is omitted: the per-outcome probabilities are float64
+      // simulation results that land ULPs away from the analytic 0.5,
+      // so the byte-exact distribution is pinned by the folded golden
+      // (ADR-0043 / issue ixnv.3) rather than a brittle literal.
       description: "prepare(1/2) — uniform distribution",
       input: encodeChannel(
         channel([], [], [prepareOp(rat(1n, 2n), 0n), observeOp(0n, "r")])
-      ),
-      output: dist(
-        ["r"],
-        [
-          outcomeF64([pair("r", 0)], 0.49999999999999983),
-          outcomeF64([pair("r", 1)], 0.5000000000000001),
-        ]
       ),
     },
     {
@@ -1065,6 +1065,11 @@ export const def = defineTool({
       ),
     },
     {
+      // |+⟩ → diag(e^{-iπ/4}, e^{iπ/4})|+⟩; phase only, no basis change,
+      // so measurement gives 50/50 like prepare(1/2) alone. `output` is
+      // omitted — the byte-exact distribution (float64 simulation
+      // result) is pinned by the folded golden (ADR-0043 / issue
+      // ixnv.3).
       description: "rz alone has no effect on standard-basis probabilities",
       input: encodeChannel(
         channel(
@@ -1077,17 +1082,12 @@ export const def = defineTool({
           ]
         )
       ),
-      // |+⟩ → diag(e^{-iπ/4}, e^{iπ/4})|+⟩; phase only, no basis change.
-      // So measurement gives 50/50 like prepare(1/2) alone.
-      output: dist(
-        ["r"],
-        [
-          outcomeF64([pair("r", 0)], 0.49999999999999983),
-          outcomeF64([pair("r", 1)], 0.5000000000000001),
-        ]
-      ),
     },
     {
+      // r0=0 → wire 1 stays |0⟩ → r1=0; joint prob ≈ 0.5.
+      // r0=1 → wire 1 flipped to |1⟩ → r1=1; joint prob ≈ 0.5.
+      // `output` omitted — byte-exact joint distribution pinned by the
+      // folded golden.
       description: "cases dispatch: feedback-conditioned rotation",
       input: encodeChannel(
         channel(
@@ -1106,21 +1106,6 @@ export const def = defineTool({
             observeOp(1n, "r1"),
           ]
         )
-      ),
-      // r0=0 → wire 1 stays |0⟩ → r1=0; joint prob ≈ 0.5
-      // r0=1 → wire 1 flipped to |1⟩ → r1=1; joint prob ≈ 0.5
-      output: dist(
-        ["r0", "r1"],
-        [
-          outcomeF64(
-            [pair("r0", 0), pair("r1", 0)],
-            0.49999999999999983
-          ),
-          outcomeF64(
-            [pair("r0", 1), pair("r1", 1)],
-            0.5000000000000001 * (Math.sin(Math.PI / 2) ** 2)
-          ),
-        ]
       ),
     },
     {

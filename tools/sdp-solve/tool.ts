@@ -1085,63 +1085,30 @@ const example4Output = tagged(
   }),
 );
 
-// Example outputs are hand-written to document the expected wire
-// shape. We don't pin them byte-exactly here (the goldens do that —
-// see goldens.spec.ts); these examples are documentation that the
-// runner validates against `outputSchema` at load time. The actual
-// IPM-produced numeric values for `x`, `dual`, `slack`, `objective`,
-// and `achieved_precision` may differ by float64 ULPs from what is
-// shown — that drift is captured in the goldens, not here.
-//
-// For example 1 (1×1, x = 5): documented expected shape with the
-// analytic optimum. For example 2 (2×2 trace = 4): the optimum face
-// is the rank-1 cone; we document one canonical vertex (X = diag(2,2)).
-
-const example1Output = record({
-  status: str("optimal"),
-  x: list([float64FromNumber(5)]),
-  dual: list([float64FromNumber(1)]),
-  slack: list([float64FromNumber(0)]),
-  iterations: int(4n),
-  method: str(METHOD_TAG_HSDE_NT),
-  condition_estimate: float64FromNumber(0),
-  warnings: list([]),
-  objective: float64FromNumber(5),
-  achieved_precision: float64FromNumber(1e-12),
-});
-
-const example2Output = record({
-  status: str("optimal"),
-  x: list([
-    float64FromNumber(2),
-    float64FromNumber(0),
-    float64FromNumber(2),
-  ]),
-  dual: list([float64FromNumber(-1)]),
-  slack: list([
-    float64FromNumber(0),
-    float64FromNumber(0),
-    float64FromNumber(0),
-  ]),
-  iterations: int(4n),
-  method: str(METHOD_TAG_HSDE_NT),
-  condition_estimate: float64FromNumber(0),
-  warnings: list([]),
-  objective: float64FromNumber(-4),
-  achieved_precision: float64FromNumber(1e-12),
-});
+// The two worked examples below carry `input` only — `output` is
+// omitted. An interior-point SDP solver's exact record (iteration
+// count, ULP-level float residuals, condition estimate) is a
+// numerical detail that cannot be reliably hand-transcribed, so the
+// byte-exact output is pinned by the folded golden (ADR-0043 / issue
+// ixnv.3: `def.examples` are folded into goldens, which snapshot the
+// tool's actual output for output-omitted examples). Example 1 is the
+// 1×1 case (x = 5); example 2 the 2×2 trace = 4 case whose optimum
+// face is the rank-1 cone (canonical vertex X = diag(2,2)).
 
 const examples = [
   {
+    // `output` is omitted: an interior-point SDP solver's exact record
+    // (iteration count, ULP-level float residuals, condition estimate)
+    // is a numerical detail not reliably hand-transcribed — the
+    // byte-exact record is pinned in the folded golden (ADR-0043 /
+    // issue ixnv.3). The description states the verifiable claim.
     description: "1×1 PSD: minimise x s.t. x = 5, x ≥ 0 — optimum x = 5",
     input: example1Input,
-    output: example1Output,
   },
   {
     description:
       "2×2 PSD: minimise -tr(X) s.t. tr(X) = 4, X ⪰ 0 — optimum primal value -4",
     input: example2Input,
-    output: example2Output,
   },
   {
     description: "Refusal: quadratic objective Q is out of scope for v0.1",
@@ -1252,6 +1219,8 @@ function smokeTest(): void {
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "SDP specialist of the cone-solver tier (ADR-0030). Wraps solver-ipm's primal-dual interior-point method with four search-direction lanes; default `auto` routes to HSDE-NT; strict-Mosek √2-scaled wire",
   schema: { input: inputSchema, output: outputSchema },
   flags: {
     method: F.enum(

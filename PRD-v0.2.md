@@ -294,7 +294,7 @@ A tool ships with:
 3. A set of examples. *BUILT: required field. Each example's input and output is checked to conform to the schema at tool-load time. The current floor is "every code-path branch + edge cases"; ≥30 to call a tool v1-complete.*
 4. A set of invariants. *BUILT: required field.*
 5. A property-based test suite, OR a `--test` hook (§4.3). *BUILT: workspace-level property tests in `packages/*/test/`; per-tool `--test` hooks for the tools whose properties are best checked in-process.*
-6. A golden-master test set, content-addressed. *BUILT: every tool with non-trivial behaviour has 30+ goldens.*
+6. A golden-master test set, content-addressed. *BUILT: every tool with non-trivial behaviour has 30+ goldens. As of ADR-0043 / issue `ixnv.3` the `goldens/` directory is **generated** — `scripts/generate-goldens.ts` folds each tool's `def.examples` (artefact 3) into `tools/<tool>/goldens/*.golden.json`; a hand-authored `goldens.spec.ts` is now optional, supplementary only. The artefact is still required; it is no longer hand-maintained.*
 7. A README. *BUILT.*
 
 A tool without all seven is not a tool; it is a prototype.
@@ -311,7 +311,7 @@ MVP status: the workspace test suite exercises the cas-core algebra (47 tests in
 
 ### 4.4 Golden masters [SETTLED, BUILT for `oracle`]
 
-Goldens live alongside tool source as `*.golden.json` files in `tools/<tool>/goldens/`. They are records of `{input, output, flags?}`. Diff modes available via the `oracle` tool (§4.5):
+Goldens live alongside tool source as `*.golden.json` files in `tools/<tool>/goldens/`. They are records of `{input, output, flags?}`. They are **folded from each tool's `examples`** (ADR-0043 / issue `ixnv.3`): `scripts/generate-goldens.ts` walks the registry, runs each tool against every example input, and writes the canonical record — an example with an asserted `output` is verified against the live run (a mismatch fails the generator loudly), an `output`-omitted example is snapshotted, and `error`-expecting or `nondeterministic: true` examples are excluded. The optional per-tool `goldens.spec.ts` supplies any *additional* inputs an author wants pinned beyond the examples. `scripts/check.ts` regenerates with `--check` and byte-compares, so stale goldens fail the build. Diff modes available via the `oracle` tool (§4.5):
 
 - **exact** — bit-identical canonical bytes. *BUILT.*
 - **structural** — protocol hash equality. *BUILT (currently coincides with exact for our protocol; the distinction is a hook for the modes below).*

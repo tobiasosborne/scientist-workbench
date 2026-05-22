@@ -238,6 +238,8 @@ const piOver = (n: bigint): Value => expr("/", [PI, int(n)]);
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Sturm channel combinator: parallel composition (monoidal product); wire-id-renamed right concatenated onto left verbatim",
   schema: { input: inputSchema, output: outputSchema },
   examples: [
     {

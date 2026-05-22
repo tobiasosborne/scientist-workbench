@@ -1,0 +1,1 @@
+{"fields":{"input":{"kind":"string","value":"exp(neg(t))"},"output":{"args":[{"args":[{"kind":"symbol","name":"t"}],"head":"neg","kind":"expression"}],"head":"exp","kind":"expression"}},"kind":"record"}

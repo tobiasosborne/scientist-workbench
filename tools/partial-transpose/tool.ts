@@ -170,6 +170,8 @@ const outputSchema = S.record({
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Transpose on selected subsystems of an operator on a tensor-product Hilbert space; the Peres-Horodecki PPT entanglement witness building block; involution `PT_S(PT_S(M)) = M`. qinfo v0.1 (ADR-0034)",
   schema: { input: inputSchema, output: outputSchema },
   numerical: true, // ADR-0034 §D8
   examples: [

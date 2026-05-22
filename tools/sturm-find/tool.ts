@@ -56,13 +56,10 @@ import {
   type Value,
   S,
   type Schema,
-  expr,
-  float64FromNumber,
   float64ToNumber,
   int,
   list,
   record,
-  str,
   ToolError,
 } from "@workbench/protocol";
 import { defineTool, runTool } from "@workbench/contract";
@@ -108,31 +105,23 @@ function readInteger(v: Value | undefined, field: string): bigint {
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Grover's algorithm via `sturm-execute` + optional `sturm-sample`; v0.1 caps at `n_bits ≤ 3`",
   schema: { input: inputSchema, output: outputSchema },
   examples: [
     {
+      // `output` is omitted for all three Grover examples: the result
+      // is a float64 amplitude distribution whose byte-exact form is a
+      // simulation detail. Under ADR-0043 / issue ixnv.3 the examples
+      // are folded into goldens, which snapshot the tool's actual
+      // output — so the exact distribution is pinned in the golden, not
+      // a hand-transcribed placeholder here. The description states the
+      // verifiable claim (here: n=2 marked={3} amplifies |11⟩ to
+      // probability 1 in a single iteration).
       description: "n=2 marked={3} — analytic distribution, no sampling",
       input: record({
         n_bits: int(2n),
         marked: list([int(3n)]),
-      }),
-      // Schema-shape sanity only — the byte-exact distribution lives
-      // in the goldens.
-      output: record({
-        distribution: record({
-          classical_refs: list([str("r0"), str("r1")]),
-          outcomes: list([
-            record({
-              classical_resolutions: list([
-                record({ ref: str("r0"), value: int(1n) }),
-                record({ ref: str("r1"), value: int(1n) }),
-              ]),
-              prob: float64FromNumber(1),
-            }),
-          ]),
-          precision: str("float64"),
-        }),
-        iterations: int(1n),
       }),
     },
     {
@@ -141,21 +130,12 @@ export const def = defineTool({
         n_bits: int(3n),
         marked: list([int(5n)]),
       }),
-      // Placeholder shape; goldens carry the exact bytes.
-      output: record({
-        distribution: expr("__placeholder", []),
-        iterations: int(2n),
-      }),
     },
     {
       description: "n=3 marked={2,5} — multi-marked oracle",
       input: record({
         n_bits: int(3n),
         marked: list([int(2n), int(5n)]),
-      }),
-      output: record({
-        distribution: expr("__placeholder", []),
-        iterations: int(1n),
       }),
     },
   ],

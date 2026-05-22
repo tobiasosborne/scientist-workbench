@@ -14,7 +14,10 @@
     "check:quick": "bun scripts/check.ts --quick",
     "goldens": "bun scripts/generate-goldens.ts",
     "goldens:check": "bun scripts/generate-goldens.ts --check",
-    "new-tool": "bun scripts/new-tool.ts"
+    "gen-catalog": "bun scripts/gen-catalog.ts",
+    "gen-tool-readme": "bun scripts/gen-tool-readme.ts",
+    "new-tool": "bun scripts/new-tool.ts",
+    "wb": "bun wb.ts"
   },
   "devDependencies": {
     "typescript": "^5.6.0",

@@ -293,6 +293,8 @@ function encodeSuccess(r: EighResult, scaleWarnings: readonly string[] = []) {
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Cyclic Jacobi symmetric eigensolver for real symmetric `n × n` A; agent-honest reconstruction + orthogonality errors",
   schema: { input: inputSchema, output: outputSchema },
   // ADR-0015: numerical tier.  The output always contains float64
   // leaves on the success branch (Q, eigenvalues, the three error

@@ -2,6 +2,8 @@
 // meijer-g-asymptotic-only — Braaksma far-field asymptotic for Meijer G
 // =============================================================================
 //
+// Intent
+// ------
 // Thin wire-protocol wrapper around `@workbench/meijer-core`'s
 // `meijergAsymptotic` orchestrator (ADR-0026). Exposes the
 // principal-sector algebraic dominant asymptotic for `|z| → ∞` as
@@ -158,6 +160,8 @@ const outputSchema = S.union([
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Braaksma far-field asymptotic for Meijer G in the principal sector; superasymptotic truncation at the optimal term; `arbprec: true`",
   schema: { input: inputSchema, output: outputSchema },
   arbprec: true,
   examples: [

@@ -322,6 +322,8 @@ const ex_depolarising_half = {
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Choi-Jamiołkowski isomorphism between superoperator matrices and Choi matrices; pure index permutation (Watrous / QuTiP convention); bit-identical round-trip is the decisive invariant. qinfo v0.1 (ADR-0034)",
   schema: { input: inputSchema, output: outputSchema },
   numerical: true, // ADR-0034 §D8: index-only ops are platform-bit-identical-in-practice
   examples: [

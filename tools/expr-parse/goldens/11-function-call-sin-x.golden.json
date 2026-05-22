@@ -1,0 +1,1 @@
+{"fields":{"input":{"kind":"string","value":"sin(x)"},"output":{"args":[{"kind":"symbol","name":"x"}],"head":"sin","kind":"expression"}},"kind":"record"}

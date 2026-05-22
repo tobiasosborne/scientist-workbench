@@ -341,6 +341,8 @@ const inp = (distribution: ReturnType<typeof dist>, entropy: string, shots: bigi
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Born's rule sampling: walks the Born CDF using 8 bytes per shot; strictly deterministic given entropy",
   schema: { input: inputSchema, output: outputSchema },
   examples: [
     {

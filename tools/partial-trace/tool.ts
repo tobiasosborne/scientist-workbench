@@ -149,6 +149,8 @@ const outputSchema = S.record({
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Trace out one or more subsystems of an operator on a tensor-product Hilbert space (dims-generalised; qubit 0 = leftmost). `Tr_1(A⊗B) = tr(B)·A` is the decisive invariant. qinfo v0.1 (ADR-0034)",
   schema: { input: inputSchema, output: outputSchema },
   examples: [
     {

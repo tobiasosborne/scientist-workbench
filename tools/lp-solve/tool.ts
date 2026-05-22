@@ -1114,6 +1114,11 @@ function maxAbs(acc: Rat, r: Rat): Rat {
 
 const examples = [
   {
+    // `output` is omitted: an LP solver's exact record (iteration
+    // count, ULP-level float residuals) is a numerical detail not
+    // reliably hand-transcribed — the byte-exact record is pinned in
+    // the folded golden (ADR-0043 / issue ixnv.3). The description
+    // states the verifiable claim.
     description: "1D LP: minimise x subject to x = 1, x ≥ 0 — optimum x = 1",
     input: record({
       minimize: record({ c: list([float64FromNumber(1)]) }),
@@ -1125,20 +1130,10 @@ const examples = [
         cones: list([expr("NonNegCone", [list([int(0n)])])]),
       }),
     }),
-    output: record({
-      status: str("optimal"),
-      x: list([float64FromNumber(1)]),
-      dual: list([float64FromNumber(1)]),
-      slack: list([float64FromNumber(0)]),
-      objective: float64FromNumber(1),
-      achieved_precision: float64FromNumber(0),
-      iterations: int(1n),
-      method: str(METHOD_TAG_EXACT),
-      condition_estimate: float64FromNumber(0),
-      warnings: list([]),
-    }),
   },
   {
+    // `output` omitted — Farkas-infeasibility record pinned in the
+    // folded golden (iteration count is solver-internal).
     description: "Infeasible: x = 1 and x = 2 simultaneously — Farkas certificate emitted",
     input: record({
       minimize: record({ c: list([float64FromNumber(0)]) }),
@@ -1149,16 +1144,6 @@ const examples = [
         }),
         cones: list([expr("NonNegCone", [list([int(0n)])])]),
       }),
-    }),
-    output: record({
-      status: str("infeasible"),
-      x: list([]),
-      dual: list([float64FromNumber(-1), float64FromNumber(1)]),
-      slack: list([]),
-      iterations: int(2n),
-      method: str(METHOD_TAG_EXACT),
-      condition_estimate: float64FromNumber(0),
-      warnings: list([]),
     }),
   },
   {
@@ -1269,6 +1254,8 @@ function smokeTest(): void {
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "LP specialist of the cone-solver tier (ADR-0030). Three lanes share one wire: `--method=exact` rational simplex, `--method=ipm` Mehrotra predictor-corrector, `--method=hsde-lp` homogeneous self-dual embedding",
   schema: { input: inputSchema, output: outputSchema },
   flags: {
     method: F.enum(["auto", "exact", "ipm", "hsde-lp"] as const, "solver lane: auto (default, dispatches by size), exact (arbprec simplex), ipm (Mehrotra primal-dual), hsde-lp (homogeneous self-dual embedding per ADR-0033)", {

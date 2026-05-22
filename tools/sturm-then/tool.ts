@@ -275,6 +275,8 @@ const piOver = (n: bigint): Value => expr("/", [PI, int(n)]);
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Sturm channel combinator: sequential composition `f; g`; positional wire renaming at the boundary; length/kind/dim mismatch → boundary tag",
   schema: { input: inputSchema, output: outputSchema },
   examples: [
     {

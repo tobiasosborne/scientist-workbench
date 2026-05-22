@@ -2,6 +2,8 @@
 // meijer-g-slater-only — Slater-residue path for the Meijer G-function
 // =============================================================================
 //
+// Intent
+// ------
 // Thin wire-protocol wrapper around `@workbench/meijer-core`'s
 // `meijergSlater` orchestrator. Independently exposing the Slater
 // path lets the benchmark exercise it in isolation — separately from
@@ -99,6 +101,8 @@ const outputSchema = S.union([
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Slater residue-summation path (Series 1 + Series 2) for the Meijer G-function; deterministic odd-coefficient perturbation for parameter coalescence; `arbprec: true`",
   schema: { input: inputSchema, output: outputSchema },
   arbprec: true,
   examples: [

@@ -157,6 +157,8 @@ function buildSuccessOutput(
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Top-level `Solve[]`-class dispatcher; routes across linear (Bareiss), univariate-poly (radicals + Root[]), multivariate-zero-dim (Buchberger + FGLM) and transcendental lanes; branch-honest by design",
   schema: { input: inputSchema, output: outputSchema },
   examples: [
     {
@@ -223,7 +225,7 @@ export const def = defineTool({
       }),
       output: refuse(
         "foreign-vocabulary",
-        "equation #1 is not a polynomial in vars over ℚ: out-of-scope head 'sin'",
+        "equation #1 is not a polynomial in vars over ℚ: unknown head \"sin\"",
       ),
     },
   ],

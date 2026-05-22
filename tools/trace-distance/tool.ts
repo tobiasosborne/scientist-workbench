@@ -422,6 +422,8 @@ function findWorstHermitianViolation(
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Trace distance `D(ρ,σ) = ½‖ρ − σ‖₁` between two complex Hermitian density operators; the operationally-meaningful state-distinguishability metric (Helstrom 1969). Third qinfo v0.2 tool",
   schema: { input: inputSchema, output: outputSchema },
   // ADR-0015: numerical tier (the success branch carries a float64
   // value); the eighComplex pass is the underlying numerical work.
@@ -439,13 +441,13 @@ export const def = defineTool({
     },
     // -- happy path: identical states → D = 0 ----------------------------
     {
+      // D = 0. `output` is omitted: the eigh path on the zero
+      // difference matrix may attach a soft orthogonality warning
+      // whose exact text is an implementation detail — the byte-exact
+      // record is pinned by the folded golden (ADR-0043 / issue
+      // ixnv.3). The description states the verifiable claim.
       description: "D(|0><0|, |0><0|) = 0 — identical states",
       input: pairRealInput([[1, 0], [0, 0]], [[1, 0], [0, 0]]),
-      output: record({
-        value: float64FromNumber(0),
-        method: str("hermitian-eigh-of-difference"),
-        warnings: list([]),
-      }),
     },
     // -- happy path: pure vs maximally mixed → D = 1/2 -------------------
     {
@@ -474,14 +476,12 @@ export const def = defineTool({
     },
     // -- happy path: two diagonal Bloch states → D = |p − q| -------------
     {
+      // ρ − σ = diag(0.4, -0.4); ‖·‖₁ = 0.8; D = 0.4. `output` is
+      // omitted: the eigh-of-difference path lands a ULP away from the
+      // literal `0.4`, so the byte-exact record is pinned by the
+      // folded golden (ADR-0043 / issue ixnv.3).
       description: "D(diag(0.7, 0.3), diag(0.3, 0.7)) = 0.4 — flipped classical bits",
       input: pairRealInput([[0.7, 0], [0, 0.3]], [[0.3, 0], [0, 0.7]]),
-      output: record({
-        // ρ − σ = diag(0.4, -0.4); ‖·‖₁ = 0.8; D = 0.4
-        value: float64FromNumber(0.4),
-        method: str("hermitian-eigh-of-difference"),
-        warnings: list([]),
-      }),
     },
     // -- boundary refusals -----------------------------------------------
     {

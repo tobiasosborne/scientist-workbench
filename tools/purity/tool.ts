@@ -407,6 +407,8 @@ function findWorstHermitianViolation(
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Purity `γ(ρ) = tr(ρ²)` of a complex Hermitian density operator via the one-pass entrywise identity `γ = Σ |ρ_ij|²`; O(n²), no eigendecomposition. Second qinfo v0.2 tool",
   schema: { input: inputSchema, output: outputSchema },
   // ADR-0015 / ADR-0035 §D3: the success branch emits float64 leaves
   // (value, trace), so the platform fingerprint is recorded on every
@@ -454,19 +456,15 @@ export const def = defineTool({
     },
     // -- happy path: Bloch density operator with Y component (complex Hermitian)
     {
+      // γ = re² + im² over all entries
+      //   = (0.6² + 0.2² + 0.2² + 0.4²) + (0 + 0.25² + 0.25² + 0)
+      //   = 0.6 + 0.125 = 0.725
+      // `output` is omitted: the float64 sum-of-squares lands a ULP
+      // away from the literal `0.725`, so the byte-exact record is
+      // pinned by the folded golden (ADR-0043 / issue ixnv.3) rather
+      // than a brittle hand-transcribed literal.
       description: "rho=(I + 0.4 X + 0.5 Y + 0.2 Z)/2 Bloch with Y → γ = 0.5·(1 + r²) for r = 0.671...",
       input: rhoInput([[0.6, 0.2], [0.2, 0.4]], [[0, -0.25], [0.25, 0]]),
-      output: record({
-        // γ = re² + im² over all entries
-        // = (0.6² + 0.2² + 0.2² + 0.4²) + (0 + 0.25² + 0.25² + 0)
-        // = (0.36 + 0.04 + 0.04 + 0.16) + (0.0625 + 0.0625)
-        // = 0.6 + 0.125 = 0.725
-        value: float64FromNumber(0.725),
-        trace: float64FromNumber(1),
-        is_pure_within_tolerance: bool(false),
-        method: str("hermitian-sum-of-squares"),
-        warnings: list([]),
-      }),
     },
     // -- happy path: pure Pauli-Y eigenstate (complex Hermitian, γ = 1) ----
     {

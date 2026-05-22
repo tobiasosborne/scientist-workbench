@@ -436,6 +436,8 @@ function buildCallables(
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Velocity Verlet / Yoshida-4 symplectic integrator for separable Hamiltonians; energy drift bounded `O(h^p)` regardless of horizon",
   schema: { input: inputSchema, output: outputSchema },
   numerical: true,
   examples: [

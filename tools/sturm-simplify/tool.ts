@@ -251,6 +251,8 @@ function simplifyChannel(c: Channel): Channel {
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Idempotent Sturm channel IR canonicaliser; eliminates trivial rotations, fuses same-axis adjacencies, sorts/dedupes controls",
   schema: {
     input: channelSchema,
     output: channelSchema,

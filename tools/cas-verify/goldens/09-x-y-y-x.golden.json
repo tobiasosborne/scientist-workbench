@@ -1,1 +1,0 @@
-{"fields":{"input":{"fields":{"lhs":{"args":[{"kind":"symbol","name":"x"},{"kind":"symbol","name":"y"}],"head":"+","kind":"expression"},"rhs":{"args":[{"kind":"symbol","name":"y"},{"kind":"symbol","name":"x"}],"head":"+","kind":"expression"}},"kind":"record"},"output":{"fields":{"equal":{"kind":"boolean","value":true}},"kind":"record"}},"kind":"record"}

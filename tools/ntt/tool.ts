@@ -2,6 +2,8 @@
 // ntt — Number-Theoretic Transform over F_p (p = 998244353, g = 3)
 // =============================================================================
 //
+// Intent
+// ------
 // Length-n transform with n | (p − 1) = 2^23 · 7 · 17. Power-of-two n
 // uses iterative Cooley-Tukey on Uint32Array with a Montgomery REDC
 // inner loop; non-power-of-two n uses Bluestein chirp-z reducing to a
@@ -66,6 +68,8 @@ const out = (xs: readonly bigint[]) => list(xs.map(int));
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Number-Theoretic Transform over `F_p`; Cooley-Tukey (power-of-two) or Bluestein chirp-z (arbitrary `n | p−1`)",
   schema: { input: inputSchema, output: outputSchema },
   examples: [
     {

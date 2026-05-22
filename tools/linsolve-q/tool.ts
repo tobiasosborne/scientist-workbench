@@ -1,5 +1,12 @@
-// linsolve-q — exact linear solving over Q via Bareiss fraction-free
-// Gaussian elimination.
+// =============================================================================
+// linsolve-q — exact linear solving over Q via Bareiss fraction-free elimination
+// =============================================================================
+//
+// Intent
+// ------
+// `linsolve-q` solves `A · x = b` exactly over the rationals. It is the
+// first solve-tier tool; ADRs 0017, 0018, 0019 are its canonical design
+// references.
 //
 // Given a rational matrix `A` and vector `b`, produce `x` such that
 // `A · x = b` exactly. Distinguishes three output kinds:
@@ -208,6 +215,8 @@ function buildOutput(result: LinSolveResult, n: number): Value {
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Exact linear solving `A·x = b` over Q via Bareiss fraction-free Gaussian elimination; distinguishes unique / under-determined / inconsistent; bit-identical cross-platform forever",
   schema: {
     input: inputSchema,
     output: outputSchema,

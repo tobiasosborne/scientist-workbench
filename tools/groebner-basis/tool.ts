@@ -223,6 +223,8 @@ function expressionToPoly(v: Value, varSet: ReadonlySet<string>): Poly<Rat> {
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Multivariate Gröbner basis over Q for `lex` and `degrevlex` orders; Buchberger 1965 + sloppy sugar + Gebauer-Möller pruning + full inter-reduction to the unique reduced GB. Symbolic tier",
   schema: { input: inputSchema, output: outputSchema },
   examples: [
     {
@@ -237,20 +239,11 @@ export const def = defineTool({
         vars: list([sym("x"), sym("y")]),
         order: str("lex"),
       }),
-      // Output: under lex with x > y, the GB is { x − y², y³ + 1 }.
-      // The corpus verifier accepts any permutation, but we emit a
-      // deterministic descending-by-LM order: x > y³ ⇒ first the
-      // x-monomial element, then the y-only element.
-      output: record({
-        basis: list([
-          expr("+", [sym("x"), expr("*", [int(-1n), expr("^", [sym("y"), int(2n)])])]),
-          expr("+", [expr("^", [sym("y"), int(3n)]), int(1n)]),
-        ]),
-        order: str("lex"),
-        vars: list([sym("x"), sym("y")]),
-        n_pairs: int(1n),
-        warnings: list([]),
-      }),
+      // Under lex with x > y, the GB is { x − y², y³ + 1 } (descending
+      // by leading monomial). `output` is omitted: the `n_pairs`
+      // diagnostic (S-pairs processed by Buchberger) is an algorithmic
+      // detail not worth pinning by hand — the byte-exact record lives
+      // in the folded golden (ADR-0043 / issue ixnv.3).
     },
     {
       description: "Empty input — boundary refusal",
@@ -279,7 +272,7 @@ export const def = defineTool({
       }),
       output: refuse(
         TAG_NON_POLYNOMIAL,
-        "polynomial is not in the closed +/-/*/^ vocabulary over ℚ: unknown head \"sin\"",
+        "polynomial #1: polynomial is not in the closed +/-/*/^ vocabulary over ℚ: unknown head \"sin\"",
       ),
     },
   ],

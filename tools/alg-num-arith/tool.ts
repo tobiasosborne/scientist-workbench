@@ -154,6 +154,8 @@ function refuse(tag: string, detail: string): Value {
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Symbolic field arithmetic over named algebraic numbers (`Root[poly, k]`, ADR-0018) via Sylvester-Bareiss resultants; add/sub/mul/div/neg/inv/eq; bit-identical cross-platform forever",
   schema: { input: inputSchema, output: outputSchema },
   flags: {
     op: F.enum(OPS, "arithmetic operation to apply"),

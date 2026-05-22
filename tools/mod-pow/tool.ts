@@ -47,6 +47,8 @@ const inp = (base: bigint, exponent: bigint, modulus: bigint) =>
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Modular exponentiation over `Z/mZ` via square-and-multiply; canonical residue in `[0, m)`",
   schema: {
     input: S.record({
       base: S.kind("integer"),

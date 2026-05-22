@@ -154,6 +154,8 @@ function inp(A: readonly (readonly number[])[], b: readonly number[]) {
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "LU with partial pivoting + iterative refinement for `Ax = b`; agent-honest residual / condition / growth-factor / warnings",
   schema: { input: inputSchema, output: outputSchema },
   // ADR-0015: numerical tier. Output bytes are bit-identical *given the
   // platform fingerprint* {arch, os, runtime}; cross-platform divergence

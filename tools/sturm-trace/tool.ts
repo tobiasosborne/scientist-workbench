@@ -313,6 +313,8 @@ const inputSchema = S.record(
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "TS-native frontend tool: run a TypeScript source string that builds a channel via `@workbench/sturm`'s `trace(...)` DSL (ADR-0009) in a sandboxed Bun subprocess, emit the canonical IR Value",
   schema: {
     input: inputSchema,
     // Output is either an `expression "channel"` IR Value or a

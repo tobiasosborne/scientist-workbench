@@ -2,6 +2,8 @@
 // special-eval — per-head arbitrary-precision / float64 evaluator umbrella
 // =============================================================================
 //
+// Intent
+// ------
 // The wire surface for ADR-0040's per-head special-function substrate.
 // This is the *single* tool an agent reaches for when the question is "give
 // me Erf at this argument, this precision" — the dispatch across the Erf
@@ -1947,6 +1949,8 @@ function isGammaHead(h: AdmittedHead): boolean {
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Per-head arb-prec / float64 evaluator umbrella for the Erf, Bessel and 16-head Gamma families (real + complex); one `--head=<name>` flag dispatches across heads and {float64, arb-prec} tiers. `arbprec: true`",
   schema: { input: inputSchema, output: outputSchema },
   arbprec: true,
   examples: [

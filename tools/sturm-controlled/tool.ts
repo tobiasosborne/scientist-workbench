@@ -267,6 +267,8 @@ const Q = (id: bigint): Wire => wire(id, "quantum");
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Sturm channel combinator: prepends a control wire to every `ry`/`rz` in the body; refuses on `prepare`/`observe`/`oracle`/`discard` or wire-id collision",
   schema: { input: inputSchema, output: outputSchema },
   examples: [
     {

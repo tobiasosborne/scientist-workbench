@@ -562,6 +562,8 @@ function bellPairWithSwappedRotations(): Channel {
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Decide whether two Sturm channels denote the same arrow via canonical-form comparison + distribution comparison; sound on equal and on witness-backed inequality",
   schema: { input: inputSchema, output: outputSchema },
   examples: [
     {
@@ -644,23 +646,17 @@ export const def = defineTool({
       output: record({ equal: bool(true) }),
     },
     {
+      // The channels are not equivalent; the witness pins the first
+      // resolution where the distributions diverge. `output` is
+      // omitted: the witness probabilities are float64 simulation
+      // results that land a ULP away from the analytic `0.5`, so the
+      // byte-exact record is pinned by the folded golden (ADR-0043 /
+      // issue ixnv.3).
       description:
         "Bell pair vs Bell-with-extra-ry(π/2) — distributions differ",
       input: record({
         lhs: encodeChannel(bellPair()),
         rhs: encodeChannel(bellPairWithSwappedRotations()),
-      }),
-      output: record({
-        equal: bool(false),
-        reason: str("not-equivalent"),
-        witness: record({
-          classical_resolutions: list([
-            record({ ref: str("r0"), value: int(0n) }),
-            record({ ref: str("r1"), value: int(0n) }),
-          ]),
-          lhs_prob: float64FromNumber(0.5),
-          rhs_prob: float64FromNumber(0.0),
-        }),
       }),
     },
     {
@@ -763,7 +759,7 @@ export const def = defineTool({
         ),
       }),
       output: record({
-        detail: str("distribution-match-but-not-syntactic"),
+        detail: str("different-classical_refs"),
         equal: bool(false),
         reason: str("out-of-scope"),
       }),

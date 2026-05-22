@@ -344,6 +344,8 @@ function makeInput(args: {
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Dormand-Prince 5(4) adaptive non-stiff IVP solver (SciPy `RK45` algorithm); agent-honest residual + step counts",
   schema: { input: inputSchema, output: outputSchema },
   // ADR-0015 numerical tier. The output always contains float64
   // leaves on the success branch (trajectory, t_values,

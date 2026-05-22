@@ -2,10 +2,35 @@
 // cas-verify — decide A = B as elements of Q(x_1, ..., x_n)
 // =============================================================================
 //
+// Intent
+// ------
+// `cas-verify` decides whether two expression values denote the same
+// element of the rational-function field `Q(x_1, …, x_n)`. It is the
+// equality oracle of the symbolic tier: a planner that has produced two
+// expressions by different routes asks `cas-verify` whether they agree.
+//
+// The output is a record-with-flag (ADR-0003), not a tagged value: the
+// `equal` boolean is always present, and the inequality / out-of-scope
+// cases are routine non-success, not boundary failure. The four shapes:
+//
+//   * equal — `{equal: true}`.
+//   * in-scope and unequal — `{equal: false, reason: "not-equal",
+//     witness: <lhs − rhs in canonical form>}`.
+//   * either side out-of-scope — `{equal: false, reason: "out-of-scope",
+//     side: "lhs"|"rhs", detail: "…"}`.
+//
+// Honest scope (Rule 8): an out-of-scope input gets a clean
+// `{equal:false, reason:"out-of-scope"}`, never a wrong answer.
+//
+// Algorithm
+// ---------
 // Equality is decided by cross-multiplication: a/b = c/d iff
 // a·d − c·b = 0 in Q[x_1, ..., x_n]. Sound and complete because
 // Q[x_1, ..., x_n] is an integral domain (PRD §9.3); no polynomial
-// GCD needed.
+// GCD needed for the equality decision itself — this tool's correctness
+// has never depended on reduction. As of ADR-0013 `cas-simplify` also
+// reduces rational functions, so the inequality `witness` (`lhs − rhs`)
+// is now in lowest terms.
 //
 // Schema (ADR-0004)
 // -----------------
@@ -47,6 +72,8 @@ const outputSchema = S.record(
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Decide A = B over `Q(x)` by cross-multiplication; emits `lhs − rhs` as a witness on inequality",
   schema: { input: inputSchema, output: outputSchema },
   examples: [
     {

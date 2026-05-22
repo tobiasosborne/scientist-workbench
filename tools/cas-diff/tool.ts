@@ -150,6 +150,8 @@ function diffOrTag(f: Value, varSym: SymbolValue, original: Value): Value {
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Symbolic differentiation over the closed elementary + special-function vocabulary (ADR-0023; 38 heads); DLMF-cited chain-rule rules for the Gamma, Bessel, Erf, Fresnel, ExpIntegral, Hermite and Polylog families",
   schema: { input: inputSchema, output: outputSchema },
   examples: [
     {

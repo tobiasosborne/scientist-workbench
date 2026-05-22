@@ -307,6 +307,8 @@ function encodeRuledOutMethods(
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Top-level Meijer G dispatcher; cost-ascending dispatch (symbolic → Slater → contour → asymptotic) with honest refusal; `arbprec: true`",
   schema: { input: inputSchema, output: outputSchema },
   arbprec: true,
   flags: {

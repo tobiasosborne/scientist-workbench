@@ -2,6 +2,8 @@
 // registry-list — discover installed tools and emit their metadata
 // =============================================================================
 //
+// Intent
+// ------
 // For an agent landing cold in a workspace: walk `tools/`, ask each
 // tool for its `--version`, `--schema`, `--examples`, `--invariants`,
 // and assemble one record per tool. The `schema_input` and
@@ -70,15 +72,20 @@ const outputSchema = S.list(entryRecordSchema);
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Discover all installed tools; schemas in the output are wire-encoded",
   schema: { input: inputSchema, output: outputSchema },
   examples: [
+    // Only the no-argument form is an example: under ADR-0043 / issue
+    // ixnv.3 every example is folded into a golden and must therefore
+    // be runnable on any checkout. The optional `tools_root` field is
+    // documented by `--schema`; an example pinning a concrete path
+    // would either be machine-specific (an absolute path) or
+    // unrunnable (a placeholder like `/path/to/tools`), so it is not
+    // carried as an example.
     {
       description: "list all tools in the current workspace — output omitted; verifier checks shape",
       input: record({}),
-    },
-    {
-      description: "list tools in a specific directory — output omitted; verifier checks shape",
-      input: record({ tools_root: str("/path/to/tools") }),
     },
   ],
   invariants: [

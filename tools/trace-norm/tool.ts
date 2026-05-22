@@ -414,6 +414,8 @@ function findWorstHermitianViolation(
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Schatten-1 (trace / nuclear) norm `‖M‖₁` of any square complex matrix via two-path dispatch: Hermitian → eigh-complex (`Σ|λ_k|`), non-Hermitian → svd-complex (`Σ S_k`). First qinfo v0.2 tool",
   schema: { input: inputSchema, output: outputSchema },
   // ADR-0015 / ADR-0035 §D3: the success branch always emits float64
   // leaves (value, eigenvalues, condition_number), so platform

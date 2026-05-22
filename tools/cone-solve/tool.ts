@@ -857,6 +857,11 @@ function coneExpr(head: string, indices: number[]) {
 
 const examples = [
   {
+    // `output` is omitted: an iterative cone solver's exact record
+    // (iteration count, ULP-level float residuals, condition estimate)
+    // is a numerical detail that cannot be reliably hand-transcribed —
+    // the byte-exact record is pinned in the folded golden (ADR-0043 /
+    // issue ixnv.3). The description states the verifiable claim.
     description: "1-D LP: minimise x subject to x = 1, x ≥ 0 — optimum x = 1",
     input: record({
       minimize: record({ c: f64List([1]) }),
@@ -864,18 +869,6 @@ const examples = [
         Ax_eq_b: record({ A: list([f64List([1])]), b: f64List([1]) }),
         cones: list([coneExpr("NonNegCone", [0])]),
       }),
-    }),
-    output: record({
-      status: str("optimal"),
-      x: f64List([1]),
-      dual: f64List([1]),
-      slack: f64List([0]),
-      objective: float64FromNumber(1),
-      achieved_precision: float64FromNumber(0),
-      iterations: int(1n),
-      method: str(METHOD_TAG),
-      condition_estimate: float64FromNumber(0),
-      warnings: list([]),
     }),
   },
   {
@@ -924,18 +917,9 @@ const examples = [
       }),
     }),
     flags: { accelerator: "type-i" as const },
-    output: record({
-      status: str("optimal"),
-      x: f64List([1]),
-      dual: f64List([1]),
-      slack: f64List([0]),
-      objective: float64FromNumber(1),
-      achieved_precision: float64FromNumber(0),
-      iterations: int(1n),
-      method: str(METHOD_TAG),
-      condition_estimate: float64FromNumber(0),
-      warnings: list([]),
-    }),
+    // `output` omitted — numerical record pinned in the folded golden
+    // (the `flags` are captured there so the accelerated path replays
+    // faithfully).
   },
 ];
 
@@ -1162,6 +1146,8 @@ function smokeTest(): void {
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Universal-primary tool of the convex-cone solver tier (ADR-0030) — the symbol for any convex cone program. Wraps cone-core's SCS operator-splitting substrate; five-class `status` discriminant; `numerical: true`",
   schema: { input: inputSchema, output: outputSchema },
   flags: {
     accelerator: F.enum(

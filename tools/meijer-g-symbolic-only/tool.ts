@@ -105,6 +105,8 @@ const outputSchema = S.union([matchedSchema, refusalSchema]);
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Adamchik-Marichev + Roach pattern-table dispatcher for Meijer G closed-form reductions (Bateman + DLMF §16.17–18); ≥30 verified rules",
   schema: { input: inputSchema, output: outputSchema },
   examples: [
     {

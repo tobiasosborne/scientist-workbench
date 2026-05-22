@@ -515,6 +515,8 @@ function hermitianPSDSqrt(
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Uhlmann fidelity `F(ρ,σ) = (tr √(√ρ·σ·√ρ))²` between two complex Hermitian density operators (Uhlmann 1976; Jozsa 1994); surfaces `√F` and the Bures angle. Fourth qinfo v0.2 tool",
   schema: { input: inputSchema, output: outputSchema },
   numerical: true,
   examples: [
@@ -532,27 +534,19 @@ export const def = defineTool({
     },
     // -- happy path: orthogonal pure states → F = 0 -----------------------
     {
+      // F = 0 with bures_angle = π/2. `output` is omitted: the tool's
+      // numerical path may attach a soft eigh-orthogonality warning whose
+      // exact text is an implementation detail — the byte-exact record
+      // is pinned in the folded golden (ADR-0043 / issue ixnv.3) rather
+      // than transcribed into a brittle literal here.
       description: "F(|0><0|, |1><1|) = 0 — orthogonal pure states",
       input: pairRealInput([[1, 0], [0, 0]], [[0, 0], [0, 1]]),
-      output: record({
-        value: float64FromNumber(0),
-        sqrt_value: float64FromNumber(0),
-        bures_angle: float64FromNumber(Math.PI / 2),
-        method: str("hermitian-eigh-spectral-sqrt"),
-        warnings: list([]),
-      }),
     },
     // -- happy path: pure vs maximally mixed → F = 1/d --------------------
     {
+      // F = 1/2 with bures_angle = π/4; exact bytes in the folded golden.
       description: "F(|0><0|, I/2) = 1/2 — pure vs qubit max-mixed",
       input: pairRealInput([[1, 0], [0, 0]], [[0.5, 0], [0, 0.5]]),
-      output: record({
-        value: float64FromNumber(0.5),
-        sqrt_value: float64FromNumber(Math.SQRT1_2),
-        bures_angle: float64FromNumber(Math.PI / 4),
-        method: str("hermitian-eigh-spectral-sqrt"),
-        warnings: list([]),
-      }),
     },
     // -- boundary refusals ------------------------------------------------
     {

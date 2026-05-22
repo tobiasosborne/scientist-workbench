@@ -233,6 +233,31 @@ export interface ToolDefinition<
 > {
   name: string;
   version: string;
+  /**
+   * A single declarative sentence — the tool's catalog blurb (ADR-0043
+   * Decision 2). One line, no trailing period required, ≤ 240 chars.
+   *
+   * `summary` is the canonical one-line index entry for the tool. The
+   * generated catalog (`scripts/gen-catalog.ts`) reads it for the
+   * `summary` column of the top-level README table, and the per-tool
+   * README generator (ADR-0043 child `.5`) uses it as the README's
+   * opening paragraph. It is *not* a duplicate of the literate header
+   * in `tool.ts`: the header is a multi-paragraph chapter (Rule 10);
+   * `summary` is the one-line entry a reader scanning fifty rows wants.
+   * The relationship is a book chapter's title versus its opening
+   * section — both hand-written, neither generated from the other,
+   * related only by editorial intent (ADR-0043 Rationale §"Why
+   * `summary` is a new field").
+   *
+   * The field is optional only so it could land (child `.2`) without a
+   * flag-day edit to all ~55 tools; authoring it explicitly is the
+   * destination, not a convenience. `defineTool` validates the length
+   * and the single-line constraint at construction time — a `summary`
+   * longer than 240 chars or carrying a newline throws loudly (Rule 1:
+   * fail fast, fail loud), because a catalog blurb that wraps or runs
+   * long is a drift the build should reject, not silently render.
+   */
+  summary?: string;
   schema: { input: Schema<I>; output: Schema<O> };
   flags?: Fl;
   examples: ExampleEntry<I, O>[];
@@ -341,6 +366,35 @@ export function defineTool<
   // call sites.
   const Ar extends boolean = boolean,
 >(def: ToolDefinition<I, O, Fl, Ar>): ToolDefinition<I, O, Fl, Ar> {
+  // ADR-0043 Decision 2 — the `summary` field is a one-line catalog
+  // blurb. Validate the bound here, at construction time, so a
+  // malformed summary fails the moment the module is imported (by the
+  // runner, the registry, or the catalog generator) rather than
+  // silently producing a wrapped or over-long catalog row. Rule 1:
+  // fail fast, fail loud. The cap (240 chars) is generous enough for a
+  // dense one-liner that names the algorithm, the determinism tier,
+  // and the scope boundary, but tight enough that a multi-sentence
+  // paragraph — which belongs in the `tool.ts` literate header, not
+  // the catalog — is rejected.
+  const SUMMARY_MAX = 240;
+  if (def.summary !== undefined) {
+    if (def.summary.includes("\n")) {
+      throw new Error(
+        `${def.name}: defineTool 'summary' must be a single line — ` +
+        `it contains a newline. The catalog blurb is one declarative ` +
+        `sentence; multi-paragraph exposition belongs in the tool.ts ` +
+        `literate header (ADR-0043 Decision 2).`,
+      );
+    }
+    if (def.summary.length > SUMMARY_MAX) {
+      throw new Error(
+        `${def.name}: defineTool 'summary' is ${def.summary.length} chars, ` +
+        `exceeding the ${SUMMARY_MAX}-char cap. Tighten it to one ` +
+        `declarative sentence; the full exposition belongs in the ` +
+        `tool.ts literate header (ADR-0043 Decision 2).`,
+      );
+    }
+  }
   return def;
 }
 

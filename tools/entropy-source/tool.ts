@@ -121,6 +121,8 @@ const HEX_RE = /^[0-9a-f]*$/;
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "The workbench's only nondeterministic tool (`nondeterministic: true`; ADR-0005); auditable OS-randomness bridge via Web Crypto",
   nondeterministic: true,
   schema: { input: inputSchema, output: outputSchema },
   examples: [

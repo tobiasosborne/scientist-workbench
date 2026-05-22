@@ -396,6 +396,8 @@ function decodeInput(
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Singular value decomposition `M = U·diag(S)·V†` of a complex `m × n` matrix via complex one-sided Jacobi (Forsythe-Henrici → Drmač); supports rectangular inputs. ADR-0035 phase 2",
   schema: { input: inputSchema, output: outputSchema },
   // ADR-0015 / ADR-0035 §D3: numerical tier. The success branch output
   // always contains float64 leaves (U.re, U.im, S, Vh.re, Vh.im, the

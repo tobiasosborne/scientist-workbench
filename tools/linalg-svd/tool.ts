@@ -326,6 +326,8 @@ function encodeSuccess(r: SVDResult, scaleWarnings: readonly string[] = []) {
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Dual-algorithm SVD (one-sided Jacobi ≤ n=500; Golub-Reinsch above); `condition_number` and `rank_estimate` are first-class fields",
   schema: { input: inputSchema, output: outputSchema },
   // ADR-0015: numerical tier.  The output always contains float64
   // leaves on the success branch (U, S, Vt, the four error scalars,

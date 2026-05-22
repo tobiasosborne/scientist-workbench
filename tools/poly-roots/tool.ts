@@ -277,6 +277,8 @@ function refuse(tag: string, detail: string): Value {
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Symbolic roots of univariate polynomials over Q; closed-form radicals for deg ≤ 4, `Root[poly, k]` for real roots of deg ≥ 5",
   schema: { input: inputSchema, output: outputSchema },
   examples: [
     {
@@ -326,7 +328,7 @@ export const def = defineTool({
       input: record({ f: expr("sin", [sym("x")]), var: sym("x") }),
       output: refuse(
         TAG_NON_POLYNOMIAL,
-        "input is not a polynomial in 'x' over ℚ: out-of-scope head 'sin'",
+        "input is not a polynomial in 'x' over ℚ: unknown head \"sin\"",
       ),
     },
   ],

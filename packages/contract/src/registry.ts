@@ -47,6 +47,16 @@ export interface ToolMetadata {
   name: string;
   version: string;
   path: string;
+  /**
+   * The tool's one-line catalog blurb (ADR-0043 Decision 2), surfaced
+   * here so registry consumers — `registry-list`, `registry-search`,
+   * and the catalog generator — read the canonical summary without
+   * re-opening `tool.ts`. Absent when the tool has not yet been
+   * back-filled with a `summary`; the field is optional precisely so
+   * the registry surface degrades gracefully during incremental
+   * back-fill.
+   */
+  summary?: string;
   schema: { input: Schema; output: Schema };
   examples: Value[];
   invariants: Value[];
@@ -118,7 +128,7 @@ export async function importToolDef(toolPath: string): Promise<ToolDefinition> {
 
 export async function describeTool(toolPath: string, name: string): Promise<ToolMetadata> {
   const def = await importToolDef(toolPath);
-  return {
+  const meta: ToolMetadata = {
     name: def.name,
     version: def.version,
     path: toolPath,
@@ -126,4 +136,6 @@ export async function describeTool(toolPath: string, name: string): Promise<Tool
     examples: def.examples.map(exampleToValue),
     invariants: def.invariants.map(invariantToValue),
   };
+  if (def.summary !== undefined) meta.summary = def.summary;
+  return meta;
 }

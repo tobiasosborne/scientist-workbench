@@ -160,6 +160,8 @@ function resultToValue(r: GoldenResult) {
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Golden-master harness; modes `exact` (default) and `structural`; exits 1 on any failure",
   schema: { input: inputSchema, output: outputSchema },
   flags: {
     // ADR-0011 demo flag. When set, the oracle emits one stderr line

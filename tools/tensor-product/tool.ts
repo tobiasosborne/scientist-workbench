@@ -127,6 +127,8 @@ const outputSchema = S.record({
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Kronecker product `A ⊗ B` of two real matrices; the standard composable primitive for assembling operators on product spaces. Mixed-product law is the decisive invariant. qinfo v0.1 (ADR-0034)",
   schema: { input: inputSchema, output: outputSchema },
   examples: [
     {

@@ -282,6 +282,8 @@ function encodeSuccess(r: LBfgsbResult) {
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "L-BFGS with active-set projection and More-Thuente line search for box-constrained minimisation; agent-honest `success` + convergence taxonomy",
   schema: { input: inputSchema, output: outputSchema },
   // ADR-0015 numerical tier. Every successful output contains float64
   // leaves (x, fun, jac, grad_inf_norm); the runner's

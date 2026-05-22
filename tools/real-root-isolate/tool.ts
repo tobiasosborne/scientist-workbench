@@ -144,6 +144,8 @@ function buildHappyOutput(intervals: { lo: Rat; hi: Rat }[]): Value {
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Rational isolating intervals for real roots via VAS continued fractions + LMQ bound; open `(lo,hi)` or singleton `(r,r)` per root",
   schema: { input: inputSchema, output: outputSchema },
   examples: [
     {
@@ -200,7 +202,7 @@ export const def = defineTool({
       input: record({ f: expr("sin", [sym("x")]), var: sym("x") }),
       output: refuse(
         TAG_NON_POLYNOMIAL,
-        "input is not a polynomial in 'x' over ℚ: out-of-scope head 'sin'",
+        "input is not a polynomial in 'x' over ℚ: unknown head \"sin\"",
       ),
     },
   ],

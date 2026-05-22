@@ -1,9 +1,23 @@
-// expr-parse — converts plain-text math expressions to expression values.
-// Input: { kind: "string", value: <source text> }
-// Output: an expression Value, or an integer/rational/symbol leaf if the source
-// is just a literal/identifier.
+// =============================================================================
+// expr-parse — convert plain-text math expressions to expression values
+// =============================================================================
 //
-// Grammar (precedence, lowest → highest):
+// Intent
+// ------
+// `expr-parse` is the front door of the symbolic tier for a human (or an
+// agent) who has a math expression as ordinary text. It takes a `string`
+// value and produces an `expression` Value — or an `integer` / `rational`
+// / `symbol` leaf when the source is just a literal or a bare identifier.
+// Downstream symbolic tools (`cas-simplify`, `cas-diff`, `cas-verify`)
+// and numerical tools (`integrate-1d`, `optimize-lbfgs-projected`,
+// `integrate-ode-ivp`) consume the expression Value it emits, so
+// `expr-parse | <tool>` is the standard idiom for "I typed a formula and
+// want a tool to act on it."
+//
+// LaTeX is out of scope for v1 — that is a sister tool (PRD §9.2).
+//
+// Grammar (precedence, lowest → highest)
+// --------------------------------------
 //   expr     := add
 //   add      := mul (('+' | '-') mul)*           — left-assoc, binary
 //   mul      := unary (('*' | '/') unary)*        — left-assoc, binary
@@ -22,8 +36,6 @@
 // followed by `(` becomes an `expression` with that head); semantic
 // vocabulary checking is the consumer's job (`evalNumericExpr` in
 // `@workbench/quadrature` rejects unknown heads with a suggestion).
-//
-// LaTeX is out of scope for v1 — that's a sister tool (PRD §9.2).
 
 import {
   canonicalize,
@@ -327,6 +339,8 @@ class Parser {
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Text → AST; operators `+ − * / ^`, identifiers, integer / rational / decimal literals",
   schema: {
     input: S.kind("string"),
     output: outputSchema,

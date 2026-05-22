@@ -1,0 +1,1 @@
+{"fields":{"input":{"fields":{"order":{"kind":"string","value":"lex"},"polys":{"items":[{"kind":"symbol","name":"x"}],"kind":"list"},"vars":{"items":[],"kind":"list"}},"kind":"record"},"output":{"kind":"tagged","payload":{"fields":{"detail":{"kind":"string","value":"vars list is empty"}},"kind":"record"},"tag":"groebner-basis/empty-vars"}},"kind":"record"}

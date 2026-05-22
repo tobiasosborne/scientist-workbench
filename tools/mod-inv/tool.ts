@@ -69,6 +69,8 @@ const outputSchema = S.record(
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Modular inverse via extended Euclid; `inverse` present iff invertible, `gcd` always present",
   schema: {
     input: S.record({ value: S.kind("integer"), modulus: S.kind("integer") }),
     output: outputSchema,

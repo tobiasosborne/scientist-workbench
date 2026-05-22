@@ -416,6 +416,8 @@ function buildAnalyticJacobian(
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Radau-IIA(5) adaptive stiff IVP solver with symbolic Jacobian auto-derivation (SciPy `Radau` algorithm); L-stable, agent-honest bookkeeping",
   schema: { input: inputSchema, output: outputSchema },
   numerical: true,
   examples: [

@@ -67,6 +67,8 @@ const outputSchema = S.list(entryRecordSchema);
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Filter the registry by schema-derived predicates (input_kind / output_kind / head / name_substring, AND-conjoined); the planner-friendly discovery path",
   schema: { input: inputSchema, output: outputSchema },
   examples: [
     {

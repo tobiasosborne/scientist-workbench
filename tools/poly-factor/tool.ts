@@ -307,6 +307,8 @@ function buildHappyOutput(
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Exact univariate factorisation over Q via Berlekamp-Zassenhaus; output canonical (irreducible, primitive, positive-leading, sorted)",
   schema: { input: inputSchema, output: outputSchema },
   examples: [
     {
@@ -365,7 +367,7 @@ export const def = defineTool({
         f: expr("sin", [sym("x")]),
         var: sym("x"),
       }),
-      output: tagged(NON_POLY_TAG, record({ detail: str("input is not a polynomial in 'x' over ℚ: out-of-scope head 'sin'") })),
+      output: tagged(NON_POLY_TAG, record({ detail: str("input is not a polynomial in 'x' over ℚ: unknown head \"sin\"") })),
     },
   ],
   invariants: [

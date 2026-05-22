@@ -428,6 +428,8 @@ function findWorstHermitianViolation(
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Hermitian eigendecomposition `H = Q·diag(λ)·Q†` for complex Hermitian H via the real-symplectic embedding (Goedecker 1999) composed with real cyclic-Jacobi eigh. ADR-0035 phase 1",
   schema: { input: inputSchema, output: outputSchema },
   // ADR-0015 / ADR-0035 §D3: numerical tier. The success branch output
   // always contains float64 leaves (Q.re, Q.im, eigenvalues, the three

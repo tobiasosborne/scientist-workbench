@@ -2,6 +2,8 @@
 // hypergeometric-pfq — arbitrary-precision generalised hypergeometric pFq
 // =============================================================================
 //
+// Intent
+// ------
 // Wire-protocol wrapper around the pure evaluator in
 // `@workbench/hypergeometric`. The algorithm itself (direct power series,
 // closed-form fast paths, cancellation-driven precision retry, parameter-
@@ -106,6 +108,8 @@ const outputSchema = S.union([
 export const def = defineTool({
   name: NAME,
   version: VERSION,
+  summary:
+    "Arbitrary-precision `pFq(a; b; z)` via direct power series with cancellation-driven precision retry; `arbprec: true` — bit-identical cross-platform forever given `--precision=N`",
   schema: { input: inputSchema, output: outputSchema },
   arbprec: true,
   examples: [
