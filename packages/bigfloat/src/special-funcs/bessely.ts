@@ -504,12 +504,28 @@ function besselYConnectionWithLossTracking(
  * agreement under the linear-error budget; under the quadratic budget
  * it loses half its digits.
  *
- * Working precision: `prec + 32 + (prec + 32) + 32` = `2·(prec + 32) +
- * 32`.  The `prec + 32` is the substrate budget; another `prec + 32`
- * absorbs the L'Hôpital cancellation (the `sin(νπ)` denominator's
- * magBits is `−log₂(1/ε) = −(prec + 32)`); the trailing 32 is safety.
- * Asymptotically `O(prec)` work; the constant factor (2×) is the price
+ * Working precision — who absorbs the L'Hôpital cancellation.  The
+ * `sin(νπ)` denominator has magBits `−log₂(1/ε) = −(prec + 32)`, so the
+ * limit's numerator/denominator subtraction sheds `prec + 32` bits to
+ * L'Hôpital cancellation.  That budget is absorbed *inside*
+ * `bigBesselYConnection` by its own measure-and-bump retry harness — we
+ * therefore call it with the **original target `prec`**, and it sizes
+ * its first-pass working precision to `work0 = prec + 32 +
+ * nearIntegerBits ≈ 2·prec + 64` (with `nearIntegerBits ≈ −magBits(ε) =
+ * prec + 32`).  So the connection runs at `≈ 2·prec` internal bits — the
+ * `prec + 32` substrate budget plus the `prec + 32` cancellation budget,
+ * counted **once**.  That `2×` constant factor is the irreducible price
  * of v0.1 limit-via-ε vs the v0.2 FLINT complex-K rotation.
+ *
+ * The local `work = 2·(prec + 32) + 32` constructed below is NOT the
+ * evaluation precision — it sizes only the *construction* of `ν = n + ε`,
+ * where it must exceed `epsBits = prec + 32` so the `add` does not round
+ * ε away.  It is held generously (the cost is one `add`) and is
+ * deliberately NOT passed to the connection: doing so (the pre-worklog-183
+ * bug) made the connection re-add `nearIntegerBits` on top of an
+ * already-doubled `prec`, sizing `work0 = 3·prec + 160` and
+ * **double-counting** the cancellation budget — ~3–4× the necessary work
+ * on every integer-ν call, which was the `m9ty` test-timeout.
  *
  * v0.2 follow-up: port FLINT `acb_hypgeom_bessel_y.c:36-80`
  * (`Y_n(z) = -2 i^n K_n(iz)/π − phase(z) i J_n(z)`) once I3b ships
@@ -545,8 +561,12 @@ export function bigBesselYIntegerNu(
   // Wolfram for n ∈ {-1, -2, -3}.
   const nAbs = Math.abs(n);
   const epsBits = prec + 32;
-  // Working precision: prec + 32 (substrate) + epsBits (L'Hôpital
-  // absorption) + 32 (safety).
+  // `work` sizes the CONSTRUCTION of ν = n + ε only — it must exceed
+  // `epsBits` so the `add` below does not round ε = 2^−epsBits away.  It
+  // is NOT the evaluation precision: the L'Hôpital cancellation is
+  // absorbed inside `bigBesselYConnection`, which (given the original
+  // `prec` we pass at the call site) sizes its own work0 ≈ 2·prec + 64.
+  // Held generously at 2·(prec + 32) + 32 — the cost is one `add`.
   const work = prec + 32 + epsBits + 32;
   // ε = 2^−epsBits as a BigFloat.
   const eps: BigFloat = {
@@ -554,7 +574,7 @@ export function bigBesselYIntegerNu(
     exponent: -epsBits,
     precision: work,
   };
-  // ν = n + ε at the boosted working precision.  We perturb the
+  // ν = n + ε at the construction precision `work`.  We perturb the
   // positive |n| (= nAbs), not the signed n, because the integer-ν
   // parity sign correction is applied after the limit evaluation —
   // this keeps the cancellation harness in `bigBesselYConnection`
@@ -563,8 +583,12 @@ export function bigBesselYIntegerNu(
   // Direct call to the connection primitive; do NOT route through
   // public `bigBesselY` (which would re-detect integer ν via the
   // round-trip-at-input-precision test and re-enter this function —
-  // infinite recursion).
-  const limit = bigBesselYConnection(nuExact, z, work);
+  // infinite recursion).  Pass the ORIGINAL `prec`, NOT `work`: the
+  // connection's measure-and-bump retry harness absorbs the L'Hôpital
+  // cancellation exactly once (sizing work0 ≈ 2·prec + 64).  Passing
+  // `work` here double-counted that budget (work0 = 3·prec + 160) — the
+  // m9ty fix; see worklog 183 and the "Working precision" header note.
+  const limit = bigBesselYConnection(nuExact, z, prec);
   // Apply DLMF 10.4.1 parity for negative-integer-ν inputs.
   const signed = n < 0 && (nAbs & 1) === 1 ? neg(limit) : limit;
   return normalise(signed.mantissa, signed.exponent, prec);
