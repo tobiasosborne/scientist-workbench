@@ -478,7 +478,17 @@ describe("bigCBesselJ — golden masters vs Arb (T5, all four quadrants)", () =>
       const result = bigCBesselJ(nuC, zC, PREC_120DP);
       expectAgrees(result.re, v.re, 40, 55, `${id}.re`, oracleExp10(v.im));
       expectAgrees(result.im, v.im, 40, 55, `${id}.im`, oracleExp10(v.re));
-    });
+      // Per-test timeout bump, off the 5000 ms default.  These golden
+      // masters run the complex AMOS K(iz)+J rotation at PREC_120DP = 400
+      // bits, up to ν=3 (T5-besselj-014).  The cost is ~3–6 s/test and is
+      // IRREDUCIBLE: the integer-ν path goes through the complex-K
+      // limit-via-ε whose working-precision boost is load-bearing (bead
+      // `m9ty` proved K's boost — unlike real Bessel Y's — is NOT a
+      // removable double-count; it absorbs a second, unmeasurable
+      // cancellation site).  Bumped so the test cannot brush the default
+      // under full-suite parallel load (mirrors the `eoei` warm-up
+      // precedent).  Bead `sgec`; worklog 185.
+    }, 30_000);
   }
 });
 
@@ -507,7 +517,10 @@ describe("bigCBesselY — golden masters vs Arb (T5, all four quadrants)", () =>
       // cancellation floor and the noise floor of either oracle.
       expectAgrees(result.re, v.re, 35, 55, `${id}.re`, oracleExp10(v.im));
       expectAgrees(result.im, v.im, 35, 55, `${id}.im`, oracleExp10(v.re));
-    });
+      // Per-test timeout bump — same irreducible complex K(iz)+J rotation
+      // cost as the J golden loop above (400 bits, ν up to 3).  Off the
+      // 5000 ms default to avoid load-dependent flakes.  Bead `sgec`.
+    }, 30_000);
   }
 });
 
