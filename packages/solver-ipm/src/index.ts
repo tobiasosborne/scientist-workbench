@@ -52,6 +52,18 @@ export {
   type HsdeSdpSolveResult,
 } from "./solver/HsdeNtSdpSolver.js";
 
+// QP — convex quadratic programming via the augmented-SQD Mehrotra IPM
+// (ADR-0044; ground truth docs/ground-truth/convex/qp-ipm.md). Built
+// additively on the LP path; the LP/SDP exports above are untouched.
+export {
+  type QpProblem,
+  type CanonicalQp,
+  qpFromCanonical,
+  symMatVec,
+} from "./problem/QpProblem.js";
+export { solveQp, type QpSolveResult, type QpSolveOptions } from "./solver/QpSolver.js";
+export { signedLdltInPlace, ldltSolveInPlace } from "./linalg/SignedLdlt.js";
+
 // SDP
 export { parseSdpaSparse, type SdpaSparseProblem } from "./format/SdpaSparse.js";
 export { convertSdpaToSdp, type SdpProblem, type SdpBlock } from "./problem/SdpProblem.js";

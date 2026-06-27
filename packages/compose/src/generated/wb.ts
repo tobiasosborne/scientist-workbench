@@ -59,6 +59,7 @@ import { def as partialTransposeDef } from "../../../../tools/partial-transpose/
 import { def as polyFactorDef } from "../../../../tools/poly-factor/tool.js";
 import { def as polyRootsDef } from "../../../../tools/poly-roots/tool.js";
 import { def as purityDef } from "../../../../tools/purity/tool.js";
+import { def as qpSolveDef } from "../../../../tools/qp-solve/tool.js";
 import { def as realRootIsolateDef } from "../../../../tools/real-root-isolate/tool.js";
 import { def as registryListDef } from "../../../../tools/registry-list/tool.js";
 import { def as registrySearchDef } from "../../../../tools/registry-search/tool.js";
@@ -116,6 +117,7 @@ export interface TypedWorkbench extends Workbench {
   polyFactor(input: InputOf<typeof polyFactorDef>, flags?: FlagsArgOf<typeof polyFactorDef>): Promise<OutputOf<typeof polyFactorDef>>;
   polyRoots(input: InputOf<typeof polyRootsDef>, flags?: FlagsArgOf<typeof polyRootsDef>): Promise<OutputOf<typeof polyRootsDef>>;
   purity(input: InputOf<typeof purityDef>, flags?: FlagsArgOf<typeof purityDef>): Promise<OutputOf<typeof purityDef>>;
+  qpSolve(input: InputOf<typeof qpSolveDef>, flags?: FlagsArgOf<typeof qpSolveDef>): Promise<OutputOf<typeof qpSolveDef>>;
   realRootIsolate(input: InputOf<typeof realRootIsolateDef>, flags?: FlagsArgOf<typeof realRootIsolateDef>): Promise<OutputOf<typeof realRootIsolateDef>>;
   registryList(input: InputOf<typeof registryListDef>, flags?: FlagsArgOf<typeof registryListDef>): Promise<OutputOf<typeof registryListDef>>;
   registrySearch(input: InputOf<typeof registrySearchDef>, flags?: FlagsArgOf<typeof registrySearchDef>): Promise<OutputOf<typeof registrySearchDef>>;
@@ -258,6 +260,9 @@ export function typed(workbench: Workbench): TypedWorkbench {
     purity(input, flags) {
       return workbench.run("purity", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof purityDef>>;
     },
+    qpSolve(input, flags) {
+      return workbench.run("qp-solve", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof qpSolveDef>>;
+    },
     realRootIsolate(input, flags) {
       return workbench.run("real-root-isolate", input, (flags ?? {}) as Record<string, unknown>) as Promise<OutputOf<typeof realRootIsolateDef>>;
     },
@@ -357,6 +362,7 @@ export const defs = {
   polyFactor: polyFactorDef,
   polyRoots: polyRootsDef,
   purity: purityDef,
+  qpSolve: qpSolveDef,
   realRootIsolate: realRootIsolateDef,
   registryList: registryListDef,
   registrySearch: registrySearchDef,

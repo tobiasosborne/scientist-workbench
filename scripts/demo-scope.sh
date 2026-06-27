@@ -264,3 +264,33 @@ echo "          and run through sturm-execute end-to-end."
 echo "============================================================"
 echo '{"kind":"record","fields":{"n_bits":{"kind":"integer","value":"3"},"marked":{"kind":"list","items":[{"kind":"integer","value":"5"}]}}}' \
   | bun tools/sturm-find/tool.ts | SHORT
+
+echo
+echo "============================================================"
+echo "  Demo 15 — qp-solve: convex QP via the augmented-SQD IPM"
+echo "          min ½‖x‖² s.t. x₁+x₂=1, x≥0  ⇒  x*=(½,½), obj=¼."
+echo "          (ADR-0044; accuracy ceiling 1e-10, returns active set.)"
+echo "============================================================"
+QP_IN=$(cat <<'JSON'
+{"kind":"record","fields":{
+  "minimize":{"kind":"record","fields":{
+    "c":{"kind":"list","items":[{"kind":"float64","bits":"0000000000000000"},{"kind":"float64","bits":"0000000000000000"}]},
+    "Q":{"kind":"list","items":[
+      {"kind":"list","items":[{"kind":"float64","bits":"3ff0000000000000"},{"kind":"float64","bits":"0000000000000000"}]},
+      {"kind":"list","items":[{"kind":"float64","bits":"0000000000000000"},{"kind":"float64","bits":"3ff0000000000000"}]}]}}},
+  "subjectTo":{"kind":"record","fields":{
+    "Ax_eq_b":{"kind":"record","fields":{
+      "A":{"kind":"list","items":[{"kind":"list","items":[{"kind":"float64","bits":"3ff0000000000000"},{"kind":"float64","bits":"3ff0000000000000"}]}]},
+      "b":{"kind":"list","items":[{"kind":"float64","bits":"3ff0000000000000"}]}}},
+    "cones":{"kind":"list","items":[{"kind":"expression","head":"NonNegCone","args":[{"kind":"list","items":[{"kind":"integer","value":"0"},{"kind":"integer","value":"1"}]}]}]}}}}}
+JSON
+)
+echo "$QP_IN" | bun tools/qp-solve/tool.ts | bun -e '
+  const v = JSON.parse(await Bun.stdin.text());
+  const dec = (x) => { const b = BigInt("0x"+x.bits); const buf = new ArrayBuffer(8); new DataView(buf).setBigUint64(0, b); return new DataView(buf).getFloat64(0); };
+  const f = v.fields;
+  console.log("  status   :", f.status.value);
+  console.log("  x        :", f.x.items.map(dec).map((n)=>n.toFixed(6)));
+  console.log("  objective:", dec(f.objective).toFixed(6));
+  console.log("  achieved :", dec(f.achieved_precision).toExponential(2));
+'

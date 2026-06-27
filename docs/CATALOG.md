@@ -6,7 +6,7 @@ This file is **generated from the tool registry** (ADR-0043): every row is deriv
 
 The same list is available live from the discovery CLI: `bun wb.ts` lists every tool from the live registry, `bun wb.ts <tool>` shows one tool's schema / examples / invariants, and `bun wb.ts search` filters by type. Per-tool detail (input/output schemas, algorithm, refusal envelope) lives in `tools/<name>/README.md` — each row links out.
 
-55 tools.
+56 tools.
 
 | tool | summary |
 |---|---|
@@ -47,6 +47,7 @@ The same list is available live from the discovery CLI: `bun wb.ts` lists every 
 | [`poly-factor`](../tools/poly-factor/README.md) | Exact univariate factorisation over Q via Berlekamp-Zassenhaus; output canonical (irreducible, primitive, positive-leading, sorted) |
 | [`poly-roots`](../tools/poly-roots/README.md) | Symbolic roots of univariate polynomials over Q; closed-form radicals for deg ≤ 4, `Root[poly, k]` for real roots of deg ≥ 5 |
 | [`purity`](../tools/purity/README.md) | Purity `γ(ρ) = tr(ρ²)` of a complex Hermitian density operator via the one-pass entrywise identity `γ = Σ \|ρ_ij\|²`; O(n²), no eigendecomposition. Second qinfo v0.2 tool |
+| [`qp-solve`](../tools/qp-solve/README.md) | Convex QP specialist (ADR-0030): a Mehrotra primal-dual interior-point method factoring the augmented quasidefinite KKT system with a static signed-Cholesky LDLᵀ (ADR-0044); 1e-10 accuracy ceiling, returns the active set. |
 | [`real-root-isolate`](../tools/real-root-isolate/README.md) | Rational isolating intervals for real roots via VAS continued fractions + LMQ bound; open `(lo,hi)` or singleton `(r,r)` per root |
 | [`registry-list`](../tools/registry-list/README.md) | Discover all installed tools; schemas in the output are wire-encoded |
 | [`registry-search`](../tools/registry-search/README.md) | Filter the registry by schema-derived predicates (input_kind / output_kind / head / name_substring, AND-conjoined); the planner-friendly discovery path |
