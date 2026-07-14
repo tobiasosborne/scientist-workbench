@@ -2,7 +2,9 @@
 
 **Status:** Implemented — 2026-05-17 (see worklog 142); float64 complex
 substrate amended to full Faddeeva-Johnson port (Algorithm 916 +
-`w_im_y100` Chebyshev) — 2026-05-17 (see worklog 167). Originally
+`w_im_y100` Chebyshev) — 2026-05-17 (see worklog 167); §Decision 9
+amended — tier mutex acknowledged, arbprec-only + 53-bit BigFloat wrap
+canonical — 2026-07-14 (see worklog 187). Originally
 proposed 2026-05-16.
 **Beads:** `scientist-workbench-43hw` (epic — World-class Erf). Phase 0
 research children all closed: `kvfu` (R1 symbolic identities), `9jpm`
@@ -126,6 +128,11 @@ proves the pattern.
 | Float64 real + complex | `@workbench/quadrature` | `src/special-funcs/<head>-float64.ts` (the SunPro / Faddeeva-Johnson port for Erf) + new `src/eval-numeric-expr.ts` wrapping `eval-expr.ts` with an `applySpecial(head, args, env)` dispatch | `numerical: true` (ADR-0015) |
 | Meijer-G bridge | `@workbench/meijer-core` | `src/bridges/<head>.ts` (forward `headToMeijerG` + backward pattern-matcher; new bridge sub-directory sibling to existing `dispatch-rules/`) | symbolic |
 | Wire surface | `tools/special-eval/` | one umbrella tool with `--head=<name>` flag dispatching across heads; honours `--precision=<int>` (ADR-0011 standard flag) — `--precision ≤ 53` routes the float64 lane, `> 53` routes the arb-prec lane | per-tier; arb-prec call records platform-independent provenance, float64 call records platform fingerprint |
+
+*Wire-surface row amended 2026-07-14 (bead `scientist-workbench-81rl`):
+the shipped dispatch threshold is `--precision ≤ 15` decimal digits
+(≈ 53 bits), and the float64 lane records **no** platform fingerprint —
+see §Decision 9 amendment.*
 
 The substrate-package boundaries follow the **existing** split: `bigfloat`
 already houses the arb-prec Γ family alongside its core type and
@@ -356,6 +363,12 @@ Standard flags: `--head=<name>` (required), `--precision=<int>` (default
 the caller requests the Meijer-G bridge form (and other future
 honestly-refused requests).
 
+*Amended 2026-07-14 (bead `scientist-workbench-81rl`): shipped
+semantics — the `--precision` default is 50 (decimal digits, ADR-0020)
+and `≤ 15` decimal routes the float64 lane; the wire `value` is
+uniformly `bigfloat`/`bigcomplex` across tiers and `achieved_precision`
+is in bits (53 on the float64 lane). See §Decision 9 amendment.*
+
 This wire tool **closes the scope of bead `d6s`** (per-head arbprec
 evaluator umbrella, P2): `d6s` is filed for the Meijer-G dispatcher's
 need to numerically evaluate AST in the special-function vocabulary;
@@ -410,6 +423,53 @@ arbprec: true }` is **not** a contradiction here — it's per-output
 conditioning, with the live tier decided by the `--precision` value at
 each invocation. The provenance writer (`runMemoized`) checks the live
 output's tier and writes the appropriate provenance fields.
+
+**Amendment (2026-07-14, worklog 187, bead `scientist-workbench-81rl`
+— successor to the bead cited as `gp75` in ADR-0041/0042 and worklogs
+142/163).** The dual manifest never shipped. The tier mutex that
+ADR-0015 and ADR-0020 promise ("the runner rejects a tool whose
+definition asserts more than one") is enforced per-execution in
+`executeToolDef` (`packages/contract/src/execute.ts`), which every
+entry point — subprocess runner and in-process compose (ADR-0012) —
+routes through: a definition declaring more than one of
+{`nondeterministic`, `numerical`, `arbprec`} throws `ToolError` before
+any work runs. Three further details above are stale against the
+shipped code:
+
+* The `--precision` standard flag is *decimal digits*, default 50
+  (ADR-0020). The shipped dispatch is `--precision ≤ 15` (decimal,
+  ≈ the 53-bit binary64 mantissa) → float64 lane; `> 15` → arb-prec
+  lane (`tools/special-eval/tool.ts`, invariant
+  `tier-dispatch-by-precision-flag`). The default therefore routes the
+  **arb-prec** lane, not float64.
+* The per-output provenance conditioning lives in `executeToolDef`,
+  not `runMemoized`, and is gated on `def.numerical === true &&
+  containsFloat64(output)`.
+* The canonical resolution is `arbprec: true` **only**, with
+  float64-lane results wrapped in 53-bit BigFloat on the wire (uniform
+  `bigfloat`/`bigcomplex` output schema across tiers). This shipped as
+  the "T2 workaround" (worklog 139) and is hereby the canonical
+  convention for every cross-tier wire tool, ADR-0041/0042 inheritors
+  included.
+
+The honest cost, accepted: ADR-0015's platform-fingerprint recording
+does not extend to the ≤ 53-bit lane — doubly structural, since
+`def.numerical` is unset (the mutex) *and* the BigFloat wire encoding
+carries no float64 leaves for `containsFloat64` to detect. The
+float64-lane computation may still depend on the platform's float
+runtime; a caller that needs the cross-platform bit-identity contract
+passes `--precision > 15`. The waiver is store-scoped, not only
+caller-scoped: ≤ 15-lane records enter the provenance store with no
+`platform` field, so `runMemoized`/`lookup` treats them as admissible
+on every platform and may serve bytes a local recomputation would not
+bit-reproduce — any consumer passing `--precision ≤ 15` accepts this,
+sight unseen. Lifting the mutex with a per-output
+provenance writer (option B in bead `81rl`) was declined: it breaks
+the single-flag tier interpretation across the codebase for a
+fingerprint the caller explicitly waived by choosing the ≤ 15 lane.
+Cross-references: ADR-0015 §Decision 4 amendment,
+`tools/special-eval/tool.ts` §"Why arbprec: true and not
+numerical: true".
 
 ### Decision 10 — Phase ordering and per-bead claim discipline
 
@@ -564,6 +624,11 @@ precedent — same tool, different-tier outputs on different inputs).
 This avoids splitting into `tools/special-eval-arbprec` and
 `tools/special-eval-float64` for what is, from the agent's perspective,
 a single conceptual operation.
+
+*Amended 2026-07-14 (bead `scientist-workbench-81rl`): the dual-flag
+annotation described here never shipped — the tier mutex forbids it.
+The tool annotates `arbprec: true` only; the no-split rationale stands.
+See §Decision 9 amendment.*
 
 ### Why ADR-0023 amends rather than a new vocabulary ADR
 

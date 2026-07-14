@@ -71,7 +71,11 @@ export async function lookupWorkbench<O extends Value = Value>(
   // perspective, the cached record is honestly a miss (its bytes would
   // not match what running the tool here would produce). Symbolic
   // tools have no platform suffix on the index, so the lookup behaves
-  // exactly as before — bit-identical cross-platform forever.
+  // exactly as before — bit-identical cross-platform forever. The
+  // sanctioned exception: a cross-tier arbprec tool's ≤ 15-decimal
+  // float64 lane writes no platform field, so its records are
+  // admissible here on every platform — the caller's lane choice
+  // waives this protection (ADR-0040 §Decision 9 amendment).
   const platformHashForLookup = def.numerical === true ? currentPlatformHash() : null;
 
   const inputHash = hash(input);

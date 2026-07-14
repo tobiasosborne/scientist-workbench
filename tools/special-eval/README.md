@@ -4,7 +4,7 @@
 
 Per-head arb-prec / float64 evaluator umbrella for the Erf, Bessel and 16-head Gamma families (real + complex); one `--head=<name>` flag dispatches across heads and {float64, arb-prec} tiers. `arbprec: true`
 
-**Determinism:** `arbprec: true` (ADR-0020) — bit-identical cross-platform forever given the `--precision` flag.
+**Determinism:** `arbprec: true` (ADR-0020) — bit-identical cross-platform forever given the `--precision` flag, for `--precision > 15`; the `≤ 15` float64 lane is platform-conditional and unfingerprinted (ADR-0040 §Decision 9 amendment).
 **Version:** `0.1.0`
 
 ## Input
@@ -182,7 +182,8 @@ Gamma-family honesty (ADR-0042 §"Decision 7-9"):
 
 ### Per-output tier dispatch (ADR-0040 §"Decision 9")
 
-`--precision ≤ 53` routes the float64 lane (I5); `> 53` routes the
+`--precision ≤ 15` (decimal digits, ≈ the 53-bit binary64 mantissa)
+routes the float64 lane (I5); `> 15` routes the
 arb-prec lane (I1-I3). The output is *always* encoded as a `bigfloat`
 (real) or `bigcomplex` (complex) — at p=53 the BigFloat carries a
 53-bit mantissa with the float64 result as its content, and at p>53
@@ -192,19 +193,25 @@ precision flag pins.
 
 ### Why arbprec: true and not numerical: true
 
-The runner's tier mutex (ADR-0015 + ADR-0020, enforced in
-`executeToolDef`) admits at most one of {nondeterministic, numerical,
-arbprec}. The `--precision` standard flag is inherited only when
-`arbprec: true`. ADR-0040 §"Decision 9" described the ideal as listing
-both annotations on the manifest; the *implementable* shape under the
-existing mutex is `arbprec: true` plus per-output dispatch (the float64
-lane's result is still byte-deterministic on a single platform; the
-BigFloat encoding makes it bit-deterministic across runtimes as soon
-as it lands in the wire because BigFloat operations are bit-identical
-cross-platform by language spec — see ADR-0020 §"Context"). A future
-ADR can lift the mutex to support per-output tier conditioning across
-the {numerical, arbprec} pair; for now the practical resolution is
-the single arbprec annotation.
+The runner's tier mutex (ADR-0015 + ADR-0020, enforced per-execution
+in `executeToolDef`) admits at most one of {nondeterministic,
+numerical, arbprec}. The `--precision` standard flag is inherited only
+when `arbprec: true`. ADR-0040 §"Decision 9" originally described the
+ideal as listing both annotations on the manifest; its amendment
+(2026-07-14, bead `scientist-workbench-81rl`) canonises the shape
+shipped here: `arbprec: true` only, float64-lane results wrapped in
+53-bit BigFloat on the wire.
+
+The honest cost: no special-eval call ever writes a provenance
+`platform` field. The write condition is `def.numerical === true &&
+containsFloat64(output)` (`executeToolDef`), and both conjuncts are
+structurally false here — no `numerical` flag on the manifest, and a
+bigfloat-encoded wire value carries no float64 leaves. The BigFloat
+*encoding* of a float64-lane result is deterministic, but the float64
+*computation* feeding it may depend on the platform's float runtime
+(exactly ADR-0015's tier, minus its fingerprint). A caller that needs
+the cross-platform bit-identity contract passes `--precision > 15`;
+the ≤ 15 lane is the fast, unfingerprinted convenience tier.
 
 ### Refusal envelope (ADR-0003 boundary categories)
 
@@ -282,7 +289,7 @@ CLAUDE.md (every rule). The substrate this tool wraps lives in:
 
 ## Invariants
 
-- **arbprec-deterministic-cross-platform** — Same input bytes + same --precision → byte-identical output bytes on any runtime / arch / os (ADR-0020). BigInt arithmetic is bit-identical by language spec; the substrate inherits the contract. _(machine-checkable)_
+- **arbprec-deterministic-cross-platform** — Same input bytes + same --precision > 15 → byte-identical output bytes on any runtime / arch / os (ADR-0020): BigInt arithmetic is bit-identical by language spec; the substrate inherits the contract. The --precision <= 15 float64 lane is byte-stable on a fixed platform only — its computation may depend on the platform's float runtime, and no platform fingerprint is recorded (ADR-0040 §'Decision 9' amendment). _(machine-checkable)_
 - **tier-dispatch-by-precision-flag** — --precision <= 15 (decimal) routes the float64 lane (achieved_precision = 53 bits); --precision > 15 routes the arb-prec lane. The wire output is uniformly bigfloat / bigcomplex across tiers; achieved_precision discloses the live tier (ADR-0040 §'Decision 9'). _(machine-checkable)_
 - **honest-no-known-representation** — Complex InverseErf / InverseErfc refuse always (R3 §3 — multi-valued Riemann surface). Arb-prec InverseErf / InverseErfc refuse at --precision > 15 (Phase 2 substrate gap). Float64 real InverseErf / InverseErfc remain available. _(machine-checkable)_
 - **parity-real-arbprec** — bigErf(-x, prec) == -bigErf(x, prec) byte-identically at every precision (DLMF §7.4.1). _(machine-checkable)_

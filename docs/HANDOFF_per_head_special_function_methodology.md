@@ -347,7 +347,8 @@ Three beads in parallel:
 
 - **T2** (`special-eval` per-head wire tool): umbrella tool with
   `--head=<name>` + `--precision=<int>`. Per-output tier dispatch
-  (≤ 53 → float64; > 53 → arb-prec). Full 7-artefact tool
+  (`--precision ≤ 15` decimal → float64; `> 15` → arb-prec; ADR-0040
+  §Decision 9 amendment). Full 7-artefact tool
   contract; ≥ 10 goldens; per-tool README.
 
 - **T3** (meijer-g closure validation): survey every existing
@@ -362,7 +363,7 @@ Three beads in parallel:
 ONE test file (~50 tests / 100+ expects) covering 8 cross-cutting
 invariants that compose multiple substrate layers:
 
-- (a) Float64 lane: special-eval @ p≤53 ≡ direct float64 call
+- (a) Float64 lane: special-eval @ p ≤ 15 (decimal) ≡ direct float64 call
 - (b) Arbprec lane: special-eval @ p=N ≡ direct bigfloat call
 - (c) Restriction-to-real: complex bigF(x+0i) ≡ real bigF(x)
 - (d) cas-simplify pipeline: cross-head identity collapses

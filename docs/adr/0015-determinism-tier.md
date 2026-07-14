@@ -8,7 +8,10 @@ relaxation; this ADR follows its annotation pattern), ADR-0007 (per-
 output `precision` field; the precedent for *per-execution* tier
 conditioning), ADR-0012 (composition layer — `runMemoized` extends with
 one more selective-skip condition), ADR-0014 (first numerical tier;
-explicitly deferred this design until the measurement ran).
+explicitly deferred this design until the measurement ran), ADR-0040
+§Decision 9 amendment (cross-tier tools declare `arbprec: true` only
+and forgo this ADR's fingerprint on their float64 lane; bead
+`scientist-workbench-81rl`).
 
 ## Context
 
@@ -104,6 +107,11 @@ no determinism contract, so the `numerical` distinction does not
 apply. The runner rejects a tool whose definition asserts both as a
 load-time contract violation.
 
+*Amended 2026-07-14 (bead `scientist-workbench-81rl`): the mutex spans
+all three annotations ({`nondeterministic`, `numerical`, `arbprec`})
+and is enforced per-execution in `executeToolDef`, not at module load
+— see item 4's amendment.*
+
 ### 2. `platform?: PlatformRecord` field on `ProvenanceRecord`
 
 The provenance record (ADR-0005's locus for the `nondeterministic`
@@ -182,6 +190,25 @@ the field. For a future `sturm-execute` with the exact-symbolic path
 landed (bead `jfj`): the field is present iff the output went down
 the float64 fallback path. Same tool, same `numerical: true`
 declaration; honest per-execution tier reporting.
+
+**Amendment — 2026-07-14 (ADR-0040 §Decision 9 amendment; bead
+`scientist-workbench-81rl`).** Cross-tier wire tools that dispatch a
+float64 lane and an arb-prec lane off the `--precision` standard flag
+(today `tools/special-eval`; the ADR-0041/0042 substrates inherit)
+declare `arbprec: true` *only* — the tier mutex (item 1 above) forbids
+adding `numerical: true`; the rejection happens per-execution in
+`executeToolDef` (`packages/contract/src/execute.ts`), not at module
+load, so it covers every entry point per ADR-0012 — and wrap
+float64-lane results in 53-bit BigFloat on the wire. This branch
+therefore never fires for them, for two independent reasons:
+`def.numerical` is unset, and the BigFloat wire encoding (`tagged
+"bigfloat"` over integers, ADR-0020 §3) contains no float64 leaves for
+`containsFloat64` to find. The platform-fingerprint promise of this
+ADR does not extend to such tools' ≤ 53-bit lane; that loss is the
+accepted trade-off of the arbprec-only convention (ADR-0040 §Decision
+9 amendment). It includes item 5's cache protection: records carrying
+no `platform` field are admissible on every platform, so `runMemoized`
+cannot platform-skip a ≤ 53-bit-lane hit.
 
 ### 5. `runMemoized` / `lookup` extend the existing selective-skip
 

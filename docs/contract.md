@@ -120,7 +120,12 @@ references, invariants, and out-of-scope decisions. The implementation file
   provenance record's optional `platform` field and surfaces as a
   `runMemoized` cache miss when the platforms differ. The four annotations
   (default = symbolic, `arbprec: true`, `numerical: true`,
-  `nondeterministic: true`) are mutually exclusive in practice. See
+  `nondeterministic: true`) are mutually exclusive — `executeToolDef`
+  rejects a definition that declares more than one. Cross-tier tools
+  (float64 + arb-prec lanes dispatched by `--precision`) declare
+  `arbprec: true` only and wrap float64-lane results in 53-bit BigFloat,
+  forgoing the `platform` fingerprint on that lane (ADR-0040 §Decision 9
+  amendment). See
   `docs/adr/0005-externalised-entropy.md`,
   `docs/adr/0015-determinism-tier.md`, and
   `docs/adr/0020-arbitrary-precision-tier.md`.

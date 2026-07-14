@@ -220,7 +220,8 @@ re-check the relevant ADR.
   via `executeToolDef` (ADR-0012). If you see in-process and
   subprocess output diverge, that is a bug, not a degree of freedom.
 - **Determinism contract is tiered, additively. Four annotations,
-  mutually exclusive in practice.** Default = symbolic = bit-identical
+  mutually exclusive — runner-enforced: `executeToolDef` throws if a
+  definition declares more than one.** Default = symbolic = bit-identical
   *cross-platform forever* (the unconditional rule). `arbprec: true`
   (ADR-0020) is *also* bit-identical *cross-platform forever* given an
   explicit `--precision=<int>` standard flag — `BigInt` arithmetic is
@@ -239,7 +240,12 @@ re-check the relevant ADR.
   is honest: a tool with `numerical: true` only writes the `platform`
   field when its output actually contains float64 leaves (per ADR-0007's
   precision-field precedent — same tool, different-tier outputs on
-  different inputs). The `--platform-fingerprint` standard flag emits
+  different inputs). A cross-tier tool that dispatches float64 vs
+  arb-prec lanes off `--precision` (today `special-eval`) declares
+  `arbprec: true` *only* and wraps float64-lane results in 53-bit
+  BigFloat; no `platform` field is ever written for it — the
+  ≤ 15-decimal-digit lane forgoes ADR-0015's fingerprint (ADR-0040
+  §Decision 9 amendment, bead `81rl`). The `--platform-fingerprint` standard flag emits
   the running fingerprint without doing any work; an agent's planner
   reads a stored provenance record's `platform` field and compares it
   to `--platform-fingerprint` to decide whether the cached output is

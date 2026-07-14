@@ -112,10 +112,25 @@ Semantics: when `arbprec: true`, the tool
   decisions is permitted iff it does not affect the canonical output
   bytes).
 
+**Amendment — 2026-07-14 (ADR-0040 §Decision 9 amendment; bead
+`scientist-workbench-81rl`).** Sanctioned exception to the no-float64
+rule: a *cross-tier* tool that dispatches a float64 lane off
+`--precision ≤ 15` (decimal digits ≈ the 53-bit binary64 mantissa;
+today only `tools/special-eval`) computes that lane in float64 and
+wraps the result in 53-bit BigFloat on the wire. The
+bit-determinism-unconditional-on-platform guarantee above holds for
+`--precision > 15` only; the ≤ 15 lane is platform-conditional and
+unfingerprinted, disclosed per-tool via the
+`tier-dispatch-by-precision-flag` invariant.
+
 Mutually exclusive with `numerical: true` and with `nondeterministic:
 true`. The runner rejects a tool whose definition asserts more than
 one as a load-time contract violation (parallel to ADR-0015's
 mutual-exclusion check).
+
+*Amended 2026-07-14 (bead `scientist-workbench-81rl`): the rejection
+happens per-execution in `executeToolDef` — every entry point routes
+through it (ADR-0012) — not at load time.*
 
 ### 2. `packages/bigfloat`: arb-prec binary-radix substrate
 
@@ -411,6 +426,8 @@ reserved.
   tool's output, or vice versa). The mutual-exclusion check at tool
   load time prevents *one* tool from being both; cross-tool
   composition through `wb.run` / `wb.pipe` is unaffected.
+  *(Amended 2026-07-14: the check runs per-execution in
+  `executeToolDef`, not at load time.)*
 - **Auto-precision-bumping** (a tool that decides "I need 80 dps to
   satisfy a 50-dps request" and silently bumps). The candidate's
   `tools/meijer-g` will internally do this for cancellation

@@ -29,7 +29,7 @@
 // invariants (a)-(j))
 // --------------------------------------------------------------------
 //
-//   (a) Float64 lane          — `special-eval @ p≤53` byte-equal to
+//   (a) Float64 lane          — `special-eval @ p ≤ 15 (decimal)` byte-equal to
 //                                direct `gammaFloat64` / `logBetaFloat64`
 //                                / `digammaFloat64` / `polygammaFloat64`
 //                                / `pochhammerFloat64` / `betaFloat64`
@@ -334,7 +334,7 @@ function diffBitMag(a: BigFloat, b: BigFloat, prec: number): number {
 }
 
 // =============================================================================
-// (a) Float64 lane parity — special-eval @ p≤53 ≡ <head>Float64 bit-for-bit
+// (a) Float64 lane parity — special-eval @ p ≤ 15 (decimal) ≡ <head>Float64 bit-for-bit
 // =============================================================================
 //
 // What this proves: the wire tool's float64 lane returns exactly the

@@ -122,11 +122,12 @@ export async function executeToolDef<
   opts: ExecuteOptions = {},
 ): Promise<ExecuteResult<O>> {
   // 0. Mutual-exclusion check on tier annotations (ADR-0015). A tool
-  //    that asserts both `nondeterministic: true` (no determinism
-  //    contract — entropy-source) and `numerical: true` (platform-
-  //    conditional contract) is a load-time contract violation: the
-  //    tiers describe different relaxations of the determinism rule
-  //    and a tool cannot be in both at once. Caught here (rather than
+  //    that asserts more than one tier annotation (e.g. both
+  //    `nondeterministic: true` — no determinism contract — and
+  //    `numerical: true` — platform-conditional contract) is a
+  //    contract violation: the tiers describe different relaxations
+  //    of the determinism rule and a tool cannot be in more than one
+  //    at once. Caught here (rather than
   //    in `defineTool`) so the failure surfaces consistently across
   //    every entry point — including in-process callers that bypass
   //    the runner.

@@ -24,8 +24,9 @@ determinism contract — bit-identical given platform fingerprint), ADR-0011
 (typed flags; `--precision` is a standard flag), ADR-0007 (per-output
 determinism-tier precedent), ADR-0014 (first numerical tier — substrate-
 package pattern). Bead `d6s` (per-head arbprec evaluator) and bead `gp75`
-(runtime mutex amendment for cross-tier tools) are inherited from the Erf
-epic and remain the relevant cross-tier touchpoints.
+(runtime mutex amendment for cross-tier tools — landed 2026-07-14 as bead
+`scientist-workbench-81rl`, ADR-0040 §Decision 9 amendment) are inherited
+from the Erf epic and remain the relevant cross-tier touchpoints.
 
 ## Context
 
@@ -436,6 +437,12 @@ Per-output tier conditioning per ADR-0040 §Decision 9: `--precision≤53` →
 `arbprec: true` output (cross-platform deterministic). The mutex
 workaround from Erf bead `gp75` applies until that ADR amendment lands.
 
+*Amended 2026-07-14: landed as the ADR-0040 §Decision 9 amendment (bead
+`scientist-workbench-81rl`, successor to `gp75`). Shipped semantics
+differ from the sketch above: the threshold is `--precision ≤ 15`
+decimal digits (≈ 53 bits), the manifest is `arbprec: true` only, and
+the float64 lane records no platform fingerprint.*
+
 The wire tool's input schema for 2-arg heads accepts both flag form
 (`--nu=2 --re=1.23 --im=0`) and JSON-on-stdin form. The 1-arg legacy form
 (Erf) remains supported via Erf's existing dispatch entries — no breakage.
@@ -492,6 +499,12 @@ statically; the provenance writer (`runMemoized`) checks the live output's
 tier and writes the appropriate provenance fields. The runtime mutex
 workaround from Erf bead `gp75` continues to apply — wrap float64 in
 `BigFloat` at `prec=53` until that ADR amendment lands.
+
+*Amended 2026-07-14: the dual annotation never shipped — the tier mutex
+forbids it. `special-eval` declares `arbprec: true` only per the
+ADR-0040 §Decision 9 amendment (bead `scientist-workbench-81rl`,
+successor to `gp75`), now canonical; the per-output conditioning lives
+in `executeToolDef`, not `runMemoized`.*
 
 ### Decision 10 — Phase ordering + per-bead claim discipline
 
@@ -697,6 +710,12 @@ bronze-tier platform fingerprint but is the v0.1 path until the ADR
 amendment in bead `gp75` (P2) lands. This ADR inherits the workaround
 verbatim — no Bessel-specific change.
 
+*Amended 2026-07-14: the awaited amendment landed — ADR-0040 §Decision
+9 amendment (bead `scientist-workbench-81rl`, successor to `gp75`).
+The wrap is now the canonical cross-tier convention, not a provisional
+workaround; the shipped dispatch threshold is `--precision ≤ 15`
+decimal digits (≈ 53 bits).*
+
 ### Oracle install gating handled in Phase 0, not Phase 1
 
 R5's STRONG Arb-install recommendation surfaced before Phase 1
@@ -755,6 +774,9 @@ The *substrate* this ADR pins is implemented when:
   matches mpmath at 50 dp; `tools/special-eval --head=BesselI --nu=1 --re=5
   --precision=53 --scaled` returns `e^{-5}·I_1(5)` matching SciPy `ive(1,
   5)` to ≤ 2 ULP.
+  *(Amended 2026-07-14: under shipped semantics `--precision=53` —
+  decimal digits — routes the arb-prec lane; the float64-lane parity
+  check is `--precision ≤ 15`. ADR-0040 §Decision 9 amendment.)*
 - Meijer-G bridge round-trip byte-identical for BesselJ / BesselY /
   BesselI / BesselK against the canonical G-forms in Decision 5.
 

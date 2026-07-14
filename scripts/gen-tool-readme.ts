@@ -449,6 +449,26 @@ function determinismLine(def: ToolDefinition): string {
     return "`nondeterministic: true` (ADR-0005) — output may differ across runs given the same input.";
   }
   if (def.arbprec === true) {
+    // A cross-tier tool — one that dispatches a float64 lane and an
+    // arb-prec lane off the `--precision` flag — is exempt from the
+    // unconditional cross-platform claim on its float64 lane: per the
+    // ADR-0040 §Decision 9 amendment (bead 81rl) the ≤ 15-decimal-digit
+    // lane is platform-conditional and unfingerprinted. The manifest
+    // marker for "this tool is cross-tier" is the declared
+    // `tier-dispatch-by-precision-flag` invariant (today only
+    // `special-eval`); keying on it keeps the mechanical line from
+    // contradicting the tool's own How-it-works prose one screen below.
+    const crossTier = def.invariants.some(
+      (i) => i.name === "tier-dispatch-by-precision-flag",
+    );
+    if (crossTier) {
+      return (
+        "`arbprec: true` (ADR-0020) — bit-identical cross-platform forever given " +
+        "the `--precision` flag, for `--precision > 15`; the `≤ 15` float64 lane " +
+        "is platform-conditional and unfingerprinted (ADR-0040 §Decision 9 " +
+        "amendment)."
+      );
+    }
     return (
       "`arbprec: true` (ADR-0020) — bit-identical cross-platform forever given " +
       "the `--precision` flag."

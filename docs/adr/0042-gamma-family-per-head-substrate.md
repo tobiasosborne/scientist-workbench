@@ -18,8 +18,9 @@ ADR-0015 (`numerical: true` determinism contract), ADR-0011 (typed flags;
 `--precision` is a standard flag), ADR-0007 (per-output determinism-tier
 precedent), ADR-0014 (first numerical tier — substrate-package pattern).
 Bead `d6s` (per-head arbprec evaluator) and bead `gp75` (runtime mutex
-amendment) inherited from the Erf epic remain the relevant cross-tier
-touchpoints.
+amendment — landed 2026-07-14 as bead `scientist-workbench-81rl`,
+ADR-0040 §Decision 9 amendment) inherited from the Erf epic remain the
+relevant cross-tier touchpoints.
 
 ---
 
@@ -479,6 +480,12 @@ Per-output tier conditioning per ADR-0040 §Decision 9: `--precision≤53` →
 `arbprec: true` output (cross-platform deterministic). The mutex workaround from
 Erf bead `gp75` applies until that ADR amendment lands.
 
+*Amended 2026-07-14: landed as the ADR-0040 §Decision 9 amendment (bead
+`scientist-workbench-81rl`, successor to `gp75`). Shipped semantics differ from
+the sketch above: the threshold is `--precision ≤ 15` decimal digits (≈ 53
+bits), the manifest is `arbprec: true` only, and the float64 lane records no
+platform fingerprint.*
+
 ### Decision 8 — Oracle hierarchy + cross-validation discipline (per R5)
 
 | Tier | Oracles | Coverage | L12 trap |
@@ -515,6 +522,11 @@ the provenance writer (`runMemoized`) checks the live output's tier and writes t
 appropriate provenance fields. The `gp75` runtime mutex workaround continues to
 apply — wrap float64 results in BigFloat at `prec=53` until that ADR amendment
 lands. This ADR inherits the workaround verbatim; no Gamma-specific change.
+
+*Amended 2026-07-14: the dual annotation never shipped — the tier mutex forbids
+it. `special-eval` declares `arbprec: true` only per the ADR-0040 §Decision 9
+amendment (bead `scientist-workbench-81rl`), now canonical; the per-output
+conditioning lives in `executeToolDef`, not `runMemoized`.*
 
 ### Decision 10 — Phase ordering + per-bead claim discipline
 

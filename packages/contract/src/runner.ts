@@ -292,7 +292,8 @@ export interface ToolDefinition<
    * ADR-0007's `precision: "exact" | "float64"` field).
    *
    * Mutually exclusive with `nondeterministic: true` and `arbprec: true`
-   * in practice. Asserting more than one is a load-time contract violation.
+   * — `executeToolDef` throws at execution time if more than one is
+   * declared (ADR-0015 + ADR-0020; ADR-0040 §Decision 9 amendment).
    *
    * Default (absent / false): the tool is symbolic — bit-identical
    * cross-platform forever, the unconditional rule.
@@ -309,10 +310,17 @@ export interface ToolDefinition<
    * Internally, `arbprec: true` tools use `@workbench/bigfloat` (or another
    * bit-deterministic substrate). No float64 in any code path that
    * contributes to the canonical output — auxiliary float64 for heuristics
-   * is permitted iff it does not affect output bytes.
+   * is permitted iff it does not affect output bytes; the sole sanctioned
+   * exception is a cross-tier tool's `--precision ≤ 15` float64 lane
+   * (ADR-0020 amendment, ADR-0040 §Decision 9 amendment).
    *
    * Mutually exclusive with `nondeterministic: true` and `numerical: true`
-   * in practice. Asserting more than one is a load-time contract violation.
+   * — `executeToolDef` throws at execution time if more than one is
+   * declared (ADR-0015 + ADR-0020; ADR-0040 §Decision 9 amendment). A
+   * cross-tier tool (float64 + arb-prec lanes dispatched by
+   * `--precision`) declares `arbprec: true` only and wraps float64-lane
+   * results in 53-bit BigFloat on the wire, forgoing the ADR-0015
+   * `platform` fingerprint on that lane.
    *
    * Default (absent / false): the tool is symbolic and does not take a
    * precision parameter.
